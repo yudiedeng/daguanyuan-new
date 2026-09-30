@@ -191,7 +191,7 @@ const PLACES=[
  {id:'yihong',name:'怡红院',sub:'贾宝玉',eyebrow:'蕉棠两植',pos:[85,12,56],quote:'一边种几本芭蕉，那一边是一树西府海棠。',
   text:'宝玉取“蕉棠两植”之意题了“红香绿玉”，元春改作“怡红快绿”，这里就叫怡红院。屋里多宝格和穿衣镜重重叠叠，刘姥姥醉后在这里迷了路。',ch:'第十七回 · 第四十一回',view:{t:[86,2,64],c:[50,28,100]},spawn:GLB?[58,76.5,-Math.PI/2]:[58,66,-Math.PI/2]},
  {id:'xiaoxiang',name:'潇湘馆',sub:'林黛玉',eyebrow:'有凤来仪',pos:[-80,12,28],link:true,quote:'里面数楹修舍，有千百竿翠竹遮映。',
-  text:'宝玉题“有凤来仪”，后赐名潇湘馆。黛玉说：“我心里想着潇湘馆好，爱那几竿竹子隐着一道曲栏。”院里的游廊、泉沟、鹦鹉架可以进馆细看。',ch:'第十七回 · 第二十三回',view:{t:[-80,3,30],c:[-46,22,62]},spawn:[-58,26,Math.PI/2]},
+  text:'宝玉题“有凤来仪”，后赐名潇湘馆。黛玉说：“我心里想着潇湘馆好，爱那几竿竹子隐着一道曲栏。”院里的游廊、泉沟、鹦鹉架可以进馆细看。',ch:'第十七回 · 第二十三回',view:{t:[-82,3,27],c:[-50,20,60]},spawn:[-58,26,Math.PI/2]},
  {id:'hengwu',name:'蘅芜苑',sub:'薛宝钗',eyebrow:'蘅芷清芬',pos:[62,11,-96],quote:'一株花木也无，只见许多异草。',
   text:'迎门一块玲珑山石，四面群绕各式石块，不见花木，只有各色异草藤萝，味香气馥。宝玉题“蘅芷清芬”。贾母来时嫌屋里太素，“雪洞一般”。',ch:'第十七回 · 第四十回',view:{t:[62,3,-92],c:[92,24,-52]},spawn:[62,-72,0]},
  {id:'daoxiang',name:'稻香村',sub:'李纨',eyebrow:'杏帘在望',pos:[-94,8,-68],quote:'里面数楹茅屋，外面却是桑、榆、槿、柘，各色树稚新条，随其曲折，编就两溜青篱。',
@@ -466,6 +466,15 @@ MAT.bark=patch(std('#6b5846',.95,{map:WOOD.map,normalMap:WOOD.nrm}),{key:'ba'});
 /* ---- Blender 精模建筑 (models/b/*.glb, 材质按名称在网页重赋) ---- */
 const BM={},BM_EM=[];
 const BMR={ // name -> [color, roughness, tri, extra]
+ 'MAT_青灰石_微风化_养护旧化_steps':['#a9aba4',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],'MAT_青灰石_微风化_养护旧化_coping':['#a6a8a1',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],
+ 'MAT_青灰石_微风化_养护旧化_wall':['#9fa19a',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],'MAT_青灰石_微风化_养护旧化_footing':['#93958f',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],
+ 'MAT_柱础青石_养护旧化_column':['#a3a59f',.85,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.2,mode:'replace',nk:0.6}],'MAT_灰缝_灰砂色':['#9c968a',.95],'MAT_灰缝_灰砂色_养护旧化_joint':['#9c968a',.95],'MAT_灰缝_灰砂色_养护旧化_footing':['#8f8a7e',.95],
+ 'MAT_廊面青砖_养护旧化_paving':['#aaa59a',.88,{a:'pave_r.jpg',n:'pave_n.jpg',s:2.4,mode:'replace',nk:0.8},{macro:1}],'MAT_台帮青砖块_养护旧化_wall':['#a8a49c',.9,{a:'brick_r.jpg',n:'brick_n.jpg',s:1.6,mode:'replace',nk:0.9},{macro:1}],
+ 'SAMPLE2_深绿漆':['#2f5546',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.35,nk:0.3}],'SAMPLE2_旧金褐线':['#b8934a',.45,null,{metal:0.3}],'SAMPLE7_银红软烟罗_经纬透纱':['#d98a9a',.8,null,{alpha:0.62,side:2}],
+ 'XS_旧白灰墙':['#e6e2d8',.93,{a:'plaster_d.jpg',n:'plaster_n.jpg',s:2.6,k:0.75,nk:0.35},{streak:1,macro:1}],'MAT_暗褐旧木_顺纹':['#5f4a35',.8,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.6,nk:0.4}],'XS_屋脊青灰':['#4a4b4d',.7],
+ 'XS_门窗深褐木':['#5c3826',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],'XS_窗纸米白':['#e8dcbf',.9,null,{em:1,side:2}],'XS_门环旧铜':['#6b6a52',.45,null,{metal:0.7}],'XS_顶棚暖木':['#b28f66',.75,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.6,nk:0.4}],
+ '匾额_深木边框':['#2a2320',.45],'匾额_温润深栗木':['#4b2e1f',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],
+ 'XS_灰瓦色差_0':['#6e6f70',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}], 'XS_灰瓦色差_1':['#727374',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}], 'XS_灰瓦色差_2':['#696a6c',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}], 'XS_灰瓦色差_3':['#75767a',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}], 'XS_灰瓦色差_4':['#66676a',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}], 'XS_灰瓦色差_5':['#707173',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}], 'XS_灰瓦色差_6':['#6b6c6e',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}],
  '灰瓦':['#6e6f70',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}],'亭顶瓦':['#6e6f70',.82,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}],'花堵瓦':['#6e6f70',.82,{a:'roof_d.jpg',s:3.2,k:0.7}],
  '屋脊灰':['#4a4b4d',.7],'沁芳脊':['#4a4b4d',.7],
  '黄琉璃瓦':['#c08a2c',.42,{a:'roof_d.jpg',s:3.2,k:0.5},{snow:1,macro:1}],'黄琉璃瓦.001_底瓦':['#a97a27',.45,{a:'roof_d.jpg',s:3.2,k:0.5},{snow:1,macro:1}],
@@ -496,7 +505,7 @@ const BMR={ // name -> [color, roughness, tri, extra]
  '荷梗':['#5e7a3a',.8],'荷叶':['#4f7a3a',.7,null,{side:2}],'粉花':['#f0b6c6',.6,null,{side:2}],'藤':['#5a4a34',.9],'藤叶':['#4d7a3a',.7,null,{side:2}],'叶绿':['#527f3c',.7,null,{side:2}],'异草':['#6c8c48',.8,null,{side:2}],'珊瑚豆':['#c8342a',.4],
  '青布':['#33456a',.95,null,{side:2}],'白布':['#e9e4d4',.95,null,{side:2}],'墨':['#17161a',.7],'刻字':['#2a2a2a',.7],'经文':['#3a3630',.7],'麻绳':['#a08a5a',.95],
 };
-const BMW={'灰瓦':'m','亭顶瓦':'m','花堵瓦':'m','黄琉璃瓦':'m','黄琉璃瓦.001_底瓦':'m','绿琉璃瓦':'m','绿琉璃瓦.001_底瓦':'m','茅草':'m','茅草旧':'m','茅草新':'m','方砖地':'mg','青砖':'g','水磨砖':'g','白灰墙':'g','赭墙':'g','黄泥墙':'g','虎皮石':'mg','青石':'g','汉白玉':'g','朱漆':'f','绿漆':'f','旧木':'f','本色木':'f','栗色柱':'f','栗壳漆':'f','栗壳漆_柱':'f','彩画青':'f','枋青':'f','daguan_彩画青':'f','daguan_彩画绿':'f','枋绿':'f','包袱':'f','油壁':'fg','竹篱':'f','竹竿':'f','山石':'m','太湖石':'m','湖石':'m'};
+const BMW={'XS_灰瓦色差_0':'m','XS_灰瓦色差_1':'m','XS_灰瓦色差_2':'m','XS_灰瓦色差_3':'m','XS_灰瓦色差_4':'m','XS_灰瓦色差_5':'m','XS_灰瓦色差_6':'m','MAT_廊面青砖_养护旧化_paving':'mg','MAT_台帮青砖块_养护旧化_wall':'g','MAT_青灰石_微风化_养护旧化_wall':'g','XS_旧白灰墙':'g','SAMPLE2_深绿漆':'f','MAT_暗褐旧木_顺纹':'f','XS_门窗深褐木':'f','XS_顶棚暖木':'f','灰瓦':'m','亭顶瓦':'m','花堵瓦':'m','黄琉璃瓦':'m','黄琉璃瓦.001_底瓦':'m','绿琉璃瓦':'m','绿琉璃瓦.001_底瓦':'m','茅草':'m','茅草旧':'m','茅草新':'m','方砖地':'mg','青砖':'g','水磨砖':'g','白灰墙':'g','赭墙':'g','黄泥墙':'g','虎皮石':'mg','青石':'g','汉白玉':'g','朱漆':'f','绿漆':'f','旧木':'f','本色木':'f','栗色柱':'f','栗壳漆':'f','栗壳漆_柱':'f','彩画青':'f','枋青':'f','daguan_彩画青':'f','daguan_彩画绿':'f','枋绿':'f','包袱':'f','油壁':'fg','竹篱':'f','竹竿':'f','山石':'m','太湖石':'m','湖石':'m'};
 function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];let r=BMR[k];
  if(!r){const c=src&&src.color?'#'+src.color.getHexString():'#b0aaa0';r=[c,src?src.roughness:0.8];console.warn('bmat: no recipe for',name);}
  const [col,rough,tri,ex]=r,e=ex||{};const m=std(col,rough,{metalness:e.metal||0,side:THREE.DoubleSide,transparent:!!e.alpha,opacity:e.alpha||1});
@@ -514,13 +523,21 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'yihong',p:[85,Z.yihong.y,65],ry:0},{id:'hengwu',p:[62,Z.hengwu.y,-92],ry:0},{id:'daoxiang',p:[-92,Z.daoxiang.y,-62],ry:0},
   {id:'daguan',p:[0,Z.daguan.y,-90],ry:0},{id:'longcui',p:[125,Z.longcui.y,5],ry:-Math.PI/2},{id:'ouxiang',p:[40,0,2],ry:Math.PI/2},
   {id:'qinfang',p:[QINFANG?QINFANG.x:0,0,QINFANG?QINFANG.z:50],ry:QINFANG?QINFANG.ry:0},
+  {id:'xiaoxiang',p:[-82,Z.xiaoxiang.y+0.06,27],ry:0,cards:'xx_win.json'},
   {id:'mudanting',file:'qinfang',keep:/亭柱|额枋|彩画|匾_匾底|亭顶瓦|望板|垂脊/,p:[Z.mudan.x,Z.mudan.y+0.14,Z.mudan.z],ry:0}];
  await Promise.all(defs.map(async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   root.traverse(m=>{if(!m.isMesh)return;const nm=m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
-  const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&/匾底|bianxin|匾心/.test(m.name))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
+  const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&m.material.name==='匾额_温润深栗木')))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
   root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});
+  if(d.cards)fetch('tex/'+d.cards).then(r=>r.json()).then(recs=>{const TL=new THREE.TextureLoader();const B2G=new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,0,0,1);
+   for(const rc of recs){const t=TL.load('tex/'+rc.tex);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.55,metalness:0}),{alphaFix:1,key:'xxw'+rc.tex}));
+    const [ax,ay]=rc.axes,lo=rc.lo,hi=rc.hi,mid=(lo[rc.thin]+hi[rc.thin])/2;
+    const mk=off=>{const V=(u,v)=>{const c=[0,0,0];c[ax]=lo[ax]+(hi[ax]-lo[ax])*u;c[ay]=lo[ay]+(hi[ay]-lo[ay])*v;c[rc.thin]=mid+off;return c;};const g=new THREE.BufferGeometry();const pos=[],uv=[];for(const [u,v] of[[0,0],[1,0],[1,1],[0,0],[1,1],[0,1]]){pos.push(...V(u,v));uv.push(u,v);}g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));return g;};
+    const g=mk(0),g2=rc.gauze?mk(-0.025):null;const gz=rc.gauze?a2c(patch(std('#d98a9a',.8,{side:THREE.DoubleSide,transparent:true,opacity:0.55,depthWrite:false}),{key:'xxgz'})):null;
+    for(const M of rc.inst){const T=new THREE.Matrix4().multiplyMatrices(B2G,new THREE.Matrix4().fromArray(M).transpose());const gi=g.clone().applyMatrix4(T);gi.computeVertexNormals();const mesh=new THREE.Mesh(gi,m);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);
+     if(g2){const gg=g2.clone().applyMatrix4(T);gg.computeVertexNormals();root.add(new THREE.Mesh(gg,gz));}}}}).catch(e=>console.warn('cards',e));
   const c=Math.cos(d.ry),s=Math.sin(d.ry);for(const b of (COLS[d.id]||[])){const [lx,lz,hx,hz,top,bot]=b;const wx=d.p[0]+lx*c+lz*s,wz=d.p[2]-lx*s+lz*c;const h=top-bot;
    if(d.id==='qinfang'&&hz>5&&h>1.5){const y0=0.86,y1=top,N=28;for(let i=0;i<N;i++){const za=-hz+i/N*2*hz,zb=za+2*hz/N,zc=(za+zb)/2;const u=Math.max(0,(Math.abs(zc)-2.8)/(hz-2.8));const y=y1-(y1-y0)*(u*u*(3-2*u));const sx=wx+(lx)*c+zc*s,sz=wz-(lx)*s+zc*c;colAdd({x:d.p[0]+lx*c+zc*s,z:d.p[2]-lx*s+zc*c,c,s,hx,hz:hz/N+0.02,top:d.p[1]+y,bot:d.p[1]+bot,walk:true});}continue;}
    if(d.id==='qinfang'&&bot>2.5){colAdd({x:wx,z:wz,c,s,hx,hz,top:d.p[1]+top,bot:d.p[1]+bot,walk:true});continue;}
@@ -891,8 +908,8 @@ function buildYihong(){const y=Z.yihong.y;if(!GLB){court({x:85,z:65,hw:22,hd:18,
  {let n=0,t=0;while(n<28&&t<1400){t++;const a=rnd()*6.28,x=85+Math.cos(a)*R(25,29),z=65+Math.sin(a)*R(21,24);if(nearPath(x,z,2.2)||height(x,z)<0.5||Math.abs(z-65)<4&&x<70||!treeOK(x,z,3))continue;if(n%3===1)addTree('pine',x,z,R(0.9,1.2),pick(['#3f5a3c','#46613f','#3a5238']),height(x,z));else addTree('willow',x,z,R(0.85,1.05),pick(GREENS),height(x,z));n++;}}if(!GLB){BANANAS.push([95,62,2.4,y],[96.5,63.5,2.0,y],[94,64,1.8,y]);
  rock(80,y+1,73,1.4,2.2,1.2);rock(81.5,y+0.6,72.5,1,1.4,1);}else{BANANAS.push([79.1,63.7,2.3,y+0.5],[80.3,64.5,1.9,y+0.5],[79.7,64.9,1.6,y+0.5]);addTree('blossom',90.3,64.2,1.35,HAITANG[0],y+0.5);}}
 function buildXiaoxiang(){const y=Z.xiaoxiang.y;court({x:-80,z:30,hw:15,hd:12,h:3.2,gates:[{side:'e',pos:30,plaque:'潇湘馆'}]});
- hall(T(-83,y,23.5,0),{w:10.5,d:6,h:3.6,bays:3,base:0.5,pad:0.9,roof:'gable',roofH:2.1,over:1.0,plaque:'有凤来仪',pscale:0.72,lanterns:true});
- buildPath({pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
+ if(!GLB)hall(T(-83,y,23.5,0),{w:10.5,d:6,h:3.6,bays:3,base:0.5,pad:0.9,roof:'gable',roofH:2.1,over:1.0,plaque:'有凤来仪',pscale:0.72,lanterns:true});
+ buildPath(GLB?{pts:[[-64,30],[-70,33.5],[-76,35],[-82,34.2]],w:1.4}:{pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
  addTree('blossom',-91,37,0.8,PEAR[0],y);BANANAS.push([-70,38,1.8,y],[-69,39,1.5,y]);
  const bamb=(x,z,inside)=>{const gy=height(x,z);const h=inside?R(5,8):R(6,10),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.07,.07),R(0,6.28),R(-.07,.07))),sx=R(0.8,1.3);
   STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:pick(['#a6bb72','#93ab63','#b3c47e','#86a058'])});const axis=new V3(0,1,0).applyQuaternion(lean);
@@ -900,7 +917,7 @@ function buildXiaoxiang(){const y=Z.xiaoxiang.y;court({x:-80,z:30,hw:15,hd:12,h:
   if(sx>1.05)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});};
  let n=0,tries=0;while(n<600&&tries<22000){tries++;const x=R(-112,-50),z=R(2,58);const inside=Math.abs(x+80)<14.4&&Math.abs(z-30)<11.4;
   if(!inside){const dx=Math.max(Math.abs(x+80)-15,0),dz=Math.max(Math.abs(z-30)-12,0);if(rnd()>1-sstep(3,16,Math.hypot(dx,dz)))continue;}
-  if(inside&&x>-89.5&&x<-76.5&&z<30.5)continue;if(inside&&z>27.5&&z<34&&x>-85)continue;
+  if(GLB){if(x>-91&&x<-73&&z>20.5&&z<34)continue;if(z>28&&z<36.5&&x>-84)continue;}else{if(inside&&x>-89.5&&x<-76.5&&z<30.5)continue;if(inside&&z>27.5&&z<34&&x>-85)continue;}
   if(Math.abs(Math.abs(x+80)-15)<0.8&&Math.abs(z-30)<13)continue;if(Math.abs(Math.abs(z-30)-12)<0.8&&Math.abs(x+80)<16)continue;
   if((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3)continue;
   if(nearPath(x,z,1.7)||height(x,z)<0.5)continue;if(!inside&&Math.abs(x+80)<16&&Math.abs(z-30)<13)continue;if(!inside&&inZone(x,z,-1))continue;bamb(x,z,inside);n++;}}
