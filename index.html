@@ -328,7 +328,7 @@ const WOOD=(()=>{const cc=pixels(256,512,(x,y)=>{const n=nz(NOISE.b,x*0.6,y*5),g
 // lattice windows (one bay per repeat)
 function drawLattice(g,w,h,mode){const wood=mode==='e'?'#000':mode==='h'?'#fff':mode==='p'?'#6d5840':'#4a2317',paper=mode==='e'?'#fff':mode==='h'?'#444':'#efe2c3',panel=mode==='e'?'#000':mode==='h'?'#aaa':mode==='p'?'#5f4b36':'#5a2a1c';g.fillStyle=wood;g.fillRect(0,0,w,h);const py=h*0.64;
  g.fillStyle=paper;g.fillRect(12,10,w-24,py-16);g.strokeStyle=wood;g.lineWidth=4;const st=18;for(let x=12+st;x<w-14;x+=st){g.beginPath();g.moveTo(x,10);g.lineTo(x,py-6);g.stroke();}for(let y=10+st;y<py-8;y+=st){g.beginPath();g.moveTo(12,y);g.lineTo(w-12,y);g.stroke();}
- g.lineWidth=2;for(let x=12+st/2;x<w-14;x+=st*2)for(let y=10+st/2;y<py-10;y+=st*2)g.strokeRect(x-3,y-3,6,6);g.fillStyle=panel;g.fillRect(12,py+4,w-24,h-py-14);if(mode!=='e'){g.strokeStyle=mode==='h'?'#666':'#7a3b27';g.lineWidth=3;g.strokeRect(22,py+14,w-44,h-py-34);}}
+ g.lineWidth=2;for(let x=12+st/2;x<w-14;x+=st*2)for(let y=10+st/2;y<py-10;y+=st*2)g.strokeRect(x-3,y-3,6,6);g.fillStyle=panel;g.fillRect(12,py+4,w-24,h-py-14);if(mode!=='e'){g.strokeStyle=mode==='h'?'#666':mode==='p'?'#8a7458':'#7a3b27';g.lineWidth=3;g.strokeRect(22,py+14,w-44,h-py-34);}}
 const LATP={map:tex(cnv(512,512,(g)=>{g.scale(2,2);drawLattice(g,256,256,'p');}),true)};// 本色木槅扇（正门：「并无朱粉涂饰」）
 // 西番草（卷草）浮雕白石带：正门「下面白石台矶，凿成西番草花样」
 const XFC=(()=>{const W=512,H=128;const draw=(g,ink,bg,hi)=>{g.fillStyle=bg;g.fillRect(0,0,W,H);g.lineCap='round';g.lineJoin='round';
