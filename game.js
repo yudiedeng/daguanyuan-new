@@ -102,6 +102,96 @@ const CHARS = {
 };
 
 /* ---------------------------------------------------------------------
+   解谜：园中各处是“谜位”（空匾、谜灯），手里或园中别处是“谜底”。
+   走到谜位前，从手中的谜底里挑一件；全部对上即揭示原著。
+   pieces：无 place 的开局就在手里；有 place 的要先去那里拾取。
+   strikes：允许错几次（0 = 不限）。谜面、诗句为原文，其余为转述。
+   --------------------------------------------------------------------- */
+const PUZZLES = {
+  tidui: {
+    title: '试才题对额', ch: '第十七回', start: 'gate', season: 0, hour: 10, color: '#2f4a4c', look: CHARS.baoyu.look,
+    line: '园子刚落成，各处还没有名字。贾政带着宝玉和一班清客进园，命他一路题来。',
+    rule: '袖中有十块匾：六块是宝玉拟的，四块是清客拟的。走到各处空匾前，看景挑匾。挂错三次，就要被叉出去。',
+    want: '园子新成，各处还没有名字。贾政命你一路题来。',
+    tip: '去各处空匾前，看景挑匾。先去哪处都可以。', doneTip: '六处都题好了。',
+    ask: '挂哪一块？', bagName: '袖中匾', strikes: 3,
+    wrong: ['贾政摇头道：“不妥。”', '贾政喝道：“胡说！”'],
+    other: '这块匾另有更合适的去处。',
+    out: { title: '叉出去！', text: '贾政气的喝命：“叉出去！”刚出去，又喝命：“回来！”——已经题好的匾都还挂着，从园门再来。' },
+    pieces: [
+      { id: 'qujing', label: '曲径通幽处' }, { id: 'qinfang', label: '沁芳' }, { id: 'youfeng', label: '有凤来仪' },
+      { id: 'xinglian', label: '杏帘在望' }, { id: 'hengzhi', label: '蘅芷清芬' }, { id: 'hongxiang', label: '红香绿玉' },
+      { id: 'xieyu', label: '泻玉', why: '这是清客拟的。宝玉说此处是省亲驻跸之地，用“泻”字粗陋不雅。' },
+      { id: 'xinghua', label: '杏花村', why: '这是清客拟的。贾政说“杏花村”犯了正名，村名要等贵妃来定。' },
+      { id: 'lanfeng', label: '兰风蕙露', why: '这是清客拟的。宝玉嫌它泛泛，没有说出此处异草的好处。' },
+      { id: 'chongguang', label: '崇光泛彩', why: '这是清客拟的，只顾了海棠一边。' }
+    ],
+    slots: [
+      { place: 'rock', kind: 'plaque', tag: '空匾', title: '一带翠嶂', answer: 'qujing',
+        clue: '一进园门，一带翠嶂挡在面前，白石崚嶒，或如鬼怪，或如猛兽，其中微露羊肠小径。贾政说：非此一山，一进来园中所有之景悉入目中，则有何趣？',
+        ok: '宝玉说：编新不如述旧，刻古终胜雕今。此处不过是探景一进步，不如直书旧句“曲径通幽处”，倒还大方气派。' },
+      { place: 'qinfang', kind: 'plaque', tag: '空匾', title: '桥上有亭', answer: 'qinfang',
+        clue: '清溪泻雪，石磴穿云，白石为栏，环抱池沼，石桥三港，桥上有亭。一带清流从花木深处泻于石隙之下。',
+        ok: '清客们拟了“泻玉”。宝玉说：用“泻玉”二字，莫若“沁芳”二字，岂不新雅？又拟一联：“绕堤柳借三篙翠，隔岸花分一脉香。”贾政点头微笑。' },
+      { place: 'xiaoxiang', kind: 'plaque', tag: '空匾', title: '千竿翠竹', answer: 'youfeng',
+        clue: '一带粉垣，数楹修舍，有千百竿翠竹遮映，后院有大株梨花兼着芭蕉。贾政说：若能月夜坐此窗下读书，不枉虚生一世。宝玉却说：这是第一处行幸之处，必须颂圣方可。',
+        ok: '凤凰非竹实不食。此处翠竹千竿，又是贵妃头一处行幸之所，故题“有凤来仪”。宝玉又拟一联：“宝鼎茶闲烟尚绿，幽窗棋罢指犹凉。”' },
+      { place: 'daoxiang', kind: 'plaque', tag: '空匾', title: '数楹茅屋', answer: 'xinglian',
+        clue: '一带黄泥筑就的矮墙，墙头皆用稻茎掩护。有几百株杏花，如喷火蒸霞一般。里面数楹茅屋，外面分畦列亩，佳蔬菜花。贾政说：此处还少一个酒幌，明日竟做一个来，用竹竿挑在树梢。',
+        ok: '宝玉说：旧诗有云“红杏梢头挂酒旗”，如今莫若“杏帘在望”四字。他还说村名可用“稻香村”，取古人“柴门临水稻花香”之句。' },
+      { place: 'hengwu', kind: 'plaque', tag: '空匾', title: '异草清香', answer: 'hengzhi',
+        clue: '一所清凉瓦舍，一色水磨砖墙。迎面突出插天的玲珑山石，把里面房屋悉皆遮住。一株花木也无，只见许多异草，或牵藤，或引蔓，味香气馥，非凡花之可比。',
+        ok: '宝玉认得这些异草：香的是杜若蘅芜，那一种大约是茝兰，这一种大约是清葛。故题“蘅芷清芬”，对联是：“吟成豆蔻才犹艳，睡足酴醾梦也香。”' },
+      { place: 'yihong', kind: 'plaque', tag: '空匾', title: '蕉棠两植', answer: 'hongxiang',
+        clue: '粉墙环护，绿柳周垂。院中点衬几块山石，一边种几本芭蕉，那一边是一树西府海棠，其势若伞，丝垂翠缕，葩吐丹砂。',
+        ok: '清客拟了“蕉鹤”“崇光泛彩”。宝玉说：此处蕉棠两植，其意暗蓄“红”“绿”二字在内。若只说蕉，则棠无着落；若只说棠，蕉亦无着落。故题“红香绿玉”。' }
+    ],
+    reveal: {
+      title: '天上人间诸景备', ch: '第十七回 · 第十八回',
+      poem: ['衔山抱水建来精，多少工夫筑始成。', '天上人间诸景备，芳园应锡大观名。'],
+      prose: '这一路题下来，贾政嘴上喝他“无知的业障”，心里却是得意的。这些匾原是暂且挂上，等元妃省亲时再定。元妃回府那晚，把“有凤来仪”赐名潇湘馆，“红香绿玉”改作“怡红快绿”，又题了这首诗，赐园名“大观园”。',
+      hour: 19.5
+    }
+  },
+  dengmi: {
+    title: '元宵灯谜', ch: '第二十二回', start: 'gate', season: 3, hour: 18.5, color: '#a8322a', look: CHARS.baoyu.look,
+    line: '上元佳节，宫里的元妃送出灯谜，家里姊妹也各制一个，贾政也来凑趣。',
+    rule: '五盏谜灯挂在园中各处，谜底散落在别处。先把谜底拾来，再到灯下猜。猜错了不要紧，再读一遍谜面。',
+    want: '上元佳节，姊妹们各制灯谜。贾政也来凑趣。',
+    tip: '园中有五盏谜灯、五件谜底。先拾谜底，再去灯下猜。', doneTip: '五个谜都猜中了。',
+    ask: '谜底是哪一件？', bagName: '手里', strikes: 0,
+    empty: '手里还没有可猜的东西。去园中别处找找谜底。',
+    wrong: ['不是这个。再读一遍谜面。'],
+    pieces: [
+      { id: 'baozhu', label: '爆竹', item: 'baozhu', place: 'yihong' },
+      { id: 'suanpan', label: '算盘', item: 'suanpan', place: 'daoxiang' },
+      { id: 'fengzheng', label: '风筝', item: 'fengzheng', place: 'hengwu' },
+      { id: 'haideng', label: '佛前海灯', item: 'haideng', place: 'longcui' },
+      { id: 'yantai', label: '砚台', item: 'yantai', place: 'xiaoxiang' }
+    ],
+    slots: [
+      { place: 'daguan', kind: 'lantern', tag: '元妃的灯谜', title: '元妃的灯谜', answer: 'baozhu',
+        poem: ['能使妖魔胆尽摧，身如束帛气如雷。', '一声震得人方恐，回首相看已化灰。'], ok: '是爆竹。一声震响，回头再看，已经化成了灰。' },
+      { place: 'qinfang', kind: 'lantern', tag: '迎春的灯谜', title: '迎春的灯谜', answer: 'suanpan',
+        poem: ['天运人功理不穷，有功无运也难逢。', '因何镇日纷纷乱，只为阴阳数不同。'], ok: '是算盘。上下两档珠子，镇日拨来拨去。' },
+      { place: 'huapu', kind: 'lantern', tag: '探春的灯谜', title: '探春的灯谜', answer: 'fengzheng',
+        poem: ['阶下儿童仰面时，清明妆点最堪宜。', '游丝一断浑无力，莫向东风怨别离。'], ok: '是风筝。清明时节放起来，线一断，就飘远了。' },
+      { place: 'ouxiang', kind: 'lantern', tag: '惜春的灯谜', title: '惜春的灯谜', answer: 'haideng',
+        poem: ['前身色相总无成，不听菱歌听佛经。', '莫道此生沉黑海，性中自有大光明。'], ok: '是佛前海灯。长明在佛前，一盏孤灯。' },
+      { place: 'rock', kind: 'lantern', tag: '贾政的灯谜', title: '贾政的灯谜', answer: 'yantai',
+        poem: ['身自端方，体自坚硬。', '虽不能言，有言必应。'], ok: '是砚台。原著里这谜是贾政出给贾母猜的，宝玉悄悄把谜底告诉了老太太。' }
+    ],
+    reveal: {
+      title: '制灯谜贾政悲谶语', ch: '第二十二回 · 听曲文宝玉悟禅机 制灯谜贾政悲谶语',
+      poem: [],
+      prose: '贾政一一猜着，心里却越想越闷：娘娘作的爆竹，是一响而散之物；迎春作的算盘，是打动乱如麻；探春作的风筝，是飘飘浮荡之物；惜春作的海灯，一发清净孤独。今乃上元佳节，如何皆作此不祥之物为戏耶？回到房中，只是思索，翻来覆去，竟难成寐。',
+      season: 3, hour: 21
+    }
+  }
+};
+const pieceOf = (P, id) => P.pieces.find(p => p.id === id);
+
+/* ---------------------------------------------------------------------
    样式 & 界面
    --------------------------------------------------------------------- */
 const css = `
@@ -155,6 +245,15 @@ const css = `
 .g-code{margin-top:14px;padding:10px 12px;background:rgba(255,255,255,.55);border:1px dashed var(--line);font-size:12px;word-break:break-all;text-align:left;user-select:all}
 .g-tag{position:fixed;left:0;top:0;transform:translate(-50%,-100%);padding:2px 9px;border-radius:2px;font-family:var(--f-disp);font-size:16px;letter-spacing:.1em;color:var(--ink);background:var(--glass);border:1px solid var(--line);pointer-events:none;white-space:nowrap;z-index:4}
 .g-tag.goal{border-color:var(--cinnabar);color:var(--cinnabar)}
+.g-sec{margin:22px 0 10px;font-family:var(--f-disp);font-weight:400;font-size:24px;letter-spacing:.14em}
+.g-sec small{font-family:var(--f-body,inherit);font-size:12px;letter-spacing:.1em;color:var(--ink-2);margin-left:10px}
+.g-scroll .ask{font-size:13px;letter-spacing:.16em;color:var(--cinnabar);margin:6px 0 0}
+.g-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0 0}
+.g-opt{all:unset;box-sizing:border-box;cursor:pointer;position:relative;padding:9px 12px;border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.4);font-family:var(--f-disp);font-size:21px;letter-spacing:.12em;text-align:center;color:var(--ink)}
+.g-opt:hover,.g-opt:focus-visible{border-color:var(--cinnabar);background:rgba(255,255,255,.75)}
+.g-opt i{position:absolute;left:8px;top:5px;font:normal 11px/1 sans-serif;color:var(--ink-2)}
+#g-quest .strk{margin-top:6px;font-size:12px;color:var(--ink-2)}
+#g-quest .strk b{color:var(--cinnabar);font-weight:400;letter-spacing:.1em}
 body.g-playing .card{display:none!important}
 @media (max-width:760px){.g-chars{grid-template-columns:1fr}.g-sheet{padding:20px 18px}.g-sheet h2{font-size:34px}.g-char ol{display:none}#g-quest{top:auto;bottom:calc(170px + env(safe-area-inset-bottom,0px));width:auto;right:16px}#g-prompt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.g-scroll{padding:24px 20px}.g-scroll .poem{font-size:20px}}
 @media (prefers-reduced-motion:reduce){#g-compass svg{transition:none}}
@@ -235,9 +334,40 @@ function makeItem(kind) {
   else if (kind === 'petal') { const m = std('#f2b6c4', .8, { side: THREE.DoubleSide }); for (let i = 0; i < 9; i++) { const p = new THREE.Mesh(new THREE.CircleGeometry(0.05, 6), m); p.rotation.set(-Math.PI / 2 + Math.sin(i) * 0.4, 0, i); p.position.set(Math.sin(i * 2.4) * 0.22, 0.01 + i * 0.004, Math.cos(i * 1.9) * 0.22); g.add(p); } }
   else if (kind === 'mound') { const m = new THREE.Mesh(new THREE.SphereGeometry(0.55, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), std('#5a4a36', 1)); m.scale.y = 0.45; g.add(m); const s = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.5, 0.06), std('#8d8a80', .9)); s.position.set(0, 0.25, -0.55); g.add(s); }
   else if (kind === 'gift') { const b = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.26, 0.3), std('#6b2a2a', .5)); b.position.y = 0.13; g.add(b); const r1 = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.27, 0.05), std('#c9a24a', .35, { metalness: .5 })); r1.position.y = 0.13; g.add(r1); const r2 = r1.clone(); r2.rotation.y = Math.PI / 2; r2.scale.x = 0.76; g.add(r2); }
+  else if (kind === 'plaque') { const wood = std('#3a2418', .8); for (const s of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 2.05, 8), wood); p.position.set(s * 0.72, 1.02, 0); g.add(p); }
+    const board = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.52, 0.07), std('#1f2a2c', .6)); board.position.y = 1.78; g.add(board);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(1.48, 0.46), new THREE.MeshStandardMaterial({ roughness: .55 })); face.position.set(0, 1.78, 0.037); g.add(face); g.userData.face = face; drawPlaque(g, ''); }
+  else if (kind === 'lantern') { const wood = std('#3a2418', .8); const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 2.4, 8), wood); p.position.y = 1.2; g.add(p);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.04, 0.04), wood); arm.position.set(0.29, 2.32, 0); g.add(arm);
+    const prof = [[0.02, 0], [0.16, 0.05], [0.22, 0.2], [0.16, 0.36], [0.02, 0.4]].map(q => new THREE.Vector2(q[0], q[1]));
+    const lamp = new THREE.Mesh(new THREE.LatheGeometry(prof, 16), std('#c8321e', .7, { emissive: new THREE.Color('#ff5a2a'), emissiveIntensity: .7 })); lamp.position.set(0.55, 1.82, 0); g.add(lamp);
+    const slip = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.36), std('#efe6d2', .9, { side: THREE.DoubleSide })); slip.position.set(0.55, 1.6, 0); g.add(slip); g.userData.slip = slip; }
+  else if (kind === 'baozhu') { const red = std('#b8261c', .6); for (let i = 0; i < 5; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.2, 10), red); c.position.set(Math.cos(i * 1.26) * 0.05, 0.1, Math.sin(i * 1.26) * 0.05); g.add(c); }
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.05, 14), std('#d9b45a', .5)); band.position.y = 0.1; g.add(band); }
+  else if (kind === 'suanpan') { const wood = std('#5a3a22', .7); for (const [w, h, x, y] of [[0.42, 0.03, 0, 0.12], [0.42, 0.03, 0, -0.12], [0.03, 0.27, -0.2, 0], [0.03, 0.27, 0.2, 0], [0.42, 0.02, 0, 0.06]]) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.04), wood); b.position.set(x, y, 0); g.add(b); }
+    const bead = std('#2a1a12', .5); for (let i = 0; i < 7; i++) { const x = -0.15 + i * 0.05; const r = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.24, 4), wood); r.position.x = x; g.add(r);
+      for (const y of [0.09, -0.02, -0.055, -0.09]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), bead); b.scale.y = 0.6; b.position.set(x, y, 0); g.add(b); } } }
+  else if (kind === 'fengzheng') { const sh = new THREE.Shape(); sh.moveTo(0, 0.3); sh.lineTo(0.22, 0.02); sh.lineTo(0, -0.3); sh.lineTo(-0.22, 0.02); sh.closePath();
+    g.add(new THREE.Mesh(new THREE.ShapeGeometry(sh), std('#e7cf8e', .8, { side: THREE.DoubleSide })));
+    const stick = std('#5a3a22', .8); const v = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.6, 0.01), stick); g.add(v); const h = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.01, 0.01), stick); h.position.y = 0.02; g.add(h);
+    for (let i = 0; i < 3; i++) { const t = new THREE.Mesh(new THREE.PlaneGeometry(0.04, 0.12), std(i % 2 ? '#c2253a' : '#3f5f6e', .8, { side: THREE.DoubleSide })); t.position.set(Math.sin(i) * 0.02, -0.38 - i * 0.12, 0); t.rotation.z = Math.sin(i * 2) * 0.3; g.add(t); } g.position.y = 0.3; }
+  else if (kind === 'haideng') { const prof = [[0, 0], [0.1, 0.01], [0.14, 0.08], [0.15, 0.1]].map(q => new THREE.Vector2(q[0], q[1]));
+    const bowl = new THREE.Mesh(new THREE.LatheGeometry(prof, 18), std('#9c7a3c', .35, { metalness: .6, side: THREE.DoubleSide })); g.add(bowl);
+    const f = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), new THREE.MeshBasicMaterial({ color: '#ffd27a' })); f.scale.y = 1.8; f.position.y = 0.15; g.add(f); }
+  else if (kind === 'yantai') { const s = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.2), std('#2a2a2e', .5)); g.add(s); const w = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.012, 0.1), std('#101014', .2)); w.position.set(0, 0.026, 0.02); g.add(w); }
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
   return g;
 }
+/* 匾面：石青底、金边、金字；先用系统楷体，园中书法字体加载好后重画 */
+function drawPlaque(obj, text) {
+  const face = obj.userData.face; if (!face) return; obj.userData.text = text;
+  const c = face.userData.canvas || (face.userData.canvas = Object.assign(document.createElement('canvas'), { width: 512, height: 160 })); const x = c.getContext('2d');
+  x.fillStyle = '#1f2a2c'; x.fillRect(0, 0, 512, 160); x.strokeStyle = '#c9a24a'; x.lineWidth = 8; x.strokeRect(10, 10, 492, 140); x.lineWidth = 2; x.strokeRect(22, 22, 468, 116);
+  if (text) { const fs = text.length > 4 ? 76 : 92; x.fillStyle = '#d9b45a'; x.font = `${fs}px "Ma Shan Zheng","STKaiti","KaiTi","Kaiti SC",serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+    const n = [...text].length, step = Math.min(fs * 1.08, 440 / n); [...text].forEach((ch, i) => x.fillText(ch, 256 + (i - (n - 1) / 2) * step, 84)); }
+  if (!face.material.map) { face.material.map = new THREE.CanvasTexture(c); face.material.map.colorSpace = THREE.SRGBColorSpace; face.material.map.anisotropy = 4; face.material.needsUpdate = true; } else face.material.map.needsUpdate = true;
+}
+try { document.fonts?.load('80px "Ma Shan Zheng"').then(() => { for (const o of S.objects) if (o.userData.text) drawPlaque(o, o.userData.text); }); } catch (e) {}
 function makeFigure(color, female = true) {
   const g = new THREE.Group(), robe = std(color, .85), dark = std(new THREE.Color(color).multiplyScalar(0.8).getStyle(), .85), skin = std('#efd3bb', .6), hair = std('#16130f', .5);
   const prof = [[0, 0], [0.31, 0], [0.29, 0.15], [0.25, 0.55], [0.2, 0.9], [0.18, 1.08]].map(p => new THREE.Vector2(p[0], p[1]));
@@ -263,7 +393,7 @@ const groundRing = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.7, 40), ringMat
 /* ---------------------------------------------------------------------
    状态
    --------------------------------------------------------------------- */
-const S = { char: null, q: 0, stage: 'pick', petals: 0, carrying: null, objects: [], targets: [], tags: [], gift: null, done: {} };
+const S = { char: null, q: 0, stage: 'pick', petals: 0, carrying: null, objects: [], targets: [], tags: [], gift: null, done: {}, puz: null, solved: {}, bag: [], found: {}, strikes: 0 };
 try { Object.assign(S.done, JSON.parse(localStorage.getItem('dgy-game-done') || '{}')); } catch (e) {}
 const saveDone = () => { try { localStorage.setItem('dgy-game-done', JSON.stringify(S.done)); } catch (e) {} };
 
@@ -287,12 +417,31 @@ function stageWorld() {
   }
   renderQuest();
 }
+/* 解谜场景：未解的谜位、尚未拾取的谜底都是目标；已解的谜位留在原地显示答案 */
+function puzWorld() {
+  clearWorld(); const P = PUZZLES[S.puz]; if (!P) return;
+  P.slots.forEach((sl, i) => {
+    const a = anchor(sl.place), v = a.off(2.6), o = place(makeItem(sl.kind), v, new V3(a.spawn[0], 0, a.spawn[1])), where = placeById(sl.place).name;
+    if (S.solved[i]) { const pc = pieceOf(P, sl.answer); if (sl.kind === 'plaque') drawPlaque(o, pc.label); else o.userData.slip.material.color.set('#d9b45a'); addTag(sl.kind === 'plaque' ? where : pc.label, o, 2.35, false); return; }
+    S.targets.push({ stage: 'puz', obj: o, pos: v, r: 2.6, label: sl.kind === 'plaque' ? '看景题匾' : '读谜面', slot: i, where }); addTag(sl.tag, o, 2.35, true);
+  });
+  for (const pc of P.pieces) { if (!pc.place || S.found[pc.id]) continue;
+    const a = anchor(pc.place), v = a.off(2.2); v.y += 0.85; const o = place(makeItem(pc.item), v); o.userData.baseY = v.y;
+    S.targets.push({ stage: 'puz', obj: o, pos: v, r: 2.0, label: '拾起' + pc.label, piece: pc.id, bob: 1, where: placeById(pc.place).name }); addTag(pc.label, o, 0.55, true); }
+  renderQuest();
+}
 function currentGoal() { const t = S.targets.filter(t => t.stage === S.stage); if (!t.length) return null; const p = walk.pos; t.sort((a, b) => a.pos.distanceToSquared(p) - b.pos.distanceToSquared(p)); return t[0]; }
 
 /* ---------------------------------------------------------------------
    界面渲染
    --------------------------------------------------------------------- */
 function renderQuest() {
+  if (S.puz) { const P = PUZZLES[S.puz], n = P.slots.filter((_, i) => S.solved[i]).length, all = n >= P.slots.length;
+    const dots = P.slots.map((_, i) => `<i class="${S.solved[i] ? 'on' : ''}"></i>`).join('');
+    const bag = S.bag.length ? `<div class="bag">${esc(P.bagName)}：${S.bag.map(id => esc(pieceOf(P, id).label)).join('、')}</div>` : '';
+    const strk = P.strikes && !all ? `<div class="strk">贾政 <b>${'●'.repeat(S.strikes)}${'○'.repeat(P.strikes - S.strikes)}</b></div>` : '';
+    questEl.innerHTML = `<div class="who"><b>${esc(P.title)}</b><span>${esc(P.ch)} · ${n}/${P.slots.length}</span></div><p class="want">${esc(P.want)}</p><p class="tip">${esc(all ? P.doneTip : P.tip)}</p>${bag}${strk}<div class="dots">${dots}</div>`;
+    questEl.hidden = !walk.on; return; }
   if (!S.char) { questEl.hidden = true; return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   const dots = C.quests.map((_, i) => `<i class="${i < S.q || (i === S.q && S.stage === 'done') ? 'on' : ''}"></i>`).join('');
@@ -304,6 +453,8 @@ function renderQuest() {
 }
 function charCard(k) { const C = CHARS[k]; const done = S.done[k] ? ' · 已完成' : '';
   return `<button class="g-char" data-k="${k}"><span class="sw" style="background:${C.look.robe}"></span><b>${C.name}</b><small>${esc(C.home)}${done}</small><p>${esc(C.line)}</p><ol>${C.quests.map(q => `<li>${esc(q.title)}</li>`).join('')}</ol></button>`; }
+function puzCard(k) { const P = PUZZLES[k]; const done = S.done['p:' + k] ? ' · 已解' : '';
+  return `<button class="g-char" data-p="${k}"><span class="sw" style="background:${P.color}"></span><b>${P.title}</b><small>${esc(P.ch)}${done}</small><p>${esc(P.line)}</p><p>${esc(P.rule)}</p></button>`; }
 function showStart(giftMode) {
   pauseGame(true);
   if (walk.on) exitWalk();
@@ -318,9 +469,11 @@ function showStart(giftMode) {
   startEl.innerHTML = `<div class="g-sheet"><h2>我们的大观园</h2>
    <p class="g-lead">大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。</p>
    <div class="g-chars">${Object.keys(CHARS).map(charCard).join('')}</div>
+   <h4 class="g-sec">解谜<small>照着原著的线索，把园中的谜一一解开</small></h4>
+   <div class="g-chars">${Object.keys(PUZZLES).map(puzCard).join('')}</div>
    <div class="g-foot"><button class="g-link" id="g-skip">只是逛逛</button><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="有赠礼码？贴在这里" aria-label="赠礼码"><button class="g-btn ghost" type="submit">收礼</button></form></div></div>`;
   startEl.hidden = false;
-  startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; beginChar(b.dataset.k); });
+  startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; if (b.dataset.p) beginPuz(b.dataset.p); else beginChar(b.dataset.k); });
   $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); document.body.classList.remove('g-playing'); };
   $('g-recv').onsubmit = (e) => { e.preventDefault(); const g = decodeGift($('g-code-in').value.trim()); if (!g) { $('g-code-in').value = ''; $('g-code-in').placeholder = '这个码打不开，再检查一下'; return; } S.gift = g; showStart(true); };
 }
@@ -336,21 +489,64 @@ function dressHero(look) {
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
 function beginChar(k) {
-  S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
+  S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false; S.puz = null;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
   stageWorld(); enterWalk(spawnAt(C.start)); renderQuest();
 }
 function beginGift() {
-  S.char = null; S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
+  S.char = null; S.puz = null; S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', a = anchor(id); const v = a.off(2.2);
   const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: '打开' + (g.f ? g.f + '的' : '') + '礼' }]; S.stage = 'gift'; addTag('给你的礼', o, 0.7, true);
   questEl.innerHTML = `<div class="who"><b>收礼</b><span>${esc(placeById(id).name)}</span></div><p class="tip">${esc(g.f || '有人')}把礼放在了${esc(placeById(id).name)}。跟着光柱走过去。</p>`;
   enterWalk(spawnAt(id)); questEl.hidden = false;
 }
+function beginPuz(k) {
+  const P = PUZZLES[k];
+  S.char = null; S.giftMode = false; S.puz = k; S.stage = 'puz'; S.solved = {}; S.found = {}; S.strikes = 0; S.carrying = null;
+  S.bag = P.pieces.filter(p => !p.place).map(p => p.id);
+  dressHero(P.look); setWorld(P.season, P.hour);
+  document.body.classList.add('g-playing'); pauseGame(false);
+  puzWorld(); enterWalk(spawnAt(P.start)); renderQuest();
+  openModal(`<div class="ey">${esc(P.ch)} · 解谜</div><h3>${esc(P.title)}</h3><p class="prose">${esc(P.line)}</p><p class="prose">${esc(P.rule)}</p><button class="g-btn" id="g-next">入园</button>`, null);
+}
+/* 走到谜位前：展示谜面，从手里挑一件 */
+function openSlot(i) {
+  const P = PUZZLES[S.puz], sl = P.slots[i], where = placeById(sl.place).name;
+  const opts = S.bag.map((id, n) => `<button class="g-opt" data-id="${id}"><i>${(n + 1) % 10}</i>${esc(pieceOf(P, id).label)}</button>`).join('');
+  openModal(`<div class="ey">${esc(where)} · ${esc(sl.tag)}</div><h3>${esc(sl.title)}</h3>${sl.poem ? `<p class="poem">${sl.poem.map(esc).join('<br>')}</p>` : ''}${sl.clue ? `<p class="prose">${esc(sl.clue)}</p>` : ''}
+   ${opts ? `<p class="ask">${esc(P.ask)}</p><div class="g-opts">${opts}</div>` : `<p class="prose">${esc(P.empty)}</p>`}<button class="g-btn ghost" id="g-next">${opts ? '再想想' : '知道了'}</button>`, null);
+  scrollEl.querySelectorAll('.g-opt').forEach(b => b.onclick = () => choose(i, b.dataset.id));
+}
+function choose(i, id) {
+  const P = PUZZLES[S.puz], sl = P.slots[i], pc = pieceOf(P, id), where = placeById(sl.place).name;
+  if (id === sl.answer) {
+    S.solved[i] = 1; S.bag = S.bag.filter(x => x !== id); blip(880); puzWorld();
+    const all = P.slots.every((_, j) => S.solved[j]);
+    openModal(`<div class="ey">${esc(where)}</div><h3>${esc(pc.label)}</h3><p class="prose">${esc(sl.ok)}</p><button class="g-btn" id="g-next">${all ? '看原著' : '继续'}</button>`, all ? puzReveal : null);
+    return;
+  }
+  blip(220);
+  if (!P.strikes) { openModal(`<div class="ey">${esc(where)} · ${esc(sl.tag)}</div><h3>${esc(pc.label)}？</h3><p class="prose">${esc(P.wrong[0])}</p><button class="g-btn" id="g-next">回去再看</button>`, () => openSlot(i)); return; }
+  S.strikes++; const out = S.strikes >= P.strikes;
+  const why = pc.why || (P.slots.some(x => x.answer === id) ? P.other : '');
+  if (out) openModal(`<div class="ey">${esc(where)}</div><h3>${esc(P.out.title)}</h3><p class="prose">${esc(why)}</p><p class="prose">${esc(P.out.text)}</p><button class="g-btn" id="g-next">回园门</button>`, kickOut);
+  else openModal(`<div class="ey">${esc(where)} · 挂上“${esc(pc.label)}”</div><h3>${esc(P.wrong[(S.strikes - 1) % P.wrong.length])}</h3><p class="prose">${esc(why)}</p><p class="prose">还能错 ${P.strikes - S.strikes} 次。</p><button class="g-btn" id="g-next">再看看</button>`, () => openSlot(i));
+  renderQuest();
+}
+function kickOut() { const P = PUZZLES[S.puz]; S.strikes = 0; exitWalk(); enterWalk(spawnAt(P.start)); renderQuest(); flash('贾政又喝命：“回来！”'); }
+function puzReveal() {
+  const k = S.puz, P = PUZZLES[k], R = P.reveal; S.done['p:' + k] = 1; saveDone(); S.stage = 'done'; S.targets = []; setWorld(R.season, R.hour);
+  openModal(`<div class="ey">${esc(R.ch)}</div><h3>${esc(R.title)}</h3>${R.poem.length ? `<p class="poem">${R.poem.map(esc).join('<br>')}</p>` : ''}<p class="prose">${esc(R.prose)}</p><div class="ch">见《红楼梦》${esc(R.ch.split(' · ')[0])}</div><button class="g-btn" id="g-next">继续</button>`,
+    () => giftForm(P.title, P.start));
+}
 function interact() {
   const t = S.near; if (!t || t.stage !== S.stage || !t.obj.parent) return; S.near = null;
   if (S.stage === 'gift') { openGift(); return; }
+  if (S.stage === 'puz') {
+    if (t.piece) { const pc = pieceOf(PUZZLES[S.puz], t.piece); S.found[t.piece] = 1; S.bag.push(t.piece); scene.remove(t.obj); S.targets = S.targets.filter(x => x !== t); blip(660); flash('拾得' + pc.label); renderQuest(); }
+    else openSlot(t.slot);
+    return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   if (S.stage === 'pick') {
     if (t.petal) { scene.remove(t.obj); S.targets = S.targets.filter(x => x !== t); S.petals++; S.carrying = `落花 ${S.petals} 捧`; blip(660);
@@ -366,7 +562,7 @@ function reveal(Q) {
   const R = Q.reveal; setWorld(R.season, R.hour);
   openModal(`<div class="ey">${esc(R.ch)}</div><h3>${esc(R.title)}</h3>${R.poem.length ? `<p class="poem">${R.poem.map(esc).join('<br>')}</p>` : ''}<p class="prose">${esc(R.prose)}</p><div class="ch">见《红楼梦》${esc(R.ch.split(' · ')[0])}</div><button class="g-btn" id="g-next">继续</button>`,
     () => { S.q++; S.stage = 'pick'; S.petals = 0; const C = CHARS[S.char];
-      if (S.q >= C.quests.length) { S.done[S.char] = 1; saveDone(); giftForm(); } else { const n = C.quests[S.q]; setWorld(n.at[0], n.at[1]); stageWorld(); flash('新的心事 · ' + n.title); } });
+      if (S.q >= C.quests.length) { S.done[S.char] = 1; saveDone(); giftForm(C.name, C.start); } else { const n = C.quests[S.q]; setWorld(n.at[0], n.at[1]); stageWorld(); flash('新的心事 · ' + n.title); } });
 }
 
 /* ---------------------------------------------------------------------
@@ -374,10 +570,9 @@ function reveal(Q) {
    --------------------------------------------------------------------- */
 function encodeGift(g) { const s = btoa(unescape(encodeURIComponent(JSON.stringify(g)))); return 'DGY-' + s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function decodeGift(code) { try { let s = code.replace(/^.*#gift=/, '').replace(/^DGY-/, '').replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const g = JSON.parse(decodeURIComponent(escape(atob(s)))); return g && g.p ? g : null; } catch (e) { return null; } }
-function giftForm() {
-  const C = CHARS[S.char];
-  const opts = PLACES.filter(p => p.pos).map(p => `<option value="${p.id}"${p.id === C.start ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
-  openModal(`<div class="ey">${esc(C.name)} · 心事已了</div><h3>赠一份礼</h3>
+function giftForm(name, start) {
+  const opts = PLACES.filter(p => p.pos).map(p => `<option value="${p.id}"${p.id === start ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
+  openModal(`<div class="ey">${esc(name)} · ${S.puz ? '谜已解' : '心事已了'}</div><h3>赠一份礼</h3>
    <p class="prose">大观园是元妃的礼，园中人又以物互赠。现在轮到你：把园子里的一处地方，连同一份礼和一句话，送给现实中的一个人。</p>
    <div class="g-form"><label for="gf-f">你是</label><input id="gf-f" maxlength="12" placeholder="署名">
    <label for="gf-t">送给</label><input id="gf-t" maxlength="12" placeholder="对方的名字">
@@ -422,7 +617,10 @@ function blip(f) { try { actx = actx || new (window.AudioContext || window.webki
 /* 键盘：弹窗时拦截所有按键，避免角色乱走；E / 回车 交互 */
 addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') { if (!modalEl.hidden || !startEl.hidden) e.stopImmediatePropagation(); return; }
-  if (!modalEl.hidden) { e.stopImmediatePropagation(); if ((e.code === 'KeyE' || e.code === 'Enter' || e.code === 'Space') && $('g-next') && !$('gf-make')) { e.preventDefault(); closeModal(); } return; }
+  if (!modalEl.hidden) { e.stopImmediatePropagation();
+    const m = /^Digit(\d)$/.exec(e.code), opt = m && scrollEl.querySelectorAll('.g-opt')[(+m[1] + 9) % 10]; if (opt) { e.preventDefault(); opt.click(); return; }
+    if (e.target.classList?.contains('g-opt')) return; // 让回车 / 空格按下聚焦的选项
+    if ((e.code === 'KeyE' || e.code === 'Enter' || e.code === 'Space') && $('g-next') && !$('gf-make')) { e.preventDefault(); closeModal(); } return; }
   if (!startEl.hidden) { e.stopImmediatePropagation(); return; }
   if (e.code === 'KeyE' && walk.on && S.near) { e.preventDefault(); interact(); }
 }, true);
@@ -434,7 +632,7 @@ promptEl.addEventListener('click', interact);
 const _v = new V3(); let last = performance.now();
 function tick(now) {
   requestAnimationFrame(tick); const dt = Math.min(0.05, (now - last) / 1000); last = now; beaconMat.uniforms.t.value = now / 1000;
-  const playing = (S.char || S.giftMode) && walk.on;
+  const playing = (S.char || S.giftMode || S.puz) && walk.on;
   questEl.hidden = !(playing || (S.giftMode && walk.on));
   if (!playing) { compassEl.hidden = true; promptEl.hidden = true; beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
   for (const t of S.targets) if (t.bob) t.obj.position.y = t.obj.userData.baseY + Math.sin(now / 500) * 0.06, t.obj.rotation.y += dt * 0.6;
@@ -446,7 +644,7 @@ function tick(now) {
     // 指南：相对镜头朝向的方位
     const ang = Math.atan2(goal.pos.x - p.x, goal.pos.z - p.z); const camYaw = Math.atan2(-(Math.sin(walk.yaw)), -(Math.cos(walk.yaw)));
     let rel = ang - camYaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
-    const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = S.giftMode ? placeById(S.gift.p)?.name : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place).name;
+    const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = goal.where || (S.giftMode ? placeById(S.gift.p)?.name : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place).name);
     compassEl.hidden = d < 5; compassEl.querySelector('svg').style.transform = `rotate(${-rel}rad)`; compassEl.querySelector('b').textContent = where; compassEl.querySelector('span').textContent = Math.round(d / 0.75) + ' 步';
   } else { compassEl.hidden = true; beacon.visible = groundRing.visible = false; }
   // 最近的可交互目标
@@ -462,7 +660,7 @@ function tick(now) {
 requestAnimationFrame(tick);
 
 /* 调试接口（测试用） */
-window.__game = { S, CHARS, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
+window.__game = { S, CHARS, PUZZLES, beginPuz, choose, openSlot, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
 { const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else showStart(); }
