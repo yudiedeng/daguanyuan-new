@@ -725,7 +725,7 @@ function storyWorld() {
   const fa = st.face ? st.face() : null;
   st.npcs.forEach((n, i) => {
     const v = npcAt(n); let face;
-    if (fa) face = new V3(fa[0], 0, fa[1]); else { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); }
+    if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
     if (n.prop) { place(makeProp(n.prop), v, face); return; }
     const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male), v, face);
     if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
