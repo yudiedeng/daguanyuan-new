@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8"><title>Character visual checks</title><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {createCharacterVisuals,CHARACTER_MODELS} from '../character-visual.js';
+const result=[];const ok=(name,v)=>{if(!v)throw new Error(name);result.push(name)};
+const hero={g:new THREE.Group()};const fallback=new THREE.Group();hero.g.add(fallback);
+let resolve,reject,calls=0;const statuses=[];
+const loader={loadAsync(){calls++;return new Promise((a,b)=>{resolve=a;reject=b})}};
+const c=createCharacterVisuals({THREE,hero,loader,onStatus:s=>statuses.push(s.state)});
+const model=()=>{const g=new THREE.Group();const m=new THREE.Mesh(new THREE.BoxGeometry(.3,1,.4));m.position.set(.12,.3,-.15);g.add(m);return {scene:g,animations:[]}};
+let p=c.select('daiyu');await c.select('baoyu');resolve(model());await p;ok('stale load does not replace another character',!c.active&&fallback.visible);
+await c.select('daiyu');ok('cached model reused',calls===1&&c.active&&!fallback.visible);
+const root=hero.g.getObjectByName('character-daiyu');root.updateMatrixWorld(true);const b=new THREE.Box3().setFromObject(root);ok('height exactly 1.74 m',Math.abs(b.max.y-b.min.y-1.74)<1e-6);ok('feet on local ground',Math.abs(b.min.y)<1e-6);ok('centered horizontally',Math.abs(b.min.x+b.max.x)<1e-6&&Math.abs(b.min.z+b.max.z)<1e-6);
+const f=new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0),CHARACTER_MODELS.daiyu.yaw);ok('source +X faces hero +Z',f.distanceTo(new THREE.Vector3(0,0,1))<1e-6);
+await c.select(null);ok('neutral mode restores fallback',!c.active&&fallback.visible);
+const h2={g:new THREE.Group()};h2.g.add(new THREE.Group());const c2=createCharacterVisuals({THREE,hero:h2,loader,onStatus:s=>statuses.push(s.state)});
+p=c2.select('daiyu');reject(new Error('simulated offline'));await p;ok('network failure leaves fallback usable',!c2.active&&h2.g.children[0].visible&&statuses.at(-1)==='error');
+p=c2.select('daiyu');resolve(model());await p;ok('retry succeeds after failure',c2.active);
+const animated=model();animated.scene.children[0].name='MotionProbe';
+animated.animations=['Idle','Walk','FastWalk'].map((name,i)=>new THREE.AnimationClip(name,1,[new THREE.NumberKeyframeTrack('MotionProbe.position[x]',[0,.5,1],[.12,.12+i*.1,.12])]));
+const h3={g:new THREE.Group()};h3.g.add(new THREE.Group());const c3=createCharacterVisuals({THREE,hero:h3,loader:{loadAsync:async()=>animated}});
+await c3.select('daiyu');c3.update(.05,{speed:1.35});c3.update(.05,{speed:1.35});ok('walk clip advances the animated mesh',animated.scene.children[0].position.x>.12);
+c3.update(.05,{speed:2.3,run:true});ok('fast clip selected',c3.animation==='FastWalk');c3.update(.05,{speed:0});ok('stopping selects idle',c3.animation==='Idle');
+await c3.select(null);await c3.select('daiyu');c3.update(.05,{speed:1.35});c3.update(.05,{speed:1.35});ok('reselecting restarts playback',animated.scene.children[0].position.x>.12);
+window.unitResults={pass:true,tests:result};document.body.append(document.createElement('pre'));document.querySelector('pre').textContent=JSON.stringify(window.unitResults,null,2);
+</script>

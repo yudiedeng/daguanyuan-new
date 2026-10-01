@@ -1423,6 +1423,8 @@ const hero=(()=>{const g=new THREE.Group();const robe=std('#9fc0cf',.8),robe2=st
  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return {g,lower,arms,feet,head,torso,tail};})();
 const characterVisuals=createCharacterVisuals({THREE,hero,loader:new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),onStatus:detail=>window.dispatchEvent(new CustomEvent('dgy-character-status',{detail}))});
 hero.setCharacter=key=>characterVisuals.select(key);
+hero.updateVisual=(dt,state)=>characterVisuals.update(dt,state);
+Object.defineProperty(hero,'visualAnimation',{get:()=>characterVisuals.animation});
 Object.defineProperty(hero,'customVisualActive',{get:()=>characterVisuals.active});
 function groundAt(x,z,feet){let g=hq(x,z);let fromTerrain=true;const k=Math.floor(x/CELL)+','+Math.floor(z/CELL);const l=colHash.get(k);if(l)for(const c of l){const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx&&Math.abs(lz)<=c.hz&&c.top<=feet+0.52&&c.top>g){g=c.top;fromTerrain=false;}}return [g,fromTerrain];}
 function blockedAt(x,y,z){const l=colHash.get(Math.floor(x/CELL)+','+Math.floor(z/CELL));if(l)for(const c of l){if(c.walk)continue;const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx+0.15&&Math.abs(lz)<=c.hz+0.15&&y>c.bot&&y<c.top+0.1)return true;}return false;}
@@ -1458,7 +1460,7 @@ addEventListener('keyup',(e)=>{walk.keys[e.code]=false;});
  renderer.domElement.addEventListener('pointerup',(e)=>{if(e.pointerId===lid)lid=null;});})();
 function surfaceAt(x,z){if(nearPath(x,z,1.6))return 'gravel';if(inZone(x,z,0))return 'stone';return 'grass';}
 function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS||k.ArrowDown?1:0)-walk.stick.y,sx=(k.KeyD||k.ArrowRight?1:0)-(k.KeyA||k.ArrowLeft?1:0)+walk.stick.x;
- const run=k.ShiftLeft||k.ShiftRight;const sp=run?7:3.2;const f=new V3(-Math.sin(walk.yaw),0,-Math.cos(walk.yaw)),r=new V3(Math.cos(walk.yaw),0,-Math.sin(walk.yaw));
+ const run=k.ShiftLeft||k.ShiftRight;const sp=hero.customVisualActive?(run?2.3:1.35):(run?7:3.2);const f=new V3(-Math.sin(walk.yaw),0,-Math.cos(walk.yaw)),r=new V3(Math.cos(walk.yaw),0,-Math.sin(walk.yaw));
  const wish=f.multiplyScalar(fx).addScaledVector(r,sx);if(wish.lengthSq()>1)wish.normalize();const moving=wish.lengthSq()>0.01;wish.multiplyScalar(sp);walk.vel.lerp(wish,1-Math.exp(-(walk.grounded?12:2.5)*dt));
  const p=walk.pos.clone();const old=p.clone();p.x+=walk.vel.x*dt;p.z+=walk.vel.z*dt;pushOut(p,walk.feet);
  let [g,fromT]=groundAt(p.x,p.z,walk.feet);if(fromT&&g<0.2){p.x=old.x;p.z=old.z;[g,fromT]=groundAt(p.x,p.z,walk.feet);}
@@ -1476,6 +1478,7 @@ function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS
  hero.g.position.set(p.x,walk.feet+(hero.customVisualActive?0:walk.eyeOff+Math.abs(Math.cos(walk.phase))*0.035*amp),p.z);hero.g.rotation.y=walk.charYaw+Math.PI;
  hero.arms[0].rotation.x=sw*0.55*amp;hero.arms[1].rotation.x=-sw*0.55*amp;hero.lower.rotation.z=Math.sin(walk.phase)*0.04*amp;hero.lower.rotation.x=-0.05*amp;hero.torso.rotation.y=sw*0.06*amp;hero.head.rotation.y=-sw*0.05*amp;
  hero.feet[0].position.z=0.04+sw*0.14*amp;hero.feet[1].position.z=0.04-sw*0.14*amp;hero.tail.rotation.x=-0.2*amp+Math.sin(G.time.value*3)*0.05;
+ hero.updateVisual(dt,{speed:spd,run:!!run,grounded:walk.grounded});
  hero.g.visible=walk.third;
  if(walk.third){const tgt=new V3(p.x,walk.feet+1.45+walk.eyeOff*0.5,p.z);const el=clamp(-walk.pitch,-0.5,1.2);let d=walk.dist;const dir=new V3(Math.sin(walk.yaw)*Math.cos(el),Math.sin(el),Math.cos(walk.yaw)*Math.cos(el));
   for(let s=1;s<=14;s++){const t=d*s/14;const q=tgt.clone().addScaledVector(dir,t);if(q.y<hq(q.x,q.z)+0.3||blockedAt(q.x,q.y,q.z)){d=Math.max(0.8,t-0.35);break;}}

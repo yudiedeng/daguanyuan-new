@@ -1,7 +1,7 @@
 /* Character appearance only. Movement, terrain and quests stay on hero.g. */
 export const CHARACTER_MODELS = {
-  daiyu: { url: new URL('./models/characters/lin-daiyu-v1.glb', import.meta.url).href,
-    height: 1.74, yaw: -Math.PI / 2 }
+  daiyu: { url: new URL('./models/characters/lin-daiyu-web.glb', import.meta.url).href,
+    height: 1.74, yaw: -Math.PI / 2, walkSpeed: 1.35, fastSpeed: 2.3 }
 };
 
 export function createCharacterVisuals({ THREE, hero, loader, onStatus = () => {} }) {
@@ -10,13 +10,17 @@ export function createCharacterVisuals({ THREE, hero, loader, onStatus = () => {
   mount.name = 'character-visual';
   hero.g.add(mount);
   const cache = new Map();
+  const runtimes = new WeakMap();
+  let runtime = null;
   let selected = null;
   let active = null;
   let request = 0;
 
   function show(root) {
+    if (runtime) { runtime.mixer.stopAllAction(); runtime.current = null; }
     mount.clear();
     active = root;
+    runtime = root ? runtimes.get(root) : null;
     if (root) mount.add(root);
     for (const child of fallback) child.visible = !root;
   }
@@ -47,6 +51,11 @@ export function createCharacterVisuals({ THREE, hero, loader, onStatus = () => {
         object.castShadow = true;
         object.receiveShadow = true;
       });
+      if (gltf.animations.length) {
+        const mixer = new THREE.AnimationMixer(model);
+        const actions = Object.fromEntries(gltf.animations.map(clip => [clip.name, mixer.clipAction(clip)]));
+        runtimes.set(root, { mixer, actions, current: null });
+      }
       return root;
     }).catch(error => { cache.delete(key); throw error; });
     cache.set(key, pending);
@@ -71,5 +80,21 @@ export function createCharacterVisuals({ THREE, hero, loader, onStatus = () => {
     }
   }
 
-  return { select, get active() { return active !== null; }, get selected() { return selected; } };
+  function update(dt, { speed = 0, run = false, grounded = true } = {}) {
+    if (!runtime) return;
+    const name = !grounded || speed < .05 ? 'Idle' : run ? 'FastWalk' : 'Walk';
+    const next = runtime.actions[name] || runtime.actions.Idle;
+    if (!next) return;
+    if (runtime.current !== next) {
+      if (runtime.current) runtime.current.fadeOut(.18);
+      next.reset().setEffectiveWeight(1).fadeIn(.18).play();
+      runtime.current = next;
+    }
+    const config = CHARACTER_MODELS[selected];
+    const reference = run ? config.fastSpeed : config.walkSpeed;
+    next.setEffectiveTimeScale(name === 'Idle' ? 1 : Math.max(.5, Math.min(1.8, speed / reference)));
+    runtime.mixer.update(Math.min(dt, .05));
+  }
+
+  return { select, update, get animation() { return runtime?.current?.getClip().name || null; }, get active() { return active !== null; }, get selected() { return selected; } };
 }
