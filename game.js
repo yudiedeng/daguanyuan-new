@@ -498,10 +498,12 @@ function liuIntro() {
   pauseGame(true); startEl.hidden = true; clearWorld();
   S.char = null; S.giftMode = false; S.story = 'liu'; S.stage = 'story'; S.q = 0; S.carrying = null;
   dressHero(LIU.look); setWorld(LIU.season, LIU.hour); document.body.classList.add('g-playing');
-  let i = -1, busy = false;
+  let i = -1, busy = null;
   const paint = () => { const [zh, en, cls] = LIU.intro[i]; introEl.innerHTML = `<p class="ln ${cls || ''}">${esc(L(zh, en))}</p><button class="skip" id="g-intro-skip">${L('跳过', 'Skip')}</button><div class="hint">${isTouch ? L('点一下继续', 'Tap to continue') : L('点击或按空格继续', 'Click or press Space to continue')}</div>`;
     requestAnimationFrame(() => requestAnimationFrame(() => introEl.querySelector('.ln')?.classList.add('on'))); $('g-intro-skip').onclick = (e) => { e.stopPropagation(); wake(); }; };
-  const next = () => { if (busy) return; if (i >= LIU.intro.length - 1) { wake(); return; } const old = introEl.querySelector('.ln'); if (old) { old.classList.remove('on'); busy = true; setTimeout(() => { busy = false; i++; paint(); }, 700); } else { i++; paint(); } };
+  /* 淡出中再点：不等，直接换下一句 */
+  const next = () => { if (busy) { clearTimeout(busy); busy = null; i++; paint(); return; } if (i >= LIU.intro.length - 1) { wake(); return; }
+    const old = introEl.querySelector('.ln'); if (old) { old.classList.remove('on'); busy = setTimeout(() => { busy = null; i++; paint(); }, 700); } else { i++; paint(); } };
   const onKey = (e) => { if (introEl.hidden) return; if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') { e.preventDefault(); e.stopImmediatePropagation(); next(); } else if (e.code === 'Escape') { e.stopImmediatePropagation(); wake(); } };
   /* 睁眼：眼皮张开两次，画面由模糊转清 */
   const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
