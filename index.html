@@ -1421,7 +1421,7 @@ const hero=(()=>{const g=new THREE.Group();const robe=std('#9fc0cf',.8),robe2=st
   const hand=new THREE.Mesh(new THREE.SphereGeometry(0.045,10,8),skin);hand.position.y=-0.58;sh.add(hand);sh.rotation.z=s*0.12;arms.push(sh);}
  const feet=[];for(const s of[-1,1]){const f=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.06,0.22),shoe);f.position.set(s*0.09,0.03,0.04);g.add(f);feet.push(f);}
  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return {g,lower,arms,feet,head,torso,tail};})();
-const characterVisuals=createCharacterVisuals({THREE,hero,loader:new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),onStatus:detail=>window.dispatchEvent(new CustomEvent('dgy-character-status',{detail}))});
+const characterVisuals=createCharacterVisuals({THREE,hero,groundHeight:(x,z,feet)=>groundAt(x,z,feet)[0],loader:new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),onStatus:detail=>window.dispatchEvent(new CustomEvent('dgy-character-status',{detail}))});
 hero.setCharacter=key=>characterVisuals.select(key);
 hero.updateVisual=(dt,state)=>characterVisuals.update(dt,state);
 Object.defineProperty(hero,'visualAnimation',{get:()=>characterVisuals.animation});
