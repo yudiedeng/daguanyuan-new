@@ -496,16 +496,61 @@ const LIU = {
                     '老太太少歇一回，自然领着你都见识见识。先到了潇湘馆。'],
                 pEn: ['And you said: “If only someone would paint this garden just as it is, so I could take it home to show them — I’d die content.”',
                       'Hearing this, the old lady pointed at Xichun and laughed: “See this little granddaughter of mine? She can paint. Shall we have her paint one for you?” You were so delighted you ran over, took Xichun’s hands and said: “My dear young lady! So young, so lovely, and so clever besides — you must be a fairy come down to earth!”',
-                      'After a short rest the old lady naturally took you to see everything. First they came to the Bamboo Lodge.'] } }] }
-  ]
+                      'After a short rest the old lady naturally took you to see everything. First they came to the Bamboo Lodge.'] } }] },
+    { tip: '跟老太太去潇湘馆。', tipEn: 'Follow the old lady to the Bamboo Lodge.', label: '跟着进院', labelEn: 'Follow them in', place: 'xiaoxiang', face: () => [-40, 92],
+      npcs: [{ who: '琥珀', whoEn: 'Hupo', color: '#c7a76a', at: () => [-50.5, 92.5] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-53.6, 90.2] },
+             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [-53.2, 88.6] },
+             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [-54.4, 92.4] }],
+      pages: [{ say: [['', '', '一进门，只见两边翠竹夹路，土地下苍苔布满，中间羊肠一条石子漫的路。你让出路来给老太太众人走，自己却走土地。', 'Inside the gate, green bamboo lined both sides of the way; the bare earth was carpeted with moss, with a narrow pebbled path winding down the middle. You stepped aside to leave the path to the old lady and the others, and walked on the earth yourself.'],
+                      ['琥珀', 'Hupo', '姥姥，你上来走，仔细苍苔滑了。', 'Granny, come up onto the path — mind the moss, it’s slippery!']], btn: ['……', '…'] },
+              { ask: { q: ['你怎么回？', 'What do you say?'],
+                  opts: [{ t: ['不相干的，我们走熟了的，姑娘们只管走罢。可惜你们的那绣鞋，别沾脏了。', 'Never mind me — we’re used to it. You young ladies go on; it’d be a shame to dirty those embroidered shoes of yours.'], best: 1 },
+                         { t: ['好，好，我这就上来。', 'Yes, yes, I’m coming up.'] },
+                         { t: ['（不答话，只顾抬头看那竹子）', '(Say nothing; just gaze up at the bamboo.)'] }],
+                  bestAfter: ['你只顾上头和人说话，不防底下——', 'You were so busy talking to the people above that you didn’t watch your feet —'],
+                  after: ['你嘴上应着，眼睛却只顾往上看，不防底下——', 'You answered, but your eyes were on everything above you, and you didn’t watch your feet —'],
+                  ch: ['第四十回', 'Chapter 40'] } },
+              { fx: 'slip' },
+              { say: [['', '', '果踩滑了，咕咚一跤跌倒。众人拍手都哈哈的笑起来。', 'Sure enough your foot slid, and down you went with a thud. Everyone clapped and roared with laughter.'],
+                      ['贾母', 'The Lady Dowager', '小蹄子们，还不搀起来，只站着笑。', 'You little minxes! Don’t just stand there laughing — help her up!'],
+                      ['', '', '说话时，你已爬了起来，自己也笑了：“才说嘴就打了嘴。”', 'By then you had scrambled up yourself, laughing too: “Serves me right for boasting!”'],
+                      ['贾母', 'The Lady Dowager', '可扭了腰了不曾？叫丫头们捶一捶。', 'Did you wrench your back? Let the maids pound it for you.'],
+                      ['刘姥姥', 'Granny Liu', '那里说的我这么娇嫩了。那一天不跌两下子，都要捶起来，还了得呢。', 'I’m not as delicate as all that. Not a day goes by I don’t take a tumble or two — if I had to be pounded every time, where would I be?']], btn: ['进屋去', 'Go inside'] }] },
+    { tip: '进屋去。紫鹃早打起湘帘，老太太已在屋里坐下了。', tipEn: 'Go inside. Zijuan has raised the bamboo blind; the old lady is already seated.', label: '在屋里看看', labelEn: 'Look around the room', place: 'xiaoxiang',
+      face: () => [-70, 86],
+      npcs: [{ who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-68.2, 89.6], floor: () => roomY('xiaoxiang_in') },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-71.6, 91.3], floor: () => roomY('xiaoxiang_in') },
+             { who: '紫鹃', whoEn: 'Zijuan', color: '#9d8fb0', at: () => [-66.6, 91.7], floor: () => roomY('xiaoxiang_in') }],
+      pages: [{ say: [['', '', '林黛玉亲自用小茶盘捧了一盏茶来奉与老太太。你因见窗下案上设着笔砚，又见书架上磊着满满的书——', 'Lin Daiyu herself brought the old lady a cup of tea on a little tray. You noticed brushes and inkstones laid out on the desk by the window, and bookshelves crammed full of books —']], btn: ['……', '…'] },
+              { ask: { q: ['你心想，这是谁的屋子？', 'Whose room do you suppose this is?'],
+                  opts: [{ t: ['这必定是那位哥儿的书房了。', 'This must be one of the young masters’ studies.'], best: 1 },
+                         { t: ['这是老太太念经的地方吧？', 'Is this where the old lady says her prayers?'] },
+                         { t: ['这么多书，是哪位先生教书的屋子？', 'So many books — is this some tutor’s schoolroom?'] }],
+                  bestAfter: ['老太太笑指黛玉道：“这是我这外孙女儿的屋子。”', 'The old lady laughed and pointed at Daiyu: “This is my granddaughter’s room.”'],
+                  after: ['众人都笑了。老太太笑指黛玉道：“这是我这外孙女儿的屋子。”', 'Everyone laughed. The old lady pointed at Daiyu: “This is my granddaughter’s room.”'],
+                  ch: ['第四十回', 'Chapter 40'] } },
+              { say: [['', '', '你留神打量了黛玉一番，方笑道：', 'You looked Daiyu carefully up and down, then laughed:'],
+                      ['刘姥姥', 'Granny Liu', '这那像个小姐的绣房，竟比那上等的书房还好。', 'This is nothing like a young lady’s boudoir — it’s finer than the best of studies!']], btn: ['……', '…'] },
+              { text: { title: '软烟罗', titleEn: 'Soft Mist Gauze', ch: '第四十回', chEn: 'Chapter 40',
+                p: ['老太太见窗上的纱颜色旧了，说：“这个纱新糊上好看，过了后来就不翠了。这个院子里头又没有个桃杏树，这竹子已是绿的，再拿这绿纱糊上反不配。”',
+                    '她说库里原有一种软烟罗，只有四样颜色：一样雨过天晴，一样秋香色，一样松绿的，一样就是银红的。做了帐子，糊了窗屉，远远的看着，就似烟雾一样，所以叫作软烟罗；那银红的又叫作霞影纱。“明儿就找出几匹来，拿银红的替她糊窗子。”',
+                    '一径离了潇湘馆，远远望见池中一群人在那里撑船。老太太便说：早饭就摆到三姑娘那里去，我们从这里坐了船去。'],
+                pEn: ['Seeing the window gauze had faded, the old lady said: “This gauze looks fine when it’s new, but it soon loses its green. There are no peach or apricot trees in this courtyard, and the bamboo is green already — green gauze on top of it doesn’t suit.”',
+                      'There was a fabric in the storeroom, she said, called Soft Mist Gauze, in just four colours: rain-washed sky blue, autumn incense, pine green and silvery red. Made into bed curtains or pasted on window frames it looks from afar like mist — hence the name; the silvery red is also called Rosy Cloud Gauze. “Tomorrow find a few bolts and paste her windows with the silvery red.”',
+                      'Leaving the Bamboo Lodge, they saw people poling boats on the pool. The old lady said: lay breakfast at Third Miss’s, and we’ll go over by boat.'] } }] }
+  ],
+  tail: ['早饭摆在了探春的秋爽斋，老太太带着众人坐船过去。先在园子里四处看看吧。', 'Breakfast is laid at Tanchun’s Autumn Freshness Studio, and the old lady is going over by boat. Look around for now.']
 };
+/* 室内地面：取室内模型的位置（懒加载前用院落地面） */
+function roomY(id) { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + 0.48 : null; }
 const qf = () => { const Q = D.QINFANG; return Q ? [Q.x, Q.z] : [0, 52]; };
 const introEl = $('g-intro'), lidsEl = $('g-lids');
 let banEr = null, flowerHat = null;
 /* 站在桥上、台上的人：从上往下找最近的可站面 */
 function standY(x, z) { return groundAt(x, z, Math.max(D.hq(x, z), 0) + 4.5)[0]; }
 function npcAt(n) {
-  if (n.at) { const [x, z] = n.at(); return new V3(x, standY(x, z), z); }
+  if (n.at) { const [x, z] = n.at(); const fy = n.floor && n.floor(); return new V3(x, fy ?? standY(x, z), z); }
   const a = anchor(n.anchor); return n.off ? a.off(n.off) : new V3(a.x, a.y, a.z);
 }
 function storyWorld() {
@@ -524,7 +569,7 @@ function renderStory() {
   const st = LIU.steps[S.q], dots = LIU.steps.map((_, i) => `<i class="${i < S.q ? 'on' : ''}"></i>`).join('');
   questEl.innerHTML = st
     ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('第四十回', 'Chapter 40')} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}${flowerHat && flowerHat.parent ? L(' · 一头菊花', ' · a head full of chrysanthemums') : ''}</div><div class="dots">${dots}</div>`
-    : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${L('老太太领着众人往潇湘馆去了。先在园子里四处看看吧。', 'The old lady is leading everyone to the Bamboo Lodge. Look around for now.')}</p><div class="dots">${dots}</div>`;
+    : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${esc(L(...LIU.tail))}</p><div class="dots">${dots}</div>`;
   questEl.hidden = !walk.on;
 }
 /* 凤姐给插的一头菊花 */
@@ -545,8 +590,9 @@ function runPages(pages, k, done) {
   if (pg.ask) { const A = pg.ask;
     openModal(() => `<div class="ey">${esc(L(...A.ch))}</div><p class="prose">${esc(L(...A.q))}</p><div class="g-opts g-say">${A.opts.map((o, i) => `<button class="g-opt" data-i="${i}"><i>${i + 1}</i>${esc(L(...o.t))}</button>`).join('')}</div>`, null,
       () => { scrollEl.querySelectorAll('.g-opt').forEach(b => b.onclick = () => { const o = A.opts[+b.dataset.i]; blip(o.best ? 880 : 520);
-        openModal(() => `<div class="ey">${esc(L(...A.ch))}</div>${o.best ? `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${L('众人都笑了。', 'Everyone laughed.')}</p>` : `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${esc(L(...A.after))}</p>`}<button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); }); });
+        openModal(() => `<div class="ey">${esc(L(...A.ch))}</div>${o.best ? `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${esc(A.bestAfter ? L(...A.bestAfter) : L('众人都笑了。', 'Everyone laughed.'))}</p>` : `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${esc(L(...A.after))}</p>`}<button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); }); });
     return; }
+  if (pg.fx === 'slip') { slipAnim(go); return; }
   if (pg.text) { const R = pg.text;
     openModal(() => `<div class="ey">${esc(T(R, 'ch'))}</div><h3>${esc(T(R, 'title'))}</h3>${(EN() ? R.pEn : R.p).map(t => `<p class="prose">${esc(t)}</p>`).join('')}<div class="ch">${EN() ? `See <i>Dream of the Red Chamber</i>, ${esc(R.chEn)}` : `见《红楼梦》${esc(R.ch)}`}</div><button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); return; }
   go();
@@ -554,6 +600,14 @@ function runPages(pages, k, done) {
 function storyInteract(t) {
   const st = LIU.steps[S.q]; blip(660);
   runPages(st.pages, 0, () => { S.q++; S.done.liu = Math.max(S.done.liu || 0, S.q); saveDone(); storyWorld(); const n = LIU.steps[S.q]; if (n) flash(T(n, 'tip')); });
+}
+/* 苍苔上滑一跤：人往前扑倒，停一会儿，再爬起来 */
+function slipAnim(done) {
+  pauseGame(true); const g = hero.g, t0 = performance.now(); g.rotation.order = 'YXZ'; blip(150); flash(L('咕咚！', 'Thud!'));
+  const step = () => { const t = (performance.now() - t0) / 1000;
+    g.rotation.x = t < 0.32 ? -1.3 * (t / 0.32) ** 2 : t < 1.25 ? -1.3 : t < 2.0 ? -1.3 * (1 - (t - 1.25) / 0.75) : 0;
+    if (t < 2.05) requestAnimationFrame(step); else { g.rotation.x = 0; pauseGame(false); done(); } };
+  requestAnimationFrame(step);
 }
 /* 板儿跟在身后半步 */
 function followBanEr(dt) {
