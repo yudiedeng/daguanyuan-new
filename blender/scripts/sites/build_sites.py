@@ -6,6 +6,11 @@
 - 凹晶馆（第七十六回）：「山之低洼近水处，就叫凹晶」——借怡红院「东厢房」作三间小馆，
   加临水石台、石栏，题「凹晶溪馆」。
 - 凸碧山庄（第七十六回）：「山之高处，就叫凸碧」——借栊翠庵「佛殿」作山顶敞厅，加石台阶，题「凸碧山庄」。
+- 秋爽斋（第四十回）：贾母带刘姥姥在探春处吃早饭，「凤姐儿……在秋爽斋晓翠堂上调开桌案」；探春「素喜阔朗，这三间屋子并不曾隔断」。
+  借怡红院「正房抱厦」作北面正厅晓翠堂，借栊翠庵「西厢」作西侧探春的三间屋子，借栊翠庵「山门」作院门，
+  赭墙一律改白灰墙；院墙新砌，院子东半边留给梧桐、芭蕉（网页里种）。
+- 荇叶渚（第四十回）：饭后「到了荇叶渚，那姑苏选来的几个驾娘早把两只棠木舫撑来」——石码头、踏跺、木栈桥、系船桩。
+- 棠木舫：一只带篷的小游船（网页里摆两只），船头朝局部 +z。
 
 坐标约定同网页：局部原点在建筑地面中心，网页 x→Blender X，网页 z→Blender -Y，网页 y→Blender Z。
 正面一律朝网页 +z（Blender -Y，即 bbox 的 min.y 一侧）。
@@ -19,7 +24,8 @@ from mathutils.bvhtree import BVHTree
 
 args = [a for a in sys.argv[1:] if not a.startswith('-')]
 REPO = next((a for a in args if os.path.isdir(a)), os.getcwd())
-ONLY = [a for a in args if a in ('luxue', 'aojing', 'tubi')] or ['luxue', 'aojing', 'tubi']
+SITES = ('luxue', 'aojing', 'tubi', 'qiushuang', 'xingye', 'tangmu')
+ONLY = [a for a in args if a in SITES] or list(SITES)
 SRC = os.path.join(REPO, 'blender')
 
 
@@ -160,7 +166,20 @@ def colliders(objs, half, step=0.4, skip=lambda o: False):
     return boxes
 
 
+def merge_dup_materials():
+    """从几个 .blend 借构件时同名材质会被改成 M_xx.001，网页按材质名配方，这里并回原名。"""
+    import re
+    for o in bpy.data.objects:
+        for sl in o.material_slots:
+            m = sl.material
+            if m and re.search(r'\.\d{3}$', m.name):
+                base = bpy.data.materials.get(m.name[:-4])
+                if base: sl.material = base
+                else: m.name = m.name[:-4]
+
+
 def save(site, boxes):
+    merge_dup_materials()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SRC, site + '.blend'), compress=True)
     colp = os.path.join(REPO, 'models', 'b', 'col.json')
     col = json.load(open(colp, encoding='utf-8')); col[site] = boxes
@@ -284,5 +303,120 @@ def build_tubi():
     save('tubi', boxes)
 
 
+def swap_mat(objs, old, new):
+    m = mat(new)
+    for o in objs:
+        for i, sl in enumerate(o.material_slots):
+            if sl.material and sl.material.name.split('.')[0] == old: o.material_slots[i].material = m
+
+
+# =========================================================================== 秋爽斋
+def build_qiushuang():
+    reset(); C = coll('QS_秋爽斋')
+    X0, X1, Z0, Z1 = -15.0, 15.0, -15.0, 12.5          # 院墙内皮（网页局部坐标）
+    # 晓翠堂：北面正厅（怡红院正房连抱厦，原本就面朝网页 +z）
+    hall = append_group('yihong.blend', 'yihong_正房抱厦', '', C)
+    for o in hall: o.name = o.name.replace('yihong_', 'QS_晓翠堂_').replace('匾怡红快绿', '匾秋爽斋')
+    place(hall, center_to=B(0, 0, -7.0))
+    # 探春的三间屋子：西侧，面朝院子（栊翠庵西厢原本就面朝 +X）
+    wing = append_group('longcui.blend', '栊翠庵_西厢', '', C)
+    for o in wing: o.name = 'QS_秋爽斋三间_' + o.name.replace('西厢_', '')
+    place(wing, center_to=B(-11.2, 0, 7.0)); swap_mat(wing, 'M_赭墙', 'M_白灰墙')
+    # 院门：南墙正中
+    gate = append_group('longcui.blend', '栊翠庵_山门', '', C)
+    for o in [o for o in gate if '匾' in o.name]: gate.remove(o); bpy.data.objects.remove(o)
+    for o in gate: o.name = 'QS_院门_' + o.name.replace('山门_', '')
+    place(gate, center_to=B(0, 0, Z1 + 0.2)); swap_mat(gate, 'M_赭墙', 'M_白灰墙')
+    gmn, gmx = bbox(gate); GW = (gmx.x - gmn.x) / 2 - 0.4
+    # 院墙：青砖下碱、白灰墙身、灰瓦墙帽
+    bm_b, bm_p, bm_t = bmesh.new(), bmesh.new(), bmesh.new(); T = 0.45
+    segs = [((X0, Z0), (X1, Z0)), ((X0, Z0), (X0, Z1)), ((X1, Z0), (X1, Z1)), ((X0, Z1), (-GW, Z1)), ((GW, Z1), (X1, Z1))]
+    for (ax, az), (bx, bz) in segs:
+        L = math.hypot(bx - ax, bz - az) + T; ctr = ((ax + bx) / 2, (az + bz) / 2); along_x = abs(bz - az) < 1e-6
+        sz = (L, T + 0.12, 1.0) if along_x else (T + 0.12, L, 1.0)
+        box(bm_b, B(ctr[0], 0.5, ctr[1]), sz)
+        box(bm_p, B(ctr[0], 1.85, ctr[1]), (L, T, 1.7) if along_x else (T, L, 1.7))
+        box(bm_t, B(ctr[0], 2.82, ctr[1]), (L + 0.2, 0.95, 0.25) if along_x else (0.95, L + 0.2, 0.25))
+    walls = [mesh_obj('QS_院墙_brick', bm_b, mat('M_青砖'), C), mesh_obj('QS_院墙_plaster', bm_p, mat('M_白灰墙'), C), mesh_obj('QS_院墙_墙帽', bm_t, mat('M_灰瓦'), C)]
+    # 院内方砖地、门内甬路
+    bm = bmesh.new(); box(bm, B(0, 0.04, (Z0 + Z1) / 2), (X1 - X0 - 0.2, (Z1 - Z0) - 0.2, 0.08)); pave = mesh_obj('QS_铺地', bm, mat('M_方砖地'), C)
+    bm = bmesh.new(); box(bm, B(0, 0.1, (0.9 + Z1) / 2), (2.2, Z1 - 0.9, 0.06)); box(bm, B(-4.5, 0.1, 7.0), (6.0, 1.6, 0.06)); walk = mesh_obj('QS_甬路', bm, mat('M_青石'), C)
+    objs = hall + wing + gate + walls + [pave, walk]
+    boxes = colliders(objs, (X1 + 1, max(-Z0, Z1) + 3), skip=is_roof)
+    save('qiushuang', boxes)
+
+
+# =========================================================================== 荇叶渚
+def build_xingye():
+    """局部 +z 朝水：石台（岸上）→ 三级踏跺 → 木栈桥伸进水里。网页里转向，让 +z 指向水面。"""
+    reset(); C = coll('XY_荇叶渚')
+    stone, white, wood = mat('M_青石'), mat('M_汉白玉', (0.94, 0.93, 0.89), 0.5), mat('M_旧木', (0.35, 0.27, 0.2))
+    bm = bmesh.new()
+    box(bm, B(0, -0.75, -1.0), (7.0, 3.0, 2.2))                    # 岸边石台，台面 0.35，往下埋到池底
+    for k in range(3):                                            # 踏跺下到水边：每级低 0.12、出 0.45
+        top = 0.35 - 0.12 * (k + 1)
+        box(bm, B(0, (top - 1.8) / 2, 0.5 + 0.45 * k + 0.225), (4.0, 0.45, top + 1.8))
+    st = mesh_obj('XY_石台', bm, stone, C)
+    bm = bmesh.new()                                              # 石台两侧矮石栏
+    for sx in (-3.4, 3.4):
+        box(bm, B(sx, 0.62, -1.0), (0.2, 2.2, 0.5))
+        for zz in (-2.0, 0.0):
+            box(bm, B(sx, 0.67, zz), (0.26, 0.26, 0.64))
+    rail = mesh_obj('XY_石栏', bm, white, C)
+    bm = bmesh.new()                                              # 木栈桥：宽 2.4，伸进水里 6 m，桥面高 0.45
+    for i in range(16):
+        box(bm, B(0, 0.42, 2.0 + i * 0.4), (2.4, 0.36, 0.06))
+    for x in (-1.05, 1.05):
+        box(bm, B(x, 0.36, 5.0), (0.12, 6.4, 0.08))               # 托梁
+        for zz in (2.2, 4.4, 6.6, 7.9):
+            box(bm, B(x, -0.6, zz), (0.16, 0.16, 2.0))            # 木桩
+        for zz in (3.0, 6.0, 8.0):
+            box(bm, B(x * 1.0, 0.85, zz), (0.14, 0.14, 0.8))      # 系船桩
+    pier = mesh_obj('XY_栈桥', bm, wood, C)
+    boxes = colliders([st, rail, pier], (4.5, 9), skip=is_roof)
+    save('xingye', boxes)
+
+
+# =========================================================================== 棠木舫
+def build_tangmu():
+    """船长 7.2 m、宽 2.0 m；船头朝局部 +z；吃水线在 y=0。中段带卷棚舱，前后留出撑篙的船板。"""
+    reset(); C = coll('TM_棠木舫')
+    wood, red, roofm = mat('M_旧木', (0.35, 0.27, 0.2)), mat('M_朱漆'), mat('M_灰瓦')
+    L, Wd = 7.2, 2.0
+    def half_w(t):                                                # t: -1 船尾 … 1 船头
+        return Wd / 2 * (1 - 0.55 * abs(t) ** 2.2) * (0.92 if t < 0 else 1.0)
+    bm = bmesh.new(); N = 16; rings = []
+    for i in range(N + 1):
+        t = -1 + 2 * i / N; z = t * L / 2; w = half_w(t); top = 0.42 + 0.22 * abs(t) ** 3
+        ring = [bm.verts.new(B(-w, top, z)), bm.verts.new(B(-w * 0.75, -0.35, z)), bm.verts.new(B(w * 0.75, -0.35, z)), bm.verts.new(B(w, top, z))]
+        rings.append(ring)
+    for a, b in zip(rings, rings[1:]):
+        for k in range(3): bm.faces.new((a[k], a[k + 1], b[k + 1], b[k]))
+    bm.faces.new(rings[0][::-1]); bm.faces.new(rings[-1])
+    hull = mesh_obj('TM_船身', bm, wood, C)
+    bm = bmesh.new()                                              # 船板
+    for i in range(N):
+        t = -1 + 2 * (i + 0.5) / N
+        box(bm, B(0, 0.36, t * L / 2), (half_w(t) * 1.9, L / N + 0.02, 0.05))
+    deck = mesh_obj('TM_船板', bm, wood, C)
+    bm = bmesh.new()                                              # 舱：四柱、栏、坐板
+    cz0, cz1, cw, ch = -1.5, 1.3, 0.78, 1.75
+    for x in (-cw, cw):
+        for z in (cz0, cz1): box(bm, B(x, 0.4 + ch / 2, z), (0.09, 0.09, ch))
+        box(bm, B(x, 0.95, (cz0 + cz1) / 2), (0.06, cz1 - cz0, 0.06))
+        box(bm, B(x * 0.82, 0.62, (cz0 + cz1) / 2), (0.3, cz1 - cz0 - 0.2, 0.06))
+    cabin = mesh_obj('TM_舱柱', bm, red, C)
+    bm = bmesh.new(); seg = 8; rows = []                            # 卷棚顶
+    for j in range(seg + 1):
+        a = math.pi * j / seg; x = -math.cos(a) * (cw + 0.28); y = 0.4 + ch + math.sin(a) * 0.38
+        rows.append((bm.verts.new(B(x, y, cz0 - 0.35)), bm.verts.new(B(x, y, cz1 + 0.35))))
+    for a, b in zip(rows, rows[1:]): bm.faces.new((a[0], a[1], b[1], b[0]))
+    bmesh.ops.solidify(bm, geom=bm.faces[:], thickness=0.06)
+    roof = mesh_obj('TM_舱顶', bm, roofm, C)
+    bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SRC, 'tangmu.blend'), compress=True)
+    print('SITE tangmu objects', len([o for o in bpy.data.objects if o.type == 'MESH']))
+
+
 for s in ONLY:
-    {'luxue': build_luxue, 'aojing': build_aojing, 'tubi': build_tubi}[s]()
+    {'luxue': build_luxue, 'aojing': build_aojing, 'tubi': build_tubi, 'qiushuang': build_qiushuang,
+     'xingye': build_xingye, 'tangmu': build_tangmu}[s]()

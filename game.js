@@ -48,8 +48,8 @@ const CHARS = {
         titleEn: 'Begging for Red Plum', wantEn: 'You came last in the linked verses at Reed Snow Cottage, and Li Wan, president of the poetry club, sends you as forfeit to Green Lattice Nunnery to beg a sprig of red plum.',
         pick: { place: 'longcui', kind: 'npc', who: '妙玉', color: '#d8d2c4', item: 'mei', label: '一枝红梅', verb: '向妙玉讨', tip: '去栊翠庵，向妙玉讨一枝红梅。',
           whoEn: 'Miaoyu', labelEn: 'a sprig of red plum', verbEn: 'Beg Miaoyu for', doEn: 'Beg a sprig of red plum from Miaoyu', tipEn: 'Go to Green Lattice Nunnery and beg a sprig of red plum from Miaoyu.' },
-        give: { place: 'daoxiang', who: '李纨', color: '#8e8a80', verb: '交给', tip: '把红梅带回去交给李纨。（芦雪庵尚未建出，暂在稻香村）',
-          whoEn: 'Li Wan', verbEn: 'Hand to', tipEn: 'Bring the plum back to Li Wan. (Reed Snow Cottage is not built yet, so she waits at Paddy-Sweet Cottage.)' },
+        give: { place: 'luxue', who: '李纨', color: '#8e8a80', verb: '交给', tip: '把红梅带回芦雪广，交给李纨。',
+          whoEn: 'Li Wan', verbEn: 'Hand to', tipEn: 'Bring the plum back to Reed Snow Cottage and hand it to Li Wan.' },
         reveal: {
           title: '访妙玉乞红梅', ch: '第五十回 · 芦雪庵争联即景诗',
           titleEn: 'Begging Red Plum Blossom of Miaoyu', chEn: 'Chapter 50 · Rival linked verses on the snow at Reed Snow Cottage',
@@ -390,6 +390,7 @@ function dressHero(look) {
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
 function beginChar(k) {
+  startEl.hidden = true;
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
