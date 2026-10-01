@@ -543,6 +543,7 @@ function dressHero(look) {
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
 function beginChar(k) {
+  startEl.hidden = true;
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false; S.puz = null;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
@@ -557,6 +558,7 @@ function beginGift() {
 }
 function beginPuz(k) {
   const P = PUZZLES[k];
+  startEl.hidden = true;
   S.char = null; S.giftMode = false; S.puz = k; S.stage = 'puz'; S.solved = {}; S.found = {}; S.strikes = 0; S.carrying = null;
   S.bag = P.pieces.filter(p => !p.place).map(p => p.id);
   dressHero(P.look); setWorld(P.season, P.hour);
