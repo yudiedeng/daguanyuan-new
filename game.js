@@ -7,6 +7,13 @@ const wait = () => new Promise(r => { const t = () => window.__dgy && window.__D
 const D = await wait();
 const { THREE, scene, hero, walk, blockedAt, groundAt, setSeason, applyTime, enterWalk, exitWalk, camera, PLACES, isTouch, hourEl } = D;
 const V3 = THREE.Vector3;
+/* 中英双语：window.__lang 由主页面设置；切换时触发 'dgy-lang' */
+const EN = () => window.__lang === 'en'; const L = (zh, en) => EN() ? en : zh;
+const T = (o, k) => EN() && o && o[k + 'En'] != null ? o[k + 'En'] : o && o[k];   // 取数据字段的当前语言版本
+const pname = p => (EN() && p && p.en) ? p.en.name : (p && p.name);
+const txt = v => typeof v === 'function' ? v() : v;   // 标签/随身物可为函数，渲染时按当前语言求值
+const pickDo = P => EN() ? (P.doEn || `${P.verbEn} ${P.labelEn}`) : P.verb + P.label;
+const giveDo = G => EN() ? (G.doEn || `${G.verbEn} ${G.whoEn}`) : G.verb + G.who;
 
 /* ---------------------------------------------------------------------
    人物与心事（全部取自原著；诗句为原文，其余为转述）
@@ -14,28 +21,42 @@ const V3 = THREE.Vector3;
 const CHARS = {
   baoyu: {
     name: '贾宝玉', short: '宝玉', home: '怡红院', start: 'yihong', season: 1, hour: 16,
+    nameEn: 'Jia Baoyu', shortEn: 'Baoyu', homeEn: 'Happy Red Court',
     look: { robe: '#a8342b', robe2: '#8b2b24', sash: '#c9a24a', crown: true },
     line: '衔玉而生，住怡红院。心里装着一园子的姊妹。',
+    lineEn: 'Born with a jade in his mouth, he lives at Happy Red Court, and carries a whole garden of girl cousins in his heart.',
     quests: [
       {
         title: '两条旧帕', at: [1, 16], want: '挨打后养伤，想让林妹妹放心。',
-        pick: { place: 'yihong', kind: 'item', item: 'pa', label: '两条旧帕子', verb: '取出', tip: '先在怡红院找到那两条半新不旧的帕子。' },
-        give: { place: 'xiaoxiang', who: '林黛玉', color: '#b9c9b4', verb: '送给', tip: '把帕子送到潇湘馆，交给林妹妹。' },
+        titleEn: 'Two Old Handkerchiefs', wantEn: 'Laid up after your beating, you want to set Cousin Lin’s mind at rest.',
+        pick: { place: 'yihong', kind: 'item', item: 'pa', label: '两条旧帕子', verb: '取出', tip: '先在怡红院找到那两条半新不旧的帕子。',
+          labelEn: 'two old handkerchiefs', verbEn: 'Take out', tipEn: 'First find the two well-worn handkerchiefs at Happy Red Court.' },
+        give: { place: 'xiaoxiang', who: '林黛玉', color: '#b9c9b4', verb: '送给', tip: '把帕子送到潇湘馆，交给林妹妹。',
+          whoEn: 'Lin Daiyu', verbEn: 'Give to', tipEn: 'Take the handkerchiefs to Bamboo Lodge and give them to Cousin Lin.' },
         reveal: {
           title: '题帕三绝', ch: '第三十四回 · 情中情因情感妹妹',
+          titleEn: 'Three Quatrains on a Handkerchief', chEn: 'Chapter 34 · Love within love: his feeling moves his cousin',
           poem: ['眼空蓄泪泪空垂，暗洒闲抛却为谁？', '尺幅鲛绡劳解赠，叫人焉得不伤悲！'],
+          poemEn: ['Eyes brim with tears, and tears fall all in vain; / shed in secret, spilled at idle hours, for whom?', 'This foot of mermaid silk, so kindly sent: / how could it fail to break my heart with grief?'],
           prose: '原著里是宝玉打发晴雯送去的，不带一句话。黛玉体贴出帕子的意思，又喜又悲，研墨蘸笔，在两块旧帕上一连写了三首绝句。',
+          proseEn: 'In the novel Baoyu sends Qingwen with them, and not a word of message. Daiyu divines what the handkerchiefs mean, and is glad and grieved at once; she grinds ink, dips her brush, and writes three quatrains, one after another, on the two old handkerchiefs.',
           hour: 20.5
         }
       },
       {
         title: '乞红梅', at: [3, 10.5], want: '芦雪庵联诗落了第，社长李纨罚你去栊翠庵讨一枝红梅。',
-        pick: { place: 'longcui', kind: 'npc', who: '妙玉', color: '#d8d2c4', item: 'mei', label: '一枝红梅', verb: '向妙玉讨', tip: '去栊翠庵，向妙玉讨一枝红梅。' },
-        give: { place: 'daoxiang', who: '李纨', color: '#8e8a80', verb: '交给', tip: '把红梅带回去交给李纨。（芦雪庵尚未建出，暂在稻香村）' },
+        titleEn: 'Begging for Red Plum', wantEn: 'You came last in the linked verses at Reed Snow Cottage, and Li Wan, president of the poetry club, sends you as forfeit to Green Lattice Nunnery to beg a sprig of red plum.',
+        pick: { place: 'longcui', kind: 'npc', who: '妙玉', color: '#d8d2c4', item: 'mei', label: '一枝红梅', verb: '向妙玉讨', tip: '去栊翠庵，向妙玉讨一枝红梅。',
+          whoEn: 'Miaoyu', labelEn: 'a sprig of red plum', verbEn: 'Beg Miaoyu for', doEn: 'Beg a sprig of red plum from Miaoyu', tipEn: 'Go to Green Lattice Nunnery and beg a sprig of red plum from Miaoyu.' },
+        give: { place: 'daoxiang', who: '李纨', color: '#8e8a80', verb: '交给', tip: '把红梅带回去交给李纨。（芦雪庵尚未建出，暂在稻香村）',
+          whoEn: 'Li Wan', verbEn: 'Hand to', tipEn: 'Bring the plum back to Li Wan. (Reed Snow Cottage is not built yet, so she waits at Paddy-Sweet Cottage.)' },
         reveal: {
           title: '访妙玉乞红梅', ch: '第五十回 · 芦雪庵争联即景诗',
+          titleEn: 'Begging Red Plum Blossom of Miaoyu', chEn: 'Chapter 50 · Rival linked verses on the snow at Reed Snow Cottage',
           poem: ['酒未开樽句未裁，寻春问腊到蓬莱。', '不求大士瓶中露，为乞孀娥槛外梅。'],
+          poemEn: ['The wine still sealed, the verses still unmade, / I seek out spring in winter, at the Isle of the Blest.', 'Not for the dew in Guanyin’s holy vase: / I come to beg the moon-maid’s plum beyond the rail.'],
           prose: '宝玉扛着一枝二尺来高的红梅回来，众人都笑着赏玩。李纨又命他就此事作诗一首，便是这首。',
+          proseEn: 'Baoyu comes back shouldering a branch of red plum some two feet high, and everyone crowds round, laughing and admiring it. Li Wan then sets him to write a poem on the errand, and this is the poem.',
           hour: 11
         }
       }
@@ -43,28 +64,42 @@ const CHARS = {
   },
   daiyu: {
     name: '林黛玉', short: '黛玉', home: '潇湘馆', start: 'xiaoxiang', season: 0, hour: 16.5,
+    nameEn: 'Lin Daiyu', shortEn: 'Daiyu', homeEn: 'Bamboo Lodge',
     look: { robe: '#b7c8b6', robe2: '#98ae9a', sash: '#6f8c7c', crown: false },
     line: '寄居外祖母家，住潇湘馆。千百竿翠竹，一道曲栏。',
+    lineEn: 'Living under her grandmother’s roof, she has Bamboo Lodge: a thousand stems of green bamboo and a winding balustrade.',
     quests: [
       {
         title: '葬花', at: [0, 16.5], want: '春残了，沁芳闸桥边的落花被人践踏，不如收起来葬了。',
-        pick: { place: 'qinfang', kind: 'petals', n: 3, label: '落花', verb: '拾起', tip: '在沁芳亭一带拾起三捧落花。' },
-        give: { place: 'qinfang', kind: 'mound', who: '花冢', verb: '葬入', tip: '把落花葬入花冢。' },
+        titleEn: 'Burying the Blossoms', wantEn: 'Spring is fading, and the fallen petals by the Drenched Blossoms weir are being trodden underfoot. Better to gather them up and bury them.',
+        pick: { place: 'qinfang', kind: 'petals', n: 3, label: '落花', verb: '拾起', tip: '在沁芳亭一带拾起三捧落花。',
+          labelEn: 'fallen petals', verbEn: 'Gather', tipEn: 'Gather three handfuls of fallen petals around Drenched Blossoms Pavilion.' },
+        give: { place: 'qinfang', kind: 'mound', who: '花冢', verb: '葬入', tip: '把落花葬入花冢。',
+          whoEn: 'Flower Grave', verbEn: 'Bury in the', doEn: 'Bury the petals in the Flower Grave', tipEn: 'Bury the petals in the Flower Grave.' },
         reveal: {
           title: '葬花吟', ch: '第二十三回 · 第二十七回',
+          titleEn: 'Song of Burying Flowers', chEn: 'Chapter 23 · Chapter 27',
           poem: ['花谢花飞花满天，红消香断有谁怜？', '尔今死去侬收葬，未卜侬身何日丧？'],
+          poemEn: ['Flowers fade and fly, flowers fill the sky; / their red is spent, their scent is gone: who pities them?', 'Now you are dead, and I am here to bury you; / who knows the day when I myself shall die?'],
           prose: '黛玉肩上担着花锄，锄上挂着花囊，手里拿着花帚。她说花撂在水里，流出园子仍旧糟蹋，不如装在绢袋里埋起来，日久随土化了，岂不干净。',
+          proseEn: 'Daiyu carries a flower-hoe on her shoulder, a gauze bag hung from it, and a broom in her hand. Throw the petals in the water, she says, and they only drift out of the garden to be spoiled; better to put them in a silk bag and bury them, to go back to earth in time. Isn’t that cleaner?',
           season: 0, hour: 17.5
         }
       },
       {
         title: '借书与香菱', at: [2, 16], want: '香菱一心想学作诗，来求你教。',
-        pick: { place: 'xiaoxiang', kind: 'item', item: 'book', label: '王右丞五言律', verb: '取出', tip: '在潇湘馆取出王维的五言律诗集。' },
-        give: { place: 'hengwu', who: '香菱', color: '#c9a88a', verb: '借给', tip: '把诗集借给住在蘅芜苑的香菱。' },
+        titleEn: 'A Book for Xiangling', wantEn: 'Xiangling has set her heart on learning to write poetry, and comes to beg you to teach her.',
+        pick: { place: 'xiaoxiang', kind: 'item', item: 'book', label: '王右丞五言律', verb: '取出', tip: '在潇湘馆取出王维的五言律诗集。',
+          labelEn: 'Wang Wei’s regulated verse', verbEn: 'Take out', tipEn: 'At Bamboo Lodge, take out your volume of Wang Wei’s five-character regulated verse.' },
+        give: { place: 'hengwu', who: '香菱', color: '#c9a88a', verb: '借给', tip: '把诗集借给住在蘅芜苑的香菱。',
+          whoEn: 'Xiangling', verbEn: 'Lend to', tipEn: 'Lend the book to Xiangling, who is staying at Alpinia Park.' },
         reveal: {
           title: '香菱咏月', ch: '第四十八回 · 第四十九回',
+          titleEn: 'Xiangling Sings of the Moon', chEn: 'Chapter 48 · Chapter 49',
           poem: ['精华欲掩料应难，影自娟娟魄自寒。'],
+          poemEn: ['Such radiance would be hidden, but how could it be? / Its shadow so lovely, and its soul so cold.'],
           prose: '黛玉让她先读透王维的五言律一百首，再读杜甫、李白。香菱茶饭无心，坐卧不定，连作三首咏月诗，第三首梦中得来，众人都说新巧有意趣。',
+          proseEn: 'Daiyu has her first master a hundred of Wang Wei’s five-character regulated poems, then go on to Du Fu and Li Bai. Xiangling forgets to eat and cannot sit or lie still; she writes three poems on the moon one after another, the third of them found in a dream, and everyone declares it fresh, clever and full of feeling.',
           hour: 21.5
         }
       }
@@ -72,28 +107,41 @@ const CHARS = {
   },
   xiangyun: {
     name: '史湘云', short: '湘云', home: '史侯府（客居园中）', start: 'gate', season: 1, hour: 15,
+    nameEn: 'Shi Xiangyun', shortEn: 'Xiangyun', homeEn: 'the Shi mansion (a guest in the garden)',
     look: { robe: '#c98a4e', robe2: '#a86d3b', sash: '#3f5f6e', crown: false },
     line: '贾母的侄孙女，常来园中小住。心直口快，爱说爱笑。',
+    lineEn: 'Grandniece of the Matriarch, often in the garden for a stay. Frank and quick of tongue, always talking, always laughing.',
     quests: [
       {
         title: '绛纹石戒指', at: [1, 15], want: '上回打发人送了戒指给姐妹们，这回亲自带来给袭人她们。',
-        pick: { place: 'gate', kind: 'item', item: 'ring', label: '绛纹石戒指', verb: '取出', tip: '在正门进园前，取出带来的绛纹石戒指。' },
-        give: { place: 'yihong', who: '袭人', color: '#c7a3a0', verb: '送给', tip: '把戒指送到怡红院，交给袭人。' },
+        titleEn: 'The Carnelian Rings', wantEn: 'Last time you sent rings to the girls by a servant; this time you have brought some yourself, for Xiren and the others.',
+        pick: { place: 'gate', kind: 'item', item: 'ring', label: '绛纹石戒指', verb: '取出', tip: '在正门进园前，取出带来的绛纹石戒指。',
+          labelEn: 'the carnelian rings', verbEn: 'Take out', tipEn: 'At the Main Gate, before you go in, take out the carnelian rings you brought.' },
+        give: { place: 'yihong', who: '袭人', color: '#c7a3a0', verb: '送给', tip: '把戒指送到怡红院，交给袭人。',
+          whoEn: 'Xiren', verbEn: 'Give to', tipEn: 'Take the rings to Happy Red Court and give them to Xiren.' },
         reveal: {
           title: '因麒麟伏白首双星', ch: '第三十一回',
-          poem: [],
+          titleEn: 'A Kylin Foretells a White-Haired Pair', chEn: 'Chapter 31',
+          poem: [], poemEn: [],
           prose: '湘云来园中，特意带了绛纹石戒指，一包四个，分给袭人、鸳鸯、金钏、平儿。袭人笑说前日已收过她打发人送来的，知她心里时时记着人。',
+          proseEn: 'Coming to the garden, Xiangyun has brought carnelian rings on purpose, four to a packet, for Xiren, Yuanyang, Jinchuan and Pinger. Xiren laughs that she already had the ones sent over the other day, and knows that Xiangyun keeps people always in her thoughts.',
           season: 1, hour: 15.5
         }
       },
       {
         title: '螃蟹宴', at: [2, 14.5], want: '起了诗社要做东，可手头短。宝姐姐说替你张罗螃蟹。',
-        pick: { place: 'hengwu', kind: 'npc', who: '薛宝钗', color: '#e5d9b6', item: 'crab', label: '几篓螃蟹', verb: '从宝钗处领', tip: '去蘅芜苑，从宝钗处领几篓肥螃蟹。' },
-        give: { place: 'ouxiang', who: '贾母', color: '#6d5a48', verb: '摆给', tip: '把螃蟹带到藕香榭，请老太太和众人赏桂吃蟹。' },
+        titleEn: 'The Crab Feast', wantEn: 'The poetry club is founded and it is your turn to host, but your purse is thin. Cousin Baochai says she will see to the crabs for you.',
+        pick: { place: 'hengwu', kind: 'npc', who: '薛宝钗', color: '#e5d9b6', item: 'crab', label: '几篓螃蟹', verb: '从宝钗处领', tip: '去蘅芜苑，从宝钗处领几篓肥螃蟹。',
+          whoEn: 'Xue Baochai', labelEn: 'baskets of crabs', verbEn: 'Collect from Baochai', doEn: 'Collect the baskets of crabs from Baochai', tipEn: 'Go to Alpinia Park and collect a few baskets of fat crabs from Baochai.' },
+        give: { place: 'ouxiang', who: '贾母', color: '#6d5a48', verb: '摆给', tip: '把螃蟹带到藕香榭，请老太太和众人赏桂吃蟹。',
+          whoEn: 'Grandmother Jia', verbEn: 'Serve to', doEn: 'Set the feast before Grandmother Jia', tipEn: 'Bring the crabs to Lotus Fragrance Pavilion and invite the Matriarch and everyone to eat crabs beneath the osmanthus.' },
         reveal: {
           title: '菊花诗', ch: '第三十七回 · 第三十八回',
+          titleEn: 'The Chrysanthemum Poems', chEn: 'Chapter 37 · Chapter 38',
           poem: ['欲讯秋情众莫知，喃喃负手叩东篱。'],
+          poemEn: ['I would ask autumn’s heart, but no one knows; / murmuring, hands behind me, I knock at the eastern hedge.'],
           prose: '宝钗让家里伙计送来几篓极肥极大的螃蟹，替湘云在藕香榭做东。众人赏桂吃蟹，又作菊花诗十二题，黛玉《咏菊》《问菊》《菊梦》夺魁。',
+          proseEn: 'Baochai has the men from her family’s shop send over several baskets of the biggest, fattest crabs, so that Xiangyun can play host at Lotus Fragrance Pavilion. They eat crabs beneath the osmanthus and write chrysanthemum poems on twelve themes; Daiyu’s “Ode to the Chrysanthemum”, “Questioning the Chrysanthemum” and “Chrysanthemum Dream” carry off the prize.',
           hour: 15.5
         }
       }
@@ -171,7 +219,9 @@ const startEl = $('g-start'), questEl = $('g-quest'), compassEl = $('g-compass')
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* dock 按钮：随时回到选人界面 */
-{ const b = document.createElement('button'); b.className = 'tbtn'; b.id = 'btn-game'; b.textContent = '入园'; b.title = '选一个人入园';
+const dockBtn = document.createElement('button');
+const dockLang = () => { dockBtn.textContent = L('入园', 'Play'); dockBtn.title = L('选一个人入园', 'Choose someone and enter the garden'); };
+{ const b = dockBtn; b.className = 'tbtn'; b.id = 'btn-game'; dockLang();
   b.addEventListener('click', () => showStart()); const w = $('btn-walk'); w.parentNode.insertBefore(b, w); }
 
 /* ---------------------------------------------------------------------
@@ -268,7 +318,7 @@ try { Object.assign(S.done, JSON.parse(localStorage.getItem('dgy-game-done') || 
 const saveDone = () => { try { localStorage.setItem('dgy-game-done', JSON.stringify(S.done)); } catch (e) {} };
 
 function clearWorld() { for (const o of S.objects) scene.remove(o); S.objects = []; S.targets = []; for (const t of S.tags) t.el.remove(); S.tags = []; beacon.visible = groundRing.visible = false; }
-function addTag(text, obj, dy, goal) { const el = document.createElement('div'); el.className = 'g-tag ui' + (goal ? ' goal' : ''); el.textContent = text; document.body.appendChild(el); const t = { el, obj, dy, goal }; S.tags.push(t); return t; }
+function addTag(text, obj, dy, goal) { const el = document.createElement('div'); el.className = 'g-tag ui' + (goal ? ' goal' : ''); el.textContent = txt(text); document.body.appendChild(el); const t = { el, obj, dy, goal, text }; S.tags.push(t); return t; }
 function place(obj, v, faceTo) { obj.position.copy(v); if (faceTo) obj.rotation.y = Math.atan2(faceTo.x - v.x, faceTo.z - v.z); scene.add(obj); S.objects.push(obj); return obj; }
 
 /* 根据当前阶段布置场景：本阶段要互动的东西 + 光柱 */
@@ -278,12 +328,12 @@ function stageWorld() {
   const P = Q.pick, G = Q.give;
   // 收礼人/花冢一直在场，让玩家先认得去处
   const ga = anchor(G.place);
-  if (G.kind === 'mound') { const v = ga.off(2.4); const m = place(makeItem('mound'), v); S.targets.push({ stage: 'give', obj: m, pos: v, r: 2.2, label: G.verb + G.who }); addTag('花冢', m, 1.0, S.stage === 'give'); }
-  else { const v = new V3(ga.x, ga.y, ga.z); const f = place(makeFigure(G.color, G.who !== '李纨' ? true : true), v, new V3(ga.spawn[0], 0, ga.spawn[1])); S.targets.push({ stage: 'give', obj: f, pos: v, r: 2.4, label: G.verb + G.who }); addTag(G.who, f, 2.15, S.stage === 'give'); }
+  if (G.kind === 'mound') { const v = ga.off(2.4); const m = place(makeItem('mound'), v); S.targets.push({ stage: 'give', obj: m, pos: v, r: 2.2, label: () => giveDo(G) }); addTag(() => T(G, 'who'), m, 1.0, S.stage === 'give'); }
+  else { const v = new V3(ga.x, ga.y, ga.z); const f = place(makeFigure(G.color, G.who !== '李纨' ? true : true), v, new V3(ga.spawn[0], 0, ga.spawn[1])); S.targets.push({ stage: 'give', obj: f, pos: v, r: 2.4, label: () => giveDo(G) }); addTag(() => T(G, 'who'), f, 2.15, S.stage === 'give'); }
   if (S.stage === 'pick') {
-    if (P.kind === 'petals') { ringPoints(P.place, P.n).forEach((v, i) => { if (i < S.petals) return; const o = place(makeItem('petal'), v); S.targets.push({ stage: 'pick', obj: o, pos: v, r: 1.8, label: '拾起落花', petal: true, bob: 0 }); }); }
-    else if (P.kind === 'npc') { const a = anchor(P.place); const v = P.place === G.place ? a.off(3) : new V3(a.x, a.y, a.z); const f = place(makeFigure(P.color, true), v, new V3(a.spawn[0], 0, a.spawn[1])); S.targets.push({ stage: 'pick', obj: f, pos: v, r: 2.4, label: P.verb + P.label }); addTag(P.who, f, 2.15, true); }
-    else { const a = anchor(P.place); const v = P.place === G.place ? a.off(3) : a.off(2.2); v.y += 0.85; const o = place(makeItem(P.item), v); o.userData.baseY = v.y; S.targets.push({ stage: 'pick', obj: o, pos: v, r: 2.0, label: P.verb + P.label, bob: 1 }); addTag(P.label, o, 0.55, true); }
+    if (P.kind === 'petals') { ringPoints(P.place, P.n).forEach((v, i) => { if (i < S.petals) return; const o = place(makeItem('petal'), v); S.targets.push({ stage: 'pick', obj: o, pos: v, r: 1.8, label: () => L('拾起落花', 'Gather fallen petals'), petal: true, bob: 0 }); }); }
+    else if (P.kind === 'npc') { const a = anchor(P.place); const v = P.place === G.place ? a.off(3) : new V3(a.x, a.y, a.z); const f = place(makeFigure(P.color, true), v, new V3(a.spawn[0], 0, a.spawn[1])); S.targets.push({ stage: 'pick', obj: f, pos: v, r: 2.4, label: () => pickDo(P) }); addTag(() => T(P, 'who'), f, 2.15, true); }
+    else { const a = anchor(P.place); const v = P.place === G.place ? a.off(3) : a.off(2.2); v.y += 0.85; const o = place(makeItem(P.item), v); o.userData.baseY = v.y; S.targets.push({ stage: 'pick', obj: o, pos: v, r: 2.0, label: () => pickDo(P), bob: 1 }); addTag(() => T(P, 'label'), o, 0.55, true); }
   }
   renderQuest();
 }
@@ -296,33 +346,37 @@ function renderQuest() {
   if (!S.char) { questEl.hidden = true; return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   const dots = C.quests.map((_, i) => `<i class="${i < S.q || (i === S.q && S.stage === 'done') ? 'on' : ''}"></i>`).join('');
-  if (!Q) { questEl.innerHTML = `<div class="who"><b>${C.name}</b><span>心事已了</span></div><p class="tip">在园中随意走走，或按「入园」换一个人。</p><div class="dots">${dots}</div>`; questEl.hidden = !walk.on; return; }
-  const tip = S.stage === 'pick' ? (Q.pick.kind === 'petals' ? `${Q.pick.tip}（${S.petals}/${Q.pick.n}）` : Q.pick.tip) : Q.give.tip;
-  questEl.innerHTML = `<div class="who"><b>${C.name}</b><span>心事 ${S.q + 1}/${C.quests.length} · ${Q.title}</span></div><p class="want">${esc(Q.want)}</p><p class="tip">${esc(tip)}</p>${S.carrying ? `<div class="bag">随身：${esc(S.carrying)}</div>` : ''}<div class="dots">${dots}</div>`;
+  if (!Q) { questEl.innerHTML = `<div class="who"><b>${esc(T(C, 'name'))}</b><span>${L('心事已了', 'Wishes fulfilled')}</span></div><p class="tip">${L('在园中随意走走，或按「入园」换一个人。', 'Wander the garden as you please, or press “Play” to choose someone else.')}</p><div class="dots">${dots}</div>`; questEl.hidden = !walk.on; return; }
+  const tip = S.stage === 'pick' ? (Q.pick.kind === 'petals' ? `${T(Q.pick, 'tip')}${L('（', ' (')}${S.petals}/${Q.pick.n}${L('）', ')')}` : T(Q.pick, 'tip')) : T(Q.give, 'tip');
+  questEl.innerHTML = `<div class="who"><b>${esc(T(C, 'name'))}</b><span>${L('心事', 'Wish')} ${S.q + 1}/${C.quests.length} · ${esc(T(Q, 'title'))}</span></div><p class="want">${esc(T(Q, 'want'))}</p><p class="tip">${esc(tip)}</p>${S.carrying ? `<div class="bag">${L('随身：', 'Carrying: ')}${esc(txt(S.carrying))}</div>` : ''}<div class="dots">${dots}</div>`;
   questEl.hidden = !walk.on;
   for (const t of S.tags) t.el.classList.toggle('goal', t.goal || (S.stage === 'give' && t.obj === (S.targets.find(x => x.stage === 'give') || {}).obj));
 }
-function charCard(k) { const C = CHARS[k]; const done = S.done[k] ? ' · 已完成' : '';
-  return `<button class="g-char" data-k="${k}"><span class="sw" style="background:${C.look.robe}"></span><b>${C.name}</b><small>${esc(C.home)}${done}</small><p>${esc(C.line)}</p><ol>${C.quests.map(q => `<li>${esc(q.title)}</li>`).join('')}</ol></button>`; }
+function charCard(k) { const C = CHARS[k]; const done = S.done[k] ? L(' · 已完成', ' · completed') : '';
+  return `<button class="g-char" data-k="${k}"><span class="sw" style="background:${C.look.robe}"></span><b>${esc(T(C, 'name'))}</b><small>${esc(T(C, 'home'))}${done}</small><p>${esc(T(C, 'line'))}</p><ol>${C.quests.map(q => `<li>${esc(T(q, 'title'))}</li>`).join('')}</ol></button>`; }
 function showStart(giftMode) {
   pauseGame(true);
   if (walk.on) exitWalk();
   if (giftMode && S.gift) {
     const g = S.gift, p = placeById(g.p) || placeById('qinfang');
-    startEl.innerHTML = `<div class="g-sheet"><h2>园中有礼</h2><p class="g-lead"><b>${esc(g.f || '有人')}</b>在大观园的<b>${esc(p.name)}</b>给${esc(g.t ? g.t : '你')}留了一份礼：${esc(g.n || '一只锦盒')}。进园走到那里，就能打开它。</p><div class="g-foot"><button class="g-btn" id="g-go-gift">入园寻礼</button><button class="g-link" id="g-skip">先不打开，随便看看</button></div></div>`;
+    startEl.innerHTML = EN()
+      ? `<div class="g-sheet"><h2>A Gift in the Garden</h2><p class="g-lead"><b>${esc(g.f || 'Someone')}</b> has left ${esc(g.t ? g.t : 'you')} a gift at <b>${esc(pname(p))}</b> in the Grand View Garden: ${esc(g.n || 'a brocade box')}. Walk there in the garden and you can open it.</p><div class="g-foot"><button class="g-btn" id="g-go-gift">Enter and find it</button><button class="g-link" id="g-skip">Not yet, just look around</button></div></div>`
+      : `<div class="g-sheet"><h2>园中有礼</h2><p class="g-lead"><b>${esc(g.f || '有人')}</b>在大观园的<b>${esc(p.name)}</b>给${esc(g.t ? g.t : '你')}留了一份礼：${esc(g.n || '一只锦盒')}。进园走到那里，就能打开它。</p><div class="g-foot"><button class="g-btn" id="g-go-gift">入园寻礼</button><button class="g-link" id="g-skip">先不打开，随便看看</button></div></div>`;
+    startEl.dataset.mode = 'gift';
     startEl.hidden = false;
     $('g-go-gift').onclick = () => { startEl.hidden = true; beginGift(); };
     $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); };
     return;
   }
-  startEl.innerHTML = `<div class="g-sheet"><h2>我们的大观园</h2>
-   <p class="g-lead">大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。</p>
+  startEl.dataset.mode = '';
+  startEl.innerHTML = `<div class="g-sheet"><h2>${L('我们的大观园', 'Our Grand View Garden')}</h2>
+   <p class="g-lead">${L('大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。', 'The Grand View Garden was itself a gift, built by the Jia family for the Imperial Consort’s visit home. Those who live in it speak their hearts through things, too: an old handkerchief, a sprig of red plum, a few baskets of crabs. Choose someone, enter the garden, and carry their feelings to where they belong.')}</p>
    <div class="g-chars">${Object.keys(CHARS).map(charCard).join('')}</div>
-   <div class="g-foot"><button class="g-link" id="g-skip">只是逛逛</button><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="有赠礼码？贴在这里" aria-label="赠礼码"><button class="g-btn ghost" type="submit">收礼</button></form></div></div>`;
+   <div class="g-foot"><button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
   startEl.hidden = false;
   startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; beginChar(b.dataset.k); });
   $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); document.body.classList.remove('g-playing'); };
-  $('g-recv').onsubmit = (e) => { e.preventDefault(); const g = decodeGift($('g-code-in').value.trim()); if (!g) { $('g-code-in').value = ''; $('g-code-in').placeholder = '这个码打不开，再检查一下'; return; } S.gift = g; showStart(true); };
+  $('g-recv').onsubmit = (e) => { e.preventDefault(); const g = decodeGift($('g-code-in').value.trim()); if (!g) { $('g-code-in').value = ''; $('g-code-in').placeholder = L('这个码打不开，再检查一下', 'That code won’t open. Please check it'); return; } S.gift = g; showStart(true); };
 }
 
 /* ---------------------------------------------------------------------
@@ -344,29 +398,33 @@ function beginChar(k) {
 function beginGift() {
   S.char = null; S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', a = anchor(id); const v = a.off(2.2);
-  const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: '打开' + (g.f ? g.f + '的' : '') + '礼' }]; S.stage = 'gift'; addTag('给你的礼', o, 0.7, true);
-  questEl.innerHTML = `<div class="who"><b>收礼</b><span>${esc(placeById(id).name)}</span></div><p class="tip">${esc(g.f || '有人')}把礼放在了${esc(placeById(id).name)}。跟着光柱走过去。</p>`;
+  const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: () => L('打开' + (g.f ? g.f + '的' : '') + '礼', g.f ? `Open ${g.f}’s gift` : 'Open the gift') }]; S.stage = 'gift'; addTag(() => L('给你的礼', 'A gift for you'), o, 0.7, true);
+  renderGiftQuest();
   enterWalk(spawnAt(id)); questEl.hidden = false;
+}
+function renderGiftQuest() {
+  const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', pn = esc(pname(placeById(id)));
+  questEl.innerHTML = `<div class="who"><b>${L('收礼', 'A Gift')}</b><span>${pn}</span></div><p class="tip">${EN() ? `${esc(g.f || 'Someone')} left the gift at ${pn}. Follow the beam of light.` : `${esc(g.f || '有人')}把礼放在了${pn}。跟着光柱走过去。`}</p>`;
 }
 function interact() {
   const t = S.near; if (!t || t.stage !== S.stage || !t.obj.parent) return; S.near = null;
   if (S.stage === 'gift') { openGift(); return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   if (S.stage === 'pick') {
-    if (t.petal) { scene.remove(t.obj); S.targets = S.targets.filter(x => x !== t); S.petals++; S.carrying = `落花 ${S.petals} 捧`; blip(660);
-      if (S.petals >= Q.pick.n) { S.stage = 'give'; S.carrying = '一囊落花'; flash('收了一囊落花'); }
+    if (t.petal) { scene.remove(t.obj); S.targets = S.targets.filter(x => x !== t); S.petals++; { const n = S.petals; S.carrying = () => L(`落花 ${n} 捧`, `${n} handful${n > 1 ? 's' : ''} of petals`); } blip(660);
+      if (S.petals >= Q.pick.n) { S.stage = 'give'; S.carrying = () => L('一囊落花', 'a bag of fallen petals'); flash(L('收了一囊落花', 'A bagful of fallen petals gathered')); }
       renderQuest(); return; }
-    S.carrying = Q.pick.label; S.stage = 'give'; blip(660);
-    flash(Q.pick.kind === 'npc' ? `${Q.pick.who}给了你${Q.pick.label}` : `取了${Q.pick.label}`);
+    { const P = Q.pick; S.carrying = () => T(P, 'label'); } S.stage = 'give'; blip(660);
+    flash(EN() ? (Q.pick.kind === 'npc' ? `${Q.pick.whoEn} gives you ${Q.pick.labelEn}` : `You take ${Q.pick.labelEn}`) : (Q.pick.kind === 'npc' ? `${Q.pick.who}给了你${Q.pick.label}` : `取了${Q.pick.label}`));
     stageWorld(); return;
   }
   if (S.stage === 'give') { S.stage = 'done'; S.carrying = null; blip(880); clearWorld(); reveal(Q); }
 }
 function reveal(Q) {
   const R = Q.reveal; setWorld(R.season, R.hour);
-  openModal(`<div class="ey">${esc(R.ch)}</div><h3>${esc(R.title)}</h3>${R.poem.length ? `<p class="poem">${R.poem.map(esc).join('<br>')}</p>` : ''}<p class="prose">${esc(R.prose)}</p><div class="ch">见《红楼梦》${esc(R.ch.split(' · ')[0])}</div><button class="g-btn" id="g-next">继续</button>`,
+  openModal(() => `<div class="ey">${esc(T(R, 'ch'))}</div><h3>${esc(T(R, 'title'))}</h3>${R.poem.length ? `<p class="poem">${R.poem.map(esc).join('<br>')}</p>` : ''}${EN() && R.poemEn && R.poemEn.length ? `<p class="prose" style="text-align:center;font-style:italic">${R.poemEn.map(l => esc(l).replace(/ \/ /g, '<br>')).join('<br><br>')}</p>` : ''}<p class="prose">${esc(T(R, 'prose'))}</p><div class="ch">${EN() ? `See <i>Dream of the Red Chamber</i>, ${esc(R.chEn.split(' · ')[0])}` : `见《红楼梦》${esc(R.ch.split(' · ')[0])}`}</div><button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`,
     () => { S.q++; S.stage = 'pick'; S.petals = 0; const C = CHARS[S.char];
-      if (S.q >= C.quests.length) { S.done[S.char] = 1; saveDone(); giftForm(); } else { const n = C.quests[S.q]; setWorld(n.at[0], n.at[1]); stageWorld(); flash('新的心事 · ' + n.title); } });
+      if (S.q >= C.quests.length) { S.done[S.char] = 1; saveDone(); giftForm(); } else { const n = C.quests[S.q]; setWorld(n.at[0], n.at[1]); stageWorld(); flash(L('新的心事 · ', 'A new wish · ') + T(n, 'title')); } });
 }
 
 /* ---------------------------------------------------------------------
@@ -375,39 +433,49 @@ function reveal(Q) {
 function encodeGift(g) { const s = btoa(unescape(encodeURIComponent(JSON.stringify(g)))); return 'DGY-' + s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function decodeGift(code) { try { let s = code.replace(/^.*#gift=/, '').replace(/^DGY-/, '').replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const g = JSON.parse(decodeURIComponent(escape(atob(s)))); return g && g.p ? g : null; } catch (e) { return null; } }
 function giftForm() {
-  const C = CHARS[S.char];
-  const opts = PLACES.filter(p => p.pos).map(p => `<option value="${p.id}"${p.id === C.start ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
-  openModal(`<div class="ey">${esc(C.name)} · 心事已了</div><h3>赠一份礼</h3>
-   <p class="prose">大观园是元妃的礼，园中人又以物互赠。现在轮到你：把园子里的一处地方，连同一份礼和一句话，送给现实中的一个人。</p>
-   <div class="g-form"><label for="gf-f">你是</label><input id="gf-f" maxlength="12" placeholder="署名">
-   <label for="gf-t">送给</label><input id="gf-t" maxlength="12" placeholder="对方的名字">
-   <label for="gf-n">礼物</label><input id="gf-n" maxlength="24" placeholder="想送的东西，如：一枝红梅">
-   <label for="gf-p">放在</label><select id="gf-p">${opts}</select>
-   <label for="gf-m">留言</label><textarea id="gf-m" maxlength="140" placeholder="一句话"></textarea></div>
-   <div id="gf-out"></div><button class="g-btn" id="gf-make">生成赠礼码</button> <button class="g-btn ghost" id="g-next">以后再说</button>`, null);
-  $('gf-make').onclick = () => {
-    const g = { f: $('gf-f').value.trim(), t: $('gf-t').value.trim(), n: $('gf-n').value.trim(), p: $('gf-p').value, m: $('gf-m').value.trim() };
-    const code = encodeGift(g); let link = ''; try { link = location.href.split('#')[0] + '#gift=' + code.slice(4); } catch (e) {}
-    $('gf-out').innerHTML = `<div class="g-code" id="gf-code">${esc(code)}</div><p class="prose" style="margin-top:8px">把赠礼码发给对方。对方打开大观园，点「入园」，把码贴进「收礼」，就会被带到${esc(placeById(g.p).name)}，找到你的礼。</p>`;
-    try { navigator.clipboard.writeText(code); $('gf-make').textContent = '已复制'; } catch (e) {}
-    void link;
+  const C = CHARS[S.char]; let keep = null, made = null;
+  const showCode = (g, code) => { $('gf-out').innerHTML = `<div class="g-code" id="gf-code">${esc(code)}</div><p class="prose" style="margin-top:8px">${EN() ? `Send the code to them. They open the Grand View Garden, press “Play”, paste the code under “Receive”, and will be led to ${esc(pname(placeById(g.p)))} to find your gift.` : `把赠礼码发给对方。对方打开大观园，点「入园」，把码贴进「收礼」，就会被带到${esc(placeById(g.p).name)}，找到你的礼。`}</p>`; };
+  const build = () => { // 切换语言重绘时保留已填写的内容
+    if ($('gf-f')) { keep = {}; for (const k of 'ftnpm') keep[k] = $('gf-' + k).value; }
+    const opts = PLACES.filter(p => p.pos).map(p => `<option value="${p.id}"${p.id === C.start ? ' selected' : ''}>${esc(pname(p))}</option>`).join('');
+    return `<div class="ey">${esc(T(C, 'name'))} · ${L('心事已了', 'Wishes fulfilled')}</div><h3>${L('赠一份礼', 'Give a Gift')}</h3>
+   <p class="prose">${L('大观园是元妃的礼，园中人又以物互赠。现在轮到你：把园子里的一处地方，连同一份礼和一句话，送给现实中的一个人。', 'The garden was a gift to the Imperial Consort, and those who lived in it gave gifts to one another. Now it is your turn: give a corner of the garden, with a gift and a few words, to someone in your own life.')}</p>
+   <div class="g-form"><label for="gf-f">${L('你是', 'From')}</label><input id="gf-f" maxlength="12" placeholder="${L('署名', 'Your name')}">
+   <label for="gf-t">${L('送给', 'To')}</label><input id="gf-t" maxlength="12" placeholder="${L('对方的名字', 'Their name')}">
+   <label for="gf-n">${L('礼物', 'Gift')}</label><input id="gf-n" maxlength="24" placeholder="${L('想送的东西，如：一枝红梅', 'What to give, e.g. a sprig of red plum')}">
+   <label for="gf-p">${L('放在', 'Leave it at')}</label><select id="gf-p">${opts}</select>
+   <label for="gf-m">${L('留言', 'Message')}</label><textarea id="gf-m" maxlength="140" placeholder="${L('一句话', 'A few words')}"></textarea></div>
+   <div id="gf-out"></div><button class="g-btn" id="gf-make">${L('生成赠礼码', 'Make a gift code')}</button> <button class="g-btn ghost" id="g-next">${L('以后再说', 'Maybe later')}</button>`; };
+  const after = () => {
+    if (keep) for (const k of 'ftnpm') $('gf-' + k).value = keep[k];
+    if (made) { showCode(made.g, made.code); if (made.copied) $('gf-make').textContent = L('已复制', 'Copied'); }
+    $('gf-make').onclick = () => {
+      const g = { f: $('gf-f').value.trim(), t: $('gf-t').value.trim(), n: $('gf-n').value.trim(), p: $('gf-p').value, m: $('gf-m').value.trim() };
+      const code = encodeGift(g); let link = ''; try { link = location.href.split('#')[0] + '#gift=' + code.slice(4); } catch (e) {}
+      made = { g, code }; showCode(g, code);
+      try { navigator.clipboard.writeText(code); $('gf-make').textContent = L('已复制', 'Copied'); made.copied = 1; } catch (e) {}
+      void link;
+    };
   };
+  openModal(build, null, after);
 }
 function openGift() {
   const g = S.gift; clearWorld(); blip(990); S.stage = 'none';
-  openModal(`<div class="ey">${esc(placeById(g.p)?.name || '')}</div><h3>${esc(g.n || '一份礼')}</h3>${g.m ? `<p class="poem" style="font-size:22px">${esc(g.m)}</p>` : ''}<p class="prose" style="text-align:center">${g.t ? esc(g.t) + '：' : ''}这是${esc(g.f || '有人')}在大观园里留给你的。</p><button class="g-btn" id="g-next">收下</button>`,
-    () => { S.giftMode = false; questEl.hidden = true; flash('也选一个人入园看看？'); setTimeout(() => { if (!walk.on) return; }, 0); });
+  openModal(() => `<div class="ey">${esc(pname(placeById(g.p)) || '')}</div><h3>${esc(g.n || L('一份礼', 'A gift'))}</h3>${g.m ? `<p class="poem" style="font-size:22px">${esc(g.m)}</p>` : ''}<p class="prose" style="text-align:center">${EN() ? `${g.t ? esc(g.t) + ': ' : ''}${esc(g.f || 'Someone')} left this for you in the Grand View Garden.` : `${g.t ? esc(g.t) + '：' : ''}这是${esc(g.f || '有人')}在大观园里留给你的。`}</p><button class="g-btn" id="g-next">${L('收下', 'Accept')}</button>`,
+    () => { S.giftMode = false; questEl.hidden = true; flash(L('也选一个人入园看看？', 'Why not choose someone and enter the garden too?')); setTimeout(() => { if (!walk.on) return; }, 0); });
 }
 
 /* ---------------------------------------------------------------------
    暂停 / 弹窗 / 小提示
    --------------------------------------------------------------------- */
 function pauseGame(on) { window.__gamePause = on; if (on) { walk.keys = {}; walk.stick.x = walk.stick.y = 0; } }
-let modalDone = null;
-function openModal(html, onDone) {
+let modalDone = null, modalPaint = null;
+/* html 为返回 HTML 的函数，切换语言时可重绘；after 在每次绘制后绑定事件 */
+function openModal(html, onDone, after) {
   pauseGame(true); walk.keys = {}; if (document.pointerLockElement) document.exitPointerLock();
-  scrollEl.innerHTML = html; modalEl.hidden = false; modalDone = onDone; promptEl.hidden = true;
-  const n = $('g-next'); if (n) { n.onclick = closeModal; setTimeout(() => n.focus(), 50); }
+  modalPaint = () => { scrollEl.innerHTML = txt(html); const n = $('g-next'); if (n) n.onclick = closeModal; if (after) after(); };
+  modalPaint(); modalEl.hidden = false; modalDone = onDone; promptEl.hidden = true;
+  const n = $('g-next'); if (n) setTimeout(() => n.focus(), 50);
 }
 function closeModal() {
   modalEl.hidden = true; pauseGame(false); const f = modalDone; modalDone = null;
@@ -446,13 +514,13 @@ function tick(now) {
     // 指南：相对镜头朝向的方位
     const ang = Math.atan2(goal.pos.x - p.x, goal.pos.z - p.z); const camYaw = Math.atan2(-(Math.sin(walk.yaw)), -(Math.cos(walk.yaw)));
     let rel = ang - camYaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
-    const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = S.giftMode ? placeById(S.gift.p)?.name : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place).name;
-    compassEl.hidden = d < 5; compassEl.querySelector('svg').style.transform = `rotate(${-rel}rad)`; compassEl.querySelector('b').textContent = where; compassEl.querySelector('span').textContent = Math.round(d / 0.75) + ' 步';
+    const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = pname(S.giftMode ? placeById(S.gift.p) : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place));
+    compassEl.hidden = d < 5; compassEl.querySelector('svg').style.transform = `rotate(${-rel}rad)`; compassEl.querySelector('b').textContent = where; compassEl.querySelector('span').textContent = Math.round(d / 0.75) + L(' 步', ' steps');
   } else { compassEl.hidden = true; beacon.visible = groundRing.visible = false; }
   // 最近的可交互目标
   let near = null; for (const t of S.targets) { if (t.stage !== S.stage) continue; const d = Math.hypot(t.pos.x - p.x, t.pos.z - p.z); if (d < t.r && Math.abs(t.pos.y - p.y) < 2.5) { near = t; break; } }
   S.near = modalEl.hidden ? near : null;
-  if (S.near) { promptEl.innerHTML = isTouch ? `<span>点这里</span>${esc(S.near.label)}` : `<kbd>E</kbd>${esc(S.near.label)}`; promptEl.hidden = false; } else promptEl.hidden = true;
+  if (S.near) { promptEl.innerHTML = isTouch ? `<span>${L('点这里', 'Tap here')}</span>${esc(txt(S.near.label))}` : `<kbd>E</kbd>${esc(txt(S.near.label))}`; promptEl.hidden = false; } else promptEl.hidden = true;
   // 头顶名签
   const W = innerWidth, H = innerHeight;
   for (const t of S.tags) { if (!t.obj.parent) { t.el.style.display = 'none'; continue; } _v.copy(t.obj.position); _v.y += t.dy; const dist = camera.position.distanceTo(_v); _v.project(camera);
@@ -460,6 +528,15 @@ function tick(now) {
     if (vis) { t.el.style.transform = `translate(${(_v.x * 0.5 + 0.5) * W}px,${(-_v.y * 0.5 + 0.5) * H}px) translate(-50%,-100%)`; t.el.style.opacity = dist > 35 ? 0.6 : 1; } }
 }
 requestAnimationFrame(tick);
+
+/* 切换语言：重绘当前可见的界面与名签 */
+addEventListener('dgy-lang', () => {
+  dockLang();
+  for (const t of S.tags) t.el.textContent = txt(t.text);
+  if (S.char) renderQuest(); else if (S.giftMode && S.gift && S.stage === 'gift') renderGiftQuest();
+  if (!startEl.hidden) showStart(startEl.dataset.mode === 'gift');
+  if (!modalEl.hidden && modalPaint) modalPaint();
+});
 
 /* 调试接口（测试用） */
 window.__game = { S, CHARS, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
