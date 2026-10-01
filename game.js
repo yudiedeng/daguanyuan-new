@@ -542,12 +542,15 @@ function dressHero(look) {
 }
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
+/* 步行中直接传送：不经 exitWalk / enterWalk，免得指针锁的释放事件回头把步行退掉 */
+function warp(id) { const [x, z, yaw] = spawnAt(id), g = groundAt(x, z, 99)[0]; walk.pos.set(x, g, z); walk.feet = g; walk.vel.set(0, 0, 0); walk.vy = 0; walk.yaw = walk.charYaw = yaw; }
+function goTo(id) { if (walk.on) warp(id); else enterWalk(spawnAt(id)); }
 function beginChar(k) {
   startEl.hidden = true;
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false; S.puz = null;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
-  stageWorld(); enterWalk(spawnAt(C.start)); renderQuest();
+  stageWorld(); goTo(C.start); renderQuest();
 }
 function beginGift() {
   S.char = null; S.puz = null; S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
@@ -563,7 +566,7 @@ function beginPuz(k) {
   S.bag = P.pieces.filter(p => !p.place).map(p => p.id);
   dressHero(P.look); setWorld(P.season, P.hour);
   document.body.classList.add('g-playing'); pauseGame(false);
-  puzWorld(); enterWalk(spawnAt(P.start)); renderQuest();
+  puzWorld(); goTo(P.start); renderQuest();
   openModal(`<div class="ey">${esc(P.ch)} · 解谜</div><h3>${esc(P.title)}</h3><p class="prose">${esc(P.line)}</p><p class="prose">${esc(P.rule)}</p><button class="g-btn" id="g-next">入园</button>`, null);
 }
 /* 走到谜位前：展示谜面，从手里挑一件 */
@@ -590,7 +593,7 @@ function choose(i, id) {
   else openModal(`<div class="ey">${esc(where)} · 挂上“${esc(pc.label)}”</div><h3>${esc(P.wrong[(S.strikes - 1) % P.wrong.length])}</h3><p class="prose">${esc(why)}</p><p class="prose">还能错 ${P.strikes - S.strikes} 次。</p><button class="g-btn" id="g-next">再看看</button>`, () => openSlot(i));
   renderQuest();
 }
-function kickOut() { const P = PUZZLES[S.puz]; S.strikes = 0; exitWalk(); enterWalk(spawnAt(P.start)); renderQuest(); flash('贾政又喝命：“回来！”'); }
+function kickOut() { const P = PUZZLES[S.puz]; S.strikes = 0; goTo(P.start); renderQuest(); flash('贾政又喝命：“回来！”'); }
 function puzReveal() {
   const k = S.puz, P = PUZZLES[k], R = P.reveal; S.done['p:' + k] = 1; saveDone(); S.stage = 'done'; S.targets = []; setWorld(R.season, R.hour);
   openModal(`<div class="ey">${esc(R.ch)}</div><h3>${esc(R.title)}</h3>${R.poem.length ? `<p class="poem">${R.poem.map(esc).join('<br>')}</p>` : ''}<p class="prose">${esc(R.prose)}</p><div class="ch">见《红楼梦》${esc(R.ch.split(' · ')[0])}</div><button class="g-btn" id="g-next">继续</button>`,
