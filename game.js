@@ -219,6 +219,9 @@ body.g-playing .card{display:none!important}
 #g-intro .skip{all:unset;position:absolute;right:22px;top:calc(18px + env(safe-area-inset-top,0px));font-size:13px;letter-spacing:.12em;color:#9a9486;cursor:pointer;border-bottom:1px solid #4a4740}
 #g-intro .skip:hover,#g-intro .skip:focus-visible{color:#e9e3d3}
 @keyframes gpulse{0%,100%{opacity:.35}50%{opacity:.9}}
+#g-fade{position:fixed;inset:0;z-index:58;background:#07080a;opacity:0;pointer-events:none;transition:opacity 1.1s ease;display:flex;align-items:center;justify-content:center}
+#g-fade.on{opacity:1;pointer-events:auto}
+#g-fade p{font-family:var(--f-disp);font-size:clamp(20px,3vw,28px);letter-spacing:.16em;color:#e9e3d3;max-width:720px;padding:0 28px;text-align:center;line-height:2}
 #g-lids{position:fixed;inset:0;z-index:59;pointer-events:none}
 #g-lids[hidden]{display:none}
 #g-lids i{position:absolute;left:-15%;width:130%;height:56%;background:#07080a}
@@ -234,6 +237,7 @@ document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 document.body.insertAdjacentHTML('beforeend', `
 <div id="g-intro" hidden role="dialog" aria-modal="true" aria-live="polite"></div>
 <div id="g-lids" hidden><i></i><i></i></div>
+<div id="g-fade"><p></p></div>
 <div id="g-start" hidden></div>
 <aside id="g-quest" class="panel ui" hidden aria-live="polite"></aside>
 <div id="g-compass" class="panel ui" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l6 16-6-4-6 4z" fill="currentColor"/></svg><b></b><span></span></div>
@@ -538,9 +542,172 @@ const LIU = {
                     '一径离了潇湘馆，远远望见池中一群人在那里撑船。老太太便说：早饭就摆到三姑娘那里去，我们从这里坐了船去。'],
                 pEn: ['Seeing the window gauze had faded, the old lady said: “This gauze looks fine when it’s new, but it soon loses its green. There are no peach or apricot trees in this courtyard, and the bamboo is green already — green gauze on top of it doesn’t suit.”',
                       'There was a fabric in the storeroom, she said, called Soft Mist Gauze, in just four colours: rain-washed sky blue, autumn incense, pine green and silvery red. Made into bed curtains or pasted on window frames it looks from afar like mist — hence the name; the silvery red is also called Rosy Cloud Gauze. “Tomorrow find a few bolts and paste her windows with the silvery red.”',
-                      'Leaving the Bamboo Lodge, they saw people poling boats on the pool. The old lady said: lay breakfast at Third Miss’s, and we’ll go over by boat.'] } }] }
+                      'Leaving the Bamboo Lodge, they saw people poling boats on the pool. The old lady said: lay breakfast at Third Miss’s, and we’ll go over by boat.'] } }] },
+    /* ---------------- 第四十回：秋爽斋早饭 ---------------- */
+    { tip: '往秋爽斋去。早饭摆在晓翠堂，鸳鸯在院里等你。', tipEn: 'Go to the Autumn Freshness Studio. Breakfast is laid in the Hall of Morning Green; Yuanyang is waiting in the court.',
+      label: '和鸳鸯说话', labelEn: 'Talk to Yuanyang', place: 'qiushuang', face: () => [-86, 34],
+      npcs: [{ who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [-83.4, 25.6] },
+             { prop: 'table', at: () => [-86, 22.6] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-86, 21.2] },
+             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [-88.6, 24.2] },
+             { who: '史湘云', whoEn: 'Shi Xiangyun', color: '#c98a4e', at: () => [-84.2, 21.6] },
+             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-87.9, 21.6] },
+             { who: '贾宝玉', whoEn: 'Jia Baoyu', color: '#a8342b', at: () => [-89.4, 22.4], male: 1 }],
+      pages: [{ say: [['', '', '早饭摆在秋爽斋晓翠堂上。鸳鸯拉你出来，悄悄的嘱咐了一席话，又说：', 'Breakfast was laid in the Hall of Morning Green. Yuanyang drew you aside, whispered a long string of instructions, and added:'],
+                      ['鸳鸯', 'Yuanyang', '这是我们家的规矩，若错了我们就笑话呢。', 'That’s the custom in our house — if you get it wrong, we’ll laugh at you.'],
+                      ['', '', '调停已毕，你入了座，拿起箸来，沉甸甸的不伏手——原是凤姐和鸳鸯商议定了，单拿一双老年四楞象牙镶金的筷子与你。', 'All arranged, you took your seat and picked up your chopsticks — heavy, and they wouldn’t sit right in your hand. Xifeng and Yuanyang had plotted to give you alone an old pair of square ivory chopsticks inlaid with gold.'],
+                      ['刘姥姥', 'Granny Liu', '这叉爬子比俺那里铁锨还沉，那里犟的过他。', 'These prongs are heavier than a spade back home — how am I to manage them?']], btn: ['……', '…'] },
+              { ask: { q: ['老太太说声“请”，你想起鸳鸯嘱咐的话，便站起身来——', 'The old lady said “Please, begin.” Remembering Yuanyang’s instructions, you stood up —'],
+                  opts: [{ t: ['（高声说）老刘，老刘，食量大似牛，吃一个老母猪不抬头。', '(Loudly) Old Liu, Old Liu, eats like an ox — gobbles a whole sow without lifting her head!'], best: 1 },
+                         { t: ['多谢老太太赏饭！', 'Thank you, old lady, for the meal!'] },
+                         { t: ['（不说话，坐下低头先吃）', '(Say nothing; sit down and start eating.)'] }],
+                  bestAfter: ['说完，却鼓着腮不语。众人先是发怔，后来一听，上上下下都哈哈的大笑起来。', 'Then you sat with cheeks puffed out, saying nothing. Everyone stared — then it sank in, and the whole room roared with laughter.'],
+                  after: ['鸳鸯在旁边直使眼色。你想起来了，忙又站起身，高声说道：“老刘，老刘，食量大似牛，吃一个老母猪不抬头。”众人先是发怔，后来一听，上上下下都哈哈的大笑起来。', 'Yuanyang kept winking at you. You remembered, stood up and boomed: “Old Liu, Old Liu, eats like an ox — gobbles a whole sow without lifting her head!” Everyone stared — then the whole room roared with laughter.'],
+                  ch: ['第四十回', 'Chapter 40'] } },
+              { say: [['', '', '史湘云撑不住，一口饭都喷了出来；林黛玉笑岔了气，伏着桌子嗳哟；宝玉早滚到老太太怀里，老太太笑的搂着宝玉叫“心肝”。', 'Shi Xiangyun couldn’t hold it and sprayed out a mouthful of rice; Lin Daiyu laughed herself breathless and collapsed over the table groaning; Baoyu rolled into the old lady’s lap, and she hugged him, calling him “my heart”.']], btn: ['……', '…'] },
+              { ask: { q: ['凤姐偏拣了一碗鸽子蛋放在你桌上。你拿起那双象牙筷子——', 'Xifeng set a bowl of pigeon eggs right in front of you. You lifted those ivory chopsticks —'],
+                  opts: [{ t: ['这里的鸡儿也俊，下的这蛋也小巧，怪俊的。我且攮一个。', 'Even the hens here are dainty — look how small and pretty their eggs are! Let me spear one.'], best: 1 },
+                         { t: ['这么小的鸡蛋，是怎么下的？', 'Such tiny hen’s eggs — how do they lay them?'] },
+                         { t: ['（不说话，伸筷子就夹）', '(Say nothing; just go for one.)'] }],
+                  bestAfter: ['满碗里闹了一阵，好容易撮起一个来，才伸着脖子要吃，偏又滑下来滚在地下。', 'You chased them round the bowl, at last pinched one up, craned your neck to eat it — and it slipped and rolled onto the floor.'],
+                  after: ['众人笑个不住。你满碗里闹了一阵，好容易撮起一个来，才伸着脖子要吃，偏又滑下来滚在地下。', 'Everyone kept laughing. You chased them round the bowl, at last pinched one up, craned your neck — and it slipped and rolled onto the floor.'],
+                  ch: ['第四十回', 'Chapter 40'] } },
+              { text: { title: '老刘老刘，食量大似牛', titleEn: 'Old Liu, Old Liu, Eats Like an Ox', ch: '第四十回', chEn: 'Chapter 40',
+                p: ['你叹道：“一两银子，也没听见响声儿就没了。”原来这鸽子蛋一两银子一个。',
+                    '老太太便叫换了一双乌木三镶银的筷子来。你说：“去了金的，又是银的，到底不及俺们那个伏手。”凤姐儿道：“菜里若有毒，这银子下去了就试的出来。”你道：“这个菜里若有毒，俺们那菜都成了砒霜了。那怕毒死了也要吃尽了。”',
+                    '饭后，忽一阵风过，隐隐听得鼓乐之声。老太太说，就叫梨香院的女孩子们在藕香榭的水亭子上演习，借着水音更好听。众人往荇叶渚上船去。'],
+                pEn: ['You sighed: “A whole tael of silver, gone without so much as a sound.” Each pigeon egg cost a tael.',
+                      'The old lady had your chopsticks changed for ebony ones mounted with silver. You said: “Gold gone, silver come — still not as handy as ours at home.” Xifeng said: “If there’s poison in a dish, the silver will show it.” You said: “If these dishes are poison, then ours at home are pure arsenic! I’d eat them all even if they killed me.”',
+                      'After the meal a breeze brought the faint sound of drums and pipes. The old lady said to have the girls from Pear Fragrance Court practise on the water pavilion of the Lotus Fragrance Pavilion — the music sounds better over water. Everyone set off for the Water-Fringe Landing to take the boats.'] } }] },
+    /* ---------------- 第四十回：荇叶渚上船，花溆萝港，到蘅芜苑 ---------------- */
+    { tip: '到荇叶渚码头上船。驾娘已把两只棠木舫撑来了。', tipEn: 'Go to the Water-Fringe Landing and board the boat. The boatwomen have brought the two crab-apple-wood boats over.',
+      label: '上船', labelEn: 'Board the boat', place: 'xingye', face: () => [-104, 21],
+      npcs: [{ who: '驾娘', whoEn: 'Boatwoman', color: '#6f7d68', at: () => [-115.6, 23.4] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-112.4, 19.6] },
+             { who: '贾宝玉', whoEn: 'Jia Baoyu', color: '#a8342b', at: () => [-110.8, 22.8], male: 1 },
+             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-111.2, 18.2] }],
+      pages: [{ say: [['', '', '到了荇叶渚，那姑苏选来的几个驾娘早把两只棠木舫撑来。众人扶了老太太上去，你也跟着上了船。', 'At the Water-Fringe Landing the boatwomen chosen from Suzhou had already poled the two crab-apple-wood boats over. They helped the old lady aboard, and you climbed in after.'],
+                      ['贾宝玉', 'Jia Baoyu', '这些破荷叶可恨，怎么还不叫人来拔去。', 'These ragged lotus leaves are hateful — why hasn’t anyone pulled them out?'],
+                      ['林黛玉', 'Lin Daiyu', '我最不喜欢李义山的诗，只喜他这一句“留得残荷听雨声”。偏你们又不留着残荷了。', 'I don’t care for Li Shangyin’s poems at all, except this one line: “Keep the withered lotus to hear the rain.” And now you won’t even keep the withered lotus.'],
+                      ['贾宝玉', 'Jia Baoyu', '果然好句，以后咱们就别叫人拔去了。', 'A fine line indeed. From now on we won’t have them pulled.']], btn: ['开船', 'Cast off'] },
+              { fade: { msg: ['船过花溆的萝港之下，觉得阴森透骨，两滩上衰草残菱，更助秋情。', 'The boat passed under the Lily Harbour by the flowering shoals — a chill to the bone; withered grass and broken water-chestnuts on either bank deepened the autumn mood.'], to: 'hengwu', hold: 3200 } }] },
+    { tip: '上岸了。进蘅芜苑，到宝钗屋里看看。', tipEn: 'You’re ashore. Go into Alpinia Park and look round Baochai’s room.',
+      label: '进宝钗屋里', labelEn: 'Enter Baochai’s room', place: 'hengwu', ch: ['第四十回', 'Chapter 40'], face: () => [-70, -128],
+      npcs: [{ who: '薛宝钗', whoEn: 'Xue Baochai', color: '#e5d9b6', at: () => [-67, -148.2], floor: () => roomY('hengwu_in') },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-72.2, -147.6], floor: () => roomY('hengwu_in') }],
+      pages: [{ say: [['', '', '进了蘅芜苑，只觉异香扑鼻。那些奇草仙藤愈冷愈苍翠，都结了实，似珊瑚豆子一般，累垂可爱。', 'Entering Alpinia Park, a strange fragrance met you. The rare grasses and fairy vines grew greener as the cold came on, all hung with fruit like coral beads, lovely in their clusters.'],
+                      ['', '', '及进了房屋，雪洞一般，一色玩器全无，案上只有一个土定瓶中供着数枝菊花，并两部书，茶奁茶杯而已。床上只吊着青纱帐幔，衾褥也十分朴素。', 'Inside, the room was like a snow cave — not a single ornament; on the desk only a plain earthenware vase with a few sprays of chrysanthemum, two volumes of books, a tea caddy and cups. The bed had only blue gauze curtains, and the covers were very plain.'],
+                      ['贾母', 'The Lady Dowager', '这孩子太老实了。你没有陈设，何妨和你姨娘要些。', 'This child is too modest. If you have no ornaments, why not ask your aunt for some?'],
+                      ['贾母', 'The Lady Dowager', '使不得。虽然她省事，倘或来一个亲戚，看着不像；二则年轻的姑娘们，房里这样素净，也忌讳。我们这老婆子，越发该住马圈去了。', 'This won’t do. Thrifty as she is, if a relative came it wouldn’t look right; and besides, it’s unlucky for a young girl’s room to be so bare. By that measure we old women ought to be living in the stables!']], btn: ['……', '…'] },
+              { text: { title: '蘅芜苑 · 雪洞一般', titleEn: 'Alpinia Park · Like a Snow Cave', ch: '第四十回', chEn: 'Chapter 40',
+                p: ['老太太便命鸳鸯去取那石头盆景儿和那架纱桌屏，还有个墨烟冻石鼎，摆在这案上就够了；再把那水墨字画白绫帐子拿来，把这帐子也换了。',
+                    '说着，坐了一回方出来，一径来至缀锦阁下。'],
+                pEn: ['The old lady sent Yuanyang to fetch the stone miniature landscape, the gauze table screen and the smoky-ink soapstone tripod — those on the desk would be enough; and the white silk curtains painted in ink were to replace the bed curtains.',
+                      'After sitting a while they came out and went straight to the foot of the Brocade Pavilion.'] } }] },
+    /* ---------------- 第四十回：缀锦阁下，鸳鸯行牙牌令 ---------------- */
+    { tip: '到大观楼东边的缀锦阁下入席。鸳鸯做令官，要行牙牌令了。', tipEn: 'Go to the foot of the Brocade Pavilion, east of the Grand View Tower, and take your seat. Yuanyang is master of the drinking game.',
+      label: '入席', labelEn: 'Take your seat', where: '缀锦阁', whereEn: 'Brocade Pavilion', place: 'daguan', ch: ['第四十回', 'Chapter 40'], face: () => [24, -70],
+      npcs: [{ who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [26.4, -45.4] },
+             { prop: 'table', at: () => [24, -47.6] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [24, -49.2] },
+             { who: '薛姨妈', whoEn: 'Aunt Xue', color: '#7d6a8a', at: () => [21.6, -48.6] },
+             { who: '史湘云', whoEn: 'Shi Xiangyun', color: '#c98a4e', at: () => [26.6, -48.6] },
+             { who: '薛宝钗', whoEn: 'Xue Baochai', color: '#e5d9b6', at: () => [21.8, -46.2] },
+             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [20.6, -47.4] }],
+      pages: [{ say: [['', '', '藕香榭那边，梨香院的女孩子们奏起乐来，乐声穿林度水而来，自然使人神怡心旷。众人在缀锦阁下吃酒，鸳鸯做了令官，行牙牌令：她说一句，各人照着牌对一句，要押韵。', 'Over at the Lotus Fragrance Pavilion the girls struck up their music, which came threading through the trees and across the water, lifting everyone’s spirits. They drank at the foot of the Brocade Pavilion with Yuanyang as master of the game: she calls out a domino, and each person answers with a rhyming line.'],
+                      ['鸳鸯', 'Yuanyang', '轮到刘姥姥了。', 'Granny Liu’s turn now.'],
+                      ['刘姥姥', 'Granny Liu', '我们庄家人闲了，也常会几个人弄这个，但不如说的这么好听。少不得我也试一试。', 'We country folk play this too when we’re idle, only we don’t say it so prettily. Well, I suppose I must try.']], btn: ['来吧', 'Go on'] },
+              { ask: { q: ['鸳鸯道：“左边‘四四’是个人。”', 'Yuanyang: “On the left, double four — that’s a person.”'],
+                  opts: [{ t: ['是个庄家人罢。', 'A farmer, I’d say.'], best: 1 }, { t: ['是个老婆子罢。', 'An old woman, I’d say.'] }, { t: ['是个大胖子罢。', 'A big fat fellow, I’d say.'] }],
+                  bestAfter: ['众人哄堂笑了。老太太笑道：“说的好，就是这样说。”你也笑道：“我们庄家人，不过是现成的本色，众位别笑。”', 'Everyone burst out laughing. The old lady said: “Well said — that’s just the way.” You laughed too: “We farmers just say what’s in front of us — don’t laugh, all of you.”'],
+                  after: ['众人都笑。你想了想，又道：“是个庄家人罢。”老太太笑道：“说的好，就是这样说。”', 'Everyone laughed. You thought again and said: “A farmer, I’d say.” The old lady laughed: “Well said — that’s just the way.”'],
+                  ch: ['第四十回 · 牙牌令', 'Chapter 40 · Dominoes'] } },
+              { ask: { q: ['鸳鸯道：“中间‘三四’绿配红。”', 'Yuanyang: “In the middle, three-four — green set off with red.”'],
+                  opts: [{ t: ['大火烧了毛毛虫。', 'A big fire burned the caterpillar up.'], best: 1 }, { t: ['红萝卜配青葱。', 'Red radishes go with green onions.'] }, { t: ['绿叶子配红花儿。', 'Green leaves go with red flowers.'] }],
+                  bestAfter: ['众人笑道：“这是有的，还说你的本色。”', 'Everyone laughed: “That’s real enough — your own true colours again.”'],
+                  after: ['众人笑道：“这也使得。”你想了想，又道：“大火烧了毛毛虫。”众人越发笑了。', 'Everyone laughed: “That’ll do.” You thought again: “A big fire burned the caterpillar up.” They laughed all the more.'],
+                  ch: ['第四十回 · 牙牌令', 'Chapter 40 · Dominoes'] } },
+              { ask: { q: ['鸳鸯道：“右边‘幺四’真好看。”', 'Yuanyang: “On the right, one-four — lovely indeed.”'],
+                  opts: [{ t: ['一个萝卜一头蒜。', 'One radish and a head of garlic.'], best: 1 }, { t: ['一朵花儿一根线。', 'One flower and one thread.'] }, { t: ['一碗米饭一碗汤。', 'A bowl of rice, a bowl of soup.'] }],
+                  bestAfter: ['众人又笑了。', 'Everyone laughed again.'],
+                  after: ['你自己摇摇头，又道：“一个萝卜一头蒜。”众人又笑了。', 'You shook your head and tried again: “One radish and a head of garlic.” Everyone laughed again.'],
+                  ch: ['第四十回 · 牙牌令', 'Chapter 40 · Dominoes'] } },
+              { ask: { q: ['鸳鸯笑道：“凑成便是一枝花。”', 'Yuanyang laughed: “All together they make a spray of flowers.”'],
+                  opts: [{ t: ['（两只手比着）花儿落了结个大倭瓜。', '(Gesturing with both hands) When the flowers fall, out comes a great big squash!'], best: 1 }, { t: ['花儿插在我头上。', 'And the flowers are stuck on my head!'] }, { t: ['一枝花儿香又香。', 'A spray of flowers, sweet and sweet.'] }],
+                  bestAfter: ['众人大笑起来。', 'Everyone roared with laughter.'],
+                  after: ['众人笑起来。你两只手比着，又说道：“花儿落了结个大倭瓜。”众人大笑起来。', 'Everyone laughed. You gestured with both hands and went on: “When the flowers fall, out comes a great big squash!” Everyone roared.'],
+                  ch: ['第四十回 · 牙牌令', 'Chapter 40 · Dominoes'] } }] },
+    /* ---------------- 第四十一回：茄鲞 ---------------- */
+    { tip: '凤姐叫你过去，要夹菜给你尝。', tipEn: 'Xifeng is calling you over to try a dish.', label: '尝凤姐夹的菜', labelEn: 'Taste Xifeng’s dish', where: '缀锦阁', whereEn: 'Brocade Pavilion', place: 'daguan',
+      ch: ['第四十一回', 'Chapter 41'], face: () => [24, -70],
+      npcs: [{ who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [22.2, -45.2] },
+             { prop: 'table', at: () => [24, -47.6] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [24, -49.2] },
+             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [26.4, -45.4] }],
+      pages: [{ say: [['贾母', 'The Lady Dowager', '你把茄鲞搛些喂她。', 'Pick out some of the aubergine relish and feed her.'],
+                      ['', '', '凤姐儿听说，依言搛些茄鲞送入你口中，笑道：“你们天天吃茄子，也尝尝我们的茄子弄的可口不可口。”', 'Xifeng did as she was told and popped some aubergine relish into your mouth, laughing: “You eat aubergine every day — try ours and see if it’s any good.”'],
+                      ['刘姥姥', 'Granny Liu', '别哄我了，茄子跑出这味儿来了，我们也不用种粮食，只种茄子了。', 'Don’t tease me! If aubergine could taste like this, we’d stop growing grain and plant nothing but aubergines.'],
+                      ['凤姐', 'Wang Xifeng', '这也不难。你把才下来的茄子把皮签了，只要净肉，切成碎钉子，用鸡油炸了，再用鸡脯子肉并香菌、新笋、蘑菇、五香腐干、各色干果子，俱切成钉子，用鸡汤煨干，将香油一收，外加糟油一拌，盛在瓷罐子里封严，要吃时拿出来，用炒的鸡瓜一拌就是。', 'Nothing to it. Take fresh aubergines, peel them, keep only the flesh and dice it; fry in chicken fat; then dice chicken breast, mushrooms, fresh bamboo shoots, button mushrooms, spiced dried tofu and all kinds of dried fruit and nuts, simmer them all dry in chicken stock, finish with sesame oil and a dash of wine-lees oil, seal it in a porcelain jar, and when you want some, toss it with fried diced chicken.']], btn: ['……', '…'] },
+              { ask: { q: ['你听完，怎么说？', 'Having heard all that, what do you say?'],
+                  opts: [{ t: ['我的佛祖！倒得十来只鸡来配他，怪道这个味儿！', 'Merciful Buddha! It takes a dozen chickens to go with it — no wonder it tastes like that!'], best: 1 }, { t: ['俺们庄上的茄子，可就白长了。', 'Then the aubergines on our farm grow for nothing.'] }, { t: ['（摇头吐舌，半日说不出话来）', '(Shake your head and stick out your tongue, speechless for a long while.)'] }],
+                  bestAfter: ['你一面说，一面慢慢的吃完了酒，还只管细玩那杯。', 'Saying so, you slowly finished your wine, and kept turning the cup over to admire it.'],
+                  after: ['半日，你摇头吐舌说道：“我的佛祖！倒得十来只鸡来配他，怪道这个味儿！”众人都笑了。', 'After a long while you shook your head, stuck out your tongue and said: “Merciful Buddha! It takes a dozen chickens to go with it — no wonder it tastes like that!” Everyone laughed.'],
+                  ch: ['第四十一回', 'Chapter 41'] } },
+              { text: { title: '茄鲞', titleEn: 'Aubergine Relish', ch: '第四十一回', chEn: 'Chapter 41',
+                p: ['吃过酒，老太太带了众人往栊翠庵来。妙玉忙接了进去。'],
+                pEn: ['After the wine the old lady led everyone to the Green Lattice Nunnery. Miaoyu hurried out to welcome them in.'] } }] },
+    /* ---------------- 第四十一回：栊翠庵品茶 ---------------- */
+    { tip: '跟老太太去栊翠庵。妙玉在庵里奉茶。', tipEn: 'Follow the old lady to the Green Lattice Nunnery. Miaoyu is serving tea.', label: '吃茶', labelEn: 'Have tea', place: 'longcui',
+      ch: ['第四十一回', 'Chapter 41'],
+      npcs: [{ who: '妙玉', whoEn: 'Miaoyu', color: '#d8d2c4', anchor: 'longcui' },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', anchor: 'longcui', off: 2.2 }],
+      pages: [{ say: [['贾母', 'The Lady Dowager', '我们才都吃了酒肉，你这里头有菩萨，冲了罪过。我们这里坐坐，把你的好茶拿来，我们吃一杯就去了。', 'We’ve all just had wine and meat, and you have the Buddha here — we mustn’t offend. We’ll sit out here; bring your good tea, we’ll have a cup and go.'],
+                      ['', '', '妙玉亲自捧了一个海棠花式雕漆填金云龙献寿的小茶盘，里面放一个成窑五彩小盖钟，捧与老太太。', 'Miaoyu herself brought a small carved-lacquer tray shaped like a crab-apple blossom, gilded with clouds and dragons, holding a little covered cup of Chenghua five-colour porcelain, and offered it to the old lady.'],
+                      ['贾母', 'The Lady Dowager', '我不吃六安茶。', 'I don’t drink Lu’an tea.'],
+                      ['妙玉', 'Miaoyu', '知道。这是老君眉。', 'I know. This is Old Master’s Eyebrow.'],
+                      ['贾母', 'The Lady Dowager', '是什么水？', 'And the water?'],
+                      ['妙玉', 'Miaoyu', '是旧年蠲的雨水。', 'Rainwater, saved from last year.'],
+                      ['', '', '老太太吃了半盏，便笑着递与你说：“你尝尝这个茶。”你便一口吃尽——', 'The old lady drank half the cup and passed it to you with a smile: “Try this tea.” You drank it down in one gulp —']], btn: ['……', '…'] },
+              { ask: { q: ['你怎么说？', 'What do you say?'],
+                  opts: [{ t: ['好是好，就是淡些，再熬浓些更好了。', 'Good it is, only a bit weak — brew it stronger and it’d be better still.'], best: 1 }, { t: ['这是什么好茶？比俺们庄上的大碗茶香多了。', 'What fine tea! Much more fragrant than the big-bowl tea back home.'] }, { t: ['这么小一个盅子，还不够润嗓子的。', 'Such a tiny cup — not enough to wet my throat.'] }],
+                  bestAfter: ['老太太众人都笑起来。', 'The old lady and everyone burst out laughing.'],
+                  after: ['众人都笑。你咂咂嘴，又道：“好是好，就是淡些，再熬浓些更好了。”老太太众人越发笑起来。', 'Everyone laughed. You smacked your lips and added: “Good it is, only a bit weak — brew it stronger and it’d be better still.” The old lady and everyone laughed all the more.'],
+                  ch: ['第四十一回', 'Chapter 41'] } },
+              { text: { title: '栊翠庵茶品梅花雪', titleEn: 'Tea at Green Lattice Nunnery', ch: '第四十一回', chEn: 'Chapter 41',
+                p: ['那成窑的茶杯，妙玉嫌你吃过，叫人不要收了，搁在外头去。宝玉悄悄讨了来，说给你拿去卖了，也可以度日。',
+                    '出了栊翠庵，你吃多了酒和油腻，又喝了些茶，肚子里一阵乱响，忙要出恭。一个婆子领你去了，回来却找不着路——'],
+                pEn: ['Because you had drunk from it, Miaoyu would not have the Chenghua cup taken back; she had it left outside. Baoyu quietly begged it from her, saying you could sell it and live on the money.',
+                      'Leaving the nunnery, between the wine, the rich food and the tea, your stomach began to rumble and you hurried off to the privy. An old woman showed you the way — but on the way back you couldn’t find it —'] } }] },
+    /* ---------------- 第四十一回：醉卧怡红院 ---------------- */
+    { tip: '你迷了路，酒也上了头。跟着光柱走，看看是哪里。', tipEn: 'You’ve lost your way, and the wine has gone to your head. Follow the beam of light and see where you end up.',
+      label: '进屋看看', labelEn: 'Go in and look', place: 'yihong', ch: ['第四十一回', 'Chapter 41'],
+      npcs: [{ ghost: 1, at: () => [104, 137], floor: () => roomY('yihong_in') }],
+      pages: [{ say: [['', '', '你东绕西绕，穿过一带竹篱，进了一个院子，又进了房门。只见迎面一个女孩儿，满面含笑迎了出来。你忙笑道：“姑娘们把我丢下了，叫我碰头碰到这里来。”说了，只见那女孩儿不答。你便赶来拉她的手，“咕咚”一声，便撞到板壁上——原来是一幅画儿。', 'You wandered this way and that, through a bamboo fence, into a courtyard and in at a door. A girl came smiling to meet you. “The young ladies left me behind,” you said, laughing, “and I’ve bumped my way here.” She didn’t answer. You went to take her hand — and thudded into the wall. It was a painting.'],
+                      ['', '', '你又转了几转，见一个老婆子也从外面迎了进来，头上满满的插着花。你只当是亲家母，诧异道——', 'You turned and turned again, and saw an old woman coming in to meet you, her head stuck full of flowers. You took her for your kinswoman and said in surprise —']], btn: ['……', '…'] },
+              { ask: { q: ['你对那“亲家母”说——', 'You say to your “kinswoman” —'],
+                  opts: [{ t: ['你好没见世面，见这园里的花好，你就没死活戴了一头。', 'You’ve never seen anything, have you? You see the pretty flowers in this garden and stick a whole headful on, never mind if you live or die!'], best: 1 }, { t: ['亲家母，你也来逛园子了？', 'Kinswoman! You’ve come to see the garden too?'] }, { t: ['（伸手去拉她）', '(Reach out to take her hand.)'] }],
+                  bestAfter: ['那老婆子只是笑，也不答言。你伸手一摸，再细一看，原来是一面嵌在板壁上的大穿衣镜，里头那个戴了一头花的，正是你自己。', 'The old woman only laughed and said nothing. You reached out, felt, looked closer — it was a great dressing mirror set into the wall, and the woman with the headful of flowers was you.'],
+                  after: ['那老婆子也伸手来拉你，你一摸，冰凉的——原来是一面嵌在板壁上的大穿衣镜，里头那个戴了一头花的，正是你自己。', 'The old woman reached out too; you touched — ice-cold. It was a great dressing mirror set into the wall, and the woman with the headful of flowers was you.'],
+                  ch: ['第四十一回', 'Chapter 41'] } },
+              { fade: { msg: ['你东一摸西一摸，转进了一间屋子，只见一副最精致的床帐。此时又带了七八分醉，又走乏了，便一屁股坐在床上，身不由己，前仰后合的，朦胧着两眼，一歪身就睡熟在床上……鼾齁如雷。', 'Groping about, you found yourself in a room with the most exquisite bed and curtains. Seven or eight parts drunk and worn out with walking, you plumped down on the bed, swayed back and forth with eyes half shut, toppled over, and fell fast asleep… snoring like thunder.'], hold: 3600 } },
+              { say: [['', '', '袭人找来，进了房门，只闻得酒屁臭气，满屋一瞧，只见你扎手舞脚的仰卧在床上。袭人这一惊不小，忙上来将你没死活的推醒。', 'Xiren came looking, stepped in, and was met by a reek of wine; there you were, sprawled on your back across the bed, arms and legs flung out. Thoroughly alarmed, she shook you awake for all she was worth.'],
+                      ['袭人', 'Xiren', '不相干，有我呢。你随我出来。', 'Never mind — I’m here. Come out with me.'],
+                      ['袭人', 'Xiren', '你就说醉倒在山子石上打了个盹儿。', 'Just say you got drunk and dozed off on the rockery.']], btn: ['跟她出去', 'Follow her out'] },
+              { fade: { msg: ['当晚你又在老太太那里歇了一夜。次日清早，该回去了。', 'You spent one more night at the old lady’s. Early next morning, it was time to go home.'], to: 'gate', at: [0, 104, 0], hour: 7.4, hold: 2600 } }] },
+    /* ---------------- 第四十二回：平儿打点东西，回乡 ---------------- */
+    { tip: '第二天一早，你要回去了。到正门去找平儿，她替你打点好了东西。', tipEn: 'Next morning you’re going home. Go to the Main Gate and find Pinger — she has packed everything for you.',
+      label: '和平儿说话', labelEn: 'Talk to Pinger', place: 'gate', ch: ['第四十二回', 'Chapter 42'], face: () => [0, 90],
+      npcs: [{ who: '平儿', whoEn: 'Pinger', color: '#c9a3b6', at: () => [-5, 111.5] }],
+      pages: [{ say: [['平儿', 'Pinger', '这是昨日你要的青纱一匹，奶奶另外送你一个实地子月白纱作里子。这是两个茧绸，作袄儿裙子都好。这包袱里是两匹绸子，年下做件衣裳穿。这是一盒子各样内造小饽饽儿，也有你吃过的，也有你没吃过的，拿去摆碟子请人，比买的强些。', 'Here’s the bolt of blue gauze you asked for yesterday, and my mistress adds a moon-white gauze for lining. These two are pongee — good for a jacket or a skirt. In this bundle, two bolts of silk to make clothes for New Year. Here’s a box of all sorts of palace pastries — some you’ve tasted, some you haven’t — set them out for guests, better than anything you could buy.'],
+                      ['平儿', 'Pinger', '这两条口袋是你昨日装瓜果子来的，如今这一个里头装了两斗御田粳米，熬粥是难得的；这一条里头是园子里果子和各样干果子。这两包每包里头五十两，共是一百两，是太太给的，叫你拿去或者作个小本买卖，或者置几亩地，以后再别求亲靠友的。', 'These two sacks you brought your melons and fruit in yesterday: one now holds two pecks of rice from the imperial fields — rare for porridge; the other, fruit from the garden and all kinds of dried fruit. And these two packets of fifty taels each, a hundred in all, are from Her Ladyship — use them to set up a little trade or buy a few acres, so you need never depend on friends and relatives again.'],
+                      ['', '', '你只管念佛，听平儿如此说，越发感激不尽。', 'You kept calling on the Buddha, and hearing all this, your gratitude knew no bounds.']], btn: ['……', '…'] },
+              { text: { title: '刘姥姥回乡', titleEn: 'Granny Liu Goes Home', ch: '第四十二回', chEn: 'Chapter 42',
+                p: ['你带着板儿，坐上车出了角门，回乡去了。',
+                    '那园子，老太太已叫四姑娘惜春照样画一张。你回去说给庄上的人听：画儿上那样的地方，原来是真有的。'],
+                pEn: ['You climbed into the cart with Ban’er, went out by the side gate, and headed home to the country.',
+                      'As for the garden — the old lady has had Fourth Miss, Xichun, set about painting it just as it is. Back home you tell the village: the places in the pictures are real after all.'] } }] }
   ],
-  tail: ['早饭摆在了探春的秋爽斋，老太太带着众人坐船过去。先在园子里四处看看吧。', 'Breakfast is laid at Tanchun’s Autumn Freshness Studio, and the old lady is going over by boat. Look around for now.']
+  tail: ['刘姥姥进大观园 · 完。可以在园子里随便走走，或点「入园」从头再来。', 'Granny Liu Visits the Garden · The End. Wander the garden as you like, or press “Play” to start again.']
 };
 /* 室内地面：取室内模型的位置（懒加载前用院落地面） */
 function roomY(id) { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + 0.48 : null; }
@@ -559,7 +726,9 @@ function storyWorld() {
   st.npcs.forEach((n, i) => {
     const v = npcAt(n); let face;
     if (fa) face = new V3(fa[0], 0, fa[1]); else { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); }
-    const f = place(makeFigure(n.color, true), v, face);
+    if (n.prop) { place(makeProp(n.prop), v, face); return; }
+    const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male), v, face);
+    if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
     if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
     addTag(() => T(n, 'who'), f, 2.15, i === 0);
   });
@@ -568,7 +737,7 @@ function storyWorld() {
 function renderStory() {
   const st = LIU.steps[S.q], dots = LIU.steps.map((_, i) => `<i class="${i < S.q ? 'on' : ''}"></i>`).join('');
   questEl.innerHTML = st
-    ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('第四十回', 'Chapter 40')} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}${flowerHat && flowerHat.parent ? L(' · 一头菊花', ' · a head full of chrysanthemums') : ''}</div><div class="dots">${dots}</div>`
+    ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${esc(L(...(st.ch || ['第四十回', 'Chapter 40'])))} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}${flowerHat && flowerHat.parent ? L(' · 一头菊花', ' · a head full of chrysanthemums') : ''}</div><div class="dots">${dots}</div>`
     : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${esc(L(...LIU.tail))}</p><div class="dots">${dots}</div>`;
   questEl.hidden = !walk.on;
 }
@@ -585,7 +754,7 @@ const say1 = ([w, wE, l, lE]) => w ? `<p class="prose"><b>${esc(L(w, wE))}</b>${
 function runPages(pages, k, done) {
   const pg = pages[k]; if (!pg) { done(); return; }
   const go = () => runPages(pages, k + 1, done);
-  if (pg.say) { openModal(() => `<div class="ey">${esc(T(LIU, 'name'))} · ${L('第四十回', 'Chapter 40')}</div>${pg.say.map(say1).join('')}<button class="g-btn" id="g-next">${esc(L(...(pg.btn || ['继续', 'Continue'])))}</button>`,
+  if (pg.say) { openModal(() => `<div class="ey">${esc(T(LIU, 'name'))} · ${esc(L(...(LIU.steps[S.q]?.ch || ['第四十回', 'Chapter 40'])))}</div>${pg.say.map(say1).join('')}<button class="g-btn" id="g-next">${esc(L(...(pg.btn || ['继续', 'Continue'])))}</button>`,
       () => { if (pg.then === 'flowers') { putFlowers(true); renderStory(); } go(); }); return; }
   if (pg.ask) { const A = pg.ask;
     openModal(() => `<div class="ey">${esc(L(...A.ch))}</div><p class="prose">${esc(L(...A.q))}</p><div class="g-opts g-say">${A.opts.map((o, i) => `<button class="g-opt" data-i="${i}"><i>${i + 1}</i>${esc(L(...o.t))}</button>`).join('')}</div>`, null,
@@ -593,13 +762,49 @@ function runPages(pages, k, done) {
         openModal(() => `<div class="ey">${esc(L(...A.ch))}</div>${o.best ? `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${esc(A.bestAfter ? L(...A.bestAfter) : L('众人都笑了。', 'Everyone laughed.'))}</p>` : `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${esc(L(...A.after))}</p>`}<button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); }); });
     return; }
   if (pg.fx === 'slip') { slipAnim(go); return; }
+  if (pg.fade) { fadeDo(pg.fade, go); return; }
   if (pg.text) { const R = pg.text;
     openModal(() => `<div class="ey">${esc(T(R, 'ch'))}</div><h3>${esc(T(R, 'title'))}</h3>${(EN() ? R.pEn : R.p).map(t => `<p class="prose">${esc(t)}</p>`).join('')}<div class="ch">${EN() ? `See <i>Dream of the Red Chamber</i>, ${esc(R.chEn)}` : `见《红楼梦》${esc(R.ch)}`}</div><button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); return; }
   go();
 }
 function storyInteract(t) {
   const st = LIU.steps[S.q]; blip(660);
-  runPages(st.pages, 0, () => { S.q++; S.done.liu = Math.max(S.done.liu || 0, S.q); saveDone(); storyWorld(); const n = LIU.steps[S.q]; if (n) flash(T(n, 'tip')); });
+  runPages(st.pages, 0, () => { S.q++; S.done.liu = Math.max(S.done.liu || 0, S.q); saveDone();
+    if (S.q >= LIU.steps.length) { finishStory(); return; }
+    storyWorld(); flash(T(LIU.steps[S.q], 'tip')); });
+}
+const liuDone = () => (S.done.liu || 0) >= LIU.steps.length;
+/* 走完刘姥姥：自由探索；原来的人物心事、赠礼都从这里接进来 */
+function endStory() { S.story = null; S.stage = 'pick'; clearWorld(); if (banEr) scene.remove(banEr); putFlowers(false); questEl.hidden = true; }
+function finishStory() {
+  clearWorld(); blip(990);
+  openModal(() => `<div class="ey">${L('第三十九回 至 第四十二回', 'Chapters 39–42')}</div><h3>${L('刘姥姥进大观园 · 完', 'Granny Liu Visits the Garden · The End')}</h3>
+    <p class="prose">${L('园子现在是你的了。可以随便走走，进各处院落、屋里看看；也可以选一个园中人，替她把心事办了；或者把园子里的一处地方，连同一份礼和一句话，送给现实中的一个人。', 'The garden is yours now. Wander anywhere, step into the courtyards and rooms; or choose someone who lives here and help with their wishes; or give a spot in the garden, with a gift and a message, to someone in real life.')}</p>
+    <div class="g-opts"><button class="g-opt" id="g-end-walk"><i>1</i>${L('在园子里随便走走', 'Wander the garden')}</button><button class="g-opt" id="g-end-chars"><i>2</i>${L('选一个人入园，办她的心事', 'Choose someone and help with their wishes')}</button><button class="g-opt" id="g-end-gift"><i>3</i>${L('赠一份礼', 'Give a gift')}</button></div>`, null,
+    () => { $('g-end-walk').onclick = () => { closeModal(); endStory(); flash(L('自由探索 · 点「入园」可以选人物、收礼赠礼', 'Free exploration · press “Play” to choose someone or give a gift')); };
+            $('g-end-chars').onclick = () => { closeModal(); endStory(); showStart(); };
+            $('g-end-gift').onclick = () => { endStory(); giftForm(); }; });
+}
+/* 黑屏转场：字幕一句，必要时换个地方（坐船到对岸） */
+const fadeEl = $('g-fade');
+function fadeDo(F, done) {
+  pauseGame(true); fadeEl.querySelector('p').textContent = L(...F.msg); fadeEl.classList.add('on');
+  setTimeout(() => { if (F.to) { const sp = placeById(F.to).spawn, [x, z, yaw] = F.at || sp, g = groundAt(x, z, 99)[0];
+      walk.pos.set(x, g, z); walk.feet = g; walk.vel.set(0, 0, 0); walk.vy = 0; walk.yaw = walk.charYaw = yaw;
+      if (banEr) banEr.position.set(x + 1, groundAt(x + 1, z + 1, g + 1)[0], z + 1); }
+    if (F.hour != null) setWorld(null, F.hour); },
+    1200);
+  setTimeout(() => { fadeEl.classList.remove('on'); }, 1200 + (F.hold || 2600));
+  setTimeout(() => { pauseGame(false); done(); }, 2400 + (F.hold || 2600));
+}
+/* 宴席上的小摆设 */
+function makeProp(kind) {
+  const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: '#5a3422', roughness: 0.6 });
+  if (kind === 'table') { const top = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.07, 0.95), wood); top.position.y = 0.78; g.add(top);
+    for (const sx of [-0.82, 0.82]) for (const sz of [-0.4, 0.4]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.76, 0.07), wood); l.position.set(sx, 0.38, sz); g.add(l); }
+    const cols = ['#f2efe6', '#c8322e', '#e3b23c', '#7aa0b8'];
+    for (let k = 0; k < 7; k++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.08, 0.05, 14), new THREE.MeshStandardMaterial({ color: cols[k % 4], roughness: 0.4 })); d.position.set(-0.66 + k * 0.22, 0.84, (k % 2 ? 0.18 : -0.16)); g.add(d); } }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return g;
 }
 /* 苍苔上滑一跤：人往前扑倒，停一会儿，再爬起来 */
 function slipAnim(done) {
@@ -682,7 +887,7 @@ function reveal(Q) {
 function encodeGift(g) { const s = btoa(unescape(encodeURIComponent(JSON.stringify(g)))); return 'DGY-' + s.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function decodeGift(code) { try { let s = code.replace(/^.*#gift=/, '').replace(/^DGY-/, '').replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const g = JSON.parse(decodeURIComponent(escape(atob(s)))); return g && g.p ? g : null; } catch (e) { return null; } }
 function giftForm() {
-  const C = CHARS[S.char]; let keep = null, made = null;
+  const C = CHARS[S.char] || { name: LIU.name, nameEn: LIU.nameEn, start: 'gate' }; let keep = null, made = null;
   const showCode = (g, code) => { $('gf-out').innerHTML = `<div class="g-code" id="gf-code">${esc(code)}</div><p class="prose" style="margin-top:8px">${EN() ? `Send the code to them. They open the Grand View Garden, press “Play”, paste the code under “Receive”, and will be led to ${esc(pname(placeById(g.p)))} to find your gift.` : `把赠礼码发给对方。对方打开大观园，点「入园」，把码贴进「收礼」，就会被带到${esc(placeById(g.p).name)}，找到你的礼。`}</p>`; };
   const build = () => { // 切换语言重绘时保留已填写的内容
     if ($('gf-f')) { keep = {}; for (const k of 'ftnpm') keep[k] = $('gf-' + k).value; }
@@ -792,4 +997,4 @@ addEventListener('dgy-lang', () => {
 window.__game = { S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
-{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else liuIntro(); }
+{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else if (liuDone()) showStart(); else liuIntro(); }
