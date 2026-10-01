@@ -166,6 +166,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { Tree as EZTree } from 'ez-tree';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { Reflector } from 'three/addons/objects/Reflector.js';
 
 const loadingEl=document.getElementById('loading'),loadStep=document.getElementById('load-step');
 const fail=(msg)=>{window.__DGY_ERR=1;loadingEl.innerHTML='场景搭建出错<small>'+msg+'</small>';};
@@ -524,6 +525,15 @@ const BMR={ // name -> [color, roughness, tri, extra]
  '茅草':['#b39a68',1,{a:'thatch_r.jpg',n:'thatch_n.jpg',s:2.0,mode:'replace',nk:1.0},{snow:1,side:2}],'茅草旧':['#8d7c5c',1,{a:'thatch_r.jpg',n:'thatch_n.jpg',s:2.0,mode:'replace',nk:1.0},{snow:1,side:2}],'茅草新':['#c9b070',1,{a:'thatch_r.jpg',n:'thatch_n.jpg',s:2.0,mode:'replace',nk:1.0},{snow:1,side:2}],
  '草绳':['#9d885a',.95],'草':['#6f8a3f',.95,null,{side:2}],'散草':['#a99a5e',.95,null,{side:2}],'苔地':['#5c6e3a',.95,{a:'g_a.jpg',s:2.0,k:0.7}],'苔缝':['#556638',.95],
  '荷梗':['#5e7a3a',.8],'荷叶':['#4f7a3a',.7,null,{side:2}],'粉花':['#f0b6c6',.6,null,{side:2}],'藤':['#5a4a34',.9],'藤叶':['#4d7a3a',.7,null,{side:2}],'叶绿':['#527f3c',.7,null,{side:2}],'异草':['#6c8c48',.8,null,{side:2}],'珊瑚豆':['#c8342a',.4],
+ /* ---- 室内陈设（blender/scripts/interiors）---- */
+ '紫檀':['#3a1f17',.42,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'花梨':['#7a4a2a',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'黄花梨':['#9a6a3a',.48,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'藤编':['#a88a55',.85,{a:'thatch_r.jpg',s:0.6,k:0.4}],
+ '锦缎':['#9a2a2a',.75],'锦缎黄':['#c8a040',.7],'锦帐':['#d39a98',.85,null,{alpha:0.72,side:2}],'碧纱':['#a9c8b0',.85,null,{alpha:0.5,side:2,em:1}],'青纱':['#8fa6ad',.85,null,{alpha:0.5,side:2}],'素绸':['#ece6d8',.85],
+ '粗布':['#9a8a6c',.95],'红毡':['#7e2a26',.95,{a:'g_a.jpg',s:4.0,k:0.25}],'蒲席':['#b49a62',.9,{a:'thatch_r.jpg',s:0.8,k:0.5}],
+ '书函':['#2e3f5c',.85],'书函黄':['#9a7a3a',.85],'书页':['#e9dfc6',.9],'画绢':['#d9ccaa',.9],'画心':['#e6dcc0',.9],'绫裱':['#6f8a8a',.8],'美人画':['#e6dcc0',.85],'墨竹图':['#e9e1c8',.85],
+ '瓷白':['#f1f0ea',.18],'青花':['#3a5a9a',.2],'青瓷':['#9fbfa8',.2],'土定':['#d6cbb2',.45],'紫砂':['#7a4030',.5],'粉彩':['#ecb8b0',.22],'玉':['#cfe2c6',.25],'陶':['#8a5a3a',.8],
+ '镜面':['#dfe3e0',.02,null,{metal:1}],'穿衣镜':['#dfe3e0',.02,null,{metal:1}],'铁':['#3a3a3a',.6,null,{metal:0.6}],'炭':['#2a2420',1],'烛':['#efe4cc',.6],
+ '菊黄':['#e8c04a',.6,null,{side:2}],'花红':['#d0485a',.6,null,{side:2}],'花白':['#f6f2ea',.6,null,{side:2}],'石':['#8f8e86',.9,{a:'r_a.jpg',n:'r_n.jpg',s:1.2,mode:'replace',nk:0.8}],'稻草':['#c9b070',.95,{a:'thatch_r.jpg',s:1.0,k:0.5}],
+ '碧绿凿花砖':['#5d7d68',.55,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.3,k:0.55,nk:0.6}],'天花':['#2c5a4b',.7],'天花心':['#2e4c72',.6],
  '青布':['#33456a',.95,null,{side:2}],'白布':['#e9e4d4',.95,null,{side:2}],'墨':['#17161a',.7],'刻字':['#2a2a2a',.7],'经文':['#3a3630',.7],'麻绳':['#a08a5a',.95],
 };
 const BMW={'YZ_虎皮石':'mg','YZ_石子甬路':'g','SAMPLE_旧绿漆木':'f','XS_灰瓦色差_0':'m','XS_灰瓦色差_1':'m','XS_灰瓦色差_2':'m','XS_灰瓦色差_3':'m','XS_灰瓦色差_4':'m','XS_灰瓦色差_5':'m','XS_灰瓦色差_6':'m','MAT_廊面青砖_养护旧化_paving':'mg','MAT_台帮青砖块_养护旧化_wall':'g','MAT_青灰石_微风化_养护旧化_wall':'g','XS_旧白灰墙':'g','SAMPLE2_深绿漆':'f','MAT_暗褐旧木_顺纹':'f','XS_门窗深褐木':'f','XS_顶棚暖木':'f','灰瓦':'m','亭顶瓦':'m','花堵瓦':'m','黄琉璃瓦':'m','黄琉璃瓦.001_底瓦':'m','绿琉璃瓦':'m','绿琉璃瓦.001_底瓦':'m','茅草':'m','茅草旧':'m','茅草新':'m','方砖地':'mg','青砖':'g','水磨砖':'g','白灰墙':'g','赭墙':'g','黄泥墙':'g','虎皮石':'mg','青石':'g','汉白玉':'g','朱漆':'f','绿漆':'f','旧木':'f','本色木':'f','栗色柱':'f','栗壳漆':'f','栗壳漆_柱':'f','彩画青':'f','枋青':'f','daguan_彩画青':'f','daguan_彩画绿':'f','枋绿':'f','包袱':'f','油壁':'fg','竹篱':'f','竹竿':'f','山石':'m','太湖石':'m','湖石':'m'};
@@ -548,13 +558,15 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'cuizhang',p:[0,height(0,96)-0.05,96],ry:0},
   // 新景点（Blender：blender/scripts/sites/build_sites.py）。正面均朝局部 +z，这里转成面向湖水。
   {id:'luxue',p:[75,1.15,-16],ry:Math.PI/2},{id:'aojing',p:[-35,1.0,0],ry:Math.PI/2},{id:'tubi',p:[-60,4.8,-20],ry:Math.PI/2},
+  // 室内陈设（blender/scripts/interiors），园子载完后再懒加载
+  {id:'yihong_in',p:[85,Z.yihong.y,65],ry:0,lazy:1},{id:'xiaoxiang_in',p:[-82,Z.xiaoxiang.y+0.1,27],ry:0,lazy:1},
   {id:'mudanting',file:'qinfang',keep:/亭柱|额枋|彩画|匾_匾底|亭顶瓦|望板|垂脊/,p:[Z.mudan.x,Z.mudan.y+0.14,Z.mudan.z],ry:0}];
- await Promise.all(defs.map(async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
+ const one=async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   root.traverse(m=>{if(!m.isMesh)return;const nm=m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
-  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});
+  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);
   if(d.cards)fetch('tex/'+d.cards).then(r=>r.json()).then(recs=>{const TL=new THREE.TextureLoader();const B2G=new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,0,0,1);
    for(const rc of recs){const t=TL.load('tex/'+rc.tex);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.55,metalness:0}),{alphaFix:1,key:'xxw'+rc.tex}));
     const [ax,ay]=rc.axes,lo=rc.lo,hi=rc.hi,mid=(lo[rc.thin]+hi[rc.thin])/2;
@@ -566,7 +578,70 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
    if(d.id==='qinfang'&&hz>5&&h>1.5){const y0=0.86,y1=top,N=28;for(let i=0;i<N;i++){const za=-hz+i/N*2*hz,zb=za+2*hz/N,zc=(za+zb)/2;const u=Math.max(0,(Math.abs(zc)-2.8)/(hz-2.8));const y=y1-(y1-y0)*(u*u*(3-2*u));const sx=wx+(lx)*c+zc*s,sz=wz-(lx)*s+zc*c;colAdd({x:d.p[0]+lx*c+zc*s,z:d.p[2]-lx*s+zc*c,c,s,hx,hz:hz/N+0.02,top:d.p[1]+y,bot:d.p[1]+bot,walk:true});}continue;}
    if(d.id==='qinfang'&&bot>2.5){colAdd({x:wx,z:wz,c,s,hx,hz,top:d.p[1]+top,bot:d.p[1]+bot,walk:true});continue;}
    colAdd({x:wx,z:wz,c,s,hx,hz,top:d.p[1]+top,bot:d.p[1]+bot,walk:h<0.5});if(h>1.5&&Math.max(hx,hz)>3&&Math.min(hx,hz)<1.2)WALLSEG.push({x:wx,z:wz,c,s,hx,hz});}
- }catch(e){console.warn('glb',d.id,e);}}));}
+ }catch(e){console.warn('glb',d.id,e);}};
+ await Promise.all(defs.filter(d=>!d.lazy).map(one));LAZY_BLD=()=>Promise.all(defs.filter(d=>d.lazy).map(one));}
+/* ---- 室内：懒加载的 *_in 模型的后处理（画、穿衣镜）与室内补光 ---- */
+let LAZY_BLD=null;const INTER=[];
+// rooms：房间范围（模型局部，网页坐标 x0,z0,x1,z1,地面 y,顶 y）；lights：补光位置
+const INTER_DEF={
+ xiaoxiang_in:{name:'潇湘馆',rooms:[[-3.7,-2.55,3.7,1.78,0.48,5.02]],lights:[[0,4.0,-0.4],[-2.5,3.8,-0.4],[2.5,3.8,-0.4]]},
+ yihong_in:{name:'怡红院 · 正房',rooms:[[-7.9,-15.3,7.9,-4.9,0.8,5.6]],lights:[[0,4.4,-11.6],[0,3.4,-6.4],[6.2,3.6,-12.4],[-6,3.6,-11.5]]},
+};
+function planarUV(mesh,look){const g=mesh.geometry;g.computeBoundingBox();const bb=g.boundingBox,sz=bb.getSize(new V3());
+ const ax=['x','y','z'];const thin=ax.reduce((a,b)=>sz[a]<sz[b]?a:b);const n=new V3();n[thin]=1;if(look&&look.dot(n)<0)n.negate();
+ const up=new V3(0,1,0);const right=new V3().crossVectors(n.clone().negate(),up).normalize();
+ const P=g.attributes.position,uv=new Float32Array(P.count*2),v=new V3();
+ const r0=Math.min(...[0,1,2,3,4,5,6,7].map(i=>new V3(i&1?bb.max.x:bb.min.x,i&2?bb.max.y:bb.min.y,i&4?bb.max.z:bb.min.z).dot(right))),rw=Math.abs(right.x)*sz.x+Math.abs(right.y)*sz.y+Math.abs(right.z)*sz.z;
+ for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i);uv[i*2]=(v.dot(right)-r0)/rw;uv[i*2+1]=(v.y-bb.min.y)/sz.y;}g.setAttribute('uv',new THREE.BufferAttribute(uv,2));}
+// 第四十一回：刘姥姥把画上的女孩儿当了真人
+function drawMeiren(){return cnv(512,680,(g,w,h)=>{g.fillStyle='#e7dcbf';g.fillRect(0,0,w,h);const rr=mulberry32(41);for(let i=0;i<2500;i++){g.fillStyle=`rgba(120,90,40,${rr()*0.05})`;g.fillRect(rr()*w,rr()*h,2,2);}
+ // 远处芭蕉、湖石
+ g.fillStyle='rgba(70,110,70,.55)';for(let k=0;k<5;k++){g.beginPath();const x=60+k*22,y=470-k*30;g.ellipse(x,y,22,90,-0.5+k*0.15,0,Math.PI*2);g.fill();}
+ g.fillStyle='rgba(120,120,110,.5)';g.beginPath();g.moveTo(330,560);g.bezierCurveTo(300,470,380,430,420,480);g.bezierCurveTo(460,520,430,580,330,560);g.fill();
+ const cx=w*0.55;// 仕女：发髻、面、长裙、披帛
+ g.fillStyle='#d9a8a8';g.beginPath();g.moveTo(cx-34,230);g.bezierCurveTo(cx-90,420,cx-110,560,cx-80,620);g.lineTo(cx+80,620);g.bezierCurveTo(cx+90,520,cx+60,380,cx+34,230);g.closePath();g.fill();
+ g.fillStyle='#f3ece0';g.beginPath();g.moveTo(cx-30,232);g.bezierCurveTo(cx-60,300,cx-62,360,cx-50,400);g.lineTo(cx+48,400);g.bezierCurveTo(cx+60,340,cx+52,290,cx+30,232);g.fill();
+ g.strokeStyle='#7b4a3a';g.lineWidth=2;for(let k=0;k<7;k++){g.beginPath();g.moveTo(cx-20+k*7,410);g.bezierCurveTo(cx-40+k*12,500,cx-50+k*16,560,cx-60+k*20,616);g.stroke();}
+ g.strokeStyle='rgba(90,140,150,.85)';g.lineWidth=7;g.beginPath();g.moveTo(cx-40,260);g.bezierCurveTo(cx-120,330,cx-70,420,cx-140,520);g.stroke();g.beginPath();g.moveTo(cx+40,260);g.bezierCurveTo(cx+110,320,cx+90,430,cx+130,500);g.stroke();
+ g.fillStyle='#f3ece0';g.beginPath();g.ellipse(cx-6,348,26,14,0.2,0,Math.PI*2);g.fill();// 袖中执扇
+ g.fillStyle='#e8d4a8';g.beginPath();g.moveTo(cx-10,350);g.arc(cx-10,350,46,-2.3,-0.9);g.closePath();g.fill();g.strokeStyle='#8a6a3a';g.lineWidth=1.5;g.stroke();
+ g.fillStyle='#f6e7d8';g.beginPath();g.ellipse(cx,196,26,32,0,0,Math.PI*2);g.fill();g.strokeStyle='#8a5a4a';g.lineWidth=1.2;g.stroke();
+ g.fillStyle='#1d1a1a';g.beginPath();g.ellipse(cx,170,32,22,0,Math.PI,Math.PI*2);g.fill();g.beginPath();g.ellipse(cx+4,138,22,20,0.3,0,Math.PI*2);g.fill();g.beginPath();g.ellipse(cx-30,190,8,24,0.1,0,Math.PI*2);g.fill();g.beginPath();g.ellipse(cx+30,190,8,24,-0.1,0,Math.PI*2);g.fill();
+ g.fillStyle='#c0303a';g.beginPath();g.arc(cx-14,130,5,0,Math.PI*2);g.fill();g.fillStyle='#e0b855';g.fillRect(cx+16,126,22,3);
+ g.fillStyle='#2a2020';g.fillRect(cx-12,194,8,2);g.fillRect(cx+5,194,8,2);g.fillStyle='#c0404a';g.beginPath();g.ellipse(cx,214,4,2.4,0,0,Math.PI*2);g.fill();
+ g.fillStyle='#2a2420';g.font='30px "Ma Shan Zheng","STKaiti",serif';g.textAlign='center';[...'绛珠仙子图'].forEach((c,i)=>g.fillText(c,60,70+i*36));
+ g.fillStyle='#b8282a';g.fillRect(44,262,32,32);g.fillStyle='#e7dcbf';g.font='20px serif';g.fillText('怡',60,284);});}
+function drawBamboo(){return cnv(400,560,(g,w,h)=>{g.fillStyle='#e9e1c8';g.fillRect(0,0,w,h);const rr=mulberry32(26);
+ const stalk=(x,top,wd,ink)=>{g.strokeStyle=ink;g.lineWidth=wd;let y=h-10;while(y>top){const seg=40+rr()*30;g.beginPath();g.moveTo(x,y-3);g.lineTo(x+(rr()-0.5)*3,Math.max(top,y-seg)+3);g.stroke();y-=seg;}};
+ stalk(150,60,9,'rgba(30,32,28,.85)');stalk(215,140,6,'rgba(30,32,28,.55)');stalk(95,220,4,'rgba(30,32,28,.4)');
+ const leaf=(x,y,a,L,ink)=>{g.fillStyle=ink;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a-0.25)*L*0.5,y+Math.sin(a-0.25)*L*0.5,x+Math.cos(a)*L,y+Math.sin(a)*L);g.quadraticCurveTo(x+Math.cos(a+0.25)*L*0.5,y+Math.sin(a+0.25)*L*0.5,x,y);g.fill();};
+ for(let i=0;i<40;i++){const x=150+(rr()-0.3)*120,y=80+rr()*300;const a=Math.PI*(0.15+rr()*0.7)+(rr()<0.5?0:Math.PI*0.6);leaf(x,y,a,40+rr()*45,`rgba(25,30,25,${0.45+rr()*0.45})`);}
+ g.fillStyle='#2a2420';g.font='26px "Ma Shan Zheng","STKaiti",serif';g.textAlign='center';[...'凤尾森森龙吟细细'].forEach((c,i)=>g.fillText(c,w-40,60+i*32));
+ g.fillStyle='#b8282a';g.fillRect(w-56,330,30,30);});}
+const PAINT={'美人画':drawMeiren,'墨竹图':drawBamboo};
+function fitInterior(id,root){const D=INTER_DEF[id];root.updateMatrixWorld(true);const mirrors=[];
+ root.traverse(m=>{if(!m.isMesh)return;const k=m.material.name;
+  if(PAINT[k]){const c=new V3();if(D){const r=D.rooms[0];c.set((r[0]+r[2])/2,(r[4]+r[5])/2,(r[1]+r[3])/2);}m.geometry.computeBoundingBox();const look=c.sub(m.geometry.boundingBox.getCenter(new V3()));planarUV(m,look);
+   m.material=m.material.clone();m.material.map=tex(PAINT[k](),true);m.material.color.set('#ffffff');m.material.needsUpdate=true;}
+  if(k==='穿衣镜')mirrors.push(m);});
+ for(const m of mirrors){// 西洋穿衣镜：真反射（只在近处渲染）
+  const P=m.geometry.attributes.position;const V=[];for(let i=0;i<P.count;i++){const v=new V3().fromBufferAttribute(P,i);if(!V.some(u=>u.distanceToSquared(v)<1e-6))V.push(v);}
+  if(V.length<8)continue;const c=V.reduce((a,b)=>a.add(b),new V3()).multiplyScalar(1/V.length);const e=V.slice(1).map(v=>v.clone().sub(V[0])).sort((a,b)=>a.length()-b.length());
+  const nrm=e[0].clone().normalize(),ort=e.filter(v=>Math.abs(v.clone().normalize().dot(nrm))<0.05);const a1=ort[0],a2=ort.find(v=>Math.abs(v.clone().normalize().dot(a1.clone().normalize()))<0.05);if(!a1||!a2)continue;const hgt=Math.abs(a1.y)>Math.abs(a2.y)?a1:a2,wid=hgt===a1?a2:a1;const th=e[0].length();
+  for(const sgn of[1,-1]){const n=nrm.clone().multiplyScalar(sgn);const rf=new Reflector(new THREE.PlaneGeometry(wid.length(),hgt.length()),{textureWidth:512,textureHeight:1024,color:0xb8bcb8,clipBias:0.003});
+   rf.position.copy(c).addScaledVector(n,th/2+0.004);const yv=hgt.clone().normalize(),xv=new V3().crossVectors(yv,n).normalize();rf.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xv,yv,n));
+   root.add(rf);rf.updateMatrixWorld(true);MIRRORS.push(rf);}
+  m.visible=false;}
+ if(D)INTER.push({id,root,...D});}
+let LAMP=0;const MIRRORS=[];const _mv=new V3(),_mn=new V3();
+function updateMirrors(){for(const rf of MIRRORS){rf.getWorldPosition(_mv);_mn.set(0,0,1).applyQuaternion(rf.getWorldQuaternion(new THREE.Quaternion()));const to=camera.position.clone().sub(_mv);rf.visible=to.lengthSq()<14*14&&to.dot(_mn)>0;}}
+// 室内补光：相机进到哪间屋，就把两盏暖光挪到那间屋里最近的灯位
+const IPL=[];let inRoom=null;const _li=new V3();
+function updateInteriorLight(lamp){if(!IPL.length)for(let i=0;i<2;i++){const l=new THREE.PointLight(0xffc890,0,14,1.6);scene.add(l);IPL.push(l);}
+ inRoom=null;for(const it of INTER){_li.copy(camera.position);it.root.worldToLocal(_li);for(const r of it.rooms)if(_li.x>r[0]&&_li.x<r[2]&&_li.z>r[1]&&_li.z<r[3]&&_li.y>r[4]-0.5&&_li.y<r[5]+0.5){inRoom=it;break;}if(inRoom)break;}
+ if(!inRoom){IPL.forEach(l=>l.intensity=0);return;}
+ const ls=inRoom.lights.map(p=>{const v=new V3(...p);inRoom.root.localToWorld(v);return v;}).sort((a,b)=>a.distanceToSquared(camera.position)-b.distanceToSquared(camera.position));
+ IPL.forEach((l,i)=>{if(!ls[i]){l.intensity=0;return;}l.position.copy(ls[i]);l.intensity=(2.5+lamp*16)*(i?0.7:1);});}
 /* ---- 稻香村菜畦: instanced impostor crops (Blender-baked cards) ---- */
 function buildCrops(){if(!GLB)return;const y0=Z.daoxiang.y,ox=-92,oz=-62;const TL=new THREE.TextureLoader();
  const defs={rape:{f:'card_rape.png',w:0.62,h:0.9,sp:0.42,jit:0.16},veg:{f:'card_veg.png',w:0.62,h:0.31,sp:0.5,jit:0.14}};
@@ -1411,7 +1486,7 @@ function applyTime(){if(!fogPass)return;
  scene.environmentIntensity=mix(0.15,0.62,day)*(1-snowAmt*0.2);
  const cu=clouds.material.uniforms;cu.lit.value.copy(scol).multiplyScalar(mix(0.05,2.2,day)).lerp(new THREE.Color(1.2,1.25,1.3),snowAmt*0.5);cu.shade.value.set(0.42,0.47,0.55).multiplyScalar(mix(0.03,1.3,day));const sunset=sstep(0.32,0.03,sd.y)*sstep(-0.14,0.0,sd.y);cu.sunset.value=sunset;fu_sunset=sunset;cu.glow.value.setRGB(1.7,0.55,0.32).lerp(new THREE.Color(1.1,0.45,0.75),sstep(0.05,-0.08,sd.y));cu.shade.value.lerp(new THREE.Color(0.55,0.25,0.45),sunset*0.85);cu.cover.value=mix(SEASONS[season].cover,0.22,snowAmt)-0.08*sunset;cu.bright.value=1;
  stars.material.opacity=night*(1-snowAmt);moon.position.copy(moonDir).multiplyScalar(2200).add(camera.position);moon.lookAt(camera.position);moon.material.opacity=night*(1-snowAmt*0.8);
- const lamp=sstep(0.25,0.9,night)+sstep(-0.05,-0.2,-night)*0;MAT.lat.emissiveIntensity=lamp*2.2;MAT.latRaw.emissiveIntensity=lamp*2.0;
+ const lamp=sstep(0.25,0.9,night)+sstep(-0.05,-0.2,-night)*0;LAMP=lamp;MAT.lat.emissiveIntensity=lamp*2.2;MAT.latRaw.emissiveIntensity=lamp*2.0;
  if(lanternMesh)lanternMesh.material.emissiveIntensity=0.3+lamp*9;PL.forEach(l=>l.intensity=lamp*28);PLAQUES.forEach(m=>m.emissiveIntensity=lamp*0.25);BM_EM.forEach(m=>m.emissiveIntensity=lamp*1.6);
  if(fireflies)fireflies.material.opacity=night*(1-snowAmt)*0.95*SEASONS[season].fire;
  if(water){water.material.uniforms.sunDirection.value.copy(sd.y>0?sd:moonDir);water.material.uniforms.sunColor.value.copy(sun.color).multiplyScalar(day*0.9+night*0.15);water.material.uniforms.waterColor.value.set(0x10261f).multiplyScalar(mix(0.15,1,day));}
@@ -1709,7 +1784,7 @@ function frame(){
   controls.update();const gy=hq(camera.position.x,camera.position.z)+1.2;if(camera.position.y<gy)camera.position.y=gy;controls.target.x=clamp(controls.target.x,-220,220);controls.target.z=clamp(controls.target.z,-200,200);}
  G.cam.value.copy(camera.position);
  const focus=walk.on?walk.pos.clone().add(new V3(-Math.sin(walk.yaw)*14,0,-Math.cos(walk.yaw)*14)):controls.target;updateSunShadow(focus);
- plTimer-=dt;if(plTimer<=0){plTimer=0.4;updatePointLights();}
+ plTimer-=dt;if(plTimer<=0){plTimer=0.4;updatePointLights();updateInteriorLight(LAMP);}updateMirrors();
  moon.position.copy(moonDir).multiplyScalar(2200).add(camera.position);moon.lookAt(camera.position);clouds.position.copy(camera.position);stars.position.copy(camera.position);
  lodT-=raw;if(lodT<=0){lodT=0.25;layoutLOD(false);updateFlora(false);}
  updateGrass();updateAudio(dt,dayv);
@@ -1750,7 +1825,7 @@ async function build(){
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
- window.__DGY_OK=1;window.__dgy={THREE,scene,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
+ window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={THREE,scene,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
 const fontReady=document.fonts&&document.fonts.load?document.fonts.load('124px "Ma Shan Zheng"','沁芳顾恩思义大观楼缀锦阁含芳怡红快绿潇湘馆有凤来仪蘅芷清芬杏帘在望栊翠庵藕香榭省亲别墅').catch(()=>{}):Promise.resolve();
 Promise.race([fontReady,new Promise(r=>setTimeout(r,2500))]).then(()=>build()).catch(e=>{console.error(e);fail(String(e&&e.message||e));});
 </script>
