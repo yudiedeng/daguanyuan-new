@@ -31,7 +31,7 @@ const CHARS = {
       {
         title: '乞红梅', at: [3, 10.5], want: '芦雪庵联诗落了第，社长李纨罚你去栊翠庵讨一枝红梅。',
         pick: { place: 'longcui', kind: 'npc', who: '妙玉', color: '#d8d2c4', item: 'mei', label: '一枝红梅', verb: '向妙玉讨', tip: '去栊翠庵，向妙玉讨一枝红梅。' },
-        give: { place: 'daoxiang', who: '李纨', color: '#8e8a80', verb: '交给', tip: '把红梅带回去交给李纨。（芦雪庵尚未建出，暂在稻香村）' },
+        give: { place: 'luxue', who: '李纨', color: '#8e8a80', verb: '交给', tip: '把红梅带回芦雪广，交给李纨。' },
         reveal: {
           title: '访妙玉乞红梅', ch: '第五十回 · 芦雪庵争联即景诗',
           poem: ['酒未开樽句未裁，寻春问腊到蓬莱。', '不求大士瓶中露，为乞孀娥槛外梅。'],
