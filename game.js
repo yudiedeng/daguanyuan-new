@@ -156,7 +156,7 @@ const css = `
 .g-tag{position:fixed;left:0;top:0;transform:translate(-50%,-100%);padding:2px 9px;border-radius:2px;font-family:var(--f-disp);font-size:16px;letter-spacing:.1em;color:var(--ink);background:var(--glass);border:1px solid var(--line);pointer-events:none;white-space:nowrap;z-index:4}
 .g-tag.goal{border-color:var(--cinnabar);color:var(--cinnabar)}
 body.g-playing .card{display:none!important}
-@media (max-width:760px){.g-chars{grid-template-columns:1fr}.g-sheet{padding:20px 18px}.g-sheet h2{font-size:34px}.g-char ol{display:none}#g-quest{top:auto;bottom:calc(170px + env(safe-area-inset-bottom,0px));width:auto;right:16px}#g-prompt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.g-scroll{padding:24px 20px}.g-scroll .poem{font-size:20px}}
+@media (max-width:760px){.g-chars{grid-template-columns:1fr}.g-sheet{padding:20px 18px}.g-sheet h2{font-size:34px}.g-char ol{display:none}#g-quest{top:calc(64px + env(safe-area-inset-top,0px));bottom:auto;width:auto;right:16px;max-height:28vh;overflow:auto}#g-prompt{left:auto;right:16px;bottom:calc(160px + env(safe-area-inset-bottom,0px));transform:none;max-width:calc(100% - 180px);font-size:13px}.g-scroll{padding:24px 20px}.g-scroll .poem{font-size:20px}}
 @media (prefers-reduced-motion:reduce){#g-compass svg{transition:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
