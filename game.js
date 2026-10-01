@@ -188,6 +188,58 @@ const PUZZLES = {
       season: 3, hour: 21
     }
   }
+  ,
+  huaqian: {
+    title: '花名签', ch: '第六十三回', start: 'yihong', season: 0, hour: 20, color: '#c2253a', look: CHARS.baoyu.look,
+    line: '宝玉生日那夜，怡红院的丫头们凑钱治了酒果，请姑娘们来掣花名签儿行令。',
+    rule: '签筒里的八支花签散了，要还给掣到它的人。听各人说说自己，再看签上的花和诗句，一支一支递过去。',
+    want: '夜宴散了，八支花签还在你手里。各人都在园中，一支一支还回去。',
+    tip: '去找园中各人，把花签递给掣到它的人。', doneTip: '八支花签都还了。',
+    ask: '这支签是谁掣的？递哪一支？', bagName: '手中签', strikes: 0,
+    wrong: ['不是这一支。再想想这人的性情和签上的诗。'],
+    pieces: [
+      { id: 'mudan', label: '牡丹', sub: '艳冠群芳 · 任是无情也动人' },
+      { id: 'xinghua', label: '杏花', sub: '瑶池仙品 · 日边红杏倚云栽' },
+      { id: 'laomei', label: '老梅', sub: '霜晓寒姿 · 竹篱茅舍自甘心' },
+      { id: 'haitang', label: '海棠', sub: '香梦沉酣 · 只恐夜深花睡去' },
+      { id: 'tumi', label: '荼蘼', sub: '韶华胜极 · 开到荼蘼花事了' },
+      { id: 'bingdi', label: '并蒂花', sub: '联春绕瑞 · 连理枝头花正开' },
+      { id: 'furong', label: '芙蓉', sub: '风露清愁 · 莫怨东风当自嗟' },
+      { id: 'taohua', label: '桃花', sub: '武陵别景 · 桃红又是一年春' }
+    ],
+    slots: [
+      { place: 'hengwu', kind: 'npc', who: '薛宝钗', color: '#e5d9b6', answer: 'mudan',
+        clue: '住蘅芜苑，屋里雪洞一般，一色玩器全无。常吃冷香丸，人都说她冷。生得肌骨莹润，举止娴雅。',
+        ok: '宝钗掣的是牡丹。众人笑说：巧得很，你也原配牡丹花。注云：在席共贺一杯，此为群芳之冠。' },
+      { place: 'qinfang', kind: 'npc', who: '贾探春', color: '#c98aa0', answer: 'xinghua',
+        clue: '住秋爽斋，精明能干，曾代凤姐理家。她说过：我但凡是个男人，可以出得去，我必早走了，立一番事业。',
+        ok: '探春掣的是杏花，注云：得此签者，必得贵婿。众人笑道：我们家已有了个王妃，难道你也是王妃不成？' },
+      { place: 'daoxiang', kind: 'npc', who: '李纨', color: '#8e8a80', answer: 'laomei',
+        clue: '年轻守寡，住稻香村。青春丧偶，居家处膏粱锦绣之中，竟如槁木死灰一般，只知侍亲养子。',
+        ok: '李纨掣的是老梅。她笑道：真有趣，你们掷去罢。我只自吃一杯，不问你们的废与兴。' },
+      { place: 'huapu', kind: 'npc', who: '史湘云', color: '#c98a4e', answer: 'haitang',
+        clue: '前几日吃醉了，在山石僻处一个青板石凳上睡着，芍药花飞了一身，满头脸衣襟上都是红香散乱，口内还作睡语说酒令。',
+        ok: '湘云掣的是海棠。黛玉笑道：“夜深”两个字，改“石凉”两个字。众人便知她趣白日间湘云醉卧的事。' },
+      { place: 'yihong', kind: 'npc', who: '麝月', color: '#9fb0c8', answer: 'tumi', off: 1.6,
+        clue: '怡红院的大丫头，性子稳重，不争不抢。宝玉曾在镜前替她篦头，被晴雯撞见，打趣了他们两个。',
+        ok: '麝月掣的是荼蘼。注云：在席各饮三杯送春。麝月问怎么讲，宝玉愁眉忙将签藏了，说：咱们且喝酒。' },
+      { place: 'hengwu', kind: 'npc', who: '香菱', color: '#c9a88a', answer: 'bingdi', off: -3.2,
+        clue: '原名英莲，幼时被拐，如今跟着宝钗住，一心学诗。斗草时她拿出一枝“夫妻蕙”，被众人好一顿取笑。',
+        ok: '香菱掣的是并蒂花。注云：共贺掣者三杯，大家陪饮一杯。' },
+      { place: 'xiaoxiang', kind: 'npc', who: '林黛玉', color: '#b7c8b6', answer: 'furong',
+        clue: '住潇湘馆，多愁多病。春残时葬过花，写过“一年三百六十日，风刀霜剑严相逼”。',
+        ok: '黛玉掣的是芙蓉。众人笑说：这个好极，除了她，别人不配作芙蓉。黛玉也自笑了。' },
+      { place: 'yihong', kind: 'npc', who: '袭人', color: '#c7a3a0', answer: 'taohua', off: -3.2,
+        clue: '怡红院的首席大丫头，本姓花。宝玉因陆游“花气袭人知昼暖”一句，给她改了名字。',
+        ok: '袭人掣的是桃花。注云：杏花陪一盏，坐中同庚者陪一盏，同辰者陪一盏，同姓者陪一盏。' }
+    ],
+    reveal: {
+      title: '寿怡红群芳开夜宴', ch: '第六十三回 · 寿怡红群芳开夜宴',
+      poem: ['任是无情也动人', '莫怨东风当自嗟', '开到荼蘼花事了'],
+      prose: '这一夜怡红院关了门，众人围坐行令，掣签饮酒，直闹到后半夜才散。签上的花和诗句看着是玩笑，后来却一一应在了各人身上。宝玉看见麝月那支“开到荼蘼花事了”，愁眉把签藏了起来。',
+      hour: 23.5
+    }
+  }
 };
 const pieceOf = (P, id) => P.pieces.find(p => p.id === id);
 
@@ -251,6 +303,7 @@ const css = `
 .g-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0 0}
 .g-opt{all:unset;box-sizing:border-box;cursor:pointer;position:relative;padding:9px 12px;border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.4);font-family:var(--f-disp);font-size:21px;letter-spacing:.12em;text-align:center;color:var(--ink)}
 .g-opt:hover,.g-opt:focus-visible{border-color:var(--cinnabar);background:rgba(255,255,255,.75)}
+.g-opt small{display:block;margin-top:3px;font:12px/1.5 var(--f-body,serif);letter-spacing:.04em;color:var(--ink-2)}
 .g-opt i{position:absolute;left:8px;top:5px;font:normal 11px/1 sans-serif;color:var(--ink-2)}
 #g-quest .strk{margin-top:6px;font-size:12px;color:var(--ink-2)}
 #g-quest .strk b{color:var(--cinnabar);font-weight:400;letter-spacing:.1em}
@@ -421,9 +474,10 @@ function stageWorld() {
 function puzWorld() {
   clearWorld(); const P = PUZZLES[S.puz]; if (!P) return;
   P.slots.forEach((sl, i) => {
-    const a = anchor(sl.place), v = a.off(2.6), o = place(makeItem(sl.kind), v, new V3(a.spawn[0], 0, a.spawn[1])), where = placeById(sl.place).name;
-    if (S.solved[i]) { const pc = pieceOf(P, sl.answer); if (sl.kind === 'plaque') drawPlaque(o, pc.label); else o.userData.slip.material.color.set('#d9b45a'); addTag(sl.kind === 'plaque' ? where : pc.label, o, 2.35, false); return; }
-    S.targets.push({ stage: 'puz', obj: o, pos: v, r: 2.6, label: sl.kind === 'plaque' ? '看景题匾' : '读谜面', slot: i, where }); addTag(sl.tag, o, 2.35, true);
+    const a = anchor(sl.place), v = a.off(sl.off ?? 2.6), where = placeById(sl.place).name, npc = sl.kind === 'npc';
+    const o = place(npc ? makeFigure(sl.color, sl.female !== false) : makeItem(sl.kind), v, new V3(a.spawn[0], 0, a.spawn[1])), tag = sl.tag || sl.who, dy = npc ? 2.15 : 2.35;
+    if (S.solved[i]) { const pc = pieceOf(P, sl.answer); if (sl.kind === 'plaque') drawPlaque(o, pc.label); else if (o.userData.slip) o.userData.slip.material.color.set('#d9b45a'); addTag(sl.kind === 'plaque' ? where : npc ? `${sl.who} · ${pc.label}` : pc.label, o, dy, false); return; }
+    S.targets.push({ stage: 'puz', obj: o, pos: v, r: npc ? 2.4 : 2.6, label: { plaque: '看景题匾', lantern: '读谜面', npc: '和' + sl.who + '说话' }[sl.kind], slot: i, where }); addTag(tag, o, dy, true);
   });
   for (const pc of P.pieces) { if (!pc.place || S.found[pc.id]) continue;
     const a = anchor(pc.place), v = a.off(2.2); v.y += 0.85; const o = place(makeItem(pc.item), v); o.userData.baseY = v.y;
@@ -513,8 +567,8 @@ function beginPuz(k) {
 /* 走到谜位前：展示谜面，从手里挑一件 */
 function openSlot(i) {
   const P = PUZZLES[S.puz], sl = P.slots[i], where = placeById(sl.place).name;
-  const opts = S.bag.map((id, n) => `<button class="g-opt" data-id="${id}"><i>${(n + 1) % 10}</i>${esc(pieceOf(P, id).label)}</button>`).join('');
-  openModal(`<div class="ey">${esc(where)} · ${esc(sl.tag)}</div><h3>${esc(sl.title)}</h3>${sl.poem ? `<p class="poem">${sl.poem.map(esc).join('<br>')}</p>` : ''}${sl.clue ? `<p class="prose">${esc(sl.clue)}</p>` : ''}
+  const opts = S.bag.map((id, n) => { const pc = pieceOf(P, id); return `<button class="g-opt" data-id="${id}"><i>${(n + 1) % 10}</i>${esc(pc.label)}${pc.sub ? `<small>${esc(pc.sub)}</small>` : ''}</button>`; }).join('');
+  openModal(`<div class="ey">${esc(where)} · ${esc(sl.tag || sl.who)}</div><h3>${esc(sl.title || sl.who)}</h3>${sl.poem ? `<p class="poem">${sl.poem.map(esc).join('<br>')}</p>` : ''}${sl.clue ? `<p class="prose">${esc(sl.clue)}</p>` : ''}
    ${opts ? `<p class="ask">${esc(P.ask)}</p><div class="g-opts">${opts}</div>` : `<p class="prose">${esc(P.empty)}</p>`}<button class="g-btn ghost" id="g-next">${opts ? '再想想' : '知道了'}</button>`, null);
   scrollEl.querySelectorAll('.g-opt').forEach(b => b.onclick = () => choose(i, b.dataset.id));
 }
@@ -527,7 +581,7 @@ function choose(i, id) {
     return;
   }
   blip(220);
-  if (!P.strikes) { openModal(`<div class="ey">${esc(where)} · ${esc(sl.tag)}</div><h3>${esc(pc.label)}？</h3><p class="prose">${esc(P.wrong[0])}</p><button class="g-btn" id="g-next">回去再看</button>`, () => openSlot(i)); return; }
+  if (!P.strikes) { openModal(`<div class="ey">${esc(where)} · ${esc(sl.tag || sl.who)}</div><h3>${esc(pc.label)}？</h3><p class="prose">${esc(P.wrong[0])}</p><button class="g-btn" id="g-next">回去再看</button>`, () => openSlot(i)); return; }
   S.strikes++; const out = S.strikes >= P.strikes;
   const why = pc.why || (P.slots.some(x => x.answer === id) ? P.other : '');
   if (out) openModal(`<div class="ey">${esc(where)}</div><h3>${esc(P.out.title)}</h3><p class="prose">${esc(why)}</p><p class="prose">${esc(P.out.text)}</p><button class="g-btn" id="g-next">回园门</button>`, kickOut);
