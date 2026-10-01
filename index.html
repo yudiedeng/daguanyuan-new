@@ -204,12 +204,16 @@ const PLACES=[
   text:'中秋夜贾母带众人在山顶凸碧堂赏月、击鼓传花。湘云说：“这山上赏月虽好，总不及近水赏月更妙。”山坡底下池边就是凹晶馆。',ch:'第七十五回 · 第七十六回',view:{t:[80,11,-129],c:[56,26,-98]},spawn:[80,-115,0]},
  {id:'aojing',name:'凹晶馆',sub:'凹晶溪馆',eyebrow:'近水赏月',pos:[83,8,-83],quote:'山坳里近水一个所在就是凹晶馆。可知当日盖这园子时就有学问。',
   text:'中秋夜人散后，黛玉、湘云悄悄来到这里临水联诗，得了“寒塘渡鹤影，冷月葬花魂”，妙玉从山石后转出来止住。',ch:'第七十六回',view:{t:[83,2,-83],c:[66,9,-58]},spawn:[83,-96,Math.PI]},
+ {id:'qiushuang',name:'秋爽斋',sub:'贾探春',eyebrow:'晓翠堂',pos:[-86,10,19],quote:'探春素喜阔朗，这三间屋子并不曾隔断。',
+  text:'探春的住处，北面正厅是晓翠堂，西边三间是她的屋子。第四十回贾母带刘姥姥在这里吃早饭，刘姥姥站起来高声说：“老刘，老刘，食量大似牛，吃一个老母猪不抬头。”又拿象牙镶金的筷子夹鸽子蛋。院里有梧桐、芭蕉，探春因爱芭蕉，自号“蕉下客”。',ch:'第三十七回 · 第四十回',view:{t:[-86,3,18],c:[-58,22,52]},spawn:[-86,38.5,0]},
+ {id:'xingye',name:'荇叶渚',sub:'码头',eyebrow:'棠木舫',pos:[-116,7,21],quote:'那姑苏选来的几个驾娘早把两只棠木舫撑来。',
+  text:'第四十回饭后，众人在这里上船。宝玉嫌残荷可恨，要叫人拔去；黛玉说她最不喜李义山的诗，只喜他一句“留得残荷听雨声”。船行到花溆的萝港之下，阴森透骨，再上岸去蘅芜苑。',ch:'第四十回',view:{t:[-119,1,21],c:[-98,11,40]},spawn:[-106,23,Math.PI/2]},
  {id:'longcui',name:'栊翠庵',sub:'妙玉',eyebrow:'红梅最盛',pos:[105,24,42],quote:'栊翠庵中有十数株红梅，如胭脂一般。',
   text:'妙玉带发修行的地方。贾母带刘姥姥来吃茶，妙玉用旧年蠲的雨水烹茶；又拉宝钗、黛玉吃体己茶，用的是五年前收的梅花上的雪。打开“落雪”可以看琉璃世界里的红梅。',ch:'第四十一回 · 第四十九回',view:{t:[105,13,43],c:[72,32,83]},spawn:[86,48,Math.PI/2]},
  {id:'huapu',name:'花圃',sub:'牡丹亭',eyebrow:'牡丹亭 · 芍药圃 · 蔷薇院',pos:[-102,8,-99],quote:'或牡丹亭，或芍药圃，或蔷薇院，或芭蕉坞，或荼蘼架，或木香棚。',
   text:'第十七回贾政一行出了稻香村，“度过荼蘼架，再入木香棚，越牡丹亭，度芍药圃，入蔷薇院”，再过水去蘅芜苑。这里照这个顺序，在稻香村北边沿一条路依次摆了荼蘼架、牡丹亭（亭子四周种牡丹）、芍药圃和蔷薇院。',ch:'第十七回',view:{t:[-100,1,-96],c:[-74,18,-70]},spawn:[-76,-84,Math.PI/2]}
 ];
-const TOUR=['gate','rock','qinfang','xiaoxiang','daoxiang','daguan','hengwu','ouxiang','longcui','yihong'];
+const TOUR=['gate','rock','qinfang','xiaoxiang','qiushuang','xingye','hengwu','daoxiang','daguan','ouxiang','longcui','yihong'];
 
 /* =====================================================================
    UTILS & WORLD SHAPE
@@ -243,7 +247,7 @@ function natural(x,z){
  h+=layAt(LAY.h,x,z);
  h=mix(h,-1.8,sstep(0.25,0.75,layAt(LAY.w,x,z)));
  return h;}
-const ZDEF=GLB?{gate:[0,118,15,8],yihong:[104,147,22,19],xiaoxiang:[-70,93,14.6,15.6],daoxiang:[-105,-59,28,24],hengwu:[-70,-141,19,15],daguan:[0,-69,40,33],longcui:[105,44,12,15],mudan:[-102,-99,7.5,7.5],shaoyao:[-121,-96,7,5],qiangwei:[-117,-118,6,6],tumi:[-84,-92,5,4],tubi:[80,-129,9.5,9]}:{gate:[0,118,15,8],yihong:[85,65,23,19],xiaoxiang:[-80,30,16,13],daoxiang:[-92,-62,28,24],hengwu:[62,-92,19,15],daguan:[0,-88,40,16],paifang:[0,-56,9,4],longcui:[125,5,14,12]};
+const ZDEF=GLB?{gate:[0,118,15,8],yihong:[104,147,22,19],xiaoxiang:[-70,93,14.6,15.6],daoxiang:[-105,-59,28,24],hengwu:[-70,-141,19,15],daguan:[0,-69,40,33],longcui:[105,44,12,15],mudan:[-102,-99,7.5,7.5],shaoyao:[-121,-96,7,5],qiangwei:[-117,-118,6,6],tumi:[-84,-92,5,4],tubi:[80,-129,9.5,9],qiushuang:[-86,18.5,15.5,14.5]}:{gate:[0,118,15,8],yihong:[85,65,23,19],xiaoxiang:[-80,30,16,13],daoxiang:[-92,-62,28,24],hengwu:[62,-92,19,15],daguan:[0,-88,40,16],paifang:[0,-56,9,4],longcui:[125,5,14,12]};
 /* 各院落从旧位置挪到新位置的位移（x, z）：院内手工摆的竹子、芭蕉、树等照原相对位置跟着走 */
 const MV={yihong:[19,82],xiaoxiang:[12,64],longcui:[-20,39],hengwu:[-132,-49],daoxiang:[-13,3],daguan:[0,21],ouxiang:[-118,-18]};
 const Z={};for(const k in ZDEF){const d=ZDEF[k];Z[k]={x:d[0],z:d[1],hw:d[2],hd:d[3],m:8,y:Math.max(0.6,natural(d[0],d[1]))};}
@@ -554,13 +558,16 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0},
   {id:'cuizhang',p:[0,height(0,96)-0.05,96],ry:0},
   // 新景点（Blender：blender/scripts/sites/build_sites.py）。正面均朝局部 +z，这里转成面向水：芦雪广面西、凹晶馆面南临池、凸碧山庄在山顶朝南俯看凹晶馆。
-  {id:'luxue',p:[-131.5,1.15,0],ry:-Math.PI/2},{id:'aojing',p:[83,1.0,-83],ry:0},{id:'tubi',p:[80,Z.tubi.y,-129],ry:0},
+  {id:'luxue',p:[-131.5,1.15,0],ry:-Math.PI/2},
+  // 秋爽斋（晓翠堂 + 探春三间）、荇叶渚码头、两只棠木舫：blender/scripts/sites/build_sites.py
+  {id:'qiushuang',p:[-86,Z.qiushuang.y,19],ry:0},{id:'xingye',p:[-114.5,0.3,21],ry:-Math.PI/2},
+  {id:'tangmu1',file:'tangmu',p:[-121.5,0,18.3],ry:-Math.PI/2},{id:'tangmu2',file:'tangmu',p:[-121.8,0,23.8],ry:-Math.PI/2-0.06},{id:'aojing',p:[83,1.0,-83],ry:0},{id:'tubi',p:[80,Z.tubi.y,-129],ry:0},
   {id:'mudanting',file:'qinfang',keep:/亭柱|额枋|彩画|匾_匾底|亭顶瓦|望板|垂脊/,p:[Z.mudan.x,Z.mudan.y+0.14,Z.mudan.z],ry:0}];
  await Promise.all(defs.map(async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   root.traverse(m=>{if(!m.isMesh)return;const nm=m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
-  const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
+  const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
   root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});
   if(d.cards)fetch('tex/'+d.cards).then(r=>r.json()).then(recs=>{const TL=new THREE.TextureLoader();const B2G=new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,0,0,1);
    for(const rc of recs){const t=TL.load('tex/'+rc.tex);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.55,metalness:0}),{alphaFix:1,key:'xxw'+rc.tex}));
@@ -875,7 +882,7 @@ const STALKS=[],BLEAF=[],LOTUSL=[],LOTUSF=[],BANANAS=[],ROCKS=[];
 const treeHash=new Map();
 function treeOK(x,z,r){const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<r*r)return false;}return true;}
 function treeAdd(x,z){const k=Math.floor(x/5)+','+Math.floor(z/5);(treeHash.get(k)||treeHash.set(k,[]).get(k)).push([x,z]);}
-const VIEWSEG=[],VIEWSEG_NEW=[];const NEW_PLACES=new Set(['luxue','tubi','aojing']);// 新景点的取景线单独放：不参与布树时的提前跳过（那会改变随机数），改为种完后隐藏
+const VIEWSEG=[],VIEWSEG_NEW=[];const NEW_PLACES=new Set(['luxue','tubi','aojing','qiushuang','xingye']);// 新景点的取景线单独放：不参与布树时的提前跳过（那会改变随机数），改为种完后隐藏
 function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c,t=p.view.t;(NEW_PLACES.has(p.id)?VIEWSEG_NEW:VIEWSEG).push([c[0],c[2],t[0],t[2],p.id==='all'?0:7]);}}
 function inView(x,z,extra,segs){for(const v of segs||VIEWSEG){if(!v[4])continue;const dx=v[2]-v[0],dz=v[3]-v[1],L2=dx*dx+dz*dz;let u=((x-v[0])*dx+(z-v[1])*dz)/L2;if(u<0.15||u>0.92)continue;const px=v[0]+dx*u,pz=v[1]+dz*u;const r=v[4]+(extra||0);if((px-x)**2+(pz-z)**2<r*r)return true;}return false;}
 // 新景点（芦雪广、凹晶馆、凸碧山庄）占地：x, z, 半宽, 半深
@@ -968,6 +975,9 @@ function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,
   if(Math.abs(Math.abs(x-CX)-HW)<0.9&&Math.abs(z-CZ)<HD+1)continue;if(Math.abs(Math.abs(z-CZ)-HD)<0.9&&Math.abs(x-CX)<HW+1)continue;
   if((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3)continue;
   if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);n++;}}
+function buildQiushuang(){if(!GLB)return;const q=Z.qiushuang,y=q.y;
+ for(const [lx,lz] of[[8,10],[11,2.5],[-6,-15.8],[6,-15.8]]){const x=-86+lx,z=19+lz;TREES.broad.push({x,y:y+0.05,z,s:R(0.75,0.9),ry:rnd()*6.283,tint:pick(GREENS),plum:false,v:1});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}
+ BANANAS.push([-86+3.2,19+6.0,2.3,y],[-86+4.4,19+7.2,1.9,y],[-86+3.6,19+8.3,1.6,y],[-86+12.5,19+9.5,2.1,y],[-86+13.2,19+11,1.7,y]);}
 function buildHengwu(){const y=Z.hengwu.y;if(GLB)return;court({x:62,z:-92,hw:18,hd:14,h:3.6,gates:[{side:'s',pos:62,moon:true,w:5}]});pave(62,-92,18,14,y);
  hall(T(62,y,-99.5,0),{w:15,d:7.5,h:4.0,bays:5,roof:'gable',round:true,roofH:2.2,over:1.5,plaque:'蘅芷清芬',lanterns:true});
  for(const [x,ry] of[[46.6,Math.PI/2],[77.4,-Math.PI/2]])hall(T(x,y,-90,ry),{w:18,d:2.6,h:3.0,bays:6,base:0.3,pad:0.3,noSteps:true,facade:'open',roof:'gable',roofH:1.3,over:0.8,lift:0.2,gapFront:false});
@@ -1740,7 +1750,7 @@ const PATHS=[
  {pts:[[0,113],[14,110],[30,112],[44,120],[56,138],[66,156],[76,158.5],[83,158.5]],w:2.6,lamps:true}, // 怡红院
  {pts:[[30,112],[36,98],[42,84],[44,70],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4}, // 东路·栊翠庵
  {pts:[[50,40],[62,26],[82,18],[100,8],[114,-12],[118,-40],[118,-70],[110,-92],[96,-100],[86,-94]],w:2.2}, // 东路·凹晶馆
- {pts:[[-30,34],[-56,40],[-80,30],[-96,14],[-108,2],[-118,0]],w:2.2}, // 西路·芦雪广
+ {pts:[[-30,34],[-56,37],[-72,36],[-86,36],[-100,35],[-108,28],[-109,14],[-108,2],[-118,0]],w:2.2}, // 西路·芦雪广
  {pts:[[-48,-40],[-46,-90],[-40,-112],[-20,-120],[20,-120],[44,-110],[50,-80],[48,-40]],w:2.2}, // 大观楼后
  {pts:[[86,-94],[96,-100],[98,-110],[90,-116],[80,-119]],w:2}, // 凸碧山庄
  {pts:[[0,-4],[-20,-12],[-36,-16],[-49,-17]],w:2.4}, // 藕香榭
@@ -1748,14 +1758,16 @@ const PATHS=[
  {pts:[[-108,2],[-112,-16],[-108,-33],[-90,-34],[-76,-35],[-74,-50],[-75,-57],[-78,-57]],w:2.4}, // 稻香村
  {pts:[[-75,-57],[-74,-74],[-76,-86],[-79,-92],[-90,-92],[-100,-89],[-112,-88],[-128,-90],[-131,-104],[-129,-116],[-122,-128],[-108,-128],[-96,-127],[-84,-124.5],[-70,-124]],w:2.2}, // 花圃·蘅芜苑
  {pts:[[-70,-124],[-54,-122],[-40,-112]],w:2.2}, // 蘅芜苑东
- {pts:[[0,-20],[24,-22],[46,-14],[60,-4],[76,6],[82,18]],w:2.4} // 沁芳闸
+ {pts:[[0,-20],[24,-22],[46,-14],[60,-4],[76,6],[82,18]],w:2.4}, // 沁芳闸
+ {pts:[[-86,36],[-86,33.5]],w:2.2}, // 秋爽斋门
+ {pts:[[-108.5,24],[-111.5,21]],w:2} // 荇叶渚
 ];
 const tick=(msg)=>new Promise(r=>{loadStep.textContent=msg;requestAnimationFrame(()=>setTimeout(r,0));});
 async function build(){
  await tick('堆山凿池');prepPaths();prepViews();buildTerrain();buildWater();
  await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);
  await tick('起楼阁，砌粉墙');buildGate();buildRockery();try{buildTown();}catch(e){console.warn('town',e);}buildDaguan();buildYihong();
- await tick('修馆舍，筑茅屋');buildXiaoxiang();buildHengwu();buildDaoxiang();buildLongcui();buildOuxiang();
+ await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();buildDaoxiang();buildLongcui();buildOuxiang();
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
  await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();

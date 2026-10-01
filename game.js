@@ -107,140 +107,9 @@ const CHARS = {
    pieces：无 place 的开局就在手里；有 place 的要先去那里拾取。
    strikes：允许错几次（0 = 不限）。谜面、诗句为原文，其余为转述。
    --------------------------------------------------------------------- */
-const PUZZLES = {
-  tidui: {
-    title: '试才题对额', ch: '第十七回', start: 'gate', season: 0, hour: 10, color: '#2f4a4c', look: CHARS.baoyu.look,
-    line: '园子刚落成，各处还没有名字。贾政带着宝玉和一班清客进园，命他一路题来。',
-    rule: '袖中有十块匾：六块是宝玉拟的，四块是清客拟的。走到各处空匾前，看景挑匾。挂错三次，就要被叉出去。',
-    want: '园子新成，各处还没有名字。贾政命你一路题来。',
-    tip: '去各处空匾前，看景挑匾。先去哪处都可以。', doneTip: '六处都题好了。',
-    ask: '挂哪一块？', bagName: '袖中匾', strikes: 3,
-    wrong: ['贾政摇头道：“不妥。”', '贾政喝道：“胡说！”'],
-    other: '这块匾另有更合适的去处。',
-    out: { title: '叉出去！', text: '贾政气的喝命：“叉出去！”刚出去，又喝命：“回来！”——已经题好的匾都还挂着，从园门再来。' },
-    pieces: [
-      { id: 'qujing', label: '曲径通幽处' }, { id: 'qinfang', label: '沁芳' }, { id: 'youfeng', label: '有凤来仪' },
-      { id: 'xinglian', label: '杏帘在望' }, { id: 'hengzhi', label: '蘅芷清芬' }, { id: 'hongxiang', label: '红香绿玉' },
-      { id: 'xieyu', label: '泻玉', why: '这是清客拟的。宝玉说此处是省亲驻跸之地，用“泻”字粗陋不雅。' },
-      { id: 'xinghua', label: '杏花村', why: '这是清客拟的。贾政说“杏花村”犯了正名，村名要等贵妃来定。' },
-      { id: 'lanfeng', label: '兰风蕙露', why: '这是清客拟的。宝玉嫌它泛泛，没有说出此处异草的好处。' },
-      { id: 'chongguang', label: '崇光泛彩', why: '这是清客拟的，只顾了海棠一边。' }
-    ],
-    slots: [
-      { place: 'rock', kind: 'plaque', tag: '空匾', title: '一带翠嶂', answer: 'qujing',
-        clue: '一进园门，一带翠嶂挡在面前，白石崚嶒，或如鬼怪，或如猛兽，其中微露羊肠小径。贾政说：非此一山，一进来园中所有之景悉入目中，则有何趣？',
-        ok: '宝玉说：编新不如述旧，刻古终胜雕今。此处不过是探景一进步，不如直书旧句“曲径通幽处”，倒还大方气派。' },
-      { place: 'qinfang', kind: 'plaque', tag: '空匾', title: '桥上有亭', answer: 'qinfang',
-        clue: '清溪泻雪，石磴穿云，白石为栏，环抱池沼，石桥三港，桥上有亭。一带清流从花木深处泻于石隙之下。',
-        ok: '清客们拟了“泻玉”。宝玉说：用“泻玉”二字，莫若“沁芳”二字，岂不新雅？又拟一联：“绕堤柳借三篙翠，隔岸花分一脉香。”贾政点头微笑。' },
-      { place: 'xiaoxiang', kind: 'plaque', tag: '空匾', title: '千竿翠竹', answer: 'youfeng',
-        clue: '一带粉垣，数楹修舍，有千百竿翠竹遮映，后院有大株梨花兼着芭蕉。贾政说：若能月夜坐此窗下读书，不枉虚生一世。宝玉却说：这是第一处行幸之处，必须颂圣方可。',
-        ok: '凤凰非竹实不食。此处翠竹千竿，又是贵妃头一处行幸之所，故题“有凤来仪”。宝玉又拟一联：“宝鼎茶闲烟尚绿，幽窗棋罢指犹凉。”' },
-      { place: 'daoxiang', kind: 'plaque', tag: '空匾', title: '数楹茅屋', answer: 'xinglian',
-        clue: '一带黄泥筑就的矮墙，墙头皆用稻茎掩护。有几百株杏花，如喷火蒸霞一般。里面数楹茅屋，外面分畦列亩，佳蔬菜花。贾政说：此处还少一个酒幌，明日竟做一个来，用竹竿挑在树梢。',
-        ok: '宝玉说：旧诗有云“红杏梢头挂酒旗”，如今莫若“杏帘在望”四字。他还说村名可用“稻香村”，取古人“柴门临水稻花香”之句。' },
-      { place: 'hengwu', kind: 'plaque', tag: '空匾', title: '异草清香', answer: 'hengzhi',
-        clue: '一所清凉瓦舍，一色水磨砖墙。迎面突出插天的玲珑山石，把里面房屋悉皆遮住。一株花木也无，只见许多异草，或牵藤，或引蔓，味香气馥，非凡花之可比。',
-        ok: '宝玉认得这些异草：香的是杜若蘅芜，那一种大约是茝兰，这一种大约是清葛。故题“蘅芷清芬”，对联是：“吟成豆蔻才犹艳，睡足酴醾梦也香。”' },
-      { place: 'yihong', kind: 'plaque', tag: '空匾', title: '蕉棠两植', answer: 'hongxiang',
-        clue: '粉墙环护，绿柳周垂。院中点衬几块山石，一边种几本芭蕉，那一边是一树西府海棠，其势若伞，丝垂翠缕，葩吐丹砂。',
-        ok: '清客拟了“蕉鹤”“崇光泛彩”。宝玉说：此处蕉棠两植，其意暗蓄“红”“绿”二字在内。若只说蕉，则棠无着落；若只说棠，蕉亦无着落。故题“红香绿玉”。' }
-    ],
-    reveal: {
-      title: '天上人间诸景备', ch: '第十七回 · 第十八回',
-      poem: ['衔山抱水建来精，多少工夫筑始成。', '天上人间诸景备，芳园应锡大观名。'],
-      prose: '这一路题下来，贾政嘴上喝他“无知的业障”，心里却是得意的。这些匾原是暂且挂上，等元妃省亲时再定。元妃回府那晚，把“有凤来仪”赐名潇湘馆，“红香绿玉”改作“怡红快绿”，又题了这首诗，赐园名“大观园”。',
-      hour: 19.5
-    }
-  },
-  dengmi: {
-    title: '元宵灯谜', ch: '第二十二回', start: 'gate', season: 3, hour: 18.5, color: '#a8322a', look: CHARS.baoyu.look,
-    line: '上元佳节，宫里的元妃送出灯谜，家里姊妹也各制一个，贾政也来凑趣。',
-    rule: '五盏谜灯挂在园中各处，谜底散落在别处。先把谜底拾来，再到灯下猜。猜错了不要紧，再读一遍谜面。',
-    want: '上元佳节，姊妹们各制灯谜。贾政也来凑趣。',
-    tip: '园中有五盏谜灯、五件谜底。先拾谜底，再去灯下猜。', doneTip: '五个谜都猜中了。',
-    ask: '谜底是哪一件？', bagName: '手里', strikes: 0,
-    empty: '手里还没有可猜的东西。去园中别处找找谜底。',
-    wrong: ['不是这个。再读一遍谜面。'],
-    pieces: [
-      { id: 'baozhu', label: '爆竹', item: 'baozhu', place: 'yihong' },
-      { id: 'suanpan', label: '算盘', item: 'suanpan', place: 'daoxiang' },
-      { id: 'fengzheng', label: '风筝', item: 'fengzheng', place: 'hengwu' },
-      { id: 'haideng', label: '佛前海灯', item: 'haideng', place: 'longcui' },
-      { id: 'yantai', label: '砚台', item: 'yantai', place: 'xiaoxiang' }
-    ],
-    slots: [
-      { place: 'daguan', kind: 'lantern', tag: '元妃的灯谜', title: '元妃的灯谜', answer: 'baozhu',
-        poem: ['能使妖魔胆尽摧，身如束帛气如雷。', '一声震得人方恐，回首相看已化灰。'], ok: '是爆竹。一声震响，回头再看，已经化成了灰。' },
-      { place: 'qinfang', kind: 'lantern', tag: '迎春的灯谜', title: '迎春的灯谜', answer: 'suanpan',
-        poem: ['天运人功理不穷，有功无运也难逢。', '因何镇日纷纷乱，只为阴阳数不同。'], ok: '是算盘。上下两档珠子，镇日拨来拨去。' },
-      { place: 'huapu', kind: 'lantern', tag: '探春的灯谜', title: '探春的灯谜', answer: 'fengzheng',
-        poem: ['阶下儿童仰面时，清明妆点最堪宜。', '游丝一断浑无力，莫向东风怨别离。'], ok: '是风筝。清明时节放起来，线一断，就飘远了。' },
-      { place: 'ouxiang', kind: 'lantern', tag: '惜春的灯谜', title: '惜春的灯谜', answer: 'haideng',
-        poem: ['前身色相总无成，不听菱歌听佛经。', '莫道此生沉黑海，性中自有大光明。'], ok: '是佛前海灯。长明在佛前，一盏孤灯。' },
-      { place: 'rock', kind: 'lantern', tag: '贾政的灯谜', title: '贾政的灯谜', answer: 'yantai',
-        poem: ['身自端方，体自坚硬。', '虽不能言，有言必应。'], ok: '是砚台。原著里这谜是贾政出给贾母猜的，宝玉悄悄把谜底告诉了老太太。' }
-    ],
-    reveal: {
-      title: '制灯谜贾政悲谶语', ch: '第二十二回 · 听曲文宝玉悟禅机 制灯谜贾政悲谶语',
-      poem: [],
-      prose: '贾政一一猜着，心里却越想越闷：娘娘作的爆竹，是一响而散之物；迎春作的算盘，是打动乱如麻；探春作的风筝，是飘飘浮荡之物；惜春作的海灯，一发清净孤独。今乃上元佳节，如何皆作此不祥之物为戏耶？回到房中，只是思索，翻来覆去，竟难成寐。',
-      season: 3, hour: 21
-    }
-  }
-  ,
-  huaqian: {
-    title: '花名签', ch: '第六十三回', start: 'yihong', season: 0, hour: 20, color: '#c2253a', look: CHARS.baoyu.look,
-    line: '宝玉生日那夜，怡红院的丫头们凑钱治了酒果，请姑娘们来掣花名签儿行令。',
-    rule: '签筒里的八支花签散了，要还给掣到它的人。听各人说说自己，再看签上的花和诗句，一支一支递过去。',
-    want: '夜宴散了，八支花签还在你手里。各人都在园中，一支一支还回去。',
-    tip: '去找园中各人，把花签递给掣到它的人。', doneTip: '八支花签都还了。',
-    ask: '这支签是谁掣的？递哪一支？', bagName: '手中签', strikes: 0,
-    wrong: ['不是这一支。再想想这人的性情和签上的诗。'],
-    pieces: [
-      { id: 'mudan', label: '牡丹', sub: '艳冠群芳 · 任是无情也动人' },
-      { id: 'xinghua', label: '杏花', sub: '瑶池仙品 · 日边红杏倚云栽' },
-      { id: 'laomei', label: '老梅', sub: '霜晓寒姿 · 竹篱茅舍自甘心' },
-      { id: 'haitang', label: '海棠', sub: '香梦沉酣 · 只恐夜深花睡去' },
-      { id: 'tumi', label: '荼蘼', sub: '韶华胜极 · 开到荼蘼花事了' },
-      { id: 'bingdi', label: '并蒂花', sub: '联春绕瑞 · 连理枝头花正开' },
-      { id: 'furong', label: '芙蓉', sub: '风露清愁 · 莫怨东风当自嗟' },
-      { id: 'taohua', label: '桃花', sub: '武陵别景 · 桃红又是一年春' }
-    ],
-    slots: [
-      { place: 'hengwu', kind: 'npc', who: '薛宝钗', color: '#e5d9b6', answer: 'mudan',
-        clue: '住蘅芜苑，屋里雪洞一般，一色玩器全无。常吃冷香丸，人都说她冷。生得肌骨莹润，举止娴雅。',
-        ok: '宝钗掣的是牡丹。众人笑说：巧得很，你也原配牡丹花。注云：在席共贺一杯，此为群芳之冠。' },
-      { place: 'qinfang', kind: 'npc', who: '贾探春', color: '#c98aa0', answer: 'xinghua',
-        clue: '住秋爽斋，精明能干，曾代凤姐理家。她说过：我但凡是个男人，可以出得去，我必早走了，立一番事业。',
-        ok: '探春掣的是杏花，注云：得此签者，必得贵婿。众人笑道：我们家已有了个王妃，难道你也是王妃不成？' },
-      { place: 'daoxiang', kind: 'npc', who: '李纨', color: '#8e8a80', answer: 'laomei',
-        clue: '年轻守寡，住稻香村。青春丧偶，居家处膏粱锦绣之中，竟如槁木死灰一般，只知侍亲养子。',
-        ok: '李纨掣的是老梅。她笑道：真有趣，你们掷去罢。我只自吃一杯，不问你们的废与兴。' },
-      { place: 'huapu', kind: 'npc', who: '史湘云', color: '#c98a4e', answer: 'haitang',
-        clue: '前几日吃醉了，在山石僻处一个青板石凳上睡着，芍药花飞了一身，满头脸衣襟上都是红香散乱，口内还作睡语说酒令。',
-        ok: '湘云掣的是海棠。黛玉笑道：“夜深”两个字，改“石凉”两个字。众人便知她趣白日间湘云醉卧的事。' },
-      { place: 'yihong', kind: 'npc', who: '麝月', color: '#9fb0c8', answer: 'tumi', off: 1.6,
-        clue: '怡红院的大丫头，性子稳重，不争不抢。宝玉曾在镜前替她篦头，被晴雯撞见，打趣了他们两个。',
-        ok: '麝月掣的是荼蘼。注云：在席各饮三杯送春。麝月问怎么讲，宝玉愁眉忙将签藏了，说：咱们且喝酒。' },
-      { place: 'hengwu', kind: 'npc', who: '香菱', color: '#c9a88a', answer: 'bingdi', off: -3.2,
-        clue: '原名英莲，幼时被拐，如今跟着宝钗住，一心学诗。斗草时她拿出一枝“夫妻蕙”，被众人好一顿取笑。',
-        ok: '香菱掣的是并蒂花。注云：共贺掣者三杯，大家陪饮一杯。' },
-      { place: 'xiaoxiang', kind: 'npc', who: '林黛玉', color: '#b7c8b6', answer: 'furong',
-        clue: '住潇湘馆，多愁多病。春残时葬过花，写过“一年三百六十日，风刀霜剑严相逼”。',
-        ok: '黛玉掣的是芙蓉。众人笑说：这个好极，除了她，别人不配作芙蓉。黛玉也自笑了。' },
-      { place: 'yihong', kind: 'npc', who: '袭人', color: '#c7a3a0', answer: 'taohua', off: -3.2,
-        clue: '怡红院的首席大丫头，本姓花。宝玉因陆游“花气袭人知昼暖”一句，给她改了名字。',
-        ok: '袭人掣的是桃花。注云：杏花陪一盏，坐中同庚者陪一盏，同辰者陪一盏，同姓者陪一盏。' }
-    ],
-    reveal: {
-      title: '寿怡红群芳开夜宴', ch: '第六十三回 · 寿怡红群芳开夜宴',
-      poem: ['任是无情也动人', '莫怨东风当自嗟', '开到荼蘼花事了'],
-      prose: '这一夜怡红院关了门，众人围坐行令，掣签饮酒，直闹到后半夜才散。签上的花和诗句看着是玩笑，后来却一一应在了各人身上。宝玉看见麝月那支“开到荼蘼花事了”，愁眉把签藏了起来。',
-      hour: 23.5
-    }
-  }
-};
+// 三个谜（试才题对额、元宵灯谜、花名签）已撤下，游戏改为只做刘姥姥进大观园；
+// 引擎留着，之后可在缀锦阁做鸳鸯行牙牌令。数据格式见 git 历史（提交 843ce6f）。
+const PUZZLES = {};
 const pieceOf = (P, id) => P.pieces.find(p => p.id === id);
 
 /* ---------------------------------------------------------------------
@@ -523,8 +392,8 @@ function showStart(giftMode) {
   startEl.innerHTML = `<div class="g-sheet"><h2>我们的大观园</h2>
    <p class="g-lead">大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。</p>
    <div class="g-chars">${Object.keys(CHARS).map(charCard).join('')}</div>
-   <h4 class="g-sec">解谜<small>照着原著的线索，把园中的谜一一解开</small></h4>
-   <div class="g-chars">${Object.keys(PUZZLES).map(puzCard).join('')}</div>
+   ${Object.keys(PUZZLES).length ? `<h4 class="g-sec">解谜<small>照着原著的线索，把园中的谜一一解开</small></h4>
+   <div class="g-chars">${Object.keys(PUZZLES).map(puzCard).join('')}</div>` : ''}
    <div class="g-foot"><button class="g-link" id="g-skip">只是逛逛</button><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="有赠礼码？贴在这里" aria-label="赠礼码"><button class="g-btn ghost" type="submit">收礼</button></form></div></div>`;
   startEl.hidden = false;
   startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; if (b.dataset.p) beginPuz(b.dataset.p); else beginChar(b.dataset.k); });
