@@ -166,7 +166,20 @@ def colliders(objs, half, step=0.4, skip=lambda o: False):
     return boxes
 
 
+def merge_dup_materials():
+    """从几个 .blend 借构件时同名材质会被改成 M_xx.001，网页按材质名配方，这里并回原名。"""
+    import re
+    for o in bpy.data.objects:
+        for sl in o.material_slots:
+            m = sl.material
+            if m and re.search(r'\.\d{3}$', m.name):
+                base = bpy.data.materials.get(m.name[:-4])
+                if base: sl.material = base
+                else: m.name = m.name[:-4]
+
+
 def save(site, boxes):
+    merge_dup_materials()
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(SRC, site + '.blend'), compress=True)
     colp = os.path.join(REPO, 'models', 'b', 'col.json')
     col = json.load(open(colp, encoding='utf-8')); col[site] = boxes
@@ -294,7 +307,7 @@ def swap_mat(objs, old, new):
     m = mat(new)
     for o in objs:
         for i, sl in enumerate(o.material_slots):
-            if sl.material and sl.material.name == old: o.material_slots[i].material = m
+            if sl.material and sl.material.name.split('.')[0] == old: o.material_slots[i].material = m
 
 
 # =========================================================================== 秋爽斋
