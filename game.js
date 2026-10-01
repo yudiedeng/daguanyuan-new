@@ -204,6 +204,10 @@ const css = `
 .g-tag{position:fixed;left:0;top:0;transform:translate(-50%,-100%);padding:2px 9px;border-radius:2px;font-family:var(--f-disp);font-size:16px;letter-spacing:.1em;color:var(--ink);background:var(--glass);border:1px solid var(--line);pointer-events:none;white-space:nowrap;z-index:4}
 .g-tag.goal{border-color:var(--cinnabar);color:var(--cinnabar)}
 body.g-playing .card{display:none!important}
+.g-opts{display:grid;gap:8px;margin:14px 0 2px}
+.g-opt{all:unset;box-sizing:border-box;cursor:pointer;padding:10px 14px;border:1px solid var(--line);border-radius:2px;background:rgba(255,255,255,.4);font-size:15px;line-height:1.7;letter-spacing:.03em;text-align:left;color:var(--ink)}
+.g-opt:hover,.g-opt:focus-visible{border-color:var(--cinnabar);background:rgba(255,255,255,.75)}
+.g-opt i{font-style:normal;font-size:12px;color:var(--cinnabar);margin-right:8px}
 #g-intro{position:fixed;inset:0;z-index:60;background:#07080a;color:#e9e3d3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 1.6s ease;user-select:none}
 #g-intro[hidden]{display:none}
 #g-intro.out{opacity:0;pointer-events:none}
@@ -413,7 +417,7 @@ function dressHero(look) {
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
 function beginChar(k) {
-  startEl.hidden = true; S.story = null; if (banEr) scene.remove(banEr);
+  startEl.hidden = true; S.story = null; if (banEr) scene.remove(banEr); putFlowers(false);
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
@@ -437,54 +441,119 @@ const LIU = {
     ['次日清早，天气清朗。', 'The next morning broke clear and bright.'],
     ['这是你头一回进大观园。', 'This is your first time in the Grand View Garden.', 'big']
   ],
+  /* 每一步：npcs 第一位是要找的人（光柱指向她），其余站在旁边；pages 依次弹出：
+     say = 对白 [谁, 谁En, 话, 话En]（谁为空即旁白）；ask = 选择回话；text = 第几回原文揭示。
+     位置函数返回 [x, z]，qf() 是沁芳亭桥心。 */
   steps: [
-    { who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', at: [6, 110],
-      tip: '进园门去。凤姐的丫头丰儿在门里等你。', tipEn: 'Go in through the gate. Xifeng’s maid Feng’er is waiting just inside.',
-      label: '和丰儿说话', labelEn: 'Talk to Feng’er', where: '正门', whereEn: 'Main Gate',
-      talk: [['丰儿', 'Feng’er', '姥姥起得早。我们奶奶叫我先领您和板儿进园子，找大奶奶去——大奶奶一早就在大观楼底下张罗呢。', 'Up early, Granny! My mistress told me to take you and Ban’er into the garden to find Madam Li Wan — she’s been busy under the Grand View Tower since dawn.'],
-             ['刘姥姥', 'Granny Liu', '好姑娘，劳动你了。', 'Bless you, my dear, for the trouble.']] },
-    { who: '李纨', whoEn: 'Li Wan', color: '#8e8a80', place: 'daguan',
-      tip: '跟着光柱，过沁芳亭，到大观楼底下找大奶奶李纨。', tipEn: 'Follow the beam of light past Drenched Blossoms Pavilion to Li Wan under the Grand View Tower.',
-      label: '见李纨', labelEn: 'Greet Li Wan',
-      reveal: { title: '史太君两宴大观园', titleEn: 'The Lady Dowager Feasts in the Garden', ch: '第四十回', chEn: 'Chapter 40',
-        prose: ['李纨一早起来，正看着老婆子丫头们扫那些落叶，擦抹桌椅，预备茶酒器皿。丰儿带了你和板儿进来，说：“大奶奶倒忙的很。”李纨笑道：“我说你昨儿去不成，只忙着要去。”你笑道：“老太太留下我，叫我也热闹一天去。”',
-                '李纨叫人上去开了缀锦阁，把桌椅一张一张往下抬。你巴不得一声儿，拉了板儿登梯上去，只见乌压压的堆着些围屏、桌椅、大小花灯，虽不大认得，只见五彩炫耀，各有奇妙。你念了几声佛，便下来了。',
-                '不多时，老太太已带了一群人进园来了。'],
-        proseEn: ['Li Wan had risen at dawn and was watching the women sweep up fallen leaves, wipe down tables and set out tea and wine things. Feng’er brought you and Ban’er in: “Madam is busy indeed.” Li Wan laughed: “I said you wouldn’t get away yesterday, you were in such a hurry to go.” You laughed: “The old lady kept me, so I could join in the fun for a day.”',
-                  'Li Wan had the Brocade Pavilion opened and the tables carried down one by one. You couldn’t wait — you pulled Ban’er up the ladder and found the place crammed with screens, tables, chairs and lanterns great and small; you hardly knew what any of it was, only that it dazzled in every colour. You called on the Buddha a few times and came back down.',
-                  'Before long, the old lady arrived in the garden with a whole crowd behind her.'] } }
+    { tip: '进园门去。凤姐的丫头丰儿在门里等你。', tipEn: 'Go in through the gate. Xifeng’s maid Feng’er is waiting just inside.',
+      label: '和丰儿说话', labelEn: 'Talk to Feng’er', where: '正门', whereEn: 'Main Gate', face: () => [0, 131],
+      npcs: [{ who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', at: () => [6, 110] }],
+      pages: [{ say: [['丰儿', 'Feng’er', '姥姥起得早。我们奶奶叫我先领您和板儿进园子，找大奶奶去——大奶奶一早就在大观楼底下张罗呢。', 'Up early, Granny! My mistress told me to take you and Ban’er into the garden to find Madam Li Wan — she’s been busy under the Grand View Tower since dawn.'],
+                      ['刘姥姥', 'Granny Liu', '好姑娘，劳动你了。', 'Bless you, my dear, for the trouble.']], btn: ['跟她走', 'Follow her'] }] },
+    { tip: '跟着光柱，过沁芳亭，到大观楼底下找大奶奶李纨。', tipEn: 'Follow the beam of light past Drenched Blossoms Pavilion to Li Wan under the Grand View Tower.',
+      label: '见李纨', labelEn: 'Greet Li Wan', place: 'daguan',
+      npcs: [{ who: '李纨', whoEn: 'Li Wan', color: '#8e8a80', anchor: 'daguan' }, { who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', anchor: 'daguan', off: 2.2 }],
+      pages: [{ text: { title: '史太君两宴大观园', titleEn: 'The Lady Dowager Feasts in the Garden', ch: '第四十回', chEn: 'Chapter 40',
+        p: ['李纨一早起来，正看着老婆子丫头们扫那些落叶，擦抹桌椅，预备茶酒器皿。丰儿带了你和板儿进来，说：“大奶奶倒忙的很。”李纨笑道：“我说你昨儿去不成，只忙着要去。”你笑道：“老太太留下我，叫我也热闹一天去。”',
+            '李纨叫人上去开了缀锦阁，把桌椅一张一张往下抬。你巴不得一声儿，拉了板儿登梯上去，只见乌压压的堆着些围屏、桌椅、大小花灯，虽不大认得，只见五彩炫耀，各有奇妙。你念了几声佛，便下来了。',
+            '不多时，老太太已带了一群人进园来了。'],
+        pEn: ['Li Wan had risen at dawn and was watching the women sweep up fallen leaves, wipe down tables and set out tea and wine things. Feng’er brought you and Ban’er in: “Madam is busy indeed.” Li Wan laughed: “I said you wouldn’t get away yesterday, you were in such a hurry to go.” You laughed: “The old lady kept me, so I could join in the fun for a day.”',
+              'Li Wan had the Brocade Pavilion opened and the tables carried down one by one. You couldn’t wait — you pulled Ban’er up the ladder and found the place crammed with screens, tables, chairs and lanterns great and small; you hardly knew what any of it was, only that it dazzled in every colour. You called on the Buddha a few times and came back down.',
+              'Before long, the old lady arrived in the garden with a whole crowd behind her.'] } }] },
+    { tip: '老太太进园了。随大奶奶往回迎，到沁芳亭南头见老太太。', tipEn: 'The old lady has come into the garden. Go back with Li Wan to meet her at the south end of Drenched Blossoms Pavilion.',
+      label: '迎老太太', labelEn: 'Greet the old lady', where: '沁芳亭', whereEn: 'Drenched Blossoms Pavilion', face: () => { const [x, z] = qf(); return [x, z - 20]; },
+      npcs: [{ who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => { const [x, z] = qf(); return [x, z + 13]; } },
+             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => { const [x, z] = qf(); return [x - 1.6, z + 14]; } },
+             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => { const [x, z] = qf(); return [x + 1.8, z + 13.6]; } },
+             { who: '碧月', whoEn: 'Biyue', color: '#c9b07a', at: () => { const [x, z] = qf(); return [x + 0.9, z + 11.4]; } }],
+      pages: [{ say: [['', '', '碧月早捧过一个大荷叶式的翡翠盘子来，里面养着各色的折枝菊花。老太太便拣了一朵大红的簪于鬓上，回头看见了你，忙笑道：', 'Biyue had already brought up a great jade dish shaped like a lotus leaf, holding sprays of chrysanthemums of every colour. The old lady picked a big red one and pinned it at her temple, then turned, saw you, and laughed:'],
+                      ['贾母', 'The Lady Dowager', '过来带花儿。', 'Come and wear some flowers.'],
+                      ['', '', '一语未完，凤姐便拉过你，笑道：“让我打扮你。”说着，将一盘子花横三竖四的插了一头。老太太和众人笑的了不得。', 'Before she had finished, Xifeng pulled you over: “Let me dress you up!” — and stuck the whole dishful of flowers every which way all over your head. The old lady and everyone laughed fit to burst.']], btn: ['……', '…'], then: 'flowers' },
+              { ask: { q: ['众人笑道：“你还不拔下来摔到她脸上呢，把你打扮的成了个老妖精了。”你怎么回？', 'Everyone laughed: “Pull them out and throw them in her face! She’s made you into an old witch!” What do you say?'],
+                  opts: [{ t: ['我虽老了，年轻时也风流，爱个花儿粉儿的，今儿老风流才好。', 'I may be old, but I was a flirt in my day and loved my flowers and powder — today I’ll be an old flirt!'], best: 1 },
+                         { t: ['哎哟，这么好的花儿，可别糟蹋了。', 'Oh my, such lovely flowers — mustn’t waste them.'] },
+                         { t: ['（不说话，只摸着一头的花傻笑）', '(Say nothing; just pat the flowers on your head and grin.)'] }],
+                  after: ['你索性笑道：“我虽老了，年轻时也风流，爱个花儿粉儿的，今儿老风流才好。”', 'Then you laughed outright: “I may be old, but I was a flirt in my day and loved my flowers and powder — today I’ll be an old flirt!”'],
+                  ch: ['第四十回', 'Chapter 40'] } }] },
+    { tip: '跟老太太到沁芳亭上去，在她身边坐下。', tipEn: 'Follow the old lady onto Drenched Blossoms Pavilion and sit beside her.',
+      label: '在老太太身边坐下', labelEn: 'Sit beside the old lady', where: '沁芳亭', whereEn: 'Drenched Blossoms Pavilion', face: () => { const [x, z] = qf(); return [x, z + 20]; },
+      npcs: [{ who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => { const [x, z] = qf(); return [x - 1.2, z - 0.6]; } },
+             { who: '惜春', whoEn: 'Xichun', color: '#9fa6c8', at: () => { const [x, z] = qf(); return [x + 1.5, z - 1.4]; } },
+             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => { const [x, z] = qf(); return [x + 1.6, z + 1.4]; } },
+             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => { const [x, z] = qf(); return [x - 1.9, z + 1.3]; } },
+             { who: '李纨', whoEn: 'Li Wan', color: '#8e8a80', at: () => { const [x, z] = qf(); return [x + 0.2, z + 3.4]; } }],
+      pages: [{ say: [['', '', '说笑之间，已来至沁芳亭子上。丫鬟们抱了一个大锦褥子来，铺在栏杆榻板上。老太太倚柱坐下，命你也坐在旁边，因问你：', 'Laughing and chatting, they came up onto Drenched Blossoms Pavilion. Maids brought a great brocade mat and spread it on the railing bench. The old lady sat down against a pillar, had you sit beside her, and asked:'],
+                      ['贾母', 'The Lady Dowager', '这园子好不好？', 'Well — is this garden good or not?']], btn: ['……', '…'] },
+              { ask: { q: ['你怎么回？', 'What do you say?'],
+                  opts: [{ t: ['我们乡下人到了年下，都上城来买画儿贴。想着那个画儿也不过是假的，那里有这个真地方呢。谁知我今儿进这园里一瞧，竟比那画儿还强十倍。', 'At New Year we country folk come to town to buy pictures to paste up. I always thought those pictures were make-believe — how could there be such a place? But now I’ve come into this garden, it beats the pictures ten times over!'], best: 1 },
+                         { t: ['好是好，就是太大了，走得我腿都酸了。', 'Good it is — only so big my old legs ache from walking.'] },
+                         { t: ['好！这么大一片地，要是种上庄稼，够我们庄上吃几年的。', 'Good! A plot this size, sown with grain, would feed our whole village for years.'] }],
+                  after: ['众人都笑了。你念了一声佛，又道：“我们乡下人到了年下，都上城来买画儿贴……谁知我今儿进这园里一瞧，竟比那画儿还强十倍。”', 'Everyone laughed. You called on the Buddha and went on: “At New Year we country folk come to town to buy pictures… but now I’ve come into this garden, it beats the pictures ten times over!”'],
+                  ch: ['第四十回', 'Chapter 40'] } },
+              { text: { title: '比画儿还强十倍', titleEn: 'Ten Times Better than the Pictures', ch: '第四十回', chEn: 'Chapter 40',
+                p: ['你又说：“怎么得有人也照着这个园子画一张，我带了家去，给他们见见，死了也得好处。”',
+                    '老太太听说，便指着惜春笑道：“你瞧我这个小孙女儿，她就会画。等明儿叫她画一张如何？”你听了，喜的忙跑过来，拉着惜春说道：“我的姑娘！你这么大年纪儿，又这么个好模样，还有这个能干，别是个神仙托生的罢。”',
+                    '老太太少歇一回，自然领着你都见识见识。先到了潇湘馆。'],
+                pEn: ['And you said: “If only someone would paint this garden just as it is, so I could take it home to show them — I’d die content.”',
+                      'Hearing this, the old lady pointed at Xichun and laughed: “See this little granddaughter of mine? She can paint. Shall we have her paint one for you?” You were so delighted you ran over, took Xichun’s hands and said: “My dear young lady! So young, so lovely, and so clever besides — you must be a fairy come down to earth!”',
+                      'After a short rest the old lady naturally took you to see everything. First they came to the Bamboo Lodge.'] } }] }
   ]
 };
+const qf = () => { const Q = D.QINFANG; return Q ? [Q.x, Q.z] : [0, 52]; };
 const introEl = $('g-intro'), lidsEl = $('g-lids');
-let banEr = null;
+let banEr = null, flowerHat = null;
+/* 站在桥上、台上的人：从上往下找最近的可站面 */
+function standY(x, z) { return groundAt(x, z, Math.max(D.hq(x, z), 0) + 4.5)[0]; }
+function npcAt(n) {
+  if (n.at) { const [x, z] = n.at(); return new V3(x, standY(x, z), z); }
+  const a = anchor(n.anchor); return n.off ? a.off(n.off) : new V3(a.x, a.y, a.z);
+}
 function storyWorld() {
   clearWorld(); const st = LIU.steps[S.q]; if (!st) { renderStory(); return; }
-  let v, face;
-  if (st.at) { const [x, z] = st.at; v = new V3(x, groundAt(x, z, 99)[0], z); face = new V3(0, 0, 131); }
-  else { const a = anchor(st.place); v = new V3(a.x, a.y, a.z); face = new V3(a.spawn[0], 0, a.spawn[1]);
-    const fe = place(makeFigure(LIU.steps[0].color, true), a.off(2.2), face); addTag(() => T(LIU.steps[0], 'who'), fe, 2.15, false); }   // 丰儿已先到，站在一旁
-  const f = place(makeFigure(st.color, true), v, face);
-  S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.4, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
-  addTag(() => T(st, 'who'), f, 2.15, true);
+  const fa = st.face ? st.face() : null;
+  st.npcs.forEach((n, i) => {
+    const v = npcAt(n); let face;
+    if (fa) face = new V3(fa[0], 0, fa[1]); else { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); }
+    const f = place(makeFigure(n.color, true), v, face);
+    if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
+    addTag(() => T(n, 'who'), f, 2.15, i === 0);
+  });
   renderStory();
 }
 function renderStory() {
   const st = LIU.steps[S.q], dots = LIU.steps.map((_, i) => `<i class="${i < S.q ? 'on' : ''}"></i>`).join('');
   questEl.innerHTML = st
-    ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('第四十回', 'Chapter 40')} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}</div><div class="dots">${dots}</div>`
-    : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${L('老太太带着众人就要进园了。先在园子里四处看看吧。', 'The old lady and her party are on their way into the garden. Look around for now.')}</p><div class="dots">${dots}</div>`;
+    ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('第四十回', 'Chapter 40')} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}${flowerHat && flowerHat.parent ? L(' · 一头菊花', ' · a head full of chrysanthemums') : ''}</div><div class="dots">${dots}</div>`
+    : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${L('老太太领着众人往潇湘馆去了。先在园子里四处看看吧。', 'The old lady is leading everyone to the Bamboo Lodge. Look around for now.')}</p><div class="dots">${dots}</div>`;
   questEl.hidden = !walk.on;
 }
+/* 凤姐给插的一头菊花 */
+function putFlowers(on) {
+  if (!on) { if (flowerHat && flowerHat.parent) flowerHat.parent.remove(flowerHat); return; }
+  if (!flowerHat) { flowerHat = new THREE.Group(); const cols = ['#c8322e', '#e3b23c', '#f2efe6', '#d96fa0', '#e88a2a', '#b8a0d8'];
+    for (let k = 0; k < 16; k++) { const a = k * 2.399, r = 0.05 + (k % 4) * 0.025, up = 0.06 + ((k * 7) % 5) * 0.012;
+      const fl = new THREE.Mesh(new THREE.SphereGeometry(0.03 + (k % 3) * 0.008, 8, 6), new THREE.MeshStandardMaterial({ color: cols[k % cols.length], roughness: 0.7 }));
+      fl.scale.y = 0.6; fl.position.set(Math.cos(a) * r, up, Math.sin(a) * r - 0.01); flowerHat.add(fl); } }
+  hero.head.add(flowerHat);
+}
+const say1 = ([w, wE, l, lE]) => w ? `<p class="prose"><b>${esc(L(w, wE))}</b>${L('：', ': ')}${esc(L(l, lE))}</p>` : `<p class="prose" style="color:var(--ink-2)">${esc(L(l, lE))}</p>`;
+function runPages(pages, k, done) {
+  const pg = pages[k]; if (!pg) { done(); return; }
+  const go = () => runPages(pages, k + 1, done);
+  if (pg.say) { openModal(() => `<div class="ey">${esc(T(LIU, 'name'))} · ${L('第四十回', 'Chapter 40')}</div>${pg.say.map(say1).join('')}<button class="g-btn" id="g-next">${esc(L(...(pg.btn || ['继续', 'Continue'])))}</button>`,
+      () => { if (pg.then === 'flowers') { putFlowers(true); renderStory(); } go(); }); return; }
+  if (pg.ask) { const A = pg.ask;
+    openModal(() => `<div class="ey">${esc(L(...A.ch))}</div><p class="prose">${esc(L(...A.q))}</p><div class="g-opts g-say">${A.opts.map((o, i) => `<button class="g-opt" data-i="${i}"><i>${i + 1}</i>${esc(L(...o.t))}</button>`).join('')}</div>`, null,
+      () => { scrollEl.querySelectorAll('.g-opt').forEach(b => b.onclick = () => { const o = A.opts[+b.dataset.i]; blip(o.best ? 880 : 520);
+        openModal(() => `<div class="ey">${esc(L(...A.ch))}</div>${o.best ? `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${L('众人都笑了。', 'Everyone laughed.')}</p>` : `<p class="prose"><b>${L('你', 'You')}</b>${L('：', ': ')}${esc(L(...o.t))}</p><p class="prose" style="color:var(--ink-2)">${esc(L(...A.after))}</p>`}<button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); }); });
+    return; }
+  if (pg.text) { const R = pg.text;
+    openModal(() => `<div class="ey">${esc(T(R, 'ch'))}</div><h3>${esc(T(R, 'title'))}</h3>${(EN() ? R.pEn : R.p).map(t => `<p class="prose">${esc(t)}</p>`).join('')}<div class="ch">${EN() ? `See <i>Dream of the Red Chamber</i>, ${esc(R.chEn)}` : `见《红楼梦》${esc(R.ch)}`}</div><button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`, go); return; }
+  go();
+}
 function storyInteract(t) {
-  const st = LIU.steps[S.q]; blip(st.reveal ? 880 : 660);
-  if (st.talk) {
-    openModal(() => `<div class="ey">${esc(T(LIU, 'name'))} · ${L('第四十回', 'Chapter 40')}</div>${st.talk.map(([w, wE, l, lE]) => `<p class="prose"><b>${esc(L(w, wE))}</b>${L('：', ': ')}${esc(L(l, lE))}</p>`).join('')}<button class="g-btn" id="g-next">${L('跟她走', 'Follow her')}</button>`,
-      () => { S.q++; storyWorld(); flash(T(LIU.steps[S.q], 'tip')); });
-    return;
-  }
-  const R = st.reveal; clearWorld();
-  openModal(() => `<div class="ey">${esc(T(R, 'ch'))}</div><h3>${esc(T(R, 'title'))}</h3>${(EN() ? R.proseEn : R.prose).map(t => `<p class="prose">${esc(t)}</p>`).join('')}<div class="ch">${EN() ? `See <i>Dream of the Red Chamber</i>, ${esc(R.chEn)}` : `见《红楼梦》${esc(R.ch)}`}</div><button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`,
-    () => { S.q++; S.done.liu = 1; saveDone(); storyWorld(); });
+  const st = LIU.steps[S.q]; blip(660);
+  runPages(st.pages, 0, () => { S.q++; S.done.liu = Math.max(S.done.liu || 0, S.q); saveDone(); storyWorld(); const n = LIU.steps[S.q]; if (n) flash(T(n, 'tip')); });
 }
 /* 板儿跟在身后半步 */
 function followBanEr(dt) {
@@ -496,7 +565,7 @@ function followBanEr(dt) {
 }
 function liuIntro() {
   pauseGame(true); startEl.hidden = true; clearWorld();
-  S.char = null; S.giftMode = false; S.story = 'liu'; S.stage = 'story'; S.q = 0; S.carrying = null;
+  S.char = null; S.giftMode = false; S.story = 'liu'; S.stage = 'story'; S.q = 0; S.carrying = null; putFlowers(false);
   dressHero(LIU.look); setWorld(LIU.season, LIU.hour); document.body.classList.add('g-playing');
   let i = -1, busy = null;
   const paint = () => { const [zh, en, cls] = LIU.intro[i]; introEl.innerHTML = `<p class="ln ${cls || ''}">${esc(L(zh, en))}</p><button class="skip" id="g-intro-skip">${L('跳过', 'Skip')}</button><div class="hint">${isTouch ? L('点一下继续', 'Tap to continue') : L('点击或按空格继续', 'Click or press Space to continue')}</div>`;
@@ -616,7 +685,8 @@ function blip(f) { try { actx = actx || new (window.AudioContext || window.webki
 /* 键盘：弹窗时拦截所有按键，避免角色乱走；E / 回车 交互 */
 addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') { if (!modalEl.hidden || !startEl.hidden) e.stopImmediatePropagation(); return; }
-  if (!modalEl.hidden) { e.stopImmediatePropagation(); if ((e.code === 'KeyE' || e.code === 'Enter' || e.code === 'Space') && $('g-next') && !$('gf-make')) { e.preventDefault(); closeModal(); } return; }
+  if (!modalEl.hidden) { e.stopImmediatePropagation();
+    { const m = /^Digit([1-9])$/.exec(e.code), o = m && scrollEl.querySelectorAll('.g-opt')[+m[1] - 1]; if (o) { e.preventDefault(); o.click(); return; } } if ((e.code === 'KeyE' || e.code === 'Enter' || e.code === 'Space') && $('g-next') && !$('gf-make')) { e.preventDefault(); closeModal(); } return; }
   if (!startEl.hidden) { e.stopImmediatePropagation(); return; }
   if (e.code === 'KeyE' && walk.on && S.near) { e.preventDefault(); interact(); }
 }, true);
