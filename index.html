@@ -1437,7 +1437,7 @@ function enterWalk(spawn){if(walk.on)return;walk.on=true;document.body.classList
  if(spawn){[x,z,yaw]=spawn;}else{const t=controls.target;x=t.x;z=t.z;const d=new V3().subVectors(controls.target,camera.position);yaw=Math.atan2(-d.x,-d.z);if(hq(x,z)<0.3){x=0;z=108;yaw=Math.PI;}}
  walk.yaw=yaw;walk.charYaw=yaw;walk.pitch=walk.third?-0.28:-0.05;walk.feet=groundAt(x,z,99)[0];walk.pos.set(x,walk.feet,z);walk.vel.set(0,0,0);walk.vy=0;camera.near=0.1;camera.updateProjectionMatrix();
  document.getElementById('walkhud').hidden=false;document.getElementById('btn-walk').setAttribute('aria-pressed','true');setWalkHelp();
- if(isTouch)document.getElementById('stick').hidden=false;else renderer.domElement.requestPointerLock?.();
+ if(isTouch)document.getElementById('stick').hidden=false;else if(navigator.userActivation?.isActive){const lock=renderer.domElement.requestPointerLock?.();lock?.catch(()=>{});}
  GRASS.R=Math.max(GRASS.R,[22,30,40][Q]);updateWalk(0.016);}
 function exitWalk(){if(!walk.on)return;walk.on=false;document.body.classList.remove('walking');hero.g.visible=false;document.getElementById('walkhud').hidden=true;document.getElementById('stick').hidden=true;document.getElementById('btn-walk').setAttribute('aria-pressed','false');
  if(document.pointerLockElement)document.exitPointerLock();controls.target.copy(walk.pos).add(new V3(0,1.2,0));const off=new V3().subVectors(camera.position,controls.target);if(off.length()<6)off.setLength(8);camera.position.copy(controls.target).add(off);controls.enabled=true;camera.near=0.3;camera.updateProjectionMatrix();GRASS.R=[0,30,40][Q];}
@@ -1662,6 +1662,7 @@ function autoTune(fps){if(!AT.on||document.hidden)return;AT.t+=0.5;if(AT.t<2)ret
 const clock=new THREE.Clock(),pv=new V3();let ftAcc=0,ftN=0,drTimer=0;const fpsEl=document.getElementById('fps');
 function frame(){
  const raw=clock.getDelta(),dt=Math.min(raw,0.05),et=clock.elapsedTime;G.time.value=et;
+ if(window.__characterShowcase){requestAnimationFrame(frame);return;}
  // gusts (drive both sound and grass/foliage)
  A.gustTimer=(A.gustTimer??0)-dt;if(A.gustTimer<=0){A.gustTimer=2+Math.random()*6;A.gustT=Math.random()<0.35?0.03+Math.random()*0.12:0.3+Math.random()*0.7;}A.gust+=(A.gustT-A.gust)*(1-Math.exp(-dt/1.4));
  G.wind.value=0.25+A.gust*0.75;G.gust.value.x+=dt*(1.5+A.gust*3.5);G.gust.value.y+=dt*(0.5+A.gust*1.2);

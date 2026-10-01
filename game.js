@@ -1,3 +1,4 @@
+import { createCharacterShowcase } from './character-showcase.js';
 /* =====================================================================
    我们的大观园 · 赠礼玩法
    选一个人入园 → 心事 → 寻物 → 送礼 → 原著片段揭示 → 赠一份礼给现实中的人
@@ -7,6 +8,8 @@ const wait = () => new Promise(r => { const t = () => window.__dgy && window.__D
 const D = await wait();
 const { THREE, scene, hero, walk, blockedAt, groundAt, setSeason, applyTime, enterWalk, exitWalk, camera, PLACES, isTouch, hourEl } = D;
 const V3 = THREE.Vector3;
+const characterShowcase = createCharacterShowcase(THREE);
+let characterSelection = 0;
 
 /* ---------------------------------------------------------------------
    人物与心事（全部取自原著；诗句为原文，其余为转述）
@@ -296,15 +299,16 @@ function renderQuest() {
   if (!S.char) { questEl.hidden = true; return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   const dots = C.quests.map((_, i) => `<i class="${i < S.q || (i === S.q && S.stage === 'done') ? 'on' : ''}"></i>`).join('');
-  if (!Q) { questEl.innerHTML = `<div class="who"><b>${C.name}</b><span>心事已了</span></div><p class="tip">在园中随意走走，或按「入园」换一个人。</p><div class="dots">${dots}</div>`; questEl.hidden = !walk.on; return; }
+  if (!Q) { questEl.innerHTML = `<div class="who"><b>${C.name}</b>${S.char === 'daiyu' ? '<button class="g-character-view" type="button" title="查看人物（C）">看人物</button>' : ''}<span>心事已了</span></div><p class="tip">在园中随意走走，或按「入园」换一个人。</p><div class="dots">${dots}</div>`; questEl.hidden = !walk.on; return; }
   const tip = S.stage === 'pick' ? (Q.pick.kind === 'petals' ? `${Q.pick.tip}（${S.petals}/${Q.pick.n}）` : Q.pick.tip) : Q.give.tip;
-  questEl.innerHTML = `<div class="who"><b>${C.name}</b><span>心事 ${S.q + 1}/${C.quests.length} · ${Q.title}</span></div><p class="want">${esc(Q.want)}</p><p class="tip">${esc(tip)}</p>${S.carrying ? `<div class="bag">随身：${esc(S.carrying)}</div>` : ''}<div class="dots">${dots}</div>`;
+  questEl.innerHTML = `<div class="who"><b>${C.name}</b>${S.char === 'daiyu' ? '<button class="g-character-view" type="button" title="查看人物（C）">看人物</button>' : ''}<span>心事 ${S.q + 1}/${C.quests.length} · ${Q.title}</span></div><p class="want">${esc(Q.want)}</p><p class="tip">${esc(tip)}</p>${S.carrying ? `<div class="bag">随身：${esc(S.carrying)}</div>` : ''}<div class="dots">${dots}</div>`;
   questEl.hidden = !walk.on;
   for (const t of S.tags) t.el.classList.toggle('goal', t.goal || (S.stage === 'give' && t.obj === (S.targets.find(x => x.stage === 'give') || {}).obj));
 }
 function charCard(k) { const C = CHARS[k]; const done = S.done[k] ? ' · 已完成' : '';
   return `<button class="g-char" data-k="${k}"><span class="sw" style="background:${C.look.robe}"></span><b>${C.name}</b><small>${esc(C.home)}${done}</small><p>${esc(C.line)}</p><ol>${C.quests.map(q => `<li>${esc(q.title)}</li>`).join('')}</ol></button>`; }
 function showStart(giftMode) {
+  characterSelection++; characterShowcase.cancel();
   pauseGame(true);
   if (walk.on) exitWalk();
   if (giftMode && S.gift) {
@@ -335,13 +339,25 @@ function dressHero(look) {
 }
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
-function beginChar(k) {
+async function beginChar(k) {
+  const ticket = ++characterSelection; characterShowcase.cancel();
+  if (walk.on) exitWalk();
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
-  const C = CHARS[k]; dressHero(C.look); void hero.setCharacter(k); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
-  document.body.classList.add('g-playing'); pauseGame(false);
-  stageWorld(); enterWalk(spawnAt(C.start)); renderQuest();
+  const C = CHARS[k]; dressHero(C.look); const loaded = hero.setCharacter(k); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
+  document.body.classList.add('g-playing'); pauseGame(true);
+  stageWorld();
+  const ready = await loaded;
+  if (ticket !== characterSelection) return;
+  if (k === 'daiyu' && ready) {
+    try { await characterShowcase.play(hero.g.getObjectByName('character-daiyu')); }
+    catch (error) { console.warn('Character showcase unavailable', error); characterShowcase.cancel(); }
+  }
+  if (ticket !== characterSelection) return;
+  pauseGame(false); walk.keys = {}; walk.vel.set(0,0,0);
+  enterWalk(spawnAt(C.start)); renderQuest();
 }
 function beginGift() {
+  characterSelection++; characterShowcase.cancel();
   S.char = null; void hero.setCharacter(null); S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', a = anchor(id); const v = a.off(2.2);
   const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: '打开' + (g.f ? g.f + '的' : '') + '礼' }]; S.stage = 'gift'; addTag('给你的礼', o, 0.7, true);
@@ -474,3 +490,14 @@ window.__game = { S, CHARS, beginChar, interact, anchor, stageWorld, encodeGift,
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
 { const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else showStart(); }
+
+async function viewDaiyu() {
+  if (S.char !== 'daiyu' || window.__characterShowcase) return;
+  const ticket = characterSelection;
+  pauseGame(true); walk.vel.set(0,0,0);
+  if (document.pointerLockElement) document.exitPointerLock();
+  try { await characterShowcase.play(hero.g.getObjectByName('character-daiyu')); }
+  finally { if (ticket === characterSelection) { pauseGame(false); walk.keys = {}; } }
+}
+questEl.addEventListener('click', e => { if(e.target.closest('.g-character-view')) void viewDaiyu(); });
+window.addEventListener('keydown', e => { if(e.code === 'KeyC' && walk.on && !window.__gamePause && e.target.tagName !== 'INPUT'){e.preventDefault();e.stopImmediatePropagation();void viewDaiyu();}}, true);
