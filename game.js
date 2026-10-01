@@ -204,11 +204,32 @@ const css = `
 .g-tag{position:fixed;left:0;top:0;transform:translate(-50%,-100%);padding:2px 9px;border-radius:2px;font-family:var(--f-disp);font-size:16px;letter-spacing:.1em;color:var(--ink);background:var(--glass);border:1px solid var(--line);pointer-events:none;white-space:nowrap;z-index:4}
 .g-tag.goal{border-color:var(--cinnabar);color:var(--cinnabar)}
 body.g-playing .card{display:none!important}
+#g-intro{position:fixed;inset:0;z-index:60;background:#07080a;color:#e9e3d3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 1.6s ease;user-select:none}
+#g-intro[hidden]{display:none}
+#g-intro.out{opacity:0;pointer-events:none}
+#g-intro .ln{font-family:var(--f-disp);font-size:clamp(20px,3.1vw,31px);letter-spacing:.14em;line-height:2;max-width:780px;padding:0 28px;text-align:center;opacity:0;transform:translateY(8px);transition:opacity 1.3s ease,transform 1.3s ease}
+#g-intro .ln.on{opacity:1;transform:none}
+#g-intro .ln.ey{font-family:inherit;font-size:13px;letter-spacing:.34em;color:#b39a6a}
+#g-intro .ln.big{font-size:clamp(28px,4.6vw,46px);letter-spacing:.2em}
+#g-intro .hint{position:absolute;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;letter-spacing:.24em;color:#7d786c;animation:gpulse 2.4s ease-in-out infinite}
+#g-intro .skip{all:unset;position:absolute;right:22px;top:calc(18px + env(safe-area-inset-top,0px));font-size:13px;letter-spacing:.12em;color:#9a9486;cursor:pointer;border-bottom:1px solid #4a4740}
+#g-intro .skip:hover,#g-intro .skip:focus-visible{color:#e9e3d3}
+@keyframes gpulse{0%,100%{opacity:.35}50%{opacity:.9}}
+#g-lids{position:fixed;inset:0;z-index:59;pointer-events:none}
+#g-lids[hidden]{display:none}
+#g-lids i{position:absolute;left:-15%;width:130%;height:56%;background:#07080a}
+#g-lids i:first-child{top:0;border-radius:0 0 50% 50%/0 0 34% 34%;animation:glidT 3.6s cubic-bezier(.4,0,.2,1) forwards}
+#g-lids i:last-child{bottom:0;border-radius:50% 50% 0 0/34% 34% 0 0;animation:glidB 3.6s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes glidT{0%{transform:translateY(0)}22%{transform:translateY(-22%)}34%{transform:translateY(-4%)}62%{transform:translateY(-58%)}74%{transform:translateY(-46%)}100%{transform:translateY(-110%)}}
+@keyframes glidB{0%{transform:translateY(0)}22%{transform:translateY(22%)}34%{transform:translateY(4%)}62%{transform:translateY(58%)}74%{transform:translateY(46%)}100%{transform:translateY(110%)}}
+@media (prefers-reduced-motion:reduce){#g-intro .ln{transition:opacity .6s}#g-lids i{animation-duration:1.2s}#g-intro .hint{animation:none}}
 @media (max-width:760px){.g-chars{grid-template-columns:1fr}.g-sheet{padding:20px 18px}.g-sheet h2{font-size:34px}.g-char ol{display:none}#g-quest{top:auto;bottom:calc(170px + env(safe-area-inset-bottom,0px));width:auto;right:16px}#g-prompt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.g-scroll{padding:24px 20px}.g-scroll .poem{font-size:20px}}
 @media (prefers-reduced-motion:reduce){#g-compass svg{transition:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
 document.body.insertAdjacentHTML('beforeend', `
+<div id="g-intro" hidden role="dialog" aria-modal="true" aria-live="polite"></div>
+<div id="g-lids" hidden><i></i><i></i></div>
 <div id="g-start" hidden></div>
 <aside id="g-quest" class="panel ui" hidden aria-live="polite"></aside>
 <div id="g-compass" class="panel ui" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l6 16-6-4-6 4z" fill="currentColor"/></svg><b></b><span></span></div>
@@ -343,6 +364,7 @@ function currentGoal() { const t = S.targets.filter(t => t.stage === S.stage); i
    界面渲染
    --------------------------------------------------------------------- */
 function renderQuest() {
+  if (S.story) { renderStory(); return; }
   if (!S.char) { questEl.hidden = true; return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   const dots = C.quests.map((_, i) => `<i class="${i < S.q || (i === S.q && S.stage === 'done') ? 'on' : ''}"></i>`).join('');
@@ -372,9 +394,10 @@ function showStart(giftMode) {
   startEl.innerHTML = `<div class="g-sheet"><h2>${L('我们的大观园', 'Our Grand View Garden')}</h2>
    <p class="g-lead">${L('大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。', 'The Grand View Garden was itself a gift, built by the Jia family for the Imperial Consort’s visit home. Those who live in it speak their hearts through things, too: an old handkerchief, a sprig of red plum, a few baskets of crabs. Choose someone, enter the garden, and carry their feelings to where they belong.')}</p>
    <div class="g-chars">${Object.keys(CHARS).map(charCard).join('')}</div>
-   <div class="g-foot"><button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
+   <div class="g-foot"><span><button class="g-btn" id="g-liu">${L('刘姥姥进大观园', 'Granny Liu Visits the Garden')}</button> <button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button></span><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
   startEl.hidden = false;
   startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; beginChar(b.dataset.k); });
+  $('g-liu').onclick = () => { startEl.hidden = true; liuIntro(); };
   $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); document.body.classList.remove('g-playing'); };
   $('g-recv').onsubmit = (e) => { e.preventDefault(); const g = decodeGift($('g-code-in').value.trim()); if (!g) { $('g-code-in').value = ''; $('g-code-in').placeholder = L('这个码打不开，再检查一下', 'That code won’t open. Please check it'); return; } S.gift = g; showStart(true); };
 }
@@ -390,14 +413,113 @@ function dressHero(look) {
 function setWorld(season, hour) { if (season != null) setSeason(season); if (hour != null) { hourEl.value = hour; hourEl.dispatchEvent(new Event('input')); } }
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
 function beginChar(k) {
-  startEl.hidden = true;
+  startEl.hidden = true; S.story = null; if (banEr) scene.remove(banEr);
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
   stageWorld(); enterWalk(spawnAt(C.start)); renderQuest();
 }
+/* =====================================================================
+   刘姥姥进大观园：开场引导（第三十九回末 · 第四十回开头）
+   黑屏旁白 → 睁眼 → 正门外清早，板儿跟在身边 → 进门找丰儿 → 到大观楼下见李纨
+   旁白、对白为转述；揭示里引号内为原文
+   ===================================================================== */
+const LIU = {
+  name: '刘姥姥', nameEn: 'Granny Liu',
+  look: { robe: '#56606c', robe2: '#47505b', sash: '#8b7a55', crown: false },
+  spawn: [0, 131, 0], season: 2, hour: 7.2,
+  intro: [
+    ['第三十九回 · 第四十回', 'Chapters 39 · 40', 'ey'],
+    ['你是刘姥姥，今年七十五岁，住在城外的庄子上。', 'You are Granny Liu, seventy-five years old, living on a farm outside the city.'],
+    ['秋收过后，你带着外孙板儿，背了些新摘的枣子、倭瓜和野菜，进城来荣国府走动。', 'After the autumn harvest you brought your grandson Ban’er into the city to call on the Rongguo mansion, with fresh-picked dates, squashes and wild greens.'],
+    ['老太太和你投缘，留你住下，说园子里也有果子，明儿叫你尝尝。', 'The old lady took to you, kept you for the night, and said there was fruit in the garden for you to try tomorrow.'],
+    ['人人都说大观园好。你只在年下买的画儿上见过那样的地方，总想着画儿不过是假的，哪里有这个真地方呢。', 'Everyone says the Grand View Garden is wonderful. You have only seen such places in New Year prints, and always thought them make-believe — how could there be such a place?'],
+    ['次日清早，天气清朗。', 'The next morning broke clear and bright.'],
+    ['这是你头一回进大观园。', 'This is your first time in the Grand View Garden.', 'big']
+  ],
+  steps: [
+    { who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', at: [6, 110],
+      tip: '进园门去。凤姐的丫头丰儿在门里等你。', tipEn: 'Go in through the gate. Xifeng’s maid Feng’er is waiting just inside.',
+      label: '和丰儿说话', labelEn: 'Talk to Feng’er', where: '正门', whereEn: 'Main Gate',
+      talk: [['丰儿', 'Feng’er', '姥姥起得早。我们奶奶叫我先领您和板儿进园子，找大奶奶去——大奶奶一早就在大观楼底下张罗呢。', 'Up early, Granny! My mistress told me to take you and Ban’er into the garden to find Madam Li Wan — she’s been busy under the Grand View Tower since dawn.'],
+             ['刘姥姥', 'Granny Liu', '好姑娘，劳动你了。', 'Bless you, my dear, for the trouble.']] },
+    { who: '李纨', whoEn: 'Li Wan', color: '#8e8a80', place: 'daguan',
+      tip: '跟着光柱，过沁芳亭，到大观楼底下找大奶奶李纨。', tipEn: 'Follow the beam of light past Drenched Blossoms Pavilion to Li Wan under the Grand View Tower.',
+      label: '见李纨', labelEn: 'Greet Li Wan',
+      reveal: { title: '史太君两宴大观园', titleEn: 'The Lady Dowager Feasts in the Garden', ch: '第四十回', chEn: 'Chapter 40',
+        prose: ['李纨一早起来，正看着老婆子丫头们扫那些落叶，擦抹桌椅，预备茶酒器皿。丰儿带了你和板儿进来，说：“大奶奶倒忙的很。”李纨笑道：“我说你昨儿去不成，只忙着要去。”你笑道：“老太太留下我，叫我也热闹一天去。”',
+                '李纨叫人上去开了缀锦阁，把桌椅一张一张往下抬。你巴不得一声儿，拉了板儿登梯上去，只见乌压压的堆着些围屏、桌椅、大小花灯，虽不大认得，只见五彩炫耀，各有奇妙。你念了几声佛，便下来了。',
+                '不多时，老太太已带了一群人进园来了。'],
+        proseEn: ['Li Wan had risen at dawn and was watching the women sweep up fallen leaves, wipe down tables and set out tea and wine things. Feng’er brought you and Ban’er in: “Madam is busy indeed.” Li Wan laughed: “I said you wouldn’t get away yesterday, you were in such a hurry to go.” You laughed: “The old lady kept me, so I could join in the fun for a day.”',
+                  'Li Wan had the Brocade Pavilion opened and the tables carried down one by one. You couldn’t wait — you pulled Ban’er up the ladder and found the place crammed with screens, tables, chairs and lanterns great and small; you hardly knew what any of it was, only that it dazzled in every colour. You called on the Buddha a few times and came back down.',
+                  'Before long, the old lady arrived in the garden with a whole crowd behind her.'] } }
+  ]
+};
+const introEl = $('g-intro'), lidsEl = $('g-lids');
+let banEr = null;
+function storyWorld() {
+  clearWorld(); const st = LIU.steps[S.q]; if (!st) { renderStory(); return; }
+  let v, face;
+  if (st.at) { const [x, z] = st.at; v = new V3(x, groundAt(x, z, 99)[0], z); face = new V3(0, 0, 131); }
+  else { const a = anchor(st.place); v = new V3(a.x, a.y, a.z); face = new V3(a.spawn[0], 0, a.spawn[1]);
+    const fe = place(makeFigure(LIU.steps[0].color, true), a.off(2.2), face); addTag(() => T(LIU.steps[0], 'who'), fe, 2.15, false); }   // 丰儿已先到，站在一旁
+  const f = place(makeFigure(st.color, true), v, face);
+  S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.4, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
+  addTag(() => T(st, 'who'), f, 2.15, true);
+  renderStory();
+}
+function renderStory() {
+  const st = LIU.steps[S.q], dots = LIU.steps.map((_, i) => `<i class="${i < S.q ? 'on' : ''}"></i>`).join('');
+  questEl.innerHTML = st
+    ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('第四十回', 'Chapter 40')} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}</div><div class="dots">${dots}</div>`
+    : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${L('老太太带着众人就要进园了。先在园子里四处看看吧。', 'The old lady and her party are on their way into the garden. Look around for now.')}</p><div class="dots">${dots}</div>`;
+  questEl.hidden = !walk.on;
+}
+function storyInteract(t) {
+  const st = LIU.steps[S.q]; blip(st.reveal ? 880 : 660);
+  if (st.talk) {
+    openModal(() => `<div class="ey">${esc(T(LIU, 'name'))} · ${L('第四十回', 'Chapter 40')}</div>${st.talk.map(([w, wE, l, lE]) => `<p class="prose"><b>${esc(L(w, wE))}</b>${L('：', ': ')}${esc(L(l, lE))}</p>`).join('')}<button class="g-btn" id="g-next">${L('跟她走', 'Follow her')}</button>`,
+      () => { S.q++; storyWorld(); flash(T(LIU.steps[S.q], 'tip')); });
+    return;
+  }
+  const R = st.reveal; clearWorld();
+  openModal(() => `<div class="ey">${esc(T(R, 'ch'))}</div><h3>${esc(T(R, 'title'))}</h3>${(EN() ? R.proseEn : R.prose).map(t => `<p class="prose">${esc(t)}</p>`).join('')}<div class="ch">${EN() ? `See <i>Dream of the Red Chamber</i>, ${esc(R.chEn)}` : `见《红楼梦》${esc(R.ch)}`}</div><button class="g-btn" id="g-next">${L('继续', 'Continue')}</button>`,
+    () => { S.q++; S.done.liu = 1; saveDone(); storyWorld(); });
+}
+/* 板儿跟在身后半步 */
+function followBanEr(dt) {
+  if (!banEr || !banEr.parent) return; const p = walk.pos, yaw = walk.charYaw ?? walk.yaw, f = new V3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const tx = p.x - f.x * 1.3 + f.z * 0.9, tz = p.z - f.z * 1.3 - f.x * 0.9; const dx = tx - banEr.position.x, dz = tz - banEr.position.z, d = Math.hypot(dx, dz);
+  if (d > 12) { banEr.position.set(tx, groundAt(tx, tz, p.y + 1)[0], tz); return; }
+  if (d > 0.25) { const k = Math.min(1, dt * (d > 3 ? 3.5 : 2.2)); banEr.position.x += dx * k; banEr.position.z += dz * k; banEr.rotation.y = Math.atan2(dx, dz); }
+  banEr.position.y = groundAt(banEr.position.x, banEr.position.z, p.y + 1)[0];
+}
+function liuIntro() {
+  pauseGame(true); startEl.hidden = true; clearWorld();
+  S.char = null; S.giftMode = false; S.story = 'liu'; S.stage = 'story'; S.q = 0; S.carrying = null;
+  dressHero(LIU.look); setWorld(LIU.season, LIU.hour); document.body.classList.add('g-playing');
+  let i = -1, busy = false;
+  const paint = () => { const [zh, en, cls] = LIU.intro[i]; introEl.innerHTML = `<p class="ln ${cls || ''}">${esc(L(zh, en))}</p><button class="skip" id="g-intro-skip">${L('跳过', 'Skip')}</button><div class="hint">${isTouch ? L('点一下继续', 'Tap to continue') : L('点击或按空格继续', 'Click or press Space to continue')}</div>`;
+    requestAnimationFrame(() => requestAnimationFrame(() => introEl.querySelector('.ln')?.classList.add('on'))); $('g-intro-skip').onclick = (e) => { e.stopPropagation(); wake(); }; };
+  const next = () => { if (busy) return; if (i >= LIU.intro.length - 1) { wake(); return; } const old = introEl.querySelector('.ln'); if (old) { old.classList.remove('on'); busy = true; setTimeout(() => { busy = false; i++; paint(); }, 700); } else { i++; paint(); } };
+  const onKey = (e) => { if (introEl.hidden) return; if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') { e.preventDefault(); e.stopImmediatePropagation(); next(); } else if (e.code === 'Escape') { e.stopImmediatePropagation(); wake(); } };
+  /* 睁眼：眼皮张开两次，画面由模糊转清 */
+  const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
+    if (walk.on) exitWalk(); enterWalk(LIU.spawn); pauseGame(true);
+    if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62); }
+    banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr);
+    storyWorld();
+    const cv = D.renderer.domElement; cv.style.transition = 'none'; cv.style.filter = 'blur(12px) brightness(.55)';
+    lidsEl.hidden = false; lidsEl.innerHTML = '<i></i><i></i>';
+    introEl.classList.add('out'); setTimeout(() => { introEl.hidden = true; introEl.classList.remove('out'); }, 1700);
+    requestAnimationFrame(() => { cv.style.transition = 'filter 3.4s ease-out'; cv.style.filter = ''; });
+    setTimeout(() => { lidsEl.hidden = true; cv.style.transition = ''; pauseGame(false); renderStory();
+      flash(isTouch ? L('左下角摇杆走路 · 跟着光柱走', 'Use the stick to walk · follow the beam of light') : L('WASD 走路 · 鼠标转头 · 跟着光柱走', 'WASD to walk · mouse to look · follow the beam of light')); }, 3700);
+  };
+  introEl.hidden = false; introEl.classList.remove('out'); introEl.onclick = next; addEventListener('keydown', onKey, true); next();
+}
 function beginGift() {
-  S.char = null; S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
+  S.char = null; S.story = null; if (banEr) scene.remove(banEr); S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', a = anchor(id); const v = a.off(2.2);
   const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: () => L('打开' + (g.f ? g.f + '的' : '') + '礼', g.f ? `Open ${g.f}’s gift` : 'Open the gift') }]; S.stage = 'gift'; addTag(() => L('给你的礼', 'A gift for you'), o, 0.7, true);
   renderGiftQuest();
@@ -410,6 +532,7 @@ function renderGiftQuest() {
 function interact() {
   const t = S.near; if (!t || t.stage !== S.stage || !t.obj.parent) return; S.near = null;
   if (S.stage === 'gift') { openGift(); return; }
+  if (S.story) { storyInteract(t); return; }
   const C = CHARS[S.char], Q = C.quests[S.q];
   if (S.stage === 'pick') {
     if (t.petal) { scene.remove(t.obj); S.targets = S.targets.filter(x => x !== t); S.petals++; { const n = S.petals; S.carrying = () => L(`落花 ${n} 捧`, `${n} handful${n > 1 ? 's' : ''} of petals`); } blip(660);
@@ -503,7 +626,7 @@ promptEl.addEventListener('click', interact);
 const _v = new V3(); let last = performance.now();
 function tick(now) {
   requestAnimationFrame(tick); const dt = Math.min(0.05, (now - last) / 1000); last = now; beaconMat.uniforms.t.value = now / 1000;
-  const playing = (S.char || S.giftMode) && walk.on;
+  const playing = (S.char || S.giftMode || S.story) && walk.on; if (S.story) followBanEr(dt);
   questEl.hidden = !(playing || (S.giftMode && walk.on));
   if (!playing) { compassEl.hidden = true; promptEl.hidden = true; beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
   for (const t of S.targets) if (t.bob) t.obj.position.y = t.obj.userData.baseY + Math.sin(now / 500) * 0.06, t.obj.rotation.y += dt * 0.6;
@@ -515,7 +638,7 @@ function tick(now) {
     // 指南：相对镜头朝向的方位
     const ang = Math.atan2(goal.pos.x - p.x, goal.pos.z - p.z); const camYaw = Math.atan2(-(Math.sin(walk.yaw)), -(Math.cos(walk.yaw)));
     let rel = ang - camYaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
-    const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = pname(S.giftMode ? placeById(S.gift.p) : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place));
+    const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = goal.where ? goal.where() : pname(S.giftMode ? placeById(S.gift.p) : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place));
     compassEl.hidden = d < 5; compassEl.querySelector('svg').style.transform = `rotate(${-rel}rad)`; compassEl.querySelector('b').textContent = where; compassEl.querySelector('span').textContent = Math.round(d / 0.75) + L(' 步', ' steps');
   } else { compassEl.hidden = true; beacon.visible = groundRing.visible = false; }
   // 最近的可交互目标
@@ -534,13 +657,13 @@ requestAnimationFrame(tick);
 addEventListener('dgy-lang', () => {
   dockLang();
   for (const t of S.tags) t.el.textContent = txt(t.text);
-  if (S.char) renderQuest(); else if (S.giftMode && S.gift && S.stage === 'gift') renderGiftQuest();
+  if (S.char || S.story) renderQuest(); else if (S.giftMode && S.gift && S.stage === 'gift') renderGiftQuest();
   if (!startEl.hidden) showStart(startEl.dataset.mode === 'gift');
   if (!modalEl.hidden && modalPaint) modalPaint();
 });
 
 /* 调试接口（测试用） */
-window.__game = { S, CHARS, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
+window.__game = { S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
-{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else showStart(); }
+{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else liuIntro(); }

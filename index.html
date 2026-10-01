@@ -1662,7 +1662,7 @@ function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS
  const wish=f.multiplyScalar(fx).addScaledVector(r,sx);if(wish.lengthSq()>1)wish.normalize();const moving=wish.lengthSq()>0.01;wish.multiplyScalar(sp);walk.vel.lerp(wish,1-Math.exp(-(walk.grounded?12:2.5)*dt));
  const p=walk.pos.clone();const old=p.clone();p.x+=walk.vel.x*dt;p.z+=walk.vel.z*dt;pushOut(p,walk.feet);
  let [g,fromT]=groundAt(p.x,p.z,walk.feet);if(fromT&&g<0.2){p.x=old.x;p.z=old.z;[g,fromT]=groundAt(p.x,p.z,walk.feet);}
- if(!inGarden(p.x,p.z,0.7)){p.x=old.x;p.z=old.z;}
+ if(!inGarden(p.x,p.z,0.7)&&!(Math.abs(p.x)<7.5&&p.z>118&&p.z<138)){p.x=old.x;p.z=old.z;}/* 正门外一小段石板路也能走：刘姥姥从这里进园 */
  const moved=Math.hypot(p.x-old.x,p.z-old.z);
  // vertical
  if(!walk.grounded||walk.vy>0){walk.vy-=9.81*dt;walk.feet+=walk.vy*dt;if(walk.feet<=g){const land=walk.vy<-2;walk.feet=g;walk.vy=0;walk.grounded=true;if(land&&A.on)footstep(surfaceAt(p.x,p.z),1.4);}}
