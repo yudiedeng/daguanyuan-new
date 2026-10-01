@@ -10,7 +10,7 @@
   const I18N = {
     '大观园': 'Grand View Garden', '《红楼梦》省亲别墅 · 全园漫游': 'Dream of the Red Chamber · The whole garden, on foot',
     '景点': 'Places', '收起说明': 'Close', '进馆细看 →': 'Look inside →', '时辰': 'Time of day',
-    '步行': 'Walk', '步行 (F)': 'Walk (F)', '季节': 'Season', '春': 'Spring', '夏': 'Summer', '秋': 'Autumn', '冬': 'Winter',
+    '步行': 'Walk', '步行 (F)': 'Walk (F)', '季节': 'Season', '春': 'Spr', '夏': 'Sum', '秋': 'Aut', '冬': 'Win',
     '声音': 'Sound', '声音 (M)': 'Sound (M)', '漫游': 'Tour', '设置': 'Settings', '设置 (H)': 'Settings (H)',
     '画质': 'Quality', '低': 'Low', '中': 'Med', '高': 'High', '时辰流转': 'Time flows', '关': 'Off', '开': 'On',
     '渲染比例': 'Render scale', '帧率': 'Frame rate', '雾气': 'Mist', '画风': 'Look', '梦幻': 'Dreamy', '写实': 'Realistic',
@@ -43,7 +43,8 @@
   const EN_HOURS = ['Rat', 'Ox', 'Tiger', 'Rabbit', 'Dragon', 'Snake', 'Horse', 'Goat', 'Monkey', 'Rooster', 'Dog', 'Pig'];
   window.I18N = I18N;
   window.T = (s) => (window.__lang === 'en' && I18N[s] != null) ? I18N[s] : s;
-  window.hourName = (i) => window.__lang === 'en' ? 'Hour of the ' + EN_HOURS[i] : ZH_HOURS[i] + '时';
+  window.tr = window.T;
+  window.hourName = (i) => window.__lang === 'en' ? EN_HOURS[i] + ' hr' : ZH_HOURS[i] + '时';
   const ATTRS = ['aria-label', 'title', 'placeholder'];
   function swapText(n) {
     if (n.__zh == null) { if (!/[一-鿿]/.test(n.nodeValue)) return; n.__zh = n.nodeValue; }

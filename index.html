@@ -1609,7 +1609,7 @@ function pushOut(p,feet){const r=0.3;const k0=Math.floor(p.x/CELL),k1=Math.floor
   const dx=p.x-c.x,dz=p.z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;const cx=clamp(lx,-c.hx,c.hx),cz=clamp(lz,-c.hz,c.hz);let ox=lx-cx,oz=lz-cz;const d=Math.hypot(ox,oz);
   if(d<r){let nx,nz,pen;if(d>1e-4){nx=ox/d;nz=oz/d;pen=r-d;}else{const ex=c.hx-Math.abs(lx),ez=c.hz-Math.abs(lz);if(ex<ez){nx=Math.sign(lx)||1;nz=0;pen=ex+r;}else{nx=0;nz=Math.sign(lz)||1;pen=ez+r;}}
    const wx=nx*c.c+nz*c.s,wz=-nx*c.s+nz*c.c;p.x+=wx*pen;p.z+=wz*pen;}}}}
-function setWalkHelp(){document.getElementById('walkhelp').textContent=T(isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · Esc 退出':'WASD 前行 · 鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · Esc 退出'));document.querySelector('#walkhud .dot').hidden=walk.third;}
+function setWalkHelp(){document.getElementById('walkhelp').textContent=tr(isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · Esc 退出':'WASD 前行 · 鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · Esc 退出'));document.querySelector('#walkhud .dot').hidden=walk.third;}
 function enterWalk(spawn){if(walk.on)return;walk.on=true;document.body.classList.add('walking');card.hidden=true;stopTour();fly=null;controls.enabled=false;let x,z,yaw;
  if(spawn){[x,z,yaw]=spawn;}else{const t=controls.target;x=t.x;z=t.z;const d=new V3().subVectors(controls.target,camera.position);yaw=Math.atan2(-d.x,-d.z);if(hq(x,z)<0.3){x=0;z=108;yaw=Math.PI;}}
  walk.yaw=yaw;walk.charYaw=yaw;walk.pitch=walk.third?-0.28:-0.05;walk.feet=groundAt(x,z,99)[0];walk.pos.set(x,walk.feet,z);walk.vel.set(0,0,0);walk.vy=0;camera.near=0.1;camera.updateProjectionMatrix();
@@ -1798,25 +1798,25 @@ layoutLOD(true);
 const placesEl=document.getElementById('places'),labelsEl=document.getElementById('labels'),card=document.getElementById('card'),linkEl=document.getElementById('c-link');
 const btns={},tags={};let current='all';
 function initUI(){PLACES.forEach(p=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<span>${PN(p,'name')}</span><small>${PN(p,'sub')}</small>`;b.addEventListener('click',()=>{if(walk.on){walk.zone=p.id;const s=p.spawn||[p.view.t[0]+6,p.view.t[2]+6,0];exitWalk();select(p.id,false);enterWalk(s);}else select(p.id,true);});placesEl.appendChild(b);btns[p.id]=b;
- if(p.pos){const t=document.createElement('button');t.className='tag';t.type='button';t.textContent=PN(p,'name');t.setAttribute('aria-label',T('前往')+' '+PN(p,'name'));t.addEventListener('click',()=>select(p.id,!walk.on));labelsEl.appendChild(t);tags[p.id]=t;}});}
+ if(p.pos){const t=document.createElement('button');t.className='tag';t.type='button';t.textContent=PN(p,'name');t.setAttribute('aria-label',tr('前往')+' '+PN(p,'name'));t.addEventListener('click',()=>select(p.id,!walk.on));labelsEl.appendChild(t);tags[p.id]=t;}});}
 function select(id,doFly,quiet){const p=PLACES.find(q=>q.id===id);current=id;for(const k in btns)btns[k].setAttribute('aria-current',k===id?'true':'false');
- document.getElementById('c-eyebrow').textContent=PN(p,'eyebrow');document.getElementById('c-name').textContent=PN(p,'name');document.getElementById('c-quote').textContent='“'+PN(p,'quote')+'”';document.getElementById('c-text').textContent=PN(p,'text');document.getElementById('c-ch').textContent=T('见《红楼梦》')+PN(p,'ch');linkEl.hidden=!p.link;card.hidden=false;
+ document.getElementById('c-eyebrow').textContent=PN(p,'eyebrow');document.getElementById('c-name').textContent=PN(p,'name');document.getElementById('c-quote').textContent='“'+PN(p,'quote')+'”';document.getElementById('c-text').textContent=PN(p,'text');document.getElementById('c-ch').textContent=tr('见《红楼梦》')+PN(p,'ch');linkEl.hidden=!p.link;card.hidden=false;
  if(doFly)flyTo(p.view);if(!quiet&&tour.on)stopTour();btns[id].scrollIntoView({block:'nearest',inline:'nearest',behavior:reduceMotion?'auto':'smooth'});}
 function curSpawn(){const p=PLACES.find(q=>q.id===current);if(p&&p.spawn)return p.spawn;return null;}
 document.getElementById('card-close').addEventListener('click',()=>{card.hidden=true;});
 const hourEl=document.getElementById('hour');hourEl.addEventListener('input',()=>{hour=parseFloat(hourEl.value);applyTime();});
 const langSeg=document.getElementById('lang-seg');function markLang(){langSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===window.__lang));}
 langSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l)));markLang();
-window.addEventListener('dgy-lang',()=>{markLang();for(const p of PLACES){if(btns[p.id])btns[p.id].innerHTML=`<span>${PN(p,'name')}</span><small>${PN(p,'sub')}</small>`;const t=tags[p.id];if(t){t.textContent=PN(p,'name');t.setAttribute('aria-label',T('前往')+' '+PN(p,'name'));}}
- if(current)select(current,false,true);tagBtn.textContent=T(tagsOn?'开':'关');flowBtn.textContent=T(flow?'开':'关');setWalkHelp();applyTime();});
+window.addEventListener('dgy-lang',()=>{markLang();for(const p of PLACES){if(btns[p.id])btns[p.id].innerHTML=`<span>${PN(p,'name')}</span><small>${PN(p,'sub')}</small>`;const t=tags[p.id];if(t){t.textContent=PN(p,'name');t.setAttribute('aria-label',tr('前往')+' '+PN(p,'name'));}}
+ if(current)select(current,false,true);tagBtn.textContent=tr(tagsOn?'开':'关');flowBtn.textContent=tr(flow?'开':'关');setWalkHelp();applyTime();});
 applyLang(document.body);
-let tagsOn=true;const tagBtn=document.getElementById('btn-tags');tagBtn.addEventListener('click',()=>{tagsOn=!tagsOn;tagBtn.setAttribute('aria-pressed',tagsOn);tagBtn.textContent=T(tagsOn?'开':'关');labelsEl.style.display=tagsOn?'':'none';});
+let tagsOn=true;const tagBtn=document.getElementById('btn-tags');tagBtn.addEventListener('click',()=>{tagsOn=!tagsOn;tagBtn.setAttribute('aria-pressed',tagsOn);tagBtn.textContent=tr(tagsOn?'开':'关');labelsEl.style.display=tagsOn?'':'none';});
 const toast=document.getElementById('toast');let toastT=0;
 const POEM=[['春夜即事','霞绡云幄任铺陈，隔巷蟆更听未真'],['夏夜即事','倦绣佳人幽梦长，金笼鹦鹉唤茶汤'],['秋夜即事','绛芸轩里绝喧哗，桂魄流光浸茜纱'],['冬夜即事','梅魂竹梦已三更，锦罽鹴衾睡未成']];
-document.querySelectorAll('#season-seg button').forEach(b=>b.addEventListener('click',()=>{setSeason(+b.dataset.s);toast.innerHTML='<b>'+T('春夏秋冬'[season])+' · '+T(POEM[season][0])+'</b><span>'+T(POEM[season][1])+' · '+T('第二十三回')+'</span>';toast.style.opacity=1;toastT=5;}));
+document.querySelectorAll('#season-seg button').forEach(b=>b.addEventListener('click',()=>{setSeason(+b.dataset.s);toast.innerHTML='<b>'+(window.__lang==='en'?['Spring','Summer','Autumn','Winter'][season]:'春夏秋冬'[season])+' · '+tr(POEM[season][0])+'</b><span>'+tr(POEM[season][1])+' · '+tr('第二十三回')+'</span>';toast.style.opacity=1;toastT=5;}));
 document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
-let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=T(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
+let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
@@ -1894,7 +1894,7 @@ const PATHS=[
  {pts:[[-18,-46],[-36,-54],[-52,-58],[-65,-60]],w:2.4,lamps:true},
  {pts:[[-92,-38],[-94,-14],[-86,4],[-66,10],[-52,22]],w:2.2}
 ];
-const tick=(msg)=>new Promise(r=>{loadStep.textContent=T(msg);requestAnimationFrame(()=>setTimeout(r,0));});
+const tick=(msg)=>new Promise(r=>{loadStep.textContent=tr(msg);requestAnimationFrame(()=>setTimeout(r,0));});
 async function build(){
  await tick('堆山凿池');prepPaths();prepViews();buildTerrain();buildWater();
  await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);
