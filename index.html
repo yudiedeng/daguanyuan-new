@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>大观园</title>
+<script src="i18n.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap">
@@ -138,6 +139,7 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
   <div class="row"><label for="fog">雾气</label><input id="fog" type="range" min="0" max="3" step="0.05" value="1.8"></div>
   <div class="row"><span>画风</span><div class="seg" id="dream-seg"><button data-d="1">梦幻</button><button data-d="0">写实</button></div></div>
   <div class="row"><span>题签</span><button class="tbtn" id="btn-tags" aria-pressed="true">开</button></div>
+  <div class="row"><span>语言</span><div class="seg" id="lang-seg" data-noi18n><button data-l="zh">中文</button><button data-l="en">English</button></div></div>
   <p class="keys"><kbd>F</kbd> 步行 · <kbd>WASD</kbd> 前行 · <kbd>Shift</kbd> 快走 · <kbd>空格</kbd> 跳 · <kbd>V</kbd> 第一/第三人称 · 滚轮 镜头远近 · <kbd>Esc</kbd> 退出<br><kbd>M</kbd> 声音 · <kbd>T</kbd> 时辰流转 · <kbd>P</kbd> 拍照（隐藏界面） · <kbd>H</kbd> 设置</p>
   <p class="credit">渲染手法参考 <a href="https://github.com/dgreenheck/tidewater" target="_blank" rel="noopener">Tidewater</a>（MIT）：高度雾、ACES 调色、叶簇树冠、草地分层淡出、步行碰撞。园中声音全部由程序实时合成。布局依原著描写示意，并非实测复原。</p>
 </section>
@@ -151,7 +153,7 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","ez-tree":"https://cdn.jsdelivr.net/npm/@dgreenheck/ez-tree@1.1.0/build/ez-tree.es.js"}}
 </script>
 <script>
-setTimeout(function(){if(!window.__DGY_OK){var l=document.getElementById('loading');if(l&&!window.__DGY_ERR)l.innerHTML='三维库加载得比较慢<small>请检查网络，或稍后刷新页面</small>';}},25000);
+setTimeout(function(){if(!window.__DGY_OK){var l=document.getElementById('loading');if(l&&!window.__DGY_ERR)l.innerHTML=T('三维库加载得比较慢')+'<small>'+T('请检查网络，或稍后刷新页面')+'</small>';}},25000);
 </script>
 <script type="module">
 import * as THREE from 'three';
@@ -190,13 +192,13 @@ const PLACES=[
  {id:'daguan',name:'大观楼',sub:'顾恩思义',eyebrow:'省亲别墅正殿',pos:[0,23,-90],quote:'天上人间诸景备，芳园应锡大观名。',
   text:'正殿匾额“顾恩思义”。玉石牌坊上原题“天仙宝境”，元春改为“省亲别墅”。正楼名“大观楼”，东面飞楼叫“缀锦阁”，西面斜楼叫“含芳阁”。元宵夜元春在这里赐名，命众姊妹题诗。',ch:'第十八回',view:{t:[0,8,-82],c:[26,19,-26]},spawn:[0,-50,Math.PI]},
  {id:'yihong',name:'怡红院',sub:'贾宝玉',eyebrow:'蕉棠两植',pos:[85,12,56],quote:'一边种几本芭蕉，那一边是一树西府海棠。',
-  text:'宝玉取“蕉棠两植”之意题了“红香绿玉”，元春改作“怡红快绿”，这里就叫怡红院。屋里多宝格和穿衣镜重重叠叠，刘姥姥醉后在这里迷了路。',ch:'第十七回 · 第四十一回',view:{t:[86,2,64],c:[50,28,100]},spawn:GLB?[58,76.5,-Math.PI/2]:[58,66,-Math.PI/2]},
+  text:'宝玉取“蕉棠两植”之意题了“红香绿玉”，元春改作“怡红快绿”，这里就叫怡红院。屋里多宝格和穿衣镜重重叠叠，刘姥姥醉后在这里迷了路。屋门开着，可以进去看看。',ch:'第十七回 · 第四十一回',view:{t:[86,2,64],c:[50,28,100]},spawn:GLB?[58,76.5,-Math.PI/2]:[58,66,-Math.PI/2]},
  {id:'xiaoxiang',name:'潇湘馆',sub:'林黛玉',eyebrow:'有凤来仪',pos:[-80,12,28],link:true,quote:'里面数楹修舍，有千百竿翠竹遮映。',
-  text:'宝玉题“有凤来仪”，后赐名潇湘馆。黛玉说：“我心里想着潇湘馆好，爱那几竿竹子隐着一道曲栏。”院里的游廊、泉沟、鹦鹉架可以进馆细看。',ch:'第十七回 · 第二十三回',view:{t:[-82,3,27],c:[-50,20,60]},spawn:[-58,26,Math.PI/2]},
+  text:'宝玉题“有凤来仪”，后赐名潇湘馆。黛玉说：“我心里想着潇湘馆好，爱那几竿竹子隐着一道曲栏。”院里的游廊、泉沟、鹦鹉架可以进馆细看；湘帘卷起，馆门开着，也可以进屋。',ch:'第十七回 · 第二十三回',view:{t:[-82,3,27],c:[-50,20,60]},spawn:[-58,26,Math.PI/2]},
  {id:'hengwu',name:'蘅芜苑',sub:'薛宝钗',eyebrow:'蘅芷清芬',pos:[62,11,-96],quote:'一株花木也无，只见许多异草。',
-  text:'迎门一块玲珑山石，四面群绕各式石块，不见花木，只有各色异草藤萝，味香气馥。宝玉题“蘅芷清芬”。贾母来时嫌屋里太素，“雪洞一般”。',ch:'第十七回 · 第四十回',view:{t:[62,3,-92],c:[92,24,-52]},spawn:[62,-72,0]},
+  text:'迎门一块玲珑山石，四面群绕各式石块，不见花木，只有各色异草藤萝，味香气馥。宝玉题“蘅芷清芬”。贾母来时嫌屋里太素，“雪洞一般”。屋门开着，可以进去看看。',ch:'第十七回 · 第四十回',view:{t:[62,3,-92],c:[92,24,-52]},spawn:[62,-72,0]},
  {id:'daoxiang',name:'稻香村',sub:'李纨',eyebrow:'杏帘在望',pos:[-94,8,-68],quote:'里面数楹茅屋，外面却是桑、榆、槿、柘，各色树稚新条，随其曲折，编就两溜青篱。',
-  text:'黄泥矮墙，稻茎掩护，墙外数百株杏花如喷火蒸霞。井边有桔槔辘轳，分畦列亩种着佳蔬菜花，竿头挑着一个酒幌。宝玉题“杏帘在望”，后赐名稻香村。诗社里李纨自号“稻香老农”。',ch:'第十七回 · 第三十七回',view:{t:[-92,2,-62],c:[-52,26,-26]},spawn:[-60,-60,Math.PI/2]},
+  text:'黄泥矮墙，稻茎掩护，墙外数百株杏花如喷火蒸霞。井边有桔槔辘轳，分畦列亩种着佳蔬菜花，竿头挑着一个酒幌。宝玉题“杏帘在望”，后赐名稻香村。诗社里李纨自号“稻香老农”。茅屋的柴门开着，可以进去看看。',ch:'第十七回 · 第三十七回',view:{t:[-92,2,-62],c:[-52,26,-26]},spawn:[-60,-60,Math.PI/2]},
  {id:'ouxiang',name:'藕香榭',sub:'水榭',eyebrow:'建在池中',pos:[40,10,2],quote:'这藕香榭盖在池中，四面有窗，左右有曲廊可通。',
   text:'后面又有曲折竹桥暗接。第三十八回史湘云在这里做东摆螃蟹宴，众人作菊花诗，黛玉夺魁。',ch:'第三十八回',view:{t:[44,2,2],c:[86,14,34]},spawn:[78,2,Math.PI/2]},
  {id:'luxue',name:'芦雪广',sub:'临水茅檐',eyebrow:'傍山临水',pos:[75,8,-16],quote:'那广就在傍山临水河滩之上，一带几间，茅檐土壁，槿篱竹牖，推窗便可垂钓。',
@@ -210,6 +212,42 @@ const PLACES=[
  {id:'huapu',name:'花圃',sub:'牡丹亭',eyebrow:'牡丹亭 · 芍药圃 · 蔷薇院',pos:[97,8,-30],quote:'或牡丹亭，或芍药圃，或蔷薇院，或芭蕉坞，或荼蘼架，或木香棚。',
   text:'第十七回贾政一行沿路走过的一串花圃和花架。这里按原文在怡红院去蘅芜苑的路东侧依次放了牡丹亭（亭子四周种牡丹）、芍药圃和蔷薇院；荼蘼架在园子西边、潇湘馆去稻香村的路北。',ch:'第十七回',view:{t:[97,1,-38],c:[68,16,-4]},spawn:[86,-30,Math.PI/2]}
 ];
+// 英文版景点说明（设置 → 语言）
+const PLACES_EN={
+ all:{name:'Grand View Garden',sub:'The whole garden',eyebrow:'Villa for the Imperial Visit',quote:'All the wonders of heaven and earth are gathered here; let this fragrant garden be named Grand View.',
+  text:'Built for Jia Yuanchun’s visit home as Imperial Consort, on land between the Ningguo and Rongguo mansions. On the night of her visit she named it the Grand View Garden; afterwards she had Baoyu and the girls move in to live. Press F to walk down into the garden.',ch:'Chapters 16–23'},
+ gate:{name:'Main Gate',sub:'Garden gate',eyebrow:'A gate of five bays',quote:'The main gate was five bays wide, roofed with half-round tiles under a loach-back ridge; its doors, rails and lattices were all carved in fresh new patterns, with no red or white paint at all.',
+  text:'Snow-white walls run off to either side above a footing of tiger-skin stone. Jia Zheng brought Baoyu and his literary gentlemen in through here, composing inscriptions as they went. The middle bay stands open — walk straight in.',ch:'Chapter 17'},
+ rock:{name:'Green Screen',sub:'A winding path',eyebrow:'A screen of green',quote:'A green screen of rockery barred the way ahead.',
+  text:'Just inside the gate a rockery hides the whole garden from view. The gentlemen proposed “Piled Emerald”, “Brocade Screen”, “Rival of Incense Burner Peak” and “Little Zhongnan”; Baoyu borrowed an old line instead: “A winding path leads to a secluded spot.”',ch:'Chapter 17'},
+ qinfang:{name:'Drenched Blossoms Pavilion',sub:'Pavilion on a bridge',eyebrow:'A pavilion astride the water',quote:'A pavilion poised as if on wings.',
+  text:'A stone bridge crosses the stream with a pavilion on top. “Poised Wings” and “Pouring Jade” were suggested, but Baoyu found them vulgar and wrote “Drenched Blossoms”. In Chapter 23 Baoyu and Daiyu read The Western Chamber together under the peach trees by the weir here, and here Daiyu buried the fallen petals.',ch:'Chapters 17 · 23'},
+ daguan:{name:'Grand View Tower',sub:'Mindful of Favour',eyebrow:'Main hall of the visiting villa',quote:'All the wonders of heaven and earth are gathered here; let this fragrant garden be named Grand View.',
+  text:'The main hall bears the board “Mindful of Favour, Remembering Duty”. The jade archway first read “Celestial Realm”, which Yuanchun changed to “Villa for the Imperial Visit”. The main tower is the Grand View Tower, with the Brocade Pavilion flying off to the east and the Fragrance Pavilion slanting to the west. On the night of the Lantern Festival Yuanchun named the garden here and had the girls write poems.',ch:'Chapter 18'},
+ yihong:{name:'Happy Red Court',sub:'Jia Baoyu',eyebrow:'Plantain and crab-apple',quote:'On one side grew a few plantains; on the other, a Western Palace crab-apple.',
+  text:'From the pairing of plantain and crab-apple Baoyu wrote “Red Fragrance, Green Jade”; Yuanchun changed it to “Happy Red and Delightful Green”, and so it became the Happy Red Court. Inside, curio shelves and a great Western mirror stand layer upon layer — Granny Liu, tipsy, lost her way in here. The doors are open: go in and look around.',ch:'Chapters 17 · 41'},
+ xiaoxiang:{name:'Bamboo Lodge',sub:'Lin Daiyu',eyebrow:'The phoenix has come',quote:'Inside were a few neat rooms, screened by thousands of green bamboos.',
+  text:'Baoyu inscribed it “The Phoenix Has Come”; later it was named the Bamboo Lodge. Daiyu said: “I like the Bamboo Lodge best — I love the way those bamboos half hide a winding balustrade.” The covered walk, the spring-fed channel and the parrot stand are in the courtyard; the blind is rolled up and the door is open, so you can go inside.',ch:'Chapters 17 · 23'},
+ hengwu:{name:'Alpinia Park',sub:'Xue Baochai',eyebrow:'Pure fragrance of herbs',quote:'Not a single flowering tree — only a profusion of rare herbs.',
+  text:'Facing the gate is an openwork rock, ringed by stones of every shape; there are no flowers or trees, only rare grasses and creepers, sweet and heady. Baoyu inscribed it “Pure Fragrance of Alpinia and Angelica”. When Grandmother Jia visited she found the rooms far too plain — “like a snow cave”. The doors are open: go in and look around.',ch:'Chapters 17 · 40'},
+ daoxiang:{name:'Paddy-Sweet Cottage',sub:'Li Wan',eyebrow:'The tavern sign in view',quote:'Inside were a few thatched cottages; outside, mulberry, elm, hibiscus and cudrania saplings had been woven, bend by bend, into two green hedges.',
+  text:'Low walls of yellow clay are capped with rice straw, and beyond them hundreds of apricot trees blaze like fire and rosy mist. By the well stand a sweep and a windlass; vegetables and flowers grow in neat plots, and a tavern sign hangs from a pole. Baoyu wrote “Apricot Sign in View”, and it was later named Paddy-Sweet Cottage. In the poetry club Li Wan called herself “Old Farmer of Paddy-Sweet”. The wicker door is open: go in and look around.',ch:'Chapters 17 · 37'},
+ ouxiang:{name:'Lotus Fragrance Pavilion',sub:'Waterside pavilion',eyebrow:'Built out in the pool',quote:'The Lotus Fragrance Pavilion stands in the middle of the pool, with windows on all four sides and winding galleries leading to it left and right.',
+  text:'Behind it a zigzag bamboo bridge links quietly to the shore. In Chapter 38 Shi Xiangyun hosted the crab feast here; everyone wrote chrysanthemum poems, and Daiyu took first place.',ch:'Chapter 38'},
+ luxue:{name:'Reed Snow Cottage',sub:'Thatched eaves by the water',eyebrow:'Between hill and water',quote:'It stood on the bank between hill and water: a row of rooms with thatched eaves and clay walls, hibiscus hedges and bamboo windows — push a window open and you could fish.',
+  text:'Reeds cover it on every side, and a path winds through them to the bamboo bridge of the Lotus Fragrance Pavilion. On a day of heavy snow everyone roasted venison here and capped verses on the scene; Xiangyun said, “True men of letters are free and easy by nature.”',ch:'Chapters 49 · 50'},
+ tubi:{name:'Convex Emerald Hall',sub:'Moon-viewing on the hilltop',eyebrow:'The high point of the hill',quote:'The high point of the hill is called Convex Emerald; the hollow below by the water is called Concave Crystal.',
+  text:'On Mid-Autumn night Grandmother Jia brought everyone up to the hilltop hall to view the moon and play at passing the flower to the drum. Xiangyun said: “Viewing the moon up here is fine, but nothing beats viewing it close to the water.” The Concave Crystal Lodge lies by the pool at the foot of the slope.',ch:'Chapters 75 · 76'},
+ aojing:{name:'Concave Crystal Lodge',sub:'By the stream',eyebrow:'Moon-viewing by the water',quote:'Down in the hollow by the water is the Concave Crystal Lodge — whoever built this garden knew what they were doing.',
+  text:'After the Mid-Autumn party broke up, Daiyu and Xiangyun slipped down here to cap verses by the water and arrived at “A crane’s shadow crosses the cold pool; a flower’s soul lies buried in the chill moonlight” — until Miaoyu stepped out from behind the rocks and stopped them.',ch:'Chapter 76'},
+ longcui:{name:'Green Lattice Nunnery',sub:'Miaoyu',eyebrow:'Red plum at its finest',quote:'At the Green Lattice Nunnery there are a dozen or more red plum trees, red as rouge.',
+  text:'Where Miaoyu lives as a lay nun. When Grandmother Jia brought Granny Liu here for tea, Miaoyu brewed it with rainwater saved from the year before; then she drew Baochai and Daiyu aside for private tea made with snow gathered from plum blossoms five years earlier. Switch to winter to see the red plums in a world of glass.',ch:'Chapters 41 · 49'},
+ huapu:{name:'Flower Beds',sub:'Peony Pavilion',eyebrow:'Peony Pavilion · Peony Garden · Rose Court',quote:'Here a Peony Pavilion, there a Herbaceous Peony Garden, a Rose Court, a Plantain Bank, a Rambler-Rose Trellis, a Banksia Pergola.',
+  text:'In Chapter 17 Jia Zheng’s party passes a string of flower beds and trellises. Following the text, the Peony Pavilion (ringed with peonies), the herbaceous peony beds and the Rose Court are set in turn east of the road from the Happy Red Court to Alpinia Park; the rambler-rose trellis is in the west, north of the road from the Bamboo Lodge to Paddy-Sweet Cottage.',ch:'Chapter 17'},
+};
+for(const p of PLACES)p.en=PLACES_EN[p.id];
+const PN=(p,k)=>window.__lang==='en'&&p.en&&p.en[k]!=null?p.en[k]:p[k];
+
 const TOUR=['gate','rock','qinfang','xiaoxiang','daoxiang','daguan','hengwu','ouxiang','longcui','yihong'];
 
 /* =====================================================================
@@ -529,7 +567,7 @@ const BMR={ // name -> [color, roughness, tri, extra]
  '紫檀':['#3a1f17',.42,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'花梨':['#7a4a2a',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'黄花梨':['#9a6a3a',.48,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'藤编':['#a88a55',.85,{a:'thatch_r.jpg',s:0.6,k:0.4}],
  '锦缎':['#9a2a2a',.75],'锦缎黄':['#c8a040',.7],'锦帐':['#d39a98',.85,null,{alpha:0.72,side:2}],'碧纱':['#a9c8b0',.85,null,{alpha:0.5,side:2,em:1}],'青纱':['#8fa6ad',.85,null,{alpha:0.5,side:2}],'素绸':['#ece6d8',.85],
  '粗布':['#9a8a6c',.95],'红毡':['#7e2a26',.95,{a:'g_a.jpg',s:4.0,k:0.25}],'蒲席':['#b49a62',.9,{a:'thatch_r.jpg',s:0.8,k:0.5}],
- '书函':['#2e3f5c',.85],'书函黄':['#9a7a3a',.85],'书页':['#e9dfc6',.9],'画绢':['#d9ccaa',.9],'画心':['#e6dcc0',.9],'绫裱':['#6f8a8a',.8],'美人画':['#e6dcc0',.85],'横披':['#ece3c8',.85],'对联上':['#c8302a',.85],'对联下':['#c8302a',.85],'棋盘':['#d9b878',.6],'湘妃竹':['#a8894e',.5,{a:'wood_d.jpg',s:0.5,k:0.55}],'墨竹图':['#e9e1c8',.85],
+ '书函':['#2e3f5c',.85],'书函黄':['#9a7a3a',.85],'书页':['#e9dfc6',.9],'画绢':['#d9ccaa',.9],'画心':['#e6dcc0',.9],'绫裱':['#6f8a8a',.8],'美人画':['#e6dcc0',.85],'横披':['#ece3c8',.85],'对联上':['#c8302a',.85],'对联下':['#c8302a',.85],'棋盘':['#d9b878',.6],'湘妃竹':['#a8894e',.5,{a:'wood_d.jpg',s:0.5,k:0.55}],'墨竹图':['#e9e1c8',.85],'山水图':['#e6dfc8',.85],
  '瓷白':['#f1f0ea',.18],'青花':['#3a5a9a',.2],'青瓷':['#9fbfa8',.2],'土定':['#d6cbb2',.45],'紫砂':['#7a4030',.5],'粉彩':['#ecb8b0',.22],'玉':['#cfe2c6',.25],'陶':['#8a5a3a',.8],
  '镜面':['#dfe3e0',.02,null,{metal:1}],'穿衣镜':['#dfe3e0',.02,null,{metal:1}],'铁':['#3a3a3a',.6,null,{metal:0.6}],'炭':['#2a2420',1],'烛':['#efe4cc',.6],
  '菊黄':['#e8c04a',.6,null,{side:2}],'花红':['#d0485a',.6,null,{side:2}],'花白':['#f6f2ea',.6,null,{side:2}],'石':['#8f8e86',.9,{a:'r_a.jpg',n:'r_n.jpg',s:1.2,mode:'replace',nk:0.8}],'稻草':['#c9b070',.95,{a:'thatch_r.jpg',s:1.0,k:0.5}],
@@ -630,7 +668,14 @@ function drawGo(){return cnv(512,512,(g,w,h)=>{g.fillStyle='#d9b878';g.fillRect(
 function drawFloorTile(){return cnv(256,256,(g,w,h)=>{g.fillStyle='#5f8a72';g.fillRect(0,0,w,h);const rr=mulberry32(3);for(let i=0;i<1500;i++){g.fillStyle=`rgba(${rr()<0.5?255:0},${rr()<0.5?255:40},${rr()<0.5?255:30},${rr()*0.05})`;g.fillRect(rr()*w,rr()*h,2,2);}
  g.strokeStyle='#2f4a3c';g.lineWidth=4;g.strokeRect(2,2,w-4,h-4);g.strokeStyle='rgba(225,240,225,.55)';g.lineWidth=3;g.beginPath();g.ellipse(w/2,h/2,96,84,0,0,Math.PI*2);g.stroke();
  for(let k=0;k<8;k++){const a=k*Math.PI/4;g.beginPath();g.ellipse(w/2+Math.cos(a)*42,h/2+Math.sin(a)*38,30,13,a,0,Math.PI*2);g.stroke();}g.beginPath();g.arc(w/2,h/2,13,0,Math.PI*2);g.stroke();});}
-const PAINT={'美人画':drawMeiren,'墨竹图':drawBamboo,'横披':drawCalli('怡红快绿',768,170,'#ece3c8','#1e1a18',120),'对联上':drawCalli('绿窗明月在',150,720,'#c8302a','#1a1210',110,1),'对联下':drawCalli('青史古人空',150,720,'#c8302a','#1a1210',110,1),'棋盘':drawGo};
+function drawShanshui(){return cnv(400,520,(g,w,h)=>{g.fillStyle='#e6dfc8';g.fillRect(0,0,w,h);const rr=mulberry32(37);
+ const hill=(y0,amp,ink,seed)=>{const r=mulberry32(seed);g.fillStyle=ink;g.beginPath();g.moveTo(0,h);let y=y0;for(let x=0;x<=w;x+=8){y+=(r()-0.5)*amp;y=Math.min(h,Math.max(y0-amp*3,y));g.lineTo(x,y);}g.lineTo(w,h);g.fill();};
+ hill(150,22,'rgba(90,100,95,.28)',3);hill(240,26,'rgba(60,70,65,.42)',5);hill(330,20,'rgba(40,48,44,.55)',8);
+ g.fillStyle='#e6dfc8';g.fillRect(0,380,w,40);g.strokeStyle='rgba(40,40,40,.5)';g.lineWidth=1.5;for(let i=0;i<6;i++){g.beginPath();g.moveTo(40+i*50,395+i%2*8);g.lineTo(70+i*50,395+i%2*8);g.stroke();}
+ g.fillStyle='rgba(30,34,30,.8)';for(let k=0;k<5;k++){const x=60+k*16,y=440;g.fillRect(x,y-40,3,40);g.beginPath();g.arc(x+1,y-46,10,0,Math.PI*2);g.fill();}
+ g.fillStyle='rgba(120,90,60,.8)';g.fillRect(300,430,40,16);g.beginPath();g.moveTo(294,432);g.lineTo(320,414);g.lineTo(346,432);g.fill();
+ g.fillStyle='#2a2420';g.font='22px "Ma Shan Zheng","STKaiti",serif';g.textAlign='center';[...'稻香村居图'].forEach((c,i)=>g.fillText(c,w-30,40+i*26));g.fillStyle='#b8282a';g.fillRect(w-44,180,26,26);});}
+const PAINT={'山水图':drawShanshui,'美人画':drawMeiren,'墨竹图':drawBamboo,'横披':drawCalli('怡红快绿',768,170,'#ece3c8','#1e1a18',120),'对联上':drawCalli('绿窗明月在',150,720,'#c8302a','#1a1210',110,1),'对联下':drawCalli('青史古人空',150,720,'#c8302a','#1a1210',110,1),'棋盘':drawGo};
 const TILEPAINT={'碧绿凿花砖':[drawFloorTile,0.62]};
 // 打包时量化过的网格自带缩放/平移；要按真实尺寸算 UV 或镜面，先把变换烘进浮点坐标
 function bakeMesh(m){const P=m.geometry.attributes.position,a=new Float32Array(P.count*3),v=new V3();m.updateMatrix();for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(m.matrix);a[i*3]=v.x;a[i*3+1]=v.y;a[i*3+2]=v.z;}
@@ -1526,7 +1571,7 @@ function applyTime(){if(!fogPass)return;
  const fu=fogPass.uniforms;fu.sunset.value=fu_sunset;fu.sunCol.value.copy(scol).multiplyScalar(day*2.5);fu.mist.value=(sstep(4.5,6.2,hour)*(1-sstep(7,9,hour))+sstep(18,19.5,hour)*0.6)*(1-snowAmt);fu.snow.value=snowAmt;fu.snowFog.value.set(0.62,0.65,0.7).multiplyScalar(mix(0.05,1,day));
  renderer.toneMappingExposure=mix(1.1,0.72,day);
  if(Math.abs(hour-lastEnvHour)>0.08||envDirty){envDirty=true;}
- const hh=Math.floor(hour)%24,mm=Math.floor((hour%1)*60);document.getElementById('sc-name').textContent=SC[Math.floor(((hour+1)%24)/2)]+'时';document.getElementById('sc-clock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
+ const hh=Math.floor(hour)%24,mm=Math.floor((hour%1)*60);document.getElementById('sc-name').textContent=hourName(Math.floor(((hour+1)%24)/2));document.getElementById('sc-clock').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
 const _sunP=new V3(),_sunF=new V3();const _sc=new V3();let shadowCenter=new V3(1e9,0,0),shadowSize=0;
 function updateSunShadow(focus){const d=camera.position.distanceTo(focus);const size=clamp(d*0.55,22,130);const snap=size/2048*4;
  if(focus.distanceTo(shadowCenter)>size*0.08||Math.abs(size-shadowSize)/size>0.12){shadowCenter.set(Math.round(focus.x/snap)*snap,0,Math.round(focus.z/snap)*snap);shadowSize=size;const c=sun.shadow.camera;c.left=-size;c.right=size;c.top=size;c.bottom=-size;c.updateProjectionMatrix();}
@@ -1564,7 +1609,7 @@ function pushOut(p,feet){const r=0.3;const k0=Math.floor(p.x/CELL),k1=Math.floor
   const dx=p.x-c.x,dz=p.z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;const cx=clamp(lx,-c.hx,c.hx),cz=clamp(lz,-c.hz,c.hz);let ox=lx-cx,oz=lz-cz;const d=Math.hypot(ox,oz);
   if(d<r){let nx,nz,pen;if(d>1e-4){nx=ox/d;nz=oz/d;pen=r-d;}else{const ex=c.hx-Math.abs(lx),ez=c.hz-Math.abs(lz);if(ex<ez){nx=Math.sign(lx)||1;nz=0;pen=ex+r;}else{nx=0;nz=Math.sign(lz)||1;pen=ez+r;}}
    const wx=nx*c.c+nz*c.s,wz=-nx*c.s+nz*c.c;p.x+=wx*pen;p.z+=wz*pen;}}}}
-function setWalkHelp(){document.getElementById('walkhelp').textContent=isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · Esc 退出':'WASD 前行 · 鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · Esc 退出');document.querySelector('#walkhud .dot').hidden=walk.third;}
+function setWalkHelp(){document.getElementById('walkhelp').textContent=T(isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · Esc 退出':'WASD 前行 · 鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · Esc 退出'));document.querySelector('#walkhud .dot').hidden=walk.third;}
 function enterWalk(spawn){if(walk.on)return;walk.on=true;document.body.classList.add('walking');card.hidden=true;stopTour();fly=null;controls.enabled=false;let x,z,yaw;
  if(spawn){[x,z,yaw]=spawn;}else{const t=controls.target;x=t.x;z=t.z;const d=new V3().subVectors(controls.target,camera.position);yaw=Math.atan2(-d.x,-d.z);if(hq(x,z)<0.3){x=0;z=108;yaw=Math.PI;}}
  walk.yaw=yaw;walk.charYaw=yaw;walk.pitch=walk.third?-0.28:-0.05;walk.feet=groundAt(x,z,99)[0];walk.pos.set(x,walk.feet,z);walk.vel.set(0,0,0);walk.vy=0;camera.near=0.1;camera.updateProjectionMatrix();
@@ -1752,21 +1797,26 @@ layoutLOD(true);
    ===================================================================== */
 const placesEl=document.getElementById('places'),labelsEl=document.getElementById('labels'),card=document.getElementById('card'),linkEl=document.getElementById('c-link');
 const btns={},tags={};let current='all';
-function initUI(){PLACES.forEach(p=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<span>${p.name}</span><small>${p.sub}</small>`;b.addEventListener('click',()=>{if(walk.on){walk.zone=p.id;const s=p.spawn||[p.view.t[0]+6,p.view.t[2]+6,0];exitWalk();select(p.id,false);enterWalk(s);}else select(p.id,true);});placesEl.appendChild(b);btns[p.id]=b;
- if(p.pos){const t=document.createElement('button');t.className='tag';t.type='button';t.textContent=p.name;t.setAttribute('aria-label','前往 '+p.name);t.addEventListener('click',()=>select(p.id,!walk.on));labelsEl.appendChild(t);tags[p.id]=t;}});}
+function initUI(){PLACES.forEach(p=>{const b=document.createElement('button');b.type='button';b.innerHTML=`<span>${PN(p,'name')}</span><small>${PN(p,'sub')}</small>`;b.addEventListener('click',()=>{if(walk.on){walk.zone=p.id;const s=p.spawn||[p.view.t[0]+6,p.view.t[2]+6,0];exitWalk();select(p.id,false);enterWalk(s);}else select(p.id,true);});placesEl.appendChild(b);btns[p.id]=b;
+ if(p.pos){const t=document.createElement('button');t.className='tag';t.type='button';t.textContent=PN(p,'name');t.setAttribute('aria-label',T('前往')+' '+PN(p,'name'));t.addEventListener('click',()=>select(p.id,!walk.on));labelsEl.appendChild(t);tags[p.id]=t;}});}
 function select(id,doFly,quiet){const p=PLACES.find(q=>q.id===id);current=id;for(const k in btns)btns[k].setAttribute('aria-current',k===id?'true':'false');
- document.getElementById('c-eyebrow').textContent=p.eyebrow;document.getElementById('c-name').textContent=p.name;document.getElementById('c-quote').textContent='“'+p.quote+'”';document.getElementById('c-text').textContent=p.text;document.getElementById('c-ch').textContent='见《红楼梦》'+p.ch;linkEl.hidden=!p.link;card.hidden=false;
+ document.getElementById('c-eyebrow').textContent=PN(p,'eyebrow');document.getElementById('c-name').textContent=PN(p,'name');document.getElementById('c-quote').textContent='“'+PN(p,'quote')+'”';document.getElementById('c-text').textContent=PN(p,'text');document.getElementById('c-ch').textContent=T('见《红楼梦》')+PN(p,'ch');linkEl.hidden=!p.link;card.hidden=false;
  if(doFly)flyTo(p.view);if(!quiet&&tour.on)stopTour();btns[id].scrollIntoView({block:'nearest',inline:'nearest',behavior:reduceMotion?'auto':'smooth'});}
 function curSpawn(){const p=PLACES.find(q=>q.id===current);if(p&&p.spawn)return p.spawn;return null;}
 document.getElementById('card-close').addEventListener('click',()=>{card.hidden=true;});
 const hourEl=document.getElementById('hour');hourEl.addEventListener('input',()=>{hour=parseFloat(hourEl.value);applyTime();});
-let tagsOn=true;const tagBtn=document.getElementById('btn-tags');tagBtn.addEventListener('click',()=>{tagsOn=!tagsOn;tagBtn.setAttribute('aria-pressed',tagsOn);tagBtn.textContent=tagsOn?'开':'关';labelsEl.style.display=tagsOn?'':'none';});
+const langSeg=document.getElementById('lang-seg');function markLang(){langSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===window.__lang));}
+langSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l)));markLang();
+window.addEventListener('dgy-lang',()=>{markLang();for(const p of PLACES){if(btns[p.id])btns[p.id].innerHTML=`<span>${PN(p,'name')}</span><small>${PN(p,'sub')}</small>`;const t=tags[p.id];if(t){t.textContent=PN(p,'name');t.setAttribute('aria-label',T('前往')+' '+PN(p,'name'));}}
+ if(current)select(current,false,true);tagBtn.textContent=T(tagsOn?'开':'关');flowBtn.textContent=T(flow?'开':'关');setWalkHelp();applyTime();});
+applyLang(document.body);
+let tagsOn=true;const tagBtn=document.getElementById('btn-tags');tagBtn.addEventListener('click',()=>{tagsOn=!tagsOn;tagBtn.setAttribute('aria-pressed',tagsOn);tagBtn.textContent=T(tagsOn?'开':'关');labelsEl.style.display=tagsOn?'':'none';});
 const toast=document.getElementById('toast');let toastT=0;
 const POEM=[['春夜即事','霞绡云幄任铺陈，隔巷蟆更听未真'],['夏夜即事','倦绣佳人幽梦长，金笼鹦鹉唤茶汤'],['秋夜即事','绛芸轩里绝喧哗，桂魄流光浸茜纱'],['冬夜即事','梅魂竹梦已三更，锦罽鹴衾睡未成']];
-document.querySelectorAll('#season-seg button').forEach(b=>b.addEventListener('click',()=>{setSeason(+b.dataset.s);toast.innerHTML='<b>'+'春夏秋冬'[season]+' · '+POEM[season][0]+'</b><span>'+POEM[season][1]+' · 第二十三回</span>';toast.style.opacity=1;toastT=5;}));
+document.querySelectorAll('#season-seg button').forEach(b=>b.addEventListener('click',()=>{setSeason(+b.dataset.s);toast.innerHTML='<b>'+T('春夏秋冬'[season])+' · '+T(POEM[season][0])+'</b><span>'+T(POEM[season][1])+' · '+T('第二十三回')+'</span>';toast.style.opacity=1;toastT=5;}));
 document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
-let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=flow?'开':'关';}flowBtn.addEventListener('click',toggleFlow);
+let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=T(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
@@ -1820,8 +1870,10 @@ function frame(){
  lodT-=raw;if(lodT<=0){lodT=0.25;layoutLOD(false);updateFlora(false);}
  updateGrass();updateAudio(dt,dayv);
  if(tagsOn){const W=innerWidth,H=innerHeight;for(const p of PLACES){const t=tags[p.id];if(!t)continue;pv.set(p.pos[0],p.pos[1],p.pos[2]);const dist=camera.position.distanceTo(pv);pv.project(camera);
-  if(pv.z>1||pv.x<-1.1||pv.x>1.1||pv.y<-1.1||pv.y>1.1||dist<(walk.on?12:8)||(walk.on&&dist>90)){t.hidden=true;continue;}t.hidden=false;const x=(pv.x*0.5+0.5)*W,y=(-pv.y*0.5+0.5)*H-16;
-  t.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-100%)`;t.style.opacity=clamp(1.5-dist/420,0.5,1).toFixed(2);t.style.zIndex=String(2000-Math.round(dist));}}
+  // 名牌靠近才出现：步行 45 m 内、俯瞰 140 m 内渐显；贴得太近（已到跟前）又收起
+  const far=walk.on?45:140,fade=walk.on?15:40,near=walk.on?12:8;const op=sstep(far,far-fade,dist)*sstep(near,near+4,dist);
+  if(pv.z>1||pv.x<-1.1||pv.x>1.1||pv.y<-1.1||pv.y>1.1||op<0.02){t.hidden=true;continue;}t.hidden=false;const x=(pv.x*0.5+0.5)*W,y=(-pv.y*0.5+0.5)*H-16;
+  t.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-100%)`;t.style.opacity=op.toFixed(2);t.style.pointerEvents=op>0.4?'auto':'none';t.style.zIndex=String(2000-Math.round(dist));}}
  // render
  camera.updateMatrixWorld();fogPass.uniforms.projInv.value.copy(camera.projectionMatrixInverse);fogPass.uniforms.camWorld.value.copy(camera.matrixWorld);fogPass.uniforms.camPos.value.copy(camera.position);{const sp=_sunP.copy(G.sunDir.value).multiplyScalar(800).add(camera.position).project(camera);const fwd=camera.getWorldDirection(_sunF).dot(G.sunDir.value);fogPass.uniforms.sunUV.value.set(sp.x*0.5+0.5,sp.y*0.5+0.5);fogPass.uniforms.sunVis.value=(fwd>0&&G.sunDir.value.y>0.02)?sstep(0.0,0.35,fwd)*sstep(0.02,0.15,G.sunDir.value.y)*(1-night):0;}
  renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);
@@ -1842,7 +1894,7 @@ const PATHS=[
  {pts:[[-18,-46],[-36,-54],[-52,-58],[-65,-60]],w:2.4,lamps:true},
  {pts:[[-92,-38],[-94,-14],[-86,4],[-66,10],[-52,22]],w:2.2}
 ];
-const tick=(msg)=>new Promise(r=>{loadStep.textContent=msg;requestAnimationFrame(()=>setTimeout(r,0));});
+const tick=(msg)=>new Promise(r=>{loadStep.textContent=T(msg);requestAnimationFrame(()=>setTimeout(r,0));});
 async function build(){
  await tick('堆山凿池');prepPaths();prepViews();buildTerrain();buildWater();
  await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);
