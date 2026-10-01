@@ -13,14 +13,14 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')
 # 近似底色（仅供 Blender 内预览；网页以 BMR 为准）
 COLORS = {
     '紫檀': '#3a1e16', '花梨': '#7a4a2a', '黄花梨': '#9a6a3a', '朱漆': '#7a2a21', '黑漆': '#1d1a18', '描金': '#e0b855',
-    '本色木': '#b28f66', '旧木': '#8a7358', '竹竿': '#b9a25f', '黄竹': '#c4ad63', '藤编': '#a88a55',
+    '本色木': '#b28f66', '旧木': '#8a7358', '竹竿': '#b9a25f', '湘妃竹': '#a8894e', '棋盘': '#d8b878', '黄竹': '#c4ad63', '藤编': '#a88a55',
     '锦缎': '#9a2a2a', '锦缎黄': '#c8a040', '锦帐': '#c98a8a', '碧纱': '#9fbfa6', '青纱': '#7f98a0', '素绸': '#e8e2d2',
     '青布': '#33456a', '白布': '#e9e4d4', '粗布': '#9a8a6c', '红毡': '#7a2a26', '蒲席': '#b49a62',
     '书函': '#2e3f5c', '书函黄': '#9a7a3a', '书页': '#e9dfc6', '画绢': '#d9ccaa', '画心': '#e6dcc0', '绫裱': '#6f8a8a',
     '瓷白': '#efeee8', '青花': '#2f4f8a', '青瓷': '#9fb8a8', '土定': '#d6cbb2', '紫砂': '#7a4030', '粉彩': '#e8b0a8',
     '铜': '#6b6a52', '镜面': '#dfe3e0', '穿衣镜': '#dfe3e0', '玉': '#cfe0c8', '石': '#8f8e86', '太湖石': '#9d9d95', '汉白玉': '#efece4',
     '菊黄': '#e8c04a', '花红': '#d0485a', '花白': '#f6f2ea', '叶绿': '#527f3c', '墨': '#17161a', '烛': '#efe4cc',
-    '窗纸': '#e8dcbf', '天花': '#2e5a4c', '天花心': '#2e4c72', '美人画': '#e6dcc0', '碧绿凿花砖': '#5f7a66', '方砖地': '#b7afa2', '夯土地': '#9a8663', '白灰墙': '#e6e2d8',
+    '窗纸': '#e8dcbf', '横披': '#e9e1c8', '对联上': '#c8302a', '对联下': '#c8302a', '墨竹图': '#e9e1c8', '天花': '#2e5a4c', '天花心': '#2e4c72', '美人画': '#e6dcc0', '碧绿凿花砖': '#5f7a66', '方砖地': '#b7afa2', '夯土地': '#9a8663', '白灰墙': '#e6e2d8',
     '油壁': '#6e4b38', '炭': '#2a2420', '铁': '#3a3a3a', '陶': '#8a5a3a', '稻草': '#c9b070',
 }
 
@@ -618,9 +618,31 @@ class Kit:
         self.box(border, x0, y0, z, x1, y1, z + 0.008)
         self.box(m, x0 + 0.12, y0 + 0.12, z + 0.001, x1 - 0.12, y1 - 0.12, z + 0.01)
 
-    def mirror(self, m, w=1.1, h=2.2, frame=0.09, glass='镜面', stand=True, col=True):
-        """穿衣镜（大玻璃镜），立于 y=0 线，镜面朝 -Y。"""
+    def mirror(self, m, w=1.1, h=2.2, frame=0.09, glass='镜面', stand=True, col=True, oval=False):
+        """穿衣镜（大玻璃镜），立于 y=0 线，镜面朝 -Y。oval：雕花门扇中嵌椭圆镜（怡红院镜门）。"""
         z0 = 0.25 if stand else 0.0
+        if oval:
+            n = 40
+            cz = z0 + h / 2
+            rx, rz = w / 2 - frame * 1.6, h / 2 - frame * 1.6
+            hole = [(rx * math.cos(2 * math.pi * i / n), cz + rz * math.sin(2 * math.pi * i / n)) for i in range(n)]
+            self.poly_panel(m, [(-w / 2, z0), (w / 2, z0), (w / 2, z0 + h), (-w / 2, z0 + h)], [hole], 0.07, 0.0)
+            self._ring('描金', hole, [(x * 1.04, cz + (z - cz) * 1.03) for x, z in hole], 0.085, False)
+            # 卷草雕花：沿门扇四角贴小涡卷
+            for sx in (-1, 1):
+                for sz in (-1, 1):
+                    for k in range(4):
+                        a = k * 0.5
+                        self.sph('描金', sx * (w / 2 - 0.12 - 0.04 * k), -0.04, cz + sz * (h / 2 - 0.12 - 0.03 * math.sin(a * 3)), 0.03, 0.012, 0.03, seg=6)
+            b = bmesh.new()
+            bmesh.ops.create_circle(b, cap_ends=True, segments=48, radius=1.0)
+            self._add(glass, b, Matrix.Translation((0, -0.004, cz)) @ Matrix.Rotation(math.pi / 2, 4, 'X') @ Matrix.Diagonal((rx, rz, 1, 1)))
+            b = bmesh.new()
+            bmesh.ops.create_circle(b, cap_ends=True, segments=48, radius=1.0)
+            self._add(glass, b, Matrix.Translation((0, 0.004, cz)) @ Matrix.Rotation(-math.pi / 2, 4, 'X') @ Matrix.Diagonal((rx, rz, 1, 1)))
+            if col:
+                self.col(-w / 2, -0.06, 0, w / 2, 0.06, z0 + h)
+            return
         self.box(m, -w / 2, -0.04, z0, w / 2, 0.04, z0 + frame)
         self.box(m, -w / 2, -0.04, z0 + h - frame, w / 2, 0.04, z0 + h)
         for sx in (-1, 1):
