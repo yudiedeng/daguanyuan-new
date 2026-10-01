@@ -157,6 +157,7 @@ setTimeout(function(){if(!window.__DGY_OK){var l=document.getElementById('loadin
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { createCharacterVisuals } from './character-visual.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -1420,6 +1421,9 @@ const hero=(()=>{const g=new THREE.Group();const robe=std('#9fc0cf',.8),robe2=st
   const hand=new THREE.Mesh(new THREE.SphereGeometry(0.045,10,8),skin);hand.position.y=-0.58;sh.add(hand);sh.rotation.z=s*0.12;arms.push(sh);}
  const feet=[];for(const s of[-1,1]){const f=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.06,0.22),shoe);f.position.set(s*0.09,0.03,0.04);g.add(f);feet.push(f);}
  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return {g,lower,arms,feet,head,torso,tail};})();
+const characterVisuals=createCharacterVisuals({THREE,hero,loader:new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),onStatus:detail=>window.dispatchEvent(new CustomEvent('dgy-character-status',{detail}))});
+hero.setCharacter=key=>characterVisuals.select(key);
+Object.defineProperty(hero,'customVisualActive',{get:()=>characterVisuals.active});
 function groundAt(x,z,feet){let g=hq(x,z);let fromTerrain=true;const k=Math.floor(x/CELL)+','+Math.floor(z/CELL);const l=colHash.get(k);if(l)for(const c of l){const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx&&Math.abs(lz)<=c.hz&&c.top<=feet+0.52&&c.top>g){g=c.top;fromTerrain=false;}}return [g,fromTerrain];}
 function blockedAt(x,y,z){const l=colHash.get(Math.floor(x/CELL)+','+Math.floor(z/CELL));if(l)for(const c of l){if(c.walk)continue;const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx+0.15&&Math.abs(lz)<=c.hz+0.15&&y>c.bot&&y<c.top+0.1)return true;}return false;}
 function pushOut(p,feet){const r=0.3;const k0=Math.floor(p.x/CELL),k1=Math.floor(p.z/CELL);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=colHash.get((k0+a)+','+(k1+b));if(!l)continue;for(const c of l){if(c.walk)continue;if(c.top<=feet+0.45||c.bot>feet+1.7)continue;
@@ -1469,7 +1473,7 @@ function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS
  const spd=moved/Math.max(dt,1e-4);walk.phase+=moved*(run?1.9:2.6);walk.step+=moved;if(walk.grounded&&walk.step>(run?0.9:0.62)){walk.step=0;if(A.on)footstep(surfaceAt(p.x,p.z),run?1.1:0.8);}
  if(moving){const mv=Math.atan2(-walk.vel.x,-walk.vel.z);let dy=mv-walk.charYaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));walk.charYaw+=dy*(1-Math.exp(-10*dt));}
  const amp=clamp(spd/3.2,0,1.6);const sw=Math.sin(walk.phase);
- hero.g.position.set(p.x,walk.feet+walk.eyeOff+Math.abs(Math.cos(walk.phase))*0.035*amp,p.z);hero.g.rotation.y=walk.charYaw+Math.PI;
+ hero.g.position.set(p.x,walk.feet+(hero.customVisualActive?0:walk.eyeOff+Math.abs(Math.cos(walk.phase))*0.035*amp),p.z);hero.g.rotation.y=walk.charYaw+Math.PI;
  hero.arms[0].rotation.x=sw*0.55*amp;hero.arms[1].rotation.x=-sw*0.55*amp;hero.lower.rotation.z=Math.sin(walk.phase)*0.04*amp;hero.lower.rotation.x=-0.05*amp;hero.torso.rotation.y=sw*0.06*amp;hero.head.rotation.y=-sw*0.05*amp;
  hero.feet[0].position.z=0.04+sw*0.14*amp;hero.feet[1].position.z=0.04-sw*0.14*amp;hero.tail.rotation.x=-0.2*amp+Math.sin(G.time.value*3)*0.05;
  hero.g.visible=walk.third;

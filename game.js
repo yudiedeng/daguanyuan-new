@@ -321,7 +321,7 @@ function showStart(giftMode) {
    <div class="g-foot"><button class="g-link" id="g-skip">只是逛逛</button><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="有赠礼码？贴在这里" aria-label="赠礼码"><button class="g-btn ghost" type="submit">收礼</button></form></div></div>`;
   startEl.hidden = false;
   startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; beginChar(b.dataset.k); });
-  $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); document.body.classList.remove('g-playing'); };
+  $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); document.body.classList.remove('g-playing'); void hero.setCharacter(null); };
   $('g-recv').onsubmit = (e) => { e.preventDefault(); const g = decodeGift($('g-code-in').value.trim()); if (!g) { $('g-code-in').value = ''; $('g-code-in').placeholder = '这个码打不开，再检查一下'; return; } S.gift = g; showStart(true); };
 }
 
@@ -337,12 +337,12 @@ function setWorld(season, hour) { if (season != null) setSeason(season); if (hou
 function spawnAt(id) { const s = spawnOf(id); return [s[0], s[1], s[2] ?? 0]; }
 function beginChar(k) {
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
-  const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
+  const C = CHARS[k]; dressHero(C.look); void hero.setCharacter(k); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
   stageWorld(); enterWalk(spawnAt(C.start)); renderQuest();
 }
 function beginGift() {
-  S.char = null; S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
+  S.char = null; void hero.setCharacter(null); S.giftMode = true; clearWorld(); document.body.classList.add('g-playing'); pauseGame(false);
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', a = anchor(id); const v = a.off(2.2);
   const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: '打开' + (g.f ? g.f + '的' : '') + '礼' }]; S.stage = 'gift'; addTag('给你的礼', o, 0.7, true);
   questEl.innerHTML = `<div class="who"><b>收礼</b><span>${esc(placeById(id).name)}</span></div><p class="tip">${esc(g.f || '有人')}把礼放在了${esc(placeById(id).name)}。跟着光柱走过去。</p>`;
@@ -416,6 +416,14 @@ function closeModal() {
 }
 const toastEl = $('toast'); let flashT = 0;
 function flash(msg) { toastEl.innerHTML = `<b>${esc(msg)}</b>`; toastEl.style.opacity = 1; clearTimeout(flashT); flashT = setTimeout(() => toastEl.style.opacity = 0, 2600); }
+addEventListener('dgy-character-status', ({detail}) => {
+  if (detail.state === 'loading') flash('正在加载林黛玉');
+  if (detail.state === 'ready') flash('林黛玉已入园');
+  if (detail.state === 'error') {
+    console.warn('Character model unavailable', detail.error);
+    flash('人物外形暂未加载，已使用简化形象，可继续游园');
+  }
+});
 let actx = null;
 function blip(f) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.5, t + 0.25); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 1); } catch (e) {} }
 
