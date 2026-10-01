@@ -1,6 +1,6 @@
 /* Character appearance only. Movement, terrain and quests stay on hero.g. */
 export const CHARACTER_MODELS = {
-  daiyu: { url: new URL('./models/characters/lin-daiyu-web.glb', import.meta.url).href,
+  daiyu: { url: new URL('./models/characters/lin-daiyu-v6.glb', import.meta.url).href,
     height: 1.74, yaw: -Math.PI / 2, walkSpeed: 1.35, fastSpeed: 2.3 }
 };
 
