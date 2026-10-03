@@ -425,7 +425,7 @@ function beginChar(k) {
   S.char = k; S.q = 0; S.stage = 'pick'; S.petals = 0; S.carrying = null; S.giftMode = false;
   const C = CHARS[k]; dressHero(C.look); const a0 = C.quests[0].at; setWorld(a0[0], a0[1]);
   document.body.classList.add('g-playing'); pauseGame(false);
-  stageWorld(); enterWalk(spawnAt(C.start)); renderQuest();
+  stageWorld(); walk.third = false; enterWalk(spawnAt(C.start)); renderQuest();
 }
 /* =====================================================================
    刘姥姥进大观园：开场引导（第三十九回末 · 第四十回开头）
@@ -454,9 +454,9 @@ const LIU = {
       npcs: [{ who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', at: () => [6, 110] }],
       pages: [{ say: [['丰儿', 'Feng’er', '姥姥起得早。我们奶奶叫我先领您和板儿进园子，找大奶奶去——大奶奶一早就在大观楼底下张罗呢。', 'Up early, Granny! My mistress told me to take you and Ban’er into the garden to find Madam Li Wan — she’s been busy under the Grand View Tower since dawn.'],
                       ['刘姥姥', 'Granny Liu', '好姑娘，劳动你了。', 'Bless you, my dear, for the trouble.']], btn: ['跟她走', 'Follow her'] }] },
-    { tip: '跟着光柱，过沁芳亭，到大观楼底下找大奶奶李纨。', tipEn: 'Follow the beam of light past Drenched Blossoms Pavilion to Li Wan under the Grand View Tower.',
+    { tip: '跟着前面的丰儿走，过沁芳亭，到大观楼底下找大奶奶李纨。（走丢了就跟着光柱）', tipEn: 'Follow Feng’er ahead of you, past Drenched Blossoms Pavilion, to Li Wan under the Grand View Tower. (If you lose her, follow the beam of light.)',
       label: '见李纨', labelEn: 'Greet Li Wan', place: 'daguan',
-      npcs: [{ who: '李纨', whoEn: 'Li Wan', color: '#8e8a80', anchor: 'daguan' }, { who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', anchor: 'daguan', off: 2.2 }],
+      npcs: [{ who: '李纨', whoEn: 'Li Wan', color: '#8e8a80', anchor: 'daguan' }, { who: '丰儿', whoEn: 'Feng’er', color: '#c08c86', anchor: 'daguan', off: 2.2, guide: true }],
       pages: [{ text: { title: '史太君两宴大观园', titleEn: 'The Lady Dowager Feasts in the Garden', ch: '第四十回', chEn: 'Chapter 40',
         p: ['李纨一早起来，正看着老婆子丫头们扫那些落叶，擦抹桌椅，预备茶酒器皿。丰儿带了你和板儿进来，说：“大奶奶倒忙的很。”李纨笑道：“我说你昨儿去不成，只忙着要去。”你笑道：“老太太留下我，叫我也热闹一天去。”',
             '李纨叫人上去开了缀锦阁，把桌椅一张一张往下抬。你巴不得一声儿，拉了板儿登梯上去，只见乌压压的堆着些围屏、桌椅、大小花灯，虽不大认得，只见五彩炫耀，各有奇妙。你念了几声佛，便下来了。',
@@ -721,13 +721,16 @@ function npcAt(n) {
   const a = anchor(n.anchor); return n.off ? a.off(n.off) : new V3(a.x, a.y, a.z);
 }
 function storyWorld() {
-  clearWorld(); const st = LIU.steps[S.q]; if (!st) { renderStory(); return; }
+  clearWorld(); guide = null; const st = LIU.steps[S.q]; if (!st) { renderStory(); return; }
   const fa = st.face ? st.face() : null;
   st.npcs.forEach((n, i) => {
-    const v = npcAt(n); let face;
+    let v = npcAt(n); let face;
     if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
     if (n.prop) { place(makeProp(n.prop), v, face); return; }
+    const dest = v.clone(); let leadFrom = null;
+    if (n.guide && S.lastNpc && S.lastNpc.who === n.who) { leadFrom = S.lastNpc.pos; v = new V3(leadFrom[0], standY(leadFrom[0], leadFrom[1]), leadFrom[1]); }
     const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male), v, face);
+    if (leadFrom && !startGuide(f, leadFrom[0], leadFrom[1], dest.x, dest.z, true)) f.position.copy(dest);
     if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
     if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
     addTag(() => T(n, 'who'), f, 2.15, i === 0);
@@ -769,6 +772,7 @@ function runPages(pages, k, done) {
 }
 function storyInteract(t) {
   const st = LIU.steps[S.q]; blip(660);
+  { const n0 = st.npcs && st.npcs[0]; S.lastNpc = n0 && n0.who && n0.at ? { who: n0.who, pos: n0.at() } : null; }
   runPages(st.pages, 0, () => { S.q++; S.done.liu = Math.max(S.done.liu || 0, S.q); saveDone();
     if (S.q >= LIU.steps.length) { finishStory(); return; }
     storyWorld(); flash(T(LIU.steps[S.q], 'tip')); });
@@ -814,6 +818,41 @@ function slipAnim(done) {
     if (t < 2.05) requestAnimationFrame(step); else { g.rotation.x = 0; pauseGame(false); done(); } };
   requestAnimationFrame(step);
 }
+
+/* 带路的人：从上一步站的地方出发，沿走得通的路在前面走；玩家落得太远就站住等 */
+let guide = null;
+function findPath(ax, az, bx, bz) {
+  const cell = 0.6, X0 = -156, Z0 = -186, NX = Math.ceil(312 / cell), NZ = Math.ceil(322 / cell), memo = new Map();
+  const toI = (x, z) => [Math.round((x - X0) / cell), Math.round((z - Z0) / cell)];
+  const hOf = (i, j) => { const k = i * NZ + j; let v = memo.get(k); if (v !== undefined) return v; const x = X0 + i * cell, z = Z0 + j * cell; let g = okAt(x, z);
+    if (g != null) for (const [dx, dz] of [[0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]]) if (okAt(x + dx, z + dz) == null) { g = null; break; }
+    memo.set(k, g); return g; };
+  const snap = (x, z) => { const [i0, j0] = toI(x, z); for (let r = 0; r < 8; r++) for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) { if (Math.max(Math.abs(a), Math.abs(b)) !== r) continue; if (hOf(i0 + a, j0 + b) != null) return [i0 + a, j0 + b]; } return null; };
+  const s = snap(ax, az), t = snap(bx, bz); if (!s || !t) return null;
+  const heap = [], push = (f, k) => { heap.push([f, k]); let c = heap.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let c = 0; for (;;) { let l = 2 * c + 1, r = l + 1, m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top; };
+  const G = new Map(), from = new Map(), key = (i, j) => i * NZ + j, h = (i, j) => Math.hypot(i - t[0], j - t[1]);
+  const sk = key(s[0], s[1]); G.set(sk, 0); push(h(s[0], s[1]), sk); let found = false, n = 0;
+  while (heap.length && n++ < 400000) { const [, k] = pop(); const i = (k / NZ) | 0, j = k % NZ; if (i === t[0] && j === t[1]) { found = true; break; } const cur = hOf(i, j), g0 = G.get(k);
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { if (!a && !b) continue; const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue; const nh = hOf(ni, nj); if (nh == null || Math.abs(nh - cur) > 0.4) continue;
+      if (a && b && (hOf(i + a, j) == null || hOf(i, j + b) == null)) continue; const nk = key(ni, nj), ng = g0 + Math.hypot(a, b); if (ng < (G.get(nk) ?? 1e9)) { G.set(nk, ng); from.set(nk, k); push(ng + h(ni, nj), nk); } } }
+  if (!found) return null;
+  const pts = []; for (let k = key(t[0], t[1]); k !== undefined; k = from.get(k)) { pts.push([X0 + ((k / NZ) | 0) * cell, Z0 + (k % NZ) * cell]); if (k === sk) break; } pts.reverse(); pts.push([bx, bz]);
+  const los = (p, q) => { const L = Math.hypot(q[0] - p[0], q[1] - p[1]), m = Math.max(2, Math.ceil(L / 0.4)); let y = null; for (let u = 0; u <= m; u++) { const x = p[0] + (q[0] - p[0]) * u / m, z = p[1] + (q[1] - p[1]) * u / m, g = okAt(x, z); if (g == null || (y != null && Math.abs(g - y) > 0.4)) return false; y = g; } return true; };
+  const out = [pts[0]]; let i = 0; while (i < pts.length - 1) { let j = pts.length - 1; while (j > i + 1 && !los(pts[i], pts[j])) j--; out.push(pts[j]); i = j; } return out;
+}
+function startGuide(fig, ax, az, bx, bz, faceTo) {
+  const path = findPath(ax, az, bx, bz); guide = path && path.length > 1 ? { fig, path, i: 1, faceTo } : null; return !!guide;
+}
+function followGuide(dt) {
+  const G = guide; if (!G || !G.fig.parent) return; const f = G.fig, p = walk.pos, x = f.position.x, z = f.position.z;
+  if (G.i >= G.path.length) { if (G.faceTo) f.rotation.y = Math.atan2(p.x - x, p.z - z); return; }
+  if (Math.hypot(p.x - x, p.z - z) > 9 && G.moved) { f.position.y = groundAt(x, z, f.position.y + 0.6)[0]; return; }   // 等你跟上
+  const [tx, tz] = G.path[G.i], dx = tx - x, dz = tz - z, d = Math.hypot(dx, dz), step = Math.min(d, 2.6 * dt);
+  if (d < 0.05) { G.i++; return; }
+  f.position.x += dx / d * step; f.position.z += dz / d * step; G.moved = true; f.rotation.y = Math.atan2(dx, dz);
+  f.position.y = groundAt(f.position.x, f.position.z, f.position.y + 0.6)[0] + Math.abs(Math.sin(performance.now() / 170)) * 0.03;
+}
 /* 板儿跟在身后半步 */
 function followBanEr(dt) {
   if (!banEr || !banEr.parent) return; const p = walk.pos, yaw = walk.charYaw ?? walk.yaw, f = new V3(-Math.sin(yaw), 0, -Math.cos(yaw));
@@ -835,7 +874,7 @@ function liuIntro() {
   const onKey = (e) => { if (introEl.hidden) return; if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') { e.preventDefault(); e.stopImmediatePropagation(); next(); } else if (e.code === 'Escape') { e.stopImmediatePropagation(); wake(); } };
   /* 睁眼：眼皮张开两次，画面由模糊转清 */
   const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
-    if (walk.on) exitWalk(); enterWalk(LIU.spawn); pauseGame(true);
+    if (walk.on) exitWalk(); walk.third = false; enterWalk(LIU.spawn); pauseGame(true);
     if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62); }
     banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr);
     storyWorld();
@@ -853,7 +892,7 @@ function beginGift() {
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', a = anchor(id); const v = a.off(2.2);
   const o = place(makeItem('gift'), v); S.targets = [{ stage: 'gift', obj: o, pos: v, r: 2.2, label: () => L('打开' + (g.f ? g.f + '的' : '') + '礼', g.f ? `Open ${g.f}’s gift` : 'Open the gift') }]; S.stage = 'gift'; addTag(() => L('给你的礼', 'A gift for you'), o, 0.7, true);
   renderGiftQuest();
-  enterWalk(spawnAt(id)); questEl.hidden = false;
+  walk.third = false; enterWalk(spawnAt(id)); questEl.hidden = false;
 }
 function renderGiftQuest() {
   const g = S.gift, id = placeById(g.p) ? g.p : 'qinfang', pn = esc(pname(placeById(id)));
@@ -957,7 +996,7 @@ promptEl.addEventListener('click', interact);
 const _v = new V3(); let last = performance.now();
 function tick(now) {
   requestAnimationFrame(tick); const dt = Math.min(0.05, (now - last) / 1000); last = now; beaconMat.uniforms.t.value = now / 1000;
-  const playing = (S.char || S.giftMode || S.story) && walk.on; if (S.story) followBanEr(dt);
+  const playing = (S.char || S.giftMode || S.story) && walk.on; if (S.story) { followBanEr(dt); followGuide(dt); }
   questEl.hidden = !(playing || (S.giftMode && walk.on));
   if (!playing) { compassEl.hidden = true; promptEl.hidden = true; beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
   for (const t of S.targets) if (t.bob) t.obj.position.y = t.obj.userData.baseY + Math.sin(now / 500) * 0.06, t.obj.rotation.y += dt * 0.6;
@@ -994,7 +1033,7 @@ addEventListener('dgy-lang', () => {
 });
 
 /* 调试接口（测试用） */
-window.__game = { S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
+window.__game = { get guide() { return guide; }, followGuide, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
 { const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else if (liuDone()) showStart(); else liuIntro(); }
