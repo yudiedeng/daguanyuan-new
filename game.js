@@ -420,10 +420,11 @@ function showStart(giftMode) {
   startEl.innerHTML = `<div class="g-sheet"><h2>${L('我们的大观园', 'Our Grand View Garden')}</h2>
    <p class="g-lead">${L('大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。', 'The Grand View Garden was itself a gift, built by the Jia family for the Imperial Consort’s visit home. Those who live in it speak their hearts through things, too: an old handkerchief, a sprig of red plum, a few baskets of crabs. Choose someone, enter the garden, and carry their feelings to where they belong.')}</p>
    <div class="g-chars">${Object.keys(CHARS).map(charCard).join('')}</div>
-   <div class="g-foot"><span><button class="g-btn" id="g-liu">${L('刘姥姥进大观园', 'Granny Liu Visits the Garden')}</button> <button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button></span><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
+   <div class="g-foot"><span><button class="g-btn" id="g-ch17">${L('大观园试才题对额', 'Testing Talents in the Garden')}</button> <button class="g-btn" id="g-liu">${L('刘姥姥进大观园', 'Granny Liu Visits the Garden')}</button> <button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button></span><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
   startEl.hidden = false;
   startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; beginChar(b.dataset.k); });
   $('g-liu').onclick = () => { startEl.hidden = true; liuIntro(); };
+  $('g-ch17').onclick = () => { startEl.hidden = true; storyIntro('ch17'); };
   $('g-skip').onclick = () => { startEl.hidden = true; pauseGame(false); document.body.classList.remove('g-playing'); };
   $('g-recv').onsubmit = (e) => { e.preventDefault(); const g = decodeGift($('g-code-in').value.trim()); if (!g) { $('g-code-in').value = ''; $('g-code-in').placeholder = L('这个码打不开，再检查一下', 'That code won’t open. Please check it'); return; } S.gift = g; showStart(true); };
 }
@@ -728,6 +729,168 @@ const LIU = {
   ],
   tail: ['刘姥姥进大观园 · 完。可以在园子里随便走走，或点「入园」从头再来。', 'Granny Liu Visits the Garden · The End. Wander the garden as you like, or press “Play” to start again.']
 };
+/* =====================================================================
+   第十七回 · 大观园试才题对额
+   园子刚落成，贾政带一班清客进园题匾额对联，撞见宝玉，便命他跟来。你是宝玉。
+   每到一处，清客们先拟，你再拟：选项里有清客的拟名，也有宝玉在原书里的拟名。
+   对白为转述；揭示里引号内为原文（庚辰本第十七至十八回）
+   ===================================================================== */
+const ZHENG = { who: '贾政', whoEn: 'Jia Zheng', color: '#34465c', male: 1 };
+const KE1 = { who: '清客', whoEn: 'A literary guest', color: '#6d6a58', male: 1 };
+const KE2 = { who: '清客', whoEn: 'A literary guest', color: '#5d6a72', male: 1 };
+const tour = (anchorId, off1 = 1.6, off2 = -1.6) => [{ ...ZHENG, anchor: anchorId, guide: true }, { ...KE1, anchor: anchorId, off: off1 }, { ...KE2, anchor: anchorId, off: off2 }];
+const CH17 = {
+  key: 'ch17', name: '大观园试才题对额', nameEn: 'Testing Talents in the Grand View Garden',
+  ch: ['第十七回', 'Chapter 17'],
+  look: { robe: '#a8342b', robe2: '#8b2b24', sash: '#c9a24a', crown: true },
+  spawn: [1.5, 100, Math.PI], season: 0, hour: 9.6,
+  bag: ['身后：奶娘、小厮', 'Behind you: your nurse and pages'],
+  intro: [
+    ['第十七回', 'Chapter 17', 'ey'],
+    ['你是贾宝玉。', 'You are Jia Baoyu.'],
+    ['为了元妃省亲，府里新造了一座园子。如今工程俱已告竣，只是各处的匾额对联还空着。', 'For the Imperial Consort’s homecoming visit, the family has built a new garden. The work is finished, but the boards and couplets over every place still stand blank.'],
+    ['这几日你思念秦钟，忧戚不尽。老太太怕你闷，命人带你进园来逛逛。', 'You have been grieving for Qin Zhong these past days. Afraid you would mope, the old lady sent you into the garden to play.'],
+    ['你才进园门，就见贾珍迎面走来——', 'You have only just come in when Jia Zhen comes hurrying towards you —', 'big']
+  ],
+  steps: [
+    { tip: '贾珍迎面走来，像是有话要说。', tipEn: 'Jia Zhen is coming your way; he seems to have something to say.',
+      label: '和贾珍说话', labelEn: 'Talk to Jia Zhen', place: 'gate',
+      npcs: [{ who: '贾珍', whoEn: 'Jia Zhen', color: '#4b3d5a', male: 1, at: () => [2.5, 103.5] }],
+      pages: [{ say: [['贾珍', 'Jia Zhen', '你还不出去？老爷就来了。', 'Still here? Get out — your father is coming!'],
+                      ['', '', '你听了，带着奶娘小厮们一溜烟就往园外跑。方转过弯，顶头贾政引着众客来了，躲之不及，只得一边站了。', 'At that you shoot off towards the gate with your nurse and pages — and round the corner run straight into your father leading his guests. Too late to hide, you can only stand aside.']], btn: ['往园门去', 'Head for the gate'] }] },
+    { tip: '贾政带着清客们在园门口。过去站好。', tipEn: 'Your father and his guests are at the garden gate. Go and stand by.',
+      label: '见过父亲', labelEn: 'Greet your father', place: 'gate', face: () => [0, 110],
+      npcs: [{ ...ZHENG, at: () => [0, 131.5] }, { ...KE1, at: () => [1.7, 132.6] }, { ...KE2, at: () => [-1.7, 132.4] }],
+      pages: [{ say: [['贾政', 'Jia Zheng', '（近日闻得塾掌赞你专能对对联，虽不喜读书，偏倒有些歪才情。）跟我进来。', '(The tutor has lately been saying you have a gift for couplets — no love of study, but a crooked sort of talent.) Follow me in.'],
+                      ['', '', '你只得随往。贾政先秉正看门：正门五间，桶瓦泥鳅脊；门栏窗槅皆是细雕新鲜花样，并无朱粉涂饰；一色水磨群墙，下面白石台矶；左右一望，皆雪白粉墙，下面虎皮石随势砌去。', 'You have no choice but to follow. Your father first stands back to look at the gate: five bays, a rounded tiled ridge; doors and lattices carved in fresh patterns, with no red or white paint; walls of ground brick on white stone steps; and on either side, white-plastered walls on tiger-skin stone, running with the lie of the land.'],
+                      ['贾政', 'Jia Zheng', '不落富丽俗套。进去罢。', 'Not the usual vulgar opulence. Let us go in.']], btn: ['跟着进园', 'Follow him in'] }] },
+    { tip: '一进门，迎面一带翠嶂挡住了园景。跟着老爷走过去。', tipEn: 'Just inside, a green screen of rockwork blocks the view. Follow your father there.',
+      label: '题翠嶂', labelEn: 'Name the rock screen', place: 'rock', npcs: tour('rock'),
+      pages: [{ say: [['贾政', 'Jia Zheng', '非此一山，一进来园中所有之景悉入目中，则有何趣？诸公看此处题以何名方妙？', 'Without this hill, the whole garden would be seen the moment one entered — where would be the charm? Gentlemen, what shall we inscribe here?'],
+                      ['清客', 'A guest', '也有说该题“叠翠”二字，也有说该题“锦嶂”的，又有说“赛香炉”的，又有说“小终南”的。', 'Some propose “Piled Green”, others “Brocade Screen”, others “Rival of Incense-Burner Peak”, others again “Little Zhongnan”.'],
+                      ['贾政', 'Jia Zheng', '宝玉，你也拟来。', 'Baoyu — you propose one too.']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['你说——', 'You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['此处并非主山正景，不过是探景一进步耳。莫如直书古人“曲径通幽处”这旧句在上，倒还大方气派。', 'This is not the main view, only a first step into the scenery. Better simply to inscribe the old line “A winding path leads to a secluded place” — that has a fine, open air.'], best: 1 },
+                         { t: ['就题“叠翠”罢。', 'Let it be “Piled Green”.'] }, { t: ['不如“小终南”。', 'Better “Little Zhongnan”.'] }],
+                  bestAfter: ['众人都赞道：“是极！二世兄天分高，才情远，不似我们读腐了书的。”贾政笑道：“不可谬奖。他年小，不过以一知充十用，取笑罢了。再俟选拟。”', 'They all cry: “Excellent! Our young friend has rare gifts, not like us who have read ourselves stale.” Your father smiles: “Don’t flatter him. He is young, and makes one thing he knows do the work of ten. A joke, that’s all. We’ll choose later.”'],
+                  after: ['贾政道：“这是众位已说过的了。”你想了想，又道：“编新不如述旧。莫若直书古人‘曲径通幽处’这旧句在上。”众人都赞好。贾政笑道：“不可谬奖。”', 'Your father: “The gentlemen have said that already.” You think again: “New is not as good as old. Better to inscribe the old line, ‘A winding path leads to a secluded place’.” They all praise it. Your father smiles: “Don’t flatter him.”'] } },
+              { text: { title: '曲径通幽', titleEn: 'A Winding Path to a Secluded Place', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“尝闻古人有云：‘编新不如述旧，刻古终胜雕今。’况此处并非主山正景，原无可题之处，不过是探景一进步耳。莫如直书古人‘曲径通幽处’这旧句在上，倒还大方气派。”'],
+                pEn: ['Baoyu said: “I have heard the ancients say, ‘To compose the new is not as good as to relate the old; to carve the ancient beats engraving the modern.’ Besides, this is not the main hill or the chief view; there is really nothing here to inscribe — it is only a step into the scenery. Better simply to write up the ancient line, ‘A winding path leads to a secluded place’. That would have a fine, generous air.”'] } }] },
+    { tip: '过了翠嶂，沿溪到沁芳亭桥上。', tipEn: 'Past the rock screen, follow the stream to the pavilion on the bridge.',
+      label: '题桥上亭', labelEn: 'Name the bridge pavilion', place: 'qinfang', face: () => [0, 30],
+      npcs: [{ ...ZHENG, at: () => { const [x, z] = qf(); return [x, z + 1.2]; }, guide: true }, { ...KE1, at: () => { const [x, z] = qf(); return [x + 1.1, z - 0.6]; } }, { ...KE2, at: () => { const [x, z] = qf(); return [x - 1.1, z - 0.6]; } }],
+      pages: [{ say: [['', '', '只见青溪泻玉，石磴穿云，白石为栏，环抱池沼，石桥三港，兽面衔吐。桥上有亭。', 'A clear stream pours like jade, stone steps thread the clouds; white stone balustrades ring the pool; a three-arched stone bridge, beast-heads spouting water. On the bridge stands a pavilion.'],
+                      ['清客', 'A guest', '当日欧阳公《醉翁亭记》有云：“有亭翼然”，就名“翼然”。', 'Ouyang Xiu wrote in his Old Drunkard’s Pavilion: “there is a pavilion, winged”. Let it be named “Winged”.'],
+                      ['贾政', 'Jia Zheng', '“翼然”虽佳，但此亭压水而成，还须偏于水题方称。依我拙裁，欧阳公之“泻出于两峰之间”，竟用他这一个“泻”字。', '“Winged” is good, but this pavilion sits over water; the name should lean towards water. To my clumsy mind, from Ouyang’s “pours out between two peaks” we might take the one word “pours”.'],
+                      ['清客', 'A guest', '是极，是极。竟是“泻玉”二字妙。', 'Just so! “Pouring Jade” — perfect.']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['老爷命你也拟一个。你说——', 'Your father bids you propose one too. You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['“泻玉”二字固好。', '“Pouring Jade” is very good.'] }, { t: ['此处是省亲驻跸别墅，亦当入于应制之例，用此等字眼亦觉粗陋不雅。用“泻玉”二字，则莫若“沁芳”二字，岂不新雅？', 'This is to be a lodge for the Consort’s visit; the names should suit a court occasion, and such words feel coarse. Rather than “Pouring Jade”, why not “Seeping Fragrance” — fresh and elegant?'], best: 1 }, { t: ['还是“翼然”罢。', 'Better keep “Winged”.'] }],
+                  bestAfter: ['贾政拈髯点头不语。众人都忙迎合，称赞宝玉才情不凡。贾政道：“匾上二字容易。再作一副七言对联来。”', 'Your father strokes his beard and nods, saying nothing. The guests hasten to agree, praising your uncommon talent. Your father: “Two words for a board are easy. Now make a seven-syllable couplet.”'],
+                  after: ['贾政道：“胡说！你且拟来。”你想了想道：“用‘泻玉’二字，则莫若‘沁芳’二字，岂不新雅？”贾政拈髯点头不语。“再作一副七言对联来。”', 'Your father: “Nonsense — think of your own.” You consider: “Rather than ‘Pouring Jade’, why not ‘Seeping Fragrance’?” He strokes his beard and nods, saying nothing. “Now a seven-syllable couplet.”'] } },
+              { say: [['', '', '你四顾一望，便机上心来，乃念道：', 'You look all round; inspiration comes, and you recite:'],
+                      ['宝玉', 'Baoyu', '绕堤柳借三篙翠，隔岸花分一脉香。', 'Willows round the bank borrow green three poles deep; / Flowers across the shore share one thread of fragrance.'],
+                      ['', '', '贾政听了，点头微笑。众人先称赞不已。', 'Your father listens, nods and smiles. The guests cannot praise it enough.']], btn: ['继续', 'Continue'] },
+              { text: { title: '沁芳', titleEn: 'Seeping Fragrance', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“……用‘泻玉’二字，则莫若‘沁芳’二字，岂不新雅？”贾政拈髯点头不语。', '对联：“绕堤柳借三篙翠，隔岸花分一脉香。”'],
+                pEn: ['Baoyu said: “… rather than ‘Pouring Jade’, would not ‘Seeping Fragrance’ be fresher and more elegant?” Jia Zheng stroked his beard and nodded, saying nothing.', 'The couplet: “Willows round the bank borrow green three poles deep; flowers across the shore share one thread of fragrance.”'] } }] },
+    { tip: '前面一带粉垣，里面千百竿翠竹。跟进去。', tipEn: 'Ahead, a whitewashed wall with a thousand green bamboos within. Follow them in.',
+      label: '题竹院', labelEn: 'Name the bamboo lodge', place: 'xiaoxiang', npcs: tour('xiaoxiang'),
+      pages: [{ say: [['', '', '忽抬头看见前面一带粉垣，里面数楹修舍，有千百竿翠竹遮映。进门便是曲折游廊，阶下石子漫成甬路；后院有大株梨花兼着芭蕉，墙下忽开一隙，得泉一派，开沟仅尺许，灌入墙内，绕阶缘屋至前院，盘旋竹下而出。', 'Ahead rises a whitewashed wall; inside, a few fine rooms screened by a thousand green bamboos. Within the gate a winding covered walk; below the steps a pebbled path. In the back court, great pear trees and plantains; a gap opens under the wall, a spring comes in, its channel barely a foot wide, runs round the steps and the house to the front court, and winds out under the bamboo.'],
+                      ['贾政', 'Jia Zheng', '这一处还罢了。若能月夜坐此窗下读书，不枉虚生一世。', 'This place is not bad. To sit reading under this window on a moonlit night — that would be a life not lived in vain.'],
+                      ['清客', 'A guest', '“淇水遗风”。', '“The lingering air of the Qi”.'], ['贾政', 'Jia Zheng', '俗。', 'Vulgar.'],
+                      ['清客', 'A guest', '“睢园雅迹”。', '“Elegant traces of the Sui garden”.'], ['贾政', 'Jia Zheng', '也俗。', 'Vulgar too.']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['你说——', 'You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['“淇水遗风”也罢了。', '“The lingering air of the Qi” would do.'] }, { t: ['这是第一处行幸之处，必须颂圣方可。“淇水”“睢园”太板腐了。莫若“有凤来仪”四字。', 'This is the first place the Consort will visit; it must praise the sovereign. “Qi” and “Sui garden” are too stiff. Better “The Phoenix Comes”.'], best: 1 }, { t: ['不如叫“竹里馆”。', 'Why not “Lodge in the Bamboo”?'] }],
+                  bestAfter: ['众人都哄然叫妙。贾政点头道：“畜生，畜生，可谓‘管窥蠡测’矣。”命再题一联。', 'The guests burst out in praise. Your father nods: “Beast! A view through a tube, the sea measured with a gourd.” He orders a couplet.'],
+                  after: ['贾政道：“俗！”你忙道：“这是第一处行幸之处，必须颂圣方可。莫若‘有凤来仪’四字。”众人哄然叫妙。贾政点头道：“畜生，畜生。”命再题一联。', 'Your father: “Vulgar!” You hurry on: “This is the first place she will visit; it must praise the sovereign. Better ‘The Phoenix Comes’.” The guests applaud. Your father nods: “Beast.” He orders a couplet.'] } },
+              { say: [['宝玉', 'Baoyu', '宝鼎茶闲烟尚绿，幽窗棋罢指犹凉。', 'From the precious tripod, tea done, the smoke still green; / By the quiet window, chess over, fingers still cool.'],
+                      ['贾政', 'Jia Zheng', '（摇头）也未见长。', '(shaking his head) No better.']], btn: ['继续', 'Continue'] },
+              { text: { title: '有凤来仪', titleEn: 'The Phoenix Comes', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“这是第一处行幸之处，必须颂圣方可。若用四字的匾，又有古人现成的，何必再作。……莫若‘有凤来仪’四字。”众人都哄然叫妙。', '日后元妃改作“潇湘馆”，林黛玉住了进来。'],
+                pEn: ['Baoyu said: “This is the first place she will honour with a visit; it must praise the sovereign. If it is to be four words, the ancients have them ready-made — why compose new ones? … Better ‘The Phoenix Comes’.” Everyone cried out in delight.', 'The Consort later renamed it the Bamboo Lodge (Xiaoxiang Guan), and Lin Daiyu came to live there.'] } }] },
+    { tip: '转过山怀，隐隐露出一带黄泥矮墙，墙头用稻茎掩护。', tipEn: 'Round the hillside, a low wall of yellow mud appears, its top thatched with rice straw.',
+      label: '题田庄', labelEn: 'Name the farmstead', place: 'daoxiang', npcs: tour('daoxiang'),
+      pages: [{ say: [['', '', '有几百株杏花，如喷火蒸霞一般。里面数楹茅屋，外面却是桑、榆、槿、柘，各色树稚新条，随其曲折，编就两溜青篱。篱外山坡之下，有一土井，旁有桔槔辘轳之属；下面分畦列亩，佳蔬菜花，漫然无际。', 'Several hundred apricot trees blaze like fire and steaming clouds. Inside, a few thatched cottages; outside, mulberry, elm, hibiscus and silkworm-thorn, their young shoots woven into two green hedges. Below the hedge, an earthen well with a sweep and windlass; beyond, plots and fields of fine vegetables and flowers, stretching away.'],
+                      ['贾政', 'Jia Zheng', '倒是此处有些道理。固然系人力穿凿，此时一见，未免勾引起我归农之意。', 'Now this place has some sense to it. Man-made, of course, but seeing it stirs in me a wish to retire to the farm.'],
+                      ['清客', 'A guest', '“杏花村”妙极。', '“Apricot Blossom Village” — perfect!'],
+                      ['贾政', 'Jia Zheng', '正亏提醒了我。此处都妙极，只是还少一个酒幌。明日竟做一个，不必华丽，就依外面村庄的式样，用竹竿挑在树梢。', 'Thank you for reminding me. Everything is perfect, only it lacks a tavern sign. Have one made tomorrow — nothing grand, like the country ones, hung from a bamboo pole in a treetop.']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['你说——', 'You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['旧诗有云：“红杏梢头挂酒旗”。如今莫若“杏帘在望”四字。村名若用“杏花”二字，则俗陋不堪了。古人诗云：“柴门临水稻花香”，何不就用“稻香村”的妙？', 'An old poem says: “From the red apricot’s tip hangs the tavern flag.” Better “Apricot Sign in Sight”. And to call the village “Apricot Blossom” is unbearably vulgar. The ancients wrote, “By the brushwood gate on the water, rice-flower fragrance” — why not “Rice-Fragrance Village”?'], best: 1 },
+                         { t: ['“杏花村”就很好。', '“Apricot Blossom Village” is very good.'] }],
+                  bestAfter: ['众人听了，越发同声拍手道妙。贾政一声断喝：“无知的业障，你能知道几个古人，能记得几首熟诗，也敢在老先生前卖弄！”', 'The guests clap and cry “Wonderful!” as one. Your father roars: “Ignorant wretch! How many ancients do you know, how many hackneyed poems can you remember, that you dare show off before these gentlemen?”'],
+                  after: ['贾政冷笑道：“你也学他们，好没出息。”你只得又道：“旧诗云‘红杏梢头挂酒旗’，莫若‘杏帘在望’。村名莫若‘稻香村’。”众人拍手道妙。贾政断喝：“无知的业障！也敢在老先生前卖弄！”', 'Your father sneers: “Copying them — how feeble.” So you try again: “An old poem says ‘From the red apricot’s tip hangs the tavern flag’ — ‘Apricot Sign in Sight’. And call the village ‘Rice-Fragrance’.” The guests applaud. Your father roars: “Ignorant wretch! Showing off before these gentlemen!”'] } },
+              { say: [['', '', '贾政引众人步入茆堂，里面纸窗木榻，富贵气象一洗皆尽。', 'Your father leads them into the thatched hall: paper windows, wooden couches, every trace of wealth washed away.'],
+                      ['贾政', 'Jia Zheng', '此处如何？', 'And what do you think of this place?'],
+                      ['清客', 'A guest', '（忙暗暗推你，教你说好）', '(nudging you secretly to say it is good)']], btn: ['你说', 'You answer'] },
+              { ask: { q: ['你说——', 'You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['此处置一田庄，分明见得人力穿凿扭捏而成。远无邻村，近不负郭，背山山无脉，临水水无源，高无隐寺之塔，下无通市之桥，峭然孤出，似非大观。哪及前数处有自然之理、自然之趣？', 'A farm put here is plainly forced and contrived. No village near, no town wall close; the hill behind has no range, the water before has no source; no pagoda of a hidden temple above, no bridge to a market below. It stands out stark and alone — no grand view at all. How can it match the places before, which had natural sense and natural charm?'], best: 1 },
+                         { t: ['此处最有归农之趣，比“有凤来仪”还好。', 'This place has the true charm of country life — better even than “The Phoenix Comes”.'] }],
+                  bestAfter: ['未及说完，贾政气的喝命：“叉出去！”刚出去，又喝命：“回来！”命再题一联：“若不通，一并打嘴！”', 'Before you finish, your father in a fury shouts: “Throw him out!” You are barely out when he shouts: “Bring him back!” — and orders a couplet: “If it doesn’t make sense, I’ll have your face slapped for both!”'],
+                  after: ['贾政冷笑道：“这是你的真心话？方才的歪才情哪里去了？”你只得照实说了：“分明见得人力穿凿扭捏而成……”未及说完，贾政喝命：“叉出去！”刚出去，又喝命：“回来！”命再题一联。', 'Your father sneers: “Is that what you really think? Where’s your crooked talent now?” So you tell him the truth: “It is plainly forced and contrived …” Before you finish he shouts: “Throw him out!” — then, “Bring him back!” — and orders a couplet.'] } },
+              { say: [['宝玉', 'Baoyu', '新涨绿添浣葛处，好云香护采芹人。', 'New floods add green where the hemp is washed; / Fair clouds guard with fragrance the gatherer of cress.'],
+                      ['贾政', 'Jia Zheng', '（摇头）更不好。', '(shaking his head) Worse still.']], btn: ['继续', 'Continue'] },
+              { text: { title: '杏帘在望 · 稻香村', titleEn: 'Apricot Sign in Sight · Rice-Fragrance Village', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“……古人云‘天然图画’四字，正畏非其地而强为其地，非其山而强为其山，即百般精巧而终不相宜……”未及说完，贾政气的喝命：“叉出去！”刚出去，又喝命：“回来！”'],
+                pEn: ['Baoyu said: “… the ancients spoke of ‘a natural picture’, precisely because they feared forcing a place where there is no place for it, forcing a hill where there is no hill for it; however clever the work, it will never be right …” Before he could finish, Jia Zheng, in a rage, shouted: “Throw him out!” He was barely out when Jia Zheng shouted again: “Bring him back!”'] } }] },
+    { tip: '一所清凉瓦舍，一色水磨砖墙。进门迎面一块大玲珑山石，一株花木也无，只有许多异草。', tipEn: 'A cool tiled house with walls of ground brick. Inside the gate, a great perforated rock; not a single flowering tree, only strange herbs.',
+      label: '题异草院', labelEn: 'Name the herb court', place: 'hengwu', npcs: tour('hengwu'),
+      pages: [{ say: [['', '', '那异草或有牵藤的，或有引蔓的，或垂山巅，或穿石隙，或垂檐绕柱，或萦砌盘阶；味香气馥，非凡花之可比。', 'Of the strange herbs some trail tendrils, some climb vines, some hang from the rock’s crown, some thread its crevices, hang from the eaves, wind round the pillars, curl over the steps — their scent rich and sweet, beyond any common flower.'],
+                      ['贾政', 'Jia Zheng', '有趣！此轩中煮茶操琴，亦不必再焚名香矣。', 'Delightful! To brew tea and play the qin in this hall, one would need no incense.'],
+                      ['清客', 'A guest', '再莫若“兰风蕙露”贴切了。', 'Nothing could be more apt than “Orchid Breeze, Melilot Dew”.']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['你说——', 'You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['“兰风蕙露”贴切。', '“Orchid Breeze, Melilot Dew” is apt.'] }, { t: ['匾上莫若“蘅芷清芬”四字。对联是：吟成豆蔻才犹艳，睡足荼蘼梦也香。', 'For the board, “Pure Fragrance of Alpinia and Angelica”. And the couplet: “Chanting of cardamom, talent still glows; / Sleeping deep in rose-leaf, even dreams are sweet.”'], best: 1 }],
+                  bestAfter: ['贾政笑道：“这是套的‘书成蕉叶文犹绿’，不足为奇。”众客道：“李太白‘凤凰台’之作，全套‘黄鹤楼’，只要套得妙。如今细评起来，方才这一联，竟比‘书成蕉叶’犹觉幽娴活泼。”贾政笑道：“岂有此理。”', 'Your father laughs: “That’s copied from ‘Written on plantain leaves, the words stay green’ — nothing remarkable.” The guests: “Li Bai’s Phoenix Terrace copied the Yellow Crane Tower entirely — what matters is copying well. Weighed carefully, this couplet is even more graceful and alive.” Your father laughs: “Nonsense.”'],
+                  after: ['贾政道：“谁问你来！”你忙改口：“匾上莫若‘蘅芷清芬’四字，对联是：吟成豆蔻才犹艳，睡足荼蘼梦也香。”贾政笑道：“这是套的‘书成蕉叶文犹绿’，不足为奇。”', 'Your father: “Who asked you that?” You correct yourself: “For the board, ‘Pure Fragrance of Alpinia and Angelica’; the couplet: Chanting of cardamom, talent still glows; sleeping deep in rose-leaf, even dreams are sweet.” He laughs: “Copied from ‘Written on plantain leaves’ — nothing remarkable.”'] } },
+              { text: { title: '蘅芷清芬', titleEn: 'Pure Fragrance of Alpinia and Angelica', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“如此说，则匾上则莫若‘蘅芷清芬’四字。对联则是：吟成豆蔻才犹艳，睡足酴醾梦也香。”', '日后元妃赐名“蘅芜苑”，薛宝钗住了进来。'],
+                pEn: ['Baoyu said: “In that case the board had better read ‘Pure Fragrance of Alpinia and Angelica’, and the couplet: Chanting of cardamom, talent still glows; sleeping deep in rose-leaf, even dreams are sweet.”', 'The Consort later named it Alpinia Park (Hengwu Yuan), and Xue Baochai came to live there.'] } }] },
+    { tip: '出了异草院，正面现出一座玉石牌坊，后面是正殿。', tipEn: 'Out of the herb court, a white jade archway rises ahead, the main hall behind it.',
+      label: '题牌坊', labelEn: 'The jade archway', place: 'daguan', npcs: tour('daguan', 2.0, -2.0),
+      pages: [{ say: [['', '', '只见正面现出一座玉石牌坊来，上面龙蟠螭护，玲珑凿就。', 'Before you rises a white jade archway, coiled with dragons and guarded by lesser dragons, exquisitely carved.'],
+                      ['贾政', 'Jia Zheng', '此处书以何文？', 'What shall be written here?'],
+                      ['清客', 'A guest', '必是“蓬莱仙境”方妙。', '“The Fairyland of Penglai” — that alone would do.'],
+                      ['', '', '贾政摇头不语。你见了这个所在，心中忽有所动，寻思起来，倒像在那里曾见过的一般，却一时想不起那年月日的事了。', 'Your father shakes his head and says nothing. As for you — at the sight of this place something stirs in you; thinking back, it seems you have seen it somewhere before, though you cannot recall when.']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['贾政又命你作题。你——', 'Your father bids you name it. You —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['（只顾细思前景，全无心于此了。）', '(lost in remembering where you saw it, you have no mind for naming it.)'], best: 1 }, { t: ['“蓬莱仙境”也罢。', '“The Fairyland of Penglai” will do.'] }],
+                  bestAfter: ['众人不知其意，只当你受了这半日的折磨，精神耗散，才尽词穷了；遂忙都劝贾政：“罢了，明日再题罢了。”贾政心中也怕贾母不放心，遂冷笑道：“你这畜生，也竟有不能之时了。也罢，限你一日，明日若再不能，我定不饶。”', 'Not knowing what is in your mind, they think half a day of torment has worn you out and you have run dry; they urge your father: “Enough — let’s name it tomorrow.” He, too, fears the old lady will fret, and sneers: “So, beast, there is something you can’t do. Very well — one day. If you can’t tomorrow, I won’t spare you.”'],
+                  after: ['贾政摇头不语。你说罢，心里却仍只想着那个在哪里见过的地方，一时怔住了。众人忙劝：“罢了，明日再题罢了。”', 'Your father shakes his head and says nothing. Even as you speak your mind is still on that place you have seen somewhere, and you stand there dazed. The guests hurry to say: “Enough — let’s name it tomorrow.”'] } },
+              { text: { title: '似曾相识', titleEn: 'Seen Somewhere Before', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉见了这个所在，心中忽有所动，寻思起来，倒像在那里曾见过的一般，却一时想不起那年月日的事了。', '这牌坊后来题了“省亲别墅”四字。宝玉梦里到过的太虚幻境，也有一座这样的石牌坊。'],
+                pEn: ['When Baoyu saw this place, something stirred in his heart; thinking it over, it seemed he had seen it somewhere before, but he could not recall when.', 'The archway was later inscribed “Lodge for the Homecoming Visit”. In the Land of Illusion Baoyu once visited in a dream, there stood just such a stone archway.'] } }] },
+    { tip: '一径引入，绕着碧桃花，穿过竹篱花障编就的月洞门，便是一处院落。', tipEn: 'A path leads on round the peach blossom, through a moon gate in a bamboo-and-flower hedge, into a courtyard.',
+      label: '题蕉棠院', labelEn: 'Name the court of plantain and crab-apple', place: 'yihong', npcs: tour('yihong'),
+      pages: [{ say: [['', '', '粉垣环护，绿柳周垂。院中点衬几块山石，一边种几本芭蕉；那一边乃是一棵西府海棠，其势若伞，丝垂翠缕，葩吐丹砂。', 'Whitewashed walls all round, green willows trailing. A few rocks set about the court; on one side some plantains, on the other a Western crab-apple, spreading like an umbrella, its threads hanging green, its blossoms spitting cinnabar.'],
+                      ['清客', 'A guest', '“蕉鹤”二字最妙。', '“Plantain and Crane” is best.'],
+                      ['清客', 'A guest', '“崇光泛彩”方妙。', '“Brimming Light and Floating Colour”.'],
+                      ['贾政', 'Jia Zheng', '宝玉，你说。', 'Baoyu, what do you say?']], btn: ['想一想', 'Think'] },
+              { ask: { q: ['你说——', 'You say —'], ch: ['第十七回', 'Chapter 17'],
+                  opts: [{ t: ['此处蕉棠两植，其意暗蓄“红”“绿”二字在内。若只说蕉，则棠无着落；若只说棠，蕉亦无着落。依我，题“红香绿玉”四字，方两全其妙。', 'Plantain and crab-apple are planted together, holding “red” and “green” between them. Speak only of plantain and the crab-apple is lost; only of crab-apple and the plantain is lost. I would write “Red Fragrance, Green Jade” — then both are served.'], best: 1 }, { t: ['“崇光泛彩”方妙。', '“Brimming Light and Floating Colour” is best.'] }],
+                  bestAfter: ['贾政摇头道：“不好，不好！”', 'Your father shakes his head: “No good, no good!”'],
+                  after: ['贾政道：“这是人家说过的。”你只得道：“蕉棠两植，暗蓄‘红’‘绿’二字，莫若‘红香绿玉’四字。”贾政摇头道：“不好，不好！”', 'Your father: “Someone already said that.” So you say: “Plantain and crab-apple hold ‘red’ and ‘green’ — better ‘Red Fragrance, Green Jade’.” He shakes his head: “No good, no good!”'] } },
+              { say: [['', '', '说着引人进入房内。只见这几间房内收拾的与别处不同，竟分不出间隔来——四面皆是雕空玲珑木板，或流云百蝠，或岁寒三友，或山水人物；倏尔五色纱糊就，竟系小窗；倏尔彩绫轻覆，竟系幽户。', 'He leads them into the rooms. These are arranged like no others: you cannot tell where one room ends — all round are pierced and carved wooden panels, clouds and bats, the three friends of winter, landscapes and figures; here gauze of five colours makes a little window, there a light silk hanging makes a secret door.'],
+                      ['', '', '众人才进来，忽见迎面也进来了一群人，都与自己形相一样，却是一架玻璃大镜相照。转过镜去，越发见门子多了，左转右转，竟迷了路。', 'Just inside, a crowd seems to come towards you, each one exactly like yourselves — it is a great glass mirror. Past the mirror there are more and more doors; turning left and right, everyone is lost.'],
+                      ['贾珍', 'Jia Zhen', '老爷随我来。从这门出去，便是后院，从后院出去，倒比先近了。', 'This way, sir. Out through this door is the back court, and from there the way out is nearer.'],
+                      ['', '', '转过花障，只见青溪前阻，那水从墙下暗沟流进来，开一道岔口，引到西南上，共总流到这里，仍旧合在一处，从那墙下出去。', 'Round the flower screen a clear stream bars the way: the water comes in by a hidden culvert under the wall, splits, is led to the south-west, comes together here again, and flows out under that wall.']], btn: ['跟着出园', 'Follow them out'] },
+              { text: { title: '红香绿玉', titleEn: 'Red Fragrance, Green Jade', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“此处蕉棠两植，其意暗蓄‘红’‘绿’二字在内。若只说蕉，则棠无着落；若只说棠，蕉亦无着落。……依我，题‘红香绿玉’四字，方两全其妙。”贾政摇头道：“不好，不好！”', '日后元妃不喜“香玉”二字，改作“怡红快绿”，赐名“怡红院”——就是宝玉自己住的地方。'],
+                pEn: ['Baoyu said: “Here plantain and crab-apple are planted together, with ‘red’ and ‘green’ hidden in them. Speak only of plantain and the crab-apple has no place; only of crab-apple, and the plantain none. … I would write ‘Red Fragrance, Green Jade’, to do justice to both.” Jia Zheng shook his head: “No good, no good!”', 'The Consort disliked “fragrance” and “jade” and changed it to “Happy Red, Joyful Green”, naming it the Happy Red Court — where Baoyu himself would live.'] } }] },
+    { tip: '老爷走了。出园去，小厮们在园门口等你。', tipEn: 'Your father has gone. Go out of the garden; your pages are waiting at the gate.',
+      label: '出园', labelEn: 'Leave the garden', place: 'gate', face: () => [0, 110],
+      npcs: [{ who: '小厮', whoEn: 'Your pages', color: '#5a6a4a', male: 1, at: () => [1.2, 129.5] }, { who: '小厮', whoEn: 'A page', color: '#6a5a44', male: 1, at: () => [-1.2, 129.8] }],
+      pages: [{ say: [['小厮', 'Pages', '今儿亏我们，老爷才喜欢；老太太打发人出来问了几遍，都亏我们回说喜欢，不然，若老太太叫你进去，就不得展才了。人人都说你才那些诗比世人的都强。今儿得了这样的彩头，该赏我们了。', 'You owe today to us — that’s why the master was pleased. The old lady sent out to ask again and again, and we told her he was pleased; otherwise she’d have called you in and you’d never have shown your talent. Everyone says those poems beat anybody’s. After such a triumph you ought to reward us!'],
+                      ['宝玉', 'Baoyu', '每人一吊钱。', 'A string of cash each.'],
+                      ['小厮', 'Pages', '谁没见那一吊钱！把这荷包赏了罢。', 'Who hasn’t seen a string of cash? Give us these purses!'],
+                      ['', '', '说着，一个上来解荷包，那一个就解扇囊，不容分说，将你所佩之物尽行解去。', 'And before you can say a word, one unties your purses, another your fan case, and everything you wear is stripped off you.']], btn: ['回去见老太太', 'Go back to the old lady'] },
+              { text: { title: '大观园试才题对额', titleEn: 'Testing Talents in the Grand View Garden', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['林黛玉听说宝玉身上佩的东西都给小厮们解了去，以为她给他做的那个荷包也没了，赌气回房，把正替他做的香袋儿拿起剪子来就剪。', '宝玉忙赶来，原来那荷包他贴身带着，掏出来给她看——那香袋已剪破了。', '这一日拟的匾额对联，贾政暂且都用了。到元宵节元妃省亲，又一一改定，园子从此叫做“大观园”。'],
+                pEn: ['When Lin Daiyu heard that the pages had stripped Baoyu of everything he wore, she thought the purse she had made him was gone too; in a temper she went to her room, took up her scissors and cut into the sachet she was making for him.', 'Baoyu ran after her — he had been carrying her purse next to his skin, and he took it out to show her. But the sachet was already cut.', 'For now Jia Zheng used the names and couplets of that day. At the Lantern Festival the Consort came home and settled each one; from then on the garden was called the Grand View Garden.'] } }] }
+  ],
+  tail: ['大观园试才题对额 · 完。可以在园子里随便走走，或点「入园」从头再来。', 'Testing Talents in the Garden · The End. Wander the garden as you like, or press “Play” to start again.'],
+  end: { ch: ['第十七回', 'Chapter 17'], title: ['大观园试才题对额 · 完', 'Testing Talents in the Grand View Garden · The End'] }
+};
+const STORIES = { liu: LIU, ch17: CH17 };
+let SY = CH17;   // 当前剧情线
 /* 室内地面：取室内模型的位置（懒加载前用院落地面） */
 const L2W = (id, lx, lz) => { const b = D.BLD.find(x => x.id === id); if (!b) return [0, 0]; const v = b.root.localToWorld(new V3(lx, 0, lz)); return [v.x, v.z]; };
 const bldY = (id, y) => { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + y : null; };
@@ -742,7 +905,7 @@ function npcAt(n) {
   const a = anchor(n.anchor); return n.off ? a.off(n.off) : new V3(a.x, a.y, a.z);
 }
 function storyWorld() {
-  clearWorld(); guide = null; const st = LIU.steps[S.q]; if (!st) { renderStory(); return; }
+  clearWorld(); guide = null; const st = SY.steps[S.q]; if (!st) { renderStory(); return; }
   const fa = st.face ? st.face() : null;
   st.npcs.forEach((n, i) => {
     let v = npcAt(n); let face;
@@ -756,16 +919,16 @@ function storyWorld() {
     const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male, !!n.sit), v, face);
     if (leadFrom && !startGuide(f, leadFrom[0], leadFrom[1], dest.x, dest.z, true)) f.position.copy(dest);
     if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
-    if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
+    if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: leadFrom ? f.position : v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
     addTag(() => T(n, 'who'), f, 2.15 * walk.s, i === 0);
   });
   renderStory();
 }
 function renderStory() {
-  const st = LIU.steps[S.q], dots = LIU.steps.map((_, i) => `<i class="${i < S.q ? 'on' : ''}"></i>`).join('');
+  const st = SY.steps[S.q], dots = SY.steps.map((_, i) => `<i class="${i < S.q ? 'on' : ''}"></i>`).join('');
   questEl.innerHTML = st
-    ? `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${esc(L(...(st.ch || ['第四十回', 'Chapter 40'])))} · ${S.q + 1}/${LIU.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${L('身边：板儿', 'With you: Ban’er')}${flowerHat && flowerHat.parent ? L(' · 一头菊花', ' · a head full of chrysanthemums') : ''}</div><div class="dots">${dots}</div>`
-    : `<div class="who"><b>${esc(T(LIU, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${esc(L(...LIU.tail))}</p><div class="dots">${dots}</div>`;
+    ? `<div class="who"><b>${esc(T(SY, 'name'))}</b><span>${esc(L(...(st.ch || SY.ch || ['第四十回', 'Chapter 40'])))} · ${S.q + 1}/${SY.steps.length}</span></div><p class="tip">${esc(T(st, 'tip'))}</p><div class="bag">${SY.bag ? L(...SY.bag) : L('身边：板儿', 'With you: Ban’er')}${flowerHat && flowerHat.parent ? L(' · 一头菊花', ' · a head full of chrysanthemums') : ''}</div><div class="dots">${dots}</div>`
+    : `<div class="who"><b>${esc(T(SY, 'name'))}</b><span>${L('未完待续', 'To be continued')}</span></div><p class="tip">${esc(L(...SY.tail))}</p><div class="dots">${dots}</div>`;
   questEl.hidden = !walk.on;
 }
 /* 凤姐给插的一头菊花 */
@@ -781,7 +944,7 @@ const say1 = ([w, wE, l, lE]) => w ? `<p class="prose"><b>${esc(L(w, wE))}</b>${
 function runPages(pages, k, done) {
   const pg = pages[k]; if (!pg) { done(); return; }
   const go = () => runPages(pages, k + 1, done);
-  if (pg.say) { openModal(() => `<div class="ey">${esc(T(LIU, 'name'))} · ${esc(L(...(LIU.steps[S.q]?.ch || ['第四十回', 'Chapter 40'])))}</div>${pg.say.map(say1).join('')}<button class="g-btn" id="g-next">${esc(L(...(pg.btn || ['继续', 'Continue'])))}</button>`,
+  if (pg.say) { openModal(() => `<div class="ey">${esc(T(SY, 'name'))} · ${esc(L(...(SY.steps[S.q]?.ch || SY.ch || ['第四十回', 'Chapter 40'])))}</div>${pg.say.map(say1).join('')}<button class="g-btn" id="g-next">${esc(L(...(pg.btn || ['继续', 'Continue'])))}</button>`,
       () => { if (pg.then === 'flowers') { putFlowers(true); renderStory(); } go(); }); return; }
   if (pg.ask) { const A = pg.ask;
     openModal(() => `<div class="ey">${esc(L(...A.ch))}</div><p class="prose">${esc(L(...A.q))}</p><div class="g-opts g-say">${A.opts.map((o, i) => `<button class="g-opt" data-i="${i}"><i>${i + 1}</i>${esc(L(...o.t))}</button>`).join('')}</div>`, null,
@@ -795,18 +958,18 @@ function runPages(pages, k, done) {
   go();
 }
 function storyInteract(t) {
-  const st = LIU.steps[S.q]; blip(660);
-  { const n0 = st.npcs && st.npcs[0]; S.lastNpc = n0 && n0.who && n0.at ? { who: n0.who, pos: n0.at() } : null; }
-  runPages(st.pages, 0, () => { S.q++; S.done.liu = Math.max(S.done.liu || 0, S.q); saveDone();
-    if (S.q >= LIU.steps.length) { finishStory(); return; }
-    storyWorld(); flash(T(LIU.steps[S.q], 'tip')); });
+  const st = SY.steps[S.q]; blip(660);
+  { const n0 = st.npcs && st.npcs[0], t0 = S.targets.find(x => x.stage === 'story'); S.lastNpc = n0 && n0.who && t0 ? { who: n0.who, pos: [t0.obj.position.x, t0.obj.position.z] } : null; }
+  runPages(st.pages, 0, () => { S.q++; S.done[SY.key || 'liu'] = Math.max(S.done[SY.key || 'liu'] || 0, S.q); saveDone();
+    if (S.q >= SY.steps.length) { finishStory(); return; }
+    storyWorld(); flash(T(SY.steps[S.q], 'tip')); });
 }
 const liuDone = () => (S.done.liu || 0) >= LIU.steps.length;
 /* 走完刘姥姥：自由探索；原来的人物心事、赠礼都从这里接进来 */
 function endStory() { S.story = null; S.stage = 'pick'; clearWorld(); if (banEr) scene.remove(banEr); putFlowers(false); questEl.hidden = true; }
 function finishStory() {
   clearWorld(); blip(990);
-  openModal(() => `<div class="ey">${L('第三十九回 至 第四十二回', 'Chapters 39–42')}</div><h3>${L('刘姥姥进大观园 · 完', 'Granny Liu Visits the Garden · The End')}</h3>
+  openModal(() => `<div class="ey">${SY.end ? L(...SY.end.ch) : L('第三十九回 至 第四十二回', 'Chapters 39–42')}</div><h3>${SY.end ? L(...SY.end.title) : L('刘姥姥进大观园 · 完', 'Granny Liu Visits the Garden · The End')}</h3>
     <p class="prose">${L('园子现在是你的了。可以随便走走，进各处院落、屋里看看；也可以选一个园中人，替她把心事办了；或者把园子里的一处地方，连同一份礼和一句话，送给现实中的一个人。', 'The garden is yours now. Wander anywhere, step into the courtyards and rooms; or choose someone who lives here and help with their wishes; or give a spot in the garden, with a gift and a message, to someone in real life.')}</p>
     <div class="g-opts"><button class="g-opt" id="g-end-walk"><i>1</i>${L('在园子里随便走走', 'Wander the garden')}</button><button class="g-opt" id="g-end-chars"><i>2</i>${L('选一个人入园，办她的心事', 'Choose someone and help with their wishes')}</button><button class="g-opt" id="g-end-gift"><i>3</i>${L('赠一份礼', 'Give a gift')}</button></div>`, null,
     () => { $('g-end-walk').onclick = () => { closeModal(); endStory(); flash(L('自由探索 · 点「入园」可以选人物、收礼赠礼', 'Free exploration · press “Play” to choose someone or give a gift')); };
@@ -896,9 +1059,11 @@ function followBanEr(dt) {
   if (d > 0.25) { const k = Math.min(1, dt * (d > 3 ? 3.5 : 2.2)); banEr.position.x += dx * k; banEr.position.z += dz * k; banEr.rotation.y = Math.atan2(dx, dz); }
   banEr.position.y = groundAt(banEr.position.x, banEr.position.z, p.y + 1)[0];
 }
-function liuIntro() {
-  pauseGame(true); startEl.hidden = true; clearWorld();
-  S.char = null; S.giftMode = false; S.story = 'liu'; S.stage = 'story'; S.q = 0; S.carrying = null; putFlowers(false);
+function liuIntro() { storyIntro('liu'); }
+function storyIntro(key) {
+  SY = STORIES[key]; const LIU = SY;   // 下面沿用原来的写法
+  pauseGame(true); startEl.hidden = true; clearWorld(); if (banEr) scene.remove(banEr);
+  S.char = null; S.giftMode = false; S.story = key; S.stage = 'story'; S.q = 0; S.carrying = null; putFlowers(false);
   dressHero(LIU.look); setWorld(LIU.season, LIU.hour); document.body.classList.add('g-playing');
   let i = -1, busy = null;
   const paint = () => { const [zh, en, cls] = LIU.intro[i]; introEl.innerHTML = `<p class="ln ${cls || ''}">${esc(L(zh, en))}</p><button class="skip" id="g-intro-skip">${L('跳过', 'Skip')}</button><div class="hint">${isTouch ? L('点一下继续', 'Tap to continue') : L('点击或按空格继续', 'Click or press Space to continue')}</div>`;
@@ -910,8 +1075,8 @@ function liuIntro() {
   /* 睁眼：眼皮张开两次，画面由模糊转清 */
   const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
     if (walk.on) exitWalk(); walk.third = false; enterWalk(LIU.spawn); pauseGame(true);
-    if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62 * walk.s); }
-    banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr);
+    if (key === 'liu') { if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62 * walk.s); }
+      banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr); }
     storyWorld();
     const cv = D.renderer.domElement; cv.style.transition = 'none'; cv.style.filter = 'blur(12px) brightness(.55)';
     lidsEl.hidden = false; lidsEl.innerHTML = '<i></i><i></i>';
@@ -1188,7 +1353,7 @@ addEventListener('dgy-lang', () => {
 });
 
 /* 调试接口（测试用） */
-window.__game = { get guide() { return guide; }, followGuide, findPath, okAt, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
+window.__game = { get SY() { return SY; }, CH17, storyIntro, get guide() { return guide; }, followGuide, findPath, okAt, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
-{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else if (liuDone()) showStart(); else liuIntro(); }
+{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else if ((S.done.ch17 || 0) >= CH17.steps.length) showStart(); else storyIntro('ch17'); }
