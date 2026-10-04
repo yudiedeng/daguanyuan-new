@@ -211,12 +211,12 @@ body.g-playing .card{display:none!important}
 #g-intro{position:fixed;inset:0;z-index:60;background:#07080a;color:#e9e3d3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 1.6s ease;user-select:none}
 #g-intro[hidden]{display:none}
 #g-intro.out{opacity:0;pointer-events:none}
-#g-intro .ln{font-family:var(--f-disp);font-size:clamp(20px,3.1vw,31px);letter-spacing:.14em;line-height:2;max-width:780px;padding:0 28px;text-align:center;opacity:0;transform:translateY(8px);transition:opacity 1.3s ease,transform 1.3s ease}
+#g-intro .ln{font-family:var(--f-disp);font-size:clamp(27px,4.6vw,54px);letter-spacing:.12em;line-height:1.95;max-width:1120px;padding:0 28px;text-align:center;opacity:0;transform:translateY(8px);transition:opacity 1.3s ease,transform 1.3s ease}
 #g-intro .ln.on{opacity:1;transform:none}
-#g-intro .ln.ey{font-family:inherit;font-size:13px;letter-spacing:.34em;color:#b39a6a}
-#g-intro .ln.big{font-size:clamp(28px,4.6vw,46px);letter-spacing:.2em}
-#g-intro .hint{position:absolute;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;letter-spacing:.24em;color:#7d786c;animation:gpulse 2.4s ease-in-out infinite}
-#g-intro .skip{all:unset;position:absolute;right:22px;top:calc(18px + env(safe-area-inset-top,0px));font-size:13px;letter-spacing:.12em;color:#9a9486;cursor:pointer;border-bottom:1px solid #4a4740}
+#g-intro .ln.ey{font-family:inherit;font-size:clamp(17px,2.2vw,24px);letter-spacing:.3em;color:#b39a6a}
+#g-intro .ln.big{font-size:clamp(38px,6.6vw,76px);letter-spacing:.18em}
+#g-intro .hint{position:absolute;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom,0px));text-align:center;font-size:clamp(15px,1.8vw,20px);letter-spacing:.22em;color:#8d887b;animation:gpulse 2.4s ease-in-out infinite}
+#g-intro .skip{all:unset;position:absolute;right:22px;top:calc(18px + env(safe-area-inset-top,0px));font-size:clamp(15px,1.8vw,20px);letter-spacing:.12em;color:#9a9486;cursor:pointer;border-bottom:1px solid #4a4740}
 #g-intro .skip:hover,#g-intro .skip:focus-visible{color:#e9e3d3}
 @keyframes gpulse{0%,100%{opacity:.35}50%{opacity:.9}}
 #g-fade{position:fixed;inset:0;z-index:58;background:#07080a;opacity:0;pointer-events:none;transition:opacity 1.1s ease;display:flex;align-items:center;justify-content:center}
