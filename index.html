@@ -186,7 +186,7 @@ const PLACES=[
  {id:'gate',name:'正门',sub:'园门',eyebrow:'正门五间',pos:[0,10,121],quote:'只见正门五间，上面桶瓦泥鳅脊，那门栏窗槅皆是细雕新鲜花样，并无朱粉涂饰。',
   text:'两边是雪白粉墙，下面虎皮石随势砌去。贾政带着宝玉和清客们从这里进园，一路题写对额。',ch:'第十七回',view:{t:[0,4,114],c:[24,15,160]},spawn:[0,108,Math.PI]},
  {id:'rock',name:'翠嶂',sub:'曲径通幽',eyebrow:'一带翠嶂',pos:[0,12,96],quote:'只见一带翠嶂挡在前面。',
-  text:'一进门，假山就把园中景致都挡住了。众清客拟了“叠翠”“锦嶂”“赛香炉”“小终南”，宝玉借旧诗题作“曲径通幽处”。',ch:'第十七回',view:{t:[0,4,96],c:[-34,13,124]},spawn:[-27,94,Math.PI]},
+  text:'一进门，假山就把园中景致都挡住了。众清客拟了“叠翠”“锦嶂”“赛香炉”“小终南”，宝玉借旧诗题作“曲径通幽处”。',ch:'第十七回',view:{t:[0,4,96],c:[-34,13,124]},spawn:[2,110,0]},
  {id:'qinfang',name:'沁芳亭',sub:'桥上亭',eyebrow:'亭压水而成',pos:[0,9,50],quote:'有亭翼然。',
   text:'溪上石桥，桥上有亭。众人拟过“翼然”“泻玉”，宝玉嫌不雅，新题“沁芳”二字。第二十三回，宝玉和黛玉就在这一带沁芳闸桥边的桃花树下共读《西厢记》，黛玉在这里葬花。',ch:'第十七回 · 第二十三回',view:{t:[0,2,50],c:[-26,11,72]}},
  {id:'daguan',name:'大观楼',sub:'顾恩思义',eyebrow:'省亲别墅正殿',pos:[0,23,-69],quote:'天上人间诸景备，芳园应锡大观名。',
@@ -1059,6 +1059,7 @@ function nearPath(x,z,r){const ix=Math.floor(x/4),iz=Math.floor(z/4),rr=Math.cei
 let QINFANG=null;const BRIDGES=[];
 /* 石磴：园路坡陡处铺台阶（第十七回“石磴穿云”）；rail 的路两侧加白石栏杆（“白石为栏”）。
    台阶面是平的，每级高差约 0.16 米；碰撞按可踩的台面加（walk），两侧望柱挡人。 */
+const RAIL_GAPS=[[-4.6,66.8,2.4]];// 石磴栏杆留口：去潇湘馆的路从这里岔出
 function stairs(pts,hs,P){const hw=P.w/2+0.15,m=pts.length,tops=new Float32Array(m);let a=0;const runs=[];
  for(let k=1;k<m;k++)if(Math.abs(hs[k]-hs[a])>=0.16||k===m-1){runs.push([a,k]);a=k;}
  for(const [a,b] of runs){const p=pts[a],q=pts[b],cx=(p[0]+q[0])/2,cz=(p[1]+q[1])/2,len=Math.hypot(q[0]-p[0],q[1]-p[1])+0.05,ry=Math.atan2(q[0]-p[0],q[1]-p[1]);
@@ -1067,9 +1068,9 @@ function stairs(pts,hs,P){const hw=P.w/2+0.15,m=pts.length,tops=new Float32Array
  if(!P.rail)return;
  for(const sd of[-1,1]){const posts=[];let acc=1e9;
   for(let k=0;k<m;k++){if(k>0)acc+=Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]);if(acc<1.6&&k<m-1)continue;acc=0;
-   const b=pts[Math.min(m-1,k+1)],a2=pts[Math.max(0,k-1)];let tx=b[0]-a2[0],tz=b[1]-a2[1];const tl=Math.hypot(tx,tz)||1;posts.push([pts[k][0]-tz/tl*(hw+0.12)*sd,tops[k],pts[k][1]+tx/tl*(hw+0.12)*sd]);}
-  for(let i=0;i<posts.length;i++){const [x,y,z]=posts[i];box('marble',T(x,y,z),0.22,1.05,0.22,0,0.5,0);add('marble',new THREE.SphereGeometry(0.14,10,8),T(x,y+1.12,z));
-   if(i===0)continue;const [x0,y0,z0]=posts[i-1],dx=x-x0,dz=z-z0,dh=Math.hypot(dx,dz),dy=y-y0,sl=Math.hypot(dh,dy),rx=-Math.atan2(dy,dh),M=T((x+x0)/2,0,(z+z0)/2,Math.atan2(dx,dz)),yc=(y+y0)/2;
+   const b=pts[Math.min(m-1,k+1)],a2=pts[Math.max(0,k-1)];let tx=b[0]-a2[0],tz=b[1]-a2[1];const tl=Math.hypot(tx,tz)||1;const px=pts[k][0]-tz/tl*(hw+0.12)*sd,pz=pts[k][1]+tx/tl*(hw+0.12)*sd;if(RAIL_GAPS.some(g=>Math.hypot(px-g[0],pz-g[1])<g[2])){posts.push(null);continue;}posts.push([px,tops[k],pz]);}
+  for(let i=0;i<posts.length;i++){if(!posts[i])continue;const [x,y,z]=posts[i];box('marble',T(x,y,z),0.22,1.05,0.22,0,0.5,0);add('marble',new THREE.SphereGeometry(0.14,10,8),T(x,y+1.12,z));
+   if(i===0||!posts[i-1])continue;const [x0,y0,z0]=posts[i-1],dx=x-x0,dz=z-z0,dh=Math.hypot(dx,dz),dy=y-y0,sl=Math.hypot(dh,dy),rx=-Math.atan2(dy,dh),M=T((x+x0)/2,0,(z+z0)/2,Math.atan2(dx,dz)),yc=(y+y0)/2;
    box('marble',M,0.16,0.14,sl,0,yc+0.88,0,{rx,noCol:1});box('marble',M,0.1,0.46,sl,0,yc+0.45,0,{rx,noCol:1});}}}
 function buildPath(P){
  const c=new THREE.CatmullRomCurve3(P.pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');const L=c.getLength();const sp=c.getSpacedPoints(Math.max(6,Math.ceil(L/0.8))).map(v=>[v.x,v.z]);
@@ -1141,8 +1142,8 @@ function treeOK(x,z,r){const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;
 function treeAdd(x,z){const k=Math.floor(x/5)+','+Math.floor(z/5);(treeHash.get(k)||treeHash.set(k,[]).get(k)).push([x,z]);}
 const VIEWSEG=[],VIEWSEG_NEW=[];const NEW_PLACES=new Set(['luxue','tubi','aojing','qiushuang','xingye']);// 新景点的取景线单独放：不参与布树时的提前跳过（那会改变随机数），改为种完后隐藏
 function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c,t=p.view.t;(NEW_PLACES.has(p.id)?VIEWSEG_NEW:VIEWSEG).push([c[0],c[2],t[0],t[2],p.id==='all'?0:7]);}
- // 第十七回 出翠嶂“俯而视之，则清溪泻雪，石磴穿云……桥上有亭”：出石洞后口往北望沁芳亭的视线不种树
- VIEWSEG.push([-13,92,1,44,8]);}
+ // 第十七回 出翠嶂“俯而视之，则清溪泻雪，石磴穿云……桥上有亭”：出石洞北口往北望沁芳亭的视线不种树
+ VIEWSEG.push([-1,91,1,44,8]);}
 function inView(x,z,extra,segs){for(const v of segs||VIEWSEG){if(!v[4])continue;const dx=v[2]-v[0],dz=v[3]-v[1],L2=dx*dx+dz*dz;let u=((x-v[0])*dx+(z-v[1])*dz)/L2;if(u<0.15||u>0.92)continue;const px=v[0]+dx*u,pz=v[1]+dz*u;const r=v[4]+(extra||0);if((px-x)**2+(pz-z)**2<r*r)return true;}return false;}
 // 新景点（芦雪广、凹晶馆、凸碧山庄）占地：x, z, 半宽, 半深
 const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9]]:[];
@@ -1187,10 +1188,17 @@ function buildRockery(){const cz=GLB,burn=()=>{rnd();rnd();rnd();};
  [[-12,95],[8,97],[16,94]].forEach(([x,z],i)=>{const y=height(x,z)+R(3,5);if(!cz){addTree('pine',x,z,0.6,'#3f5a3c',y);return;}
   const ok=!inView(x,z,0)&&!BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5)&&!(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9);
   const [px,pz,pt]=CZ_PINES[i];TREES.pine.push({x:px,y:height(0,96)-0.05+pt,z:pz,s:0.6,ry:ok?rnd()*6.283:i*2.1,tint:'#3f5a3c',plum:false,v:ok?Math.floor(rnd()*2):i%2});treeAdd(px,pz);});
- for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,2)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
+ for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,4.4)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
  // 按原著补的几座山坡陡，满坡撒山石，免得一整面光坡（x, z, 半径 rx, rz, 块数；同 make_layout.py 的 EXTRA_HILLS）
- for(const [cx,cz,rx,rz,k] of[[-41,85,20,10,26],[30,87,15,10,18],[38,157,16,21,46],[-121,-21,10,11,22]])for(let i=0;i<k;i++){const a=rnd()*6.28,d=R(0.25,0.95),x=cx+Math.cos(a)*rx*d,z=cz+Math.sin(a)*rz*d;if(nearPath(x,z,2)||inZone(x,z,1)||!inGarden(x,z,2)||height(x,z)<1.2)continue;const sx=R(1.4,3.8),sy=R(1.2,3.4);rock(x,height(x,z)+sy*0.25,z,sx,sy,R(1.2,2.8),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
+ for(const [cx,cz,rx,rz,k] of[[-41,85,20,10,26],[30,87,15,10,18],[38,157,16,21,46],[-121,-21,10,11,22]])for(let i=0;i<k;i++){const a=rnd()*6.28,d=R(0.25,0.95),x=cx+Math.cos(a)*rx*d,z=cz+Math.sin(a)*rz*d;if(nearPath(x,z,4.8)||inZone(x,z,1)||!inGarden(x,z,2)||height(x,z)<1.2)continue;const sx=R(1.4,3.8),sy=R(1.2,3.4);rock(x,height(x,z)+sy*0.25,z,sx,sy,R(1.2,2.8),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
 // 第十七回 出洞“两边飞楼插空，雕甍绣槛，皆隐于山坳树杪之间”：沁芳池北岸左右各一座两层阁，灰瓦朱柱，上层一圈栏杆，四周花木半掩
+/* 第十七回“开门只见一带翠嶂挡在前面”，“进入石洞来”：门内只有石洞一条路进园。翠嶂西头到园墙、东头沿东翼山脊到溪水源头，
+   各砌一道叠石、立看不见的挡墙；溪水下游与东墙之间的缺口也补上。东边唯一绕行的是怡红院一路
+  （原著游园出来“由山脚边忽一转，便是平坦宽阔大路，豁然大门前见”）。 */
+const BARRIERS=[[[-19.4,99],[-22,106],[-23.5,113],[-24,121]],[[19.4,99],[30,99.5],[40,97],[46.5,91],[48,85.5]],[[145,108.5],[150.5,109.5]]];
+function buildBarriers(){for(const L of BARRIERS){for(let k=1;k<L.length;k++){const [x0,z0]=L[k-1],[x1,z1]=L[k],len=Math.hypot(x1-x0,z1-z0),ry=Math.atan2(x1-x0,z1-z0),n=Math.ceil(len/1.5);
+  for(let i=0;i<n;i++){const t=(i+0.5)/n,x=mix(x0,x1,t),z=mix(z0,z1,t),g=height(x,z);colAdd({x,z,c:Math.cos(ry),s:Math.sin(ry),hx:0.45,hz:len/n/2+0.08,top:g+5,bot:g-3,walk:false});
+   if(L.length>2&&!nearPath(x,z,3.2)){const sx=R(1.0,1.9),sy=R(1.3,2.6);rock(x+R(-0.4,0.4),g+sy*0.35,z+R(-0.4,0.4),sx,sy,R(0.9,1.6));if(rnd()<0.5){const sy2=R(0.8,1.5);rock(x+R(-1,1),g+sy2*0.3,z+R(-1,1),R(0.6,1.1),sy2,R(0.6,1));}}}}}}
 function buildFeilou(){for(const k of['feilouW','feilouE']){const q=Z[k];if(!q)continue;const M=T(q.x,q.y,q.z,0);
   hall(M,{w:8,d:6.5,h:4.0,bays:3,base:1.0,roofKey:'roofGrey',roofH:2.0,over:1.4,lift:1.0,lanterns:true});
   const M2=at(M,0,1.0+4.0+0.9,0);hall(M2,{w:6.4,d:5,h:3.3,bays:3,noBase:true,roofKey:'roofGrey',roofH:2.8,over:1.5,lift:1.7,beasts:3,lanterns:true});
@@ -1282,7 +1290,7 @@ function buildOuxiang(){if(GLB){zigzag();return;}const M0=T(40,0,2,Math.PI/2);bo
  hall(at(M0,0,1.05,0),{w:10,d:7,h:3.5,noBase:true,facade:'open',roof:'hip',roofKey:'roofGreen',roofH:2.2,over:1.3,lift:1.1,bays:3,plaque:'藕香榭',pscale:0.72,lanterns:true,gapBack:true,railSides:true});
  zigzag();}
 
-function buildPathStones(){for(let i=0;i<PATH_S.length;i+=3){const p=PATH_S[i],q=PATH_S[Math.min(PATH_S.length-1,i+1)];let tx=q[0]-p[0],tz=q[1]-p[1];const l=Math.hypot(tx,tz)||1;tx/=l;tz/=l;if(rnd()<0.45)continue;const sd=rnd()<0.5?-1:1;const off=1.7+rnd()*0.9;const x=p[0]-tz*off*sd,z=p[1]+tx*off*sd;const h=height(x,z);if(h<0.4||inZone(x,z,0.5))continue;const sx=R(0.22,0.55);rock(x,h+sx*0.25,z,sx,sx*R(0.5,0.9),sx*R(0.7,1.2),pick(['#8a8a80','#9a978c','#7d7c74']));}}
+function buildPathStones(){for(let i=0;i<PATH_S.length;i+=3){const p=PATH_S[i],q=PATH_S[Math.min(PATH_S.length-1,i+1)];let tx=q[0]-p[0],tz=q[1]-p[1];const l=Math.hypot(tx,tz)||1;tx/=l;tz/=l;if(rnd()<0.45)continue;const sd=rnd()<0.5?-1:1;const off=1.7+rnd()*0.9;const x=p[0]-tz*off*sd,z=p[1]+tx*off*sd;const h=height(x,z);if(h<0.4||inZone(x,z,0.5)||nearPath(x,z,1.6))continue;/* 岔口处别压到别的路 */const sx=R(0.22,0.55);rock(x,h+sx*0.25,z,sx,sx*R(0.5,0.9),sx*R(0.7,1.2),pick(['#8a8a80','#9a978c','#7d7c74']));}}
 function buildShore(){
  const ok=(x,z)=>!nearPath(x,z,3.2)&&!inZone(x,z,0.5)&&!nearZig(x,z,4)&&!BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+2.5);
  for(let i=0;i<SHORE.length;i++){const [sx,sz,nx,nz]=SHORE[i];if(rnd()<0.45)continue;const x=sx+nx*(0.9+R(-0.3,0.3)),z=sz+nz*(0.9+R(-0.3,0.3));if(!ok(x,z))continue;
@@ -1652,13 +1660,13 @@ function cascadeLayout(){if(cascadeLayout.r)return cascadeLayout.r;
 function buildQinfangScene(){const SH=['#6a8a42','#5b7d3a','#7a9a4c','#4f7034'],FL=[...PINK,...APRICOT,'#f3f0e6'];
  const bush=(x,z,s,tint)=>{if(nearPath(x,z,1.9)||!treeOK(x,z,1.1)||height(x,z)<0.35)return false;if(nearStream(x,z,2.5))return false;TREES.bush.push({x,y:height(x,z),z,s:s*0.72,ry:rnd()*6.283,tint,fl:FL.includes(tint),v:Math.floor(rnd()*2)});treeAdd(x,z);return true;};
  // 石磴两旁：灌木、花丛、山石，一路从出洞口铺到池边
- const ax=new THREE.CatmullRomCurve3([[-10.2,87],[-10,82],[-7,75],[-3,67],[0,60]].map(p=>new V3(p[0],0,p[1])),false,'centripetal');
+ const ax=new THREE.CatmullRomCurve3([[-0.5,86.4],[-2,81],[-5,75],[-3,67],[0,60]].map(p=>new V3(p[0],0,p[1])),false,'centripetal');
  const sp=ax.getSpacedPoints(24);
  for(let i=0;i<sp.length;i++){const a=sp[Math.max(0,i-1)],b=sp[Math.min(sp.length-1,i+1)];let tx=b.x-a.x,tz=b.z-a.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;
   for(const sd of[-1,1])for(const off of[2.4,3.6,5.2]){const x=sp[i].x-tz*off*sd+R(-0.5,0.5),z=sp[i].z+tx*off*sd+R(-0.5,0.5);bush(x,z,R(0.7,1.15),rnd()<0.42?pick(FL):pick(SH));}
   if(i%3===1)for(const sd of[-1,1]){const off=R(2.2,3.4),x=sp[i].x-tz*off*sd,z=sp[i].z+tx*off*sd;if(!nearPath(x,z,1.9)){const sx=R(0.8,1.8),sy=R(0.8,1.9);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(0.8,1.6));}}}
  // 出洞口“佳木茏葱，奇花闪灼”：平地两侧花木；西侧一丛竹
- for(let i=0;i<46;i++){const x=R(-24,22),z=R(78,88);if(Math.abs(x+10)<3.2)continue;bush(x,z,R(0.75,1.2),rnd()<0.5?pick(FL):pick(SH));}
+ for(let i=0;i<46;i++){const x=R(-24,22),z=R(78,88);if(Math.abs(x+1)<3.2)continue;bush(x,z,R(0.75,1.2),rnd()<0.5?pick(FL):pick(SH));}
  for(let i=0;i<70;i++){const a=rnd()*6.28,d=Math.sqrt(rnd())*3.2,x=-20+Math.cos(a)*d,z=83+Math.sin(a)*d;if(!nearPath(x,z,1.8))bambooAt(x,z);}
  // 桃杏夹在视线两侧（视线上的会被 addTree 自动跳过）
  for(let n=0,t=0;n<14&&t<500;t++){const x=R(-30,28),z=R(60,88);if(height(x,z)<0.4||nearPath(x,z,3)||!treeOK(x,z,3.2))continue;addTree('blossom',x,z,R(0.75,1.0),pick(rnd()<0.6?PINK:APRICOT));n++;}
@@ -2106,10 +2114,10 @@ function frame(){
    ===================================================================== */
 /* 园路：tools/layout/paths.json（python3 tools/layout/check_paths.py 检查跨水与穿院）。跨水处自动架桥，bridges 依次指定桥型 */
 const PATHS=[
- {pts:[[0,113],[-3,109],[-5,105],[-5.6,101],[-7.4,98.2],[-8.6,95.4],[-8,92.6],[-9.4,90],[-10.2,87],[-10,82],[-7,75],[-3,67],[0,60],[0,44],[0,32],[0,14],[0,-4],[0,-20],[0,-37]],w:3,bridges:['qinfang','arch'],lamps:true,rail:true}, // 中轴
- {pts:[[-3,109],[-16,107],[-30,103],[-42,99],[-52,94]],w:2.4}, // 潇湘馆
+ {pts:[[0,113],[-0.9,108],[-0.9,105.6],[-0.9,103.2],[-1.35,101],[-2.45,99],[-2.7,97.2],[-2.05,95.5],[-1.05,94],[-0.55,92.4],[-0.5,90.5],[-0.5,86.4],[-2,81],[-5,75],[-3,67],[0,60],[0,44],[0,32],[0,14],[0,-4],[0,-20],[0,-37]],w:3,bridges:['qinfang','arch'],lamps:true,rail:true}, // 中轴
+ {pts:[[-3,66.5],[-14,69],[-28,70],[-40,71],[-48,73],[-50.5,80],[-51,88],[-51.5,93.5],[-53,94]],w:2.4}, // 潇湘馆
  {pts:[[0,113],[14,110],[30,112],[44,120],[56,138],[66,156],[76,158.5],[83,158.5]],w:2.6,lamps:true}, // 怡红院
- {pts:[[44,120],[46,106],[45,94],[43,84],[43,72],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4}, // 东路·栊翠庵
+ {pts:[[56,138],[60,124],[62,110],[60,98],[57,88],[52,78],[46,68],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4}, // 东路·栊翠庵
  {pts:[[50,40],[62,26],[82,18],[100,8],[114,-12],[118,-40],[118,-70],[110,-92],[96,-100],[86,-94]],w:2.2}, // 东路·凹晶馆
  {pts:[[-30,34],[-56,37],[-72,36],[-86,36],[-100,35],[-108,28],[-109,14],[-108,2],[-118,0]],w:2.2}, // 西路·芦雪广
  {pts:[[-48,-40],[-46,-90],[-40,-112],[-20,-120],[20,-120],[44,-110],[50,-80],[48,-40]],w:2.2}, // 大观楼后
@@ -2132,7 +2140,7 @@ async function build(){
  await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();buildDaoxiang();buildLongcui();buildOuxiang();
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
- await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
+ await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildBarriers();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}try{buildCrops();}catch(e){console.warn('crops',e);}try{buildBeds();}catch(e){console.warn('beds',e);}
  await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
