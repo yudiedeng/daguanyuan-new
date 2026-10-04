@@ -263,7 +263,8 @@ const dockLang = () => { dockBtn.textContent = L('入园', 'Play'); dockBtn.titl
    --------------------------------------------------------------------- */
 const placeById = id => PLACES.find(p => p.id === id);
 function spawnOf(id) { const p = placeById(id); if (p.spawn) return p.spawn; return [p.pos[0] + 6, p.pos[2] + 10, 0]; }
-function okAt(x, z) { const [g, fromT] = groundAt(x, z, 99); if (fromT && g < 0.25) return null; if (blockedAt(x, g + 1.0, z) || blockedAt(x, g + 0.4, z)) return null; return g; }
+/* 落脚面：只认离地形 3 m 以内的面（地坪、台基、桥），不把屋顶当地面，这样寻路能进屋 */
+function okAt(x, z) { const [g, fromT] = groundAt(x, z, D.hq ? D.hq(x, z) + 3 : 99); if (fromT && g < 0.25) return null; if (blockedAt(x, g + 1.0, z) || blockedAt(x, g + 0.4, z)) return null; return g; }
 const anchorCache = {};
 /* 从出生点做一次可达搜索（0.5 米网格，考虑台阶高差与碰撞），取离建筑中心最近、四周留有余地的一格 */
 function reachable(sx, sz, R = 34) {
@@ -676,8 +677,9 @@ const LIU = {
     /* ---------------- 第四十一回：栊翠庵品茶 ---------------- */
     { tip: '跟老太太去栊翠庵。妙玉在庵里奉茶。', tipEn: 'Follow the old lady to the Green Lattice Nunnery. Miaoyu is serving tea.', label: '吃茶', labelEn: 'Have tea', place: 'longcui',
       ch: ['第四十一回', 'Chapter 41'],
-      npcs: [{ who: '妙玉', whoEn: 'Miaoyu', color: '#d8d2c4', anchor: 'longcui' },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', anchor: 'longcui', off: 2.2, sit: 0.5 }],
+      // 东禅堂里：贾母坐在后墙下的榻上，妙玉站在榻前奉茶（坐标是栊翠庵局部坐标）
+      npcs: [{ who: '妙玉', whoEn: 'Miaoyu', color: '#d8d2c4', at: () => L2W('longcui', 9.55, 1.4), floor: () => bldY('longcui', 1.34), look: () => L2W('longcui', 10.6, 2.5) },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => L2W('longcui', 10.62, 2.55), floor: () => bldY('longcui', 1.34), sit: 0.47, seat: 'none', look: () => L2W('longcui', 8.4, 2.55) }],
       pages: [{ say: [['贾母', 'The Lady Dowager', '我们才都吃了酒肉，你这里头有菩萨，冲了罪过。我们这里坐坐，把你的好茶拿来，我们吃一杯就去了。', 'We’ve all just had wine and meat, and you have the Buddha here — we mustn’t offend. We’ll sit out here; bring your good tea, we’ll have a cup and go.'],
                       ['', '', '妙玉亲自捧了一个海棠花式雕漆填金云龙献寿的小茶盘，里面放一个成窑五彩小盖钟，捧与老太太。', 'Miaoyu herself brought a small carved-lacquer tray shaped like a crab-apple blossom, gilded with clouds and dragons, holding a little covered cup of Chenghua five-colour porcelain, and offered it to the old lady.'],
                       ['贾母', 'The Lady Dowager', '我不吃六安茶。', 'I don’t drink Lu’an tea.'],
@@ -727,6 +729,8 @@ const LIU = {
   tail: ['刘姥姥进大观园 · 完。可以在园子里随便走走，或点「入园」从头再来。', 'Granny Liu Visits the Garden · The End. Wander the garden as you like, or press “Play” to start again.']
 };
 /* 室内地面：取室内模型的位置（懒加载前用院落地面） */
+const L2W = (id, lx, lz) => { const b = D.BLD.find(x => x.id === id); if (!b) return [0, 0]; const v = b.root.localToWorld(new V3(lx, 0, lz)); return [v.x, v.z]; };
+const bldY = (id, y) => { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + y : null; };
 function roomY(id) { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + 0.48 : null; }
 const qf = () => { const Q = D.QINFANG; return Q ? [Q.x, Q.z] : [0, 52]; };
 const introEl = $('g-intro'), lidsEl = $('g-lids');
@@ -742,7 +746,7 @@ function storyWorld() {
   const fa = st.face ? st.face() : null;
   st.npcs.forEach((n, i) => {
     let v = npcAt(n); let face;
-    if (n.look) face = new V3(n.look[0], 0, n.look[1]); else if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
+    const lk = typeof n.look === 'function' ? n.look() : n.look; if (lk) face = new V3(lk[0], 0, lk[1]); else if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
     if (n.prop) { place(makeProp(n.prop), v, face); return; }
     const seatH = n.sit ? (typeof n.sit === 'number' ? n.sit : 0.5) : 0;
     if (n.sit && n.seat !== 'none') place(makeProp(n.seat || 'chair'), v.clone(), face);   // 座下垫一把椅子（室内已有家具的用 seat:'none'）
@@ -864,7 +868,7 @@ function findPath(ax, az, bx, bz, maxNodes = 400000) {
   const G = new Map(), from = new Map(), key = (i, j) => i * NZ + j, h = (i, j) => Math.hypot(i - t[0], j - t[1]);
   const sk = key(s[0], s[1]); G.set(sk, 0); push(h(s[0], s[1]), sk); let found = false, n = 0;
   while (heap.length && n++ < maxNodes) { const [, k] = pop(); const i = (k / NZ) | 0, j = k % NZ; if (i === t[0] && j === t[1]) { found = true; break; } const cur = hOf(i, j), g0 = G.get(k);
-    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { if (!a && !b) continue; const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue; const nh = hOf(ni, nj); if (nh == null || Math.abs(nh - cur) > 0.4) continue;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { if (!a && !b) continue; const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue; const nh = hOf(ni, nj); if (nh == null || Math.abs(nh - cur) > 0.55) continue;
       if (a && b && (hOf(i + a, j) == null || hOf(i, j + b) == null)) continue; const nk = key(ni, nj), ng = g0 + Math.hypot(a, b) * (lawn(ni, nj) ? 6 : 1); if (ng < (G.get(nk) ?? 1e9)) { G.set(nk, ng); from.set(nk, k); push(ng + h(ni, nj), nk); } } }
   if (!found) return null;
   const pts = []; for (let k = key(t[0], t[1]); k !== undefined; k = from.get(k)) { pts.push([X0 + ((k / NZ) | 0) * cell, Z0 + (k % NZ) * cell]); if (k === sk) break; } pts.reverse(); pts.push([bx, bz]);
@@ -1035,9 +1039,19 @@ const GATES = [   // [建筑根节点 id, 局部 x, 局部 z, 中文名, 英文�
   ['daoxiang', -4, -0.8, '稻香村 · 柴门', 'Paddy-Sweet Cottage · door'],
   ['daoxiang', 14.4, -14, '稻香村 · 院门', 'Paddy-Sweet Cottage · gate'],
   ['longcui', 0, 7.7, '栊翠庵 · 山门', 'Green Lattice Nunnery · gate'],
-  ['tubi', 0, 1.2, '凸碧山庄', 'Convex Emerald Hall'],
-  ['aojing', 0, -3.2, '凹晶馆', 'Concave Crystal Lodge'],
-  ['luxue', 0, -5, '芦雪广', 'Reed Snow Cottage'],
+  ['longcui', 0, -4.7, '栊翠庵 · 佛殿', 'Green Lattice Nunnery · Buddha Hall'],
+  ['longcui', 8.2, 1.8, '栊翠庵 · 东禅堂', 'Green Lattice Nunnery · East Meditation Hall'],
+  ['longcui', 8.75, -5.4, '栊翠庵 · 耳房', 'Green Lattice Nunnery · Side Chamber'],
+  ['ouxiang', 0, 3.5, '藕香榭', 'Lotus Fragrance Pavilion'],
+  ['ouxiang', 4.9, 1.65, '藕香榭 · 东门', 'Lotus Fragrance Pavilion · east door'],
+  ['ouxiang', -4.9, 1.65, '藕香榭 · 西门', 'Lotus Fragrance Pavilion · west door'],
+  ['tubi', 0, 1.8, '凸碧山庄', 'Convex Emerald Hall'],
+  ['aojing', 0, 1.3, '凹晶馆', 'Concave Crystal Lodge'],
+  ['aojing', 0, -3.4, '凹晶馆 · 后门', 'Concave Crystal Lodge · back door'],
+  ['luxue', 0, 4.4, '芦雪广', 'Reed Snow Cottage'],
+  ['daguan', 0, -13.6, '大观楼 · 顾恩思义殿', 'Grand View Tower · Main Hall'],
+  ['daguan', 33, -14.2, '缀锦阁', 'Variegated Brocade Pavilion'],
+  ['daguan', -33, -14.2, '含芳阁', 'Fragrance-Holding Pavilion'],
   ['qiushuang', 0, 12.6, '秋爽斋 · 院门', 'Autumn Freshness Studio · gate']];
 let DOORS = [], doorKey = '', nearDoor = null, doorBusy = false;
 function buildDoors() {
@@ -1099,7 +1113,12 @@ petals.frustumCulled = false; petals.visible = false; petals.renderOrder = 6; sc
 const petalSeed = Array.from({ length: PET_N }, (_, i) => ({ lat: (Math.random() - 0.5) * 1.3, ph: Math.random() * 6.283, h: 0.2 + Math.random() * 0.9, sp: 0.8 + Math.random() * 0.5, o: i / PET_N }));
 const _pd = new THREE.Object3D(); let PP = null, ppT = -1e9;
 function buildPP(gx, gz, p, now) {
-  let path = findPath(p.x, p.z, gx, gz, 80000); if (!path || path.length < 2) path = [[p.x, p.z], [gx, gz]];
+  let path = findPath(p.x, p.z, gx, gz, 80000);
+  if (!path || path.length < 2) {   // 目标在屋里而寻路进不去：先引到最近的门口，进门靠「按 E 进门」
+    buildDoors(); let dn = null, bd = 1e9; for (const d of DOORS) { const dd = Math.hypot(d.x - gx, d.z - gz); if (dd < bd) { bd = dd; dn = d; } }
+    const pd = dn && bd < 25 ? findPath(p.x, p.z, dn.x, dn.z, 80000) : null;
+    path = pd && pd.length > 1 ? [...pd, [gx, gz]] : [[p.x, p.z], [gx, gz]];
+  }
   const cum = [0]; for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
   PP = { gx, gz, path, cum, len: cum[cum.length - 1] }; ppT = now;
 }

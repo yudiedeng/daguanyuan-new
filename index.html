@@ -538,6 +538,7 @@ MAT.bark=patch(std('#6b5846',.95,{map:WOOD.map,normalMap:WOOD.nrm}),{key:'ba'});
 /* ---- Blender 精模建筑 (models/b/*.glb, 材质按名称在网页重赋) ---- */
 const BM={},BM_EM=[];
 const BMR={ // name -> [color, roughness, tri, extra]
+ 'TRIPO占位':['#888888',1,null,{hide:true}], // 室内脚本里的占位块：网页隐藏，换成 Tripo 生成的道具（PROPS）
  'YZ_苍苔泥地':['#5c6e3a',.95,{a:'g_a.jpg',s:2.0,k:0.7}],'YZ_梨叶':['#5a8a3e',.7,null,{side:2}],'YZ_梨树皮':['#6a5a48',.9,{a:'bark_c.jpg',n:'bark_n.jpg',s:1.0,k:0.6,nk:0.6}],'YZ_梨花':['#f8f3ee',.6,null,{side:2}],
  'YZ_泉水':['#a6d6d0',.04,null,{alpha:0.82,metal:0.12}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#9a948a',.95,{a:'pave_r.jpg',n:'pave_n.jpg',s:3.0,mode:'replace',nk:0.9},{macro:1}],
  'YZ_虎皮石':['#b39a7e',.92,{a:'r_a.jpg',n:'r_n.jpg',s:1.4,mode:'replace',nk:1.0},{macro:1}],'YZ_芭蕉茎':['#7a9a48',.8],'YZ_芭蕉叶':['#4f8033',.65,null,{side:2}],'YZ_芭蕉枯叶':['#9a8a4a',.9,null,{side:2}],'SAMPLE_旧绿漆木':['#3b5d4c',.55,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.35,nk:0.3}],'YZ_描金':['#e0b855',.4,null,{metal:0.35}],'匾额_院门':['#4b2e1f',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],
@@ -587,7 +588,7 @@ const BMR={ // name -> [color, roughness, tri, extra]
  '镜面':['#dfe3e0',.02,null,{metal:1}],'穿衣镜':['#dfe3e0',.02,null,{metal:1}],'铁':['#3a3a3a',.6,null,{metal:0.6}],'炭':['#2a2420',1],'烛':['#efe4cc',.6],
  '菊黄':['#e8c04a',.6,null,{side:2}],'花红':['#d0485a',.6,null,{side:2}],'花白':['#f6f2ea',.6,null,{side:2}],'石':['#8f8e86',.9,{a:'r_a.jpg',n:'r_n.jpg',s:1.2,mode:'replace',nk:0.8}],'稻草':['#c9b070',.95,{a:'thatch_r.jpg',s:1.0,k:0.5}],
  '碧绿凿花砖':['#5d7d68',.55,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.3,k:0.55,nk:0.6}],'天花':['#2c5a4b',.7],'天花心':['#2e4c72',.6],
- '大理石':['#d8d5cc',.26],'金砖':['#6d6963',.3,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.4,k:0.5,nk:0.5}],'葱绿纱':['#7fb690',.85,null,{alpha:0.52,side:2}],'楠木':['#8b5c32',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'烟雨图':['#e4dcc6',.85],'颜联上':['#d8cdae',.85],'颜联下':['#d8cdae',.85],'晓翠堂横披':['#ece3c8',.85],
+ '大理石':['#d8d5cc',.26],'金砖':['#6d6963',.3,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.4,k:0.5,nk:0.5}],'葱绿纱':['#7fb690',.85,null,{alpha:0.52,side:2}],'楠木':['#8b5c32',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'烟雨图':['#e4dcc6',.85],'颜联上':['#d8cdae',.85],'颜联下':['#d8cdae',.85],'晓翠堂横披':['#ece3c8',.85],'顾恩思义匾':['#1c2e58',.5],'殿联上':['#1c2e58',.5],'殿联下':['#1c2e58',.5],
  '青布':['#33456a',.95,null,{side:2}],'白布':['#e9e4d4',.95,null,{side:2}],'墨':['#17161a',.7],'刻字':['#2a2a2a',.7],'经文':['#3a3630',.7],'麻绳':['#a08a5a',.95],
 };
 const BMW={'YZ_虎皮石':'mg','YZ_石子甬路':'g','SAMPLE_旧绿漆木':'f','XS_灰瓦色差_0':'m','XS_灰瓦色差_1':'m','XS_灰瓦色差_2':'m','XS_灰瓦色差_3':'m','XS_灰瓦色差_4':'m','XS_灰瓦色差_5':'m','XS_灰瓦色差_6':'m','MAT_廊面青砖_养护旧化_paving':'mg','MAT_台帮青砖块_养护旧化_wall':'g','MAT_青灰石_微风化_养护旧化_wall':'g','XS_旧白灰墙':'g','SAMPLE2_深绿漆':'f','MAT_暗褐旧木_顺纹':'f','XS_门窗深褐木':'f','XS_顶棚暖木':'f','灰瓦':'m','亭顶瓦':'m','花堵瓦':'m','黄琉璃瓦':'m','黄琉璃瓦.001_底瓦':'m','绿琉璃瓦':'m','绿琉璃瓦.001_底瓦':'m','茅草':'m','茅草旧':'m','茅草新':'m','方砖地':'mg','青砖':'g','水磨砖':'g','白灰墙':'g','赭墙':'g','黄泥墙':'g','虎皮石':'mg','青石':'g','汉白玉':'g','朱漆':'f','绿漆':'f','旧木':'f','本色木':'f','栗色柱':'f','栗壳漆':'f','栗壳漆_柱':'f','彩画青':'f','枋青':'f','daguan_彩画青':'f','daguan_彩画绿':'f','枋绿':'f','包袱':'f','油壁':'fg','竹篱':'f','竹竿':'f','山石':'m','太湖石':'m','湖石':'m'};
@@ -617,14 +618,14 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'qiushuang',p:[-86,Z.qiushuang.y,19],ry:0},{id:'xingye',p:[-114.5,0.3,21],ry:-Math.PI/2},
   {id:'tangmu1',file:'tangmu',p:[-121.5,0,17.8],ry:-Math.PI/2},{id:'tangmu2',file:'tangmu',p:[-121.8,0,24.4],ry:-Math.PI/2-0.06},{id:'aojing',p:[83,1.0,-83],ry:0},{id:'tubi',p:[80,Z.tubi.y,-129],ry:0},
   // 室内陈设（blender/scripts/interiors），园子载完后再懒加载；跟着院落一起挪到新位置
-  {id:'yihong_in',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0,lazy:1},{id:'xiaoxiang_in',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,lazy:1},{id:'hengwu_in',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0,lazy:1},{id:'daoxiang_in',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0,lazy:1},{id:'qiushuang_in',p:[-86,Z.qiushuang.y,19],ry:0,lazy:1},
+  {id:'yihong_in',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0,lazy:1},{id:'xiaoxiang_in',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,lazy:1},{id:'hengwu_in',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0,lazy:1},{id:'daoxiang_in',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0,lazy:1},{id:'qiushuang_in',p:[-86,Z.qiushuang.y,19],ry:0,lazy:1},{id:'tubi_in',p:[80,Z.tubi.y,-129],ry:0,lazy:1},{id:'longcui_in',p:[Z.longcui.x,Z.longcui.y,Z.longcui.z],ry:-Math.PI/2,lazy:1},{id:'ouxiang_in',p:[40+MV.ouxiang[0],0,2+MV.ouxiang[1]],ry:Math.PI/2,lazy:1},{id:'daguan_in',p:[0,Z.daguan.y,Z.daguan.z],ry:0,lazy:1},{id:'luxue_in',p:[-131.5,1.15,0],ry:-Math.PI/2,lazy:1},{id:'aojing_in',p:[83,1.0,-83],ry:0,lazy:1},
   {id:'mudanting',file:'qinfang',keep:/亭柱|额枋|彩画|匾_匾底|亭顶瓦|望板|垂脊/,p:[Z.mudan.x,Z.mudan.y+0.14,Z.mudan.z],ry:0}];
  const one=async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   root.traverse(m=>{if(!m.isMesh)return;const nm=m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
-  const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
-  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);
+  const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
+  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);addProps(L,d.id,root);
   if(d.cards)fetch('tex/'+d.cards).then(r=>r.json()).then(recs=>{const TL=new THREE.TextureLoader();const B2G=new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,0,0,1);
    for(const rc of recs){const t=TL.load('tex/'+rc.tex);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.55,metalness:0}),{alphaFix:1,key:'xxw'+rc.tex}));
     const [ax,ay]=rc.axes,lo=rc.lo,hi=rc.hi,mid=(lo[rc.thin]+hi[rc.thin])/2;
@@ -644,9 +645,9 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
    2) 矮而大的盒子（顶 ≤0.95 m）当台基/台阶：可以站上去；比一步高的，四周补两级踏步
    3) 窄长、离地 0.3–0.6 m 起的高盒子当游廊：只留顶，人从下面走 */
 const DOOR={hengwu:[[0,13.75,0.95,1.4]],yihong:[[-20.05,11.05,0.9,0.85]],daoxiang:[[-4,-0.8,1.1,1.2],[14.4,-14,1.2,1.0]],
- longcui:[[0,7.7,1.0,2.6]],tubi:[[0,1.2,1.2,1.2]],aojing:[[0,-3.2,1.2,1.2]],luxue:[[0,-5,1.2,3.6]]};
+ longcui:[[0,7.7,1.0,2.6]],tubi:[[0,1.2,1.2,1.2]],aojing:[[0,-3.2,1.2,1.2]]};
 // DROP：整组包围盒（把整座院子罩住），删掉；ROOF：敞厅、水榭，只留顶；HOLLOW：实心殿身改成四面薄墙，[盒号…, 开门的一面, 门半宽]
-const DROP={longcui:[2,16]},ROOF={ouxiang:[1,2,3,4,5,6,8,11]},HOLLOW={longcui:[[[17,18],'+z',1.0]]};
+const DROP={},ROOF={},HOLLOW={};  // 栊翠庵、藕香榭已改用 Blender 体素碰撞，旧的按编号修补不再需要
 function patchCol(id,L){if(/^(qinfang|cuizhang|mudanting|xingye|tangmu)/.test(id))return L;const cuts=[...(DOOR[id]||[])];let out=[];L=L.map(b=>[...b]);const vox=L.some(b=>Math.abs(b[5]+1)<0.01);
  for(const [ids,side,dw] of HOLLOW[id]||[]){const bs=ids.map(i=>L[i]);let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9,top=0,bot=9;for(const [lx,lz,hx,hz,t,b] of bs){x0=Math.min(x0,lx-hx);x1=Math.max(x1,lx+hx);z0=Math.min(z0,lz-hz);z1=Math.max(z1,lz+hz);top=Math.max(top,t);bot=Math.min(bot,b);}
   const w=0.14,cx=(x0+x1)/2,cz=(z0+z1)/2;L.push([cx,z0+w,(x1-x0)/2,w,top,bot],[cx,z1-w,(x1-x0)/2,w,top,bot],[x0+w,cz,w,(z1-z0)/2,top,bot],[x1-w,cz,w,(z1-z0)/2,top,bot]);
@@ -678,12 +679,32 @@ function patchCol(id,L){if(/^(qinfang|cuizhang|mudanting|xingye|tangmu)/.test(id
  return out.concat(add);}
 /* ---- 室内：懒加载的 *_in 模型的后处理（画、穿衣镜）与室内补光 ---- */
 let LAZY_BLD=null;const INTER=[];
+/* Tripo 生成的雕塑型道具（models/p/*.glb，底面中心在原点、高 1 m）。键为建筑或室内 id；
+   p 为该根节点局部坐标 [x,y,z]（= Blender X, Z, −Y），h 为高度（米），ry 为绕竖轴转角 */
+const PROPS={
+ longcui_in:[{f:'foxiang',p:[0,2.62,-8.6],h:1.45},{f:'xianglu',p:[0,2.56,-7.55],h:0.3},{f:'muyu',p:[-1.45,2.08,-6.95],h:0.24},{f:'fenglu',p:[9.7,1.29,-8.12],h:0.5,ry:-Math.PI/2}],  // 佛像、香炉、木鱼、风炉
+ ouxiang_in:[{f:'xiepan',p:[0,1.74,-0.97],h:0.11},{f:'xiepan',p:[3.05,1.74,-0.22],h:0.1,ry:1.2},{f:'xiepan',p:[-2.02,1.70,2.28],h:0.085,ry:2.5},{f:'fenglu',p:[-4.3,0.32,5.45],h:0.5,ry:Math.PI/2},{f:'fenglu',p:[4.3,0.32,5.45],h:0.5,ry:-Math.PI/2}],  // 螃蟹、风炉
+ daguan_in:[{f:'baozuo',p:[0,2.582,-24.75],h:1.75},{f:'xianglu',p:[0,3.062,-21.75],h:0.6},{f:'hezhu',p:[-3.75,2.122,-22.2],h:1.9},{f:'hezhu',p:[3.75,2.122,-22.2],h:1.9}],  // 宝座、香炉、仙鹤烛台
+ luxue_in:[{f:'meiping',p:[1.0,0.362,-2.62],h:1.7},{f:'tielu',p:[2.75,0.35,3.5],h:0.72}],  // 红梅大瓶、烤鹿肉铁炉
+ tubi_in:[{f:'yuegong',p:[4.6,1.785,-1.0],h:0.3,ry:-Math.PI/2},{f:'xianglu',p:[4.3,1.785,-1.0],h:0.28,ry:-Math.PI/2}],  // 中秋月供
+ aojing_in:[{f:'zhudun',p:[-0.62,0.51,-0.45],h:0.46,ry:0.3},{f:'zhudun',p:[0.62,0.51,-0.45],h:0.46,ry:-0.4}],  // 湘妃竹墩
+ xiaoxiang_ct:[{f:'hushi',p:[-6.6,0,11.6],h:2.3,ry:0.6,r:0.6},{f:'hushi',p:[-10.9,0.1,9.7],h:1.4,ry:2.2,r:0.4}],  // 潇湘馆院中太湖石
+};
+function addProps(L,id,root){for(const q of PROPS[id]||[])L.loadAsync('models/p/'+q.f+'.glb').then(g=>{const o=g.scene;o.scale.setScalar(q.h);o.position.set(q.p[0],q.p[1],q.p[2]);o.rotation.y=q.ry||0;
+ o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}}).catch(e=>console.warn('prop',q.f,e));}
 // rooms：房间范围（模型局部，网页坐标 x0,z0,x1,z1,地面 y,顶 y）；lights：补光位置
 const INTER_DEF={
  hengwu_in:{name:'蘅芜苑 · 清厦',en:'Alpinia Park Hall',rooms:[[-8,-10.4,8,-4.6,0.75,3.72]],lights:[[0,3.1,-7.5],[5,3.0,-7.5],[-5,3.0,-7.5]]},
  daoxiang_in:{name:'稻香村 · 茅屋',en:'Paddy-Sweet Cottage',rooms:[[-11.4,-18.2,3.4,-12.4,0.5,4.6]],lights:[[-4,3.1,-15.3],[-8.5,3.0,-15.3],[0.5,3.0,-15.3]]},
  xiaoxiang_in:{name:'潇湘馆',en:'Bamboo Lodge',names:['潇湘馆 · 明间书房','潇湘馆 · 东间卧室'],namesEn:['Bamboo Lodge · Study','Bamboo Lodge · East Bedroom'],rooms:[[-3.7,-2.55,1.4,1.78,0.48,5.02],[1.55,-2.55,3.7,1.78,0.48,5.02,[1.45,1.03]]],lights:[[0,4.0,-0.4],[-2.5,3.8,-0.4],[2.5,3.8,-0.4]]},
  qiushuang_in:{name:'秋爽斋',en:'Autumn Freshness Studio',names:['秋爽斋 · 晓翠堂','秋爽斋 · 探春屋'],namesEn:['Hall of Morning Green','Tanchun’s Rooms'],rooms:[[-7.65,-13.09,7.65,-1.8,0.81,5.6],[-13.37,2.5,-10.7,11.5,0.57,4.0,'e']],lights:[[0,4.4,-7.8],[-4.2,4.2,-7.8],[4.2,4.2,-7.8],[0,3.8,-3.6],[-12,3.5,4],[-12,3.5,7],[-12,3.5,10]]},
+ daguan_in:{name:'大观楼',en:'Grand View Tower',names:['大观楼 · 顾恩思义殿','缀锦阁','含芳阁'],namesEn:['Hall of Mindful Favour','Variegated Brocade Pavilion','Fragrance-Holding Pavilion'],rooms:[[-14.3,-26.6,14.3,-15.2,2.12,7.24],[28.7,-22.78,37.28,-15.35,0.91,5.6],[-37.28,-22.78,-28.7,-15.35,0.91,5.6]],lights:[[0,6.4,-19],[-6,6.2,-21],[6,6.2,-21],[0,6.2,-24.5],[-11.5,6,-21],[11.5,6,-21],[33,4.8,-19],[-33,4.8,-19]]},
+ luxue_in:{name:'芦雪广 · 地炕屋',en:'Reed Snow Cottage',rooms:[[-7.37,-3.05,7.37,2.65,0.36,4.6]],lights:[[-5,2.6,-1],[0,2.6,-0.5],[4.6,2.6,-0.6]]},
+ longcui_in:{name:'栊翠庵',en:'Green Lattice Nunnery',names:['栊翠庵 · 佛殿','栊翠庵 · 东禅堂','栊翠庵 · 耳房'],namesEn:['Green Lattice Nunnery · Buddha Hall','Green Lattice Nunnery · East Meditation Hall','Green Lattice Nunnery · Side Chamber'],rooms:[[-4.84,-9.18,4.84,-4.83,1.64,7.4,[0,-4.83]],[8.36,-2.68,11.08,6.28,1.34,5.6,[8.36,1.8]],[7.47,-8.48,10.03,-5.54,1.29,5.3,[8.75,-5.54]]],lights:[[0,4.6,-7.0],[-3,4.2,-7],[3,4.2,-7],[9.7,4.0,1.8],[9.7,3.8,-1.4],[9.7,3.8,4.9],[8.75,3.6,-7.0]]},
+ ouxiang_in:{name:'藕香榭',en:'Lotus Fragrance Pavilion',rooms:[[-4.66,-3.26,4.66,3.26,0.9,5.9,[0,3.3]]],lights:[[0,4.4,-1.0],[3.05,4.2,-0.2],[-2.6,4.2,-0.3],[0,4.2,2.2]]},
+ tubi_in:{name:'凸碧山庄 · 敞厅',en:'Convex Emerald Hall',rooms:[[-4.85,-3.09,4.85,1.24,0.88,4.7,[0,1.3]]],lights:[[0,3.58,-1.0],[-3.3,3.68,-0.9],[3.3,3.68,-0.9],[-2.55,2.3,-2.55],[2.55,2.3,-2.55]]},
+ aojing_in:{name:'凹晶馆',en:'Concave Crystal Lodge',rooms:[[-4.69,-2.6,4.69,0.71,0.51,4.0,[0,0.75]]],lights:[[-1.35,1.66,-1.75],[0,3.2,-0.9]]},
  yihong_in:{name:'怡红院 · 正房',en:'Happy Red Court · Main Hall',rooms:[[-7.9,-15.3,7.9,-4.9,0.8,5.6]],lights:[[0,4.4,-11.6],[0,3.4,-6.4],[6.2,3.6,-12.4],[-6,3.6,-11.5]]},
 };
 function planarUV(mesh,look){const g=mesh.geometry;g.computeBoundingBox();const bb=g.boundingBox,sz=bb.getSize(new V3());
@@ -743,7 +764,7 @@ function drawYanyu(){return cnv(640,420,(g,w,h)=>{g.fillStyle='#e7dfca';g.fillRe
  for(let k=0;k<6;k++){const x=40+k*34+rr()*14,y=368+rr()*20;g.fillStyle='rgba(30,36,32,.85)';g.fillRect(x,y-34,3,34);for(let j=0;j<22;j++){g.beginPath();g.ellipse(x+1+(rr()-.5)*34,y-44+(rr()-.5)*24,5+rr()*6,2+rr()*2.5,0,0,Math.PI*2);g.fill();}}
  g.fillStyle='rgba(60,50,40,.8)';g.fillRect(440,372,52,18);g.beginPath();g.moveTo(432,374);g.lineTo(466,352);g.lineTo(500,374);g.fill();
  g.fillStyle='#2a2420';g.font='24px "Ma Shan Zheng","STKaiti",serif';g.textAlign='center';[...'襄阳米芾烟雨图'].forEach((c,i)=>g.fillText(c,w-30,34+i*28));g.fillStyle='#b8282a';g.fillRect(w-46,248,26,26);});}
-const PAINT={'烟雨图':drawYanyu,'颜联上':drawCalli('烟霞闲骨格',150,720,'#d8cdae','#1a1210',104,1),'颜联下':drawCalli('泉石野生涯',150,720,'#d8cdae','#1a1210',104,1),'晓翠堂横披':drawCalli('晓翠堂',768,170,'#ece3c8','#1e1a18',120),'山水图':drawShanshui,'美人画':drawMeiren,'墨竹图':drawBamboo,'横披':drawCalli('怡红快绿',768,170,'#ece3c8','#1e1a18',120),'对联上':drawCalli('绿窗明月在',150,720,'#c8302a','#1a1210',110,1),'对联下':drawCalli('青史古人空',150,720,'#c8302a','#1a1210',110,1),'棋盘':drawGo};
+const PAINT={'顾恩思义匾':drawCalli('义思恩顾',820,192,'#1c2e58','#e0bb5c',150),'殿联上':drawCalli('天地启宏慈赤子苍头同感戴',150,1230,'#1c2e58','#e0bb5c',82,1),'殿联下':drawCalli('古今垂旷典九州万国被恩荣',150,1230,'#1c2e58','#e0bb5c',82,1),'烟雨图':drawYanyu,'颜联上':drawCalli('烟霞闲骨格',150,720,'#d8cdae','#1a1210',104,1),'颜联下':drawCalli('泉石野生涯',150,720,'#d8cdae','#1a1210',104,1),'晓翠堂横披':drawCalli('晓翠堂',768,170,'#ece3c8','#1e1a18',120),'山水图':drawShanshui,'美人画':drawMeiren,'墨竹图':drawBamboo,'横披':drawCalli('怡红快绿',768,170,'#ece3c8','#1e1a18',120),'对联上':drawCalli('绿窗明月在',150,720,'#c8302a','#1a1210',110,1),'对联下':drawCalli('青史古人空',150,720,'#c8302a','#1a1210',110,1),'棋盘':drawGo};
 const TILEPAINT={'碧绿凿花砖':[drawFloorTile,0.62]};
 // 打包时量化过的网格自带缩放/平移；要按真实尺寸算 UV 或镜面，先把变换烘进浮点坐标
 function bakeMesh(m){const P=m.geometry.attributes.position,a=new Float32Array(P.count*3),v=new V3();m.updateMatrix();for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(m.matrix);a[i*3]=v.x;a[i*3+1]=v.y;a[i*3+2]=v.z;}
