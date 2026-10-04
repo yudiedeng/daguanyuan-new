@@ -291,7 +291,7 @@ function natural(x,z){
  h+=layAt(LAY.h,x,z);
  h=mix(h,-1.8,sstep(0.25,0.75,layAt(LAY.w,x,z)));
  return h;}
-const ZDEF=GLB?{gate:[0,118,15,8],yihong:[104,147,22,19],xiaoxiang:[-70,93,14.6,15.6],daoxiang:[-105,-59,28,24],hengwu:[-70,-141,19,15],daguan:[0,-69,40,33],longcui:[105,44,12,15],mudan:[-102,-99,7.5,7.5],shaoyao:[-121,-96,7,5],qiangwei:[-117,-118,6,6],tumi:[-84,-92,5,4],tubi:[80,-129,9.5,9],qiushuang:[-86,18.5,15.5,14.5]}:{gate:[0,118,15,8],yihong:[85,65,23,19],xiaoxiang:[-80,30,16,13],daoxiang:[-92,-62,28,24],hengwu:[62,-92,19,15],daguan:[0,-88,40,16],paifang:[0,-56,9,4],longcui:[125,5,14,12]};
+const ZDEF=GLB?{gate:[0,118,15,8],yihong:[104,147,22,19],xiaoxiang:[-70,93,14.6,15.6],daoxiang:[-105,-59,28,24],hengwu:[-70,-141,19,15],daguan:[0,-69,40,33],longcui:[105,44,12,15],mudan:[-102,-99,7.5,7.5],shaoyao:[-121,-96,7,5],qiangwei:[-117,-118,6,6],tumi:[-84,-92,5,4],tubi:[80,-129,9.5,9],qiushuang:[-86,18.5,15.5,14.5],feilouW:[-19,31,7,6],feilouE:[21,33,7,6]}:{gate:[0,118,15,8],yihong:[85,65,23,19],xiaoxiang:[-80,30,16,13],daoxiang:[-92,-62,28,24],hengwu:[62,-92,19,15],daguan:[0,-88,40,16],paifang:[0,-56,9,4],longcui:[125,5,14,12]};
 /* 各院落从旧位置挪到新位置的位移（x, z）：院内手工摆的竹子、芭蕉、树等照原相对位置跟着走 */
 const MV={yihong:[19,82],xiaoxiang:[12,64],longcui:[-20,39],hengwu:[-132,-49],daoxiang:[-13,3],daguan:[0,21],ouxiang:[-118,-18]};
 const Z={};for(const k in ZDEF){const d=ZDEF[k];Z[k]={x:d[0],z:d[1],hw:d[2],hd:d[3],m:8,y:Math.max(0.6,natural(d[0],d[1]))};}
@@ -1163,6 +1163,14 @@ function buildRockery(){const cz=GLB,burn=()=>{rnd();rnd();rnd();};
  for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,2)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
  // 按原著补的几座山坡陡，满坡撒山石，免得一整面光坡（x, z, 半径 rx, rz, 块数；同 make_layout.py 的 EXTRA_HILLS）
  for(const [cx,cz,rx,rz,k] of[[-41,85,20,10,26],[30,87,15,10,18],[38,157,16,21,46],[-121,-21,10,11,22]])for(let i=0;i<k;i++){const a=rnd()*6.28,d=R(0.25,0.95),x=cx+Math.cos(a)*rx*d,z=cz+Math.sin(a)*rz*d;if(nearPath(x,z,2)||inZone(x,z,1)||!inGarden(x,z,2)||height(x,z)<1.2)continue;const sx=R(1.4,3.8),sy=R(1.2,3.4);rock(x,height(x,z)+sy*0.25,z,sx,sy,R(1.2,2.8),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
+// 第十七回 出洞“两边飞楼插空，雕甍绣槛，皆隐于山坳树杪之间”：沁芳池北岸左右各一座两层阁，灰瓦朱柱，上层一圈栏杆，四周花木半掩
+function buildFeilou(){for(const k of['feilouW','feilouE']){const q=Z[k];if(!q)continue;const M=T(q.x,q.y,q.z,0);
+  hall(M,{w:8,d:6.5,h:4.0,bays:3,base:1.0,roofKey:'roofGrey',roofH:2.0,over:1.4,lift:1.0,lanterns:true});
+  const M2=at(M,0,1.0+4.0+0.9,0);hall(M2,{w:6.4,d:5,h:3.3,bays:3,noBase:true,roofKey:'roofGrey',roofH:2.8,over:1.5,lift:1.7,beasts:3,lanterns:true});
+  const bx=6.4/2+0.9,bz=5/2+0.9;box('wood',M2,2*bx+0.2,0.18,2*bz+0.2,0,-0.05,0,{noCol:1});
+  for(const [x1,z1,x2,z2] of[[-bx,bz,bx,bz],[bx,bz,bx,-bz],[bx,-bz,-bx,-bz],[-bx,-bz,-bx,bz]])balustrade(M2,x1,z1,x2,z2,0.05,'wood');
+  for(let n=0,t=0;n<7&&t<200;t++){const a=rnd()*6.28,r=R(8,13),x=q.x+Math.cos(a)*r,z=q.z+Math.sin(a)*r;if(height(x,z)<0.4||nearPath(x,z,2.5)||!treeOK(x,z,3.5))continue;
+   const sp=rnd()<0.35?'willow':rnd()<0.5?'blossom':'broad';addTree(sp,x,z,R(0.85,1.15),sp==='willow'?'#8fae4e':sp==='blossom'?pick(PINK):pick(GREENS));n++;}}}
 function buildDaguan(){const y=Z.daguan.y,M=T(0,y,-90,0);if(!GLB){
  box('marble',M,48,4.5,24,0,1.5-2.25,0,{ao:(yy)=>0.7+0.3*sstep(-0.5,1.5,yy)});for(let i=0;i<5;i++)box('marble',M,12,1.5*(5-i)/5,0.6,0,1.5*(5-i)/10,12+0.3+i*0.6);
  box('marble',M,1.6,0.9,3.2,-6.8,0.45,13.2);box('marble',M,1.6,0.9,3.2,6.8,0.45,13.2);
@@ -2072,7 +2080,7 @@ async function build(){
  await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();buildDaoxiang();buildLongcui();buildOuxiang();
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
- await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
+ await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}try{buildCrops();}catch(e){console.warn('crops',e);}try{buildBeds();}catch(e){console.warn('beds',e);}
  await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
