@@ -1,0 +1,50 @@
+{
+ "foxiang": {
+  "prompt": "seated Guanyin bodhisattva statue on a lotus pedestal, gilded bronze, serene face, Chinese Qing dynasty Buddhist temple sculpture",
+  "faces": 12000
+ },
+ "fenglu": {
+  "prompt": "small antique Chinese clay tea brazier stove with a copper kettle on top, charcoal fire opening, Qing dynasty tea ware",
+  "faces": 6000
+ },
+ "muyu": {
+  "prompt": "Chinese Buddhist temple wooden fish (muyu): a round hollow carved wooden block shaped like a curled fish with a slit mouth, dark red lacquer, sitting on a small embroidered cushion, with a short wooden mallet beside it",
+  "faces": 5000
+ },
+ "xiepan": {
+  "prompt": "a flat round blue and white Chinese porcelain plate holding three cooked red hairy crabs, food still life",
+  "faces": 6000
+ },
+ "baozuo": {
+  "prompt": "Chinese imperial throne chair, carved red sandalwood with gilded dragons, Qing dynasty palace throne",
+  "faces": 12000
+ },
+ "hezhu": {
+  "prompt": "Chinese bronze crane candlestick, a standing crane on a turtle holding a candle cup in its beak, Qing palace",
+  "faces": 8000
+ },
+ "xianglu": {
+  "prompt": "large Chinese bronze tripod incense burner ding with pierced lid and two handles, Qing dynasty",
+  "faces": 8000
+ },
+ "tielu": {
+  "prompt": "small antique cast iron charcoal brazier on legs with an iron wire grill on top and venison meat skewers, rustic",
+  "faces": 6000
+ },
+ "meiping": {
+  "prompt": "large Chinese celadon porcelain vase filled with blooming red plum blossom branches",
+  "faces": 10000
+ },
+ "yuegong": {
+  "prompt": "flat round red lacquer tray with a stack of Chinese mooncakes, a slice of watermelon, apples and grapes, Mid-Autumn festival offering, no stand",
+  "faces": 8000
+ },
+ "zhudun": {
+  "prompt": "Chinese drum-shaped round garden stool, barrel shaped like a drum, made of mottled spotted Xiangfei bamboo strips, solid round seat top",
+  "faces": 5000
+ },
+ "hushi": {
+  "prompt": "tall Chinese Taihu scholar garden rock with many holes, grey eroded limestone, on a small stone base",
+  "faces": 10000
+ }
+}
