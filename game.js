@@ -1076,7 +1076,7 @@ function storyIntro(key) {
   const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
     if (walk.on) exitWalk(); walk.third = false; enterWalk(LIU.spawn); pauseGame(true);
     if (key === 'liu') { if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62 * walk.s); }
-      banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr); }
+      banEr.position.set(1.0, standY(1.0, 132.4), 132.4); banEr.rotation.y = Math.PI; scene.add(banEr); }
     storyWorld();
     const cv = D.renderer.domElement; cv.style.transition = 'none'; cv.style.filter = 'blur(12px) brightness(.55)';
     lidsEl.hidden = false; lidsEl.innerHTML = '<i></i><i></i>';
