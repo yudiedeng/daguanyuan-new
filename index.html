@@ -680,11 +680,11 @@ function patchCol(id,L){if(/^(qinfang|cuizhang|mudanting|xingye|tangmu)/.test(id
 let LAZY_BLD=null;const INTER=[];
 // rooms：房间范围（模型局部，网页坐标 x0,z0,x1,z1,地面 y,顶 y）；lights：补光位置
 const INTER_DEF={
- hengwu_in:{name:'蘅芜苑 · 清厦',rooms:[[-8,-10.4,8,-4.6,0.75,3.72]],lights:[[0,3.1,-7.5],[5,3.0,-7.5],[-5,3.0,-7.5]]},
- daoxiang_in:{name:'稻香村 · 茅屋',rooms:[[-11.4,-18.2,3.4,-12.4,0.5,4.6]],lights:[[-4,3.1,-15.3],[-8.5,3.0,-15.3],[0.5,3.0,-15.3]]},
- xiaoxiang_in:{name:'潇湘馆',rooms:[[-3.7,-2.55,3.7,1.78,0.48,5.02]],lights:[[0,4.0,-0.4],[-2.5,3.8,-0.4],[2.5,3.8,-0.4]]},
- qiushuang_in:{name:'秋爽斋',rooms:[[-7.65,-13.09,7.65,-1.8,0.81,5.6],[-13.37,2.5,-10.7,11.5,0.57,4.0]],lights:[[0,4.4,-7.8],[-4.2,4.2,-7.8],[4.2,4.2,-7.8],[0,3.8,-3.6],[-12,3.5,4],[-12,3.5,7],[-12,3.5,10]]},
- yihong_in:{name:'怡红院 · 正房',rooms:[[-7.9,-15.3,7.9,-4.9,0.8,5.6]],lights:[[0,4.4,-11.6],[0,3.4,-6.4],[6.2,3.6,-12.4],[-6,3.6,-11.5]]},
+ hengwu_in:{name:'蘅芜苑 · 清厦',en:'Alpinia Park Hall',rooms:[[-8,-10.4,8,-4.6,0.75,3.72]],lights:[[0,3.1,-7.5],[5,3.0,-7.5],[-5,3.0,-7.5]]},
+ daoxiang_in:{name:'稻香村 · 茅屋',en:'Paddy-Sweet Cottage',rooms:[[-11.4,-18.2,3.4,-12.4,0.5,4.6]],lights:[[-4,3.1,-15.3],[-8.5,3.0,-15.3],[0.5,3.0,-15.3]]},
+ xiaoxiang_in:{name:'潇湘馆',en:'Bamboo Lodge',rooms:[[-3.7,-2.55,3.7,1.78,0.48,5.02]],lights:[[0,4.0,-0.4],[-2.5,3.8,-0.4],[2.5,3.8,-0.4]]},
+ qiushuang_in:{name:'秋爽斋',en:'Autumn Freshness Studio',names:['秋爽斋 · 晓翠堂','秋爽斋 · 探春屋'],namesEn:['Hall of Morning Green','Tanchun’s Rooms'],rooms:[[-7.65,-13.09,7.65,-1.8,0.81,5.6],[-13.37,2.5,-10.7,11.5,0.57,4.0,'e']],lights:[[0,4.4,-7.8],[-4.2,4.2,-7.8],[4.2,4.2,-7.8],[0,3.8,-3.6],[-12,3.5,4],[-12,3.5,7],[-12,3.5,10]]},
+ yihong_in:{name:'怡红院 · 正房',en:'Happy Red Court · Main Hall',rooms:[[-7.9,-15.3,7.9,-4.9,0.8,5.6]],lights:[[0,4.4,-11.6],[0,3.4,-6.4],[6.2,3.6,-12.4],[-6,3.6,-11.5]]},
 };
 function planarUV(mesh,look){const g=mesh.geometry;g.computeBoundingBox();const bb=g.boundingBox,sz=bb.getSize(new V3());
  const ax=['x','y','z'];const thin=ax.reduce((a,b)=>sz[a]<sz[b]?a:b);const n=new V3();n[thin]=1;if(look&&look.isVector3&&look.dot(n)<0)n.negate();
@@ -1651,7 +1651,7 @@ function updateSunShadow(focus){const d=camera.position.distanceTo(focus);const 
 /* =====================================================================
    WALK MODE
    ===================================================================== */
-const walk={on:false,third:true,yaw:0,pitch:-0.05,vel:new V3(),vy:0,bob:0,eyeOff:0,eyeV:0,feet:0,pos:new V3(),keys:{},stick:{x:0,y:0},zone:null,dist:5.2,charYaw:0,grounded:true,step:0,phase:0};
+const walk={on:false,s:0.8,third:true,yaw:0,pitch:-0.05,vel:new V3(),vy:0,bob:0,eyeOff:0,eyeV:0,feet:0,pos:new V3(),keys:{},stick:{x:0,y:0},zone:null,dist:4.2,charYaw:0,grounded:true,step:0,phase:0};
 /* ---- the wanderer (游园人) ---- */
 const hero=(()=>{const g=new THREE.Group();const robe=std('#9fc0cf',.8),robe2=std('#7fa2b5',.8),skin=std('#efd3bb',.6),hair=std('#16130f',.5),sash=std('#a8322a',.6),shoe=std('#222',.7),trim=std('#e8e0cc',.8);
  const prof=[[0.0,0.0],[0.33,0.0],[0.31,0.15],[0.27,0.55],[0.22,0.9],[0.19,1.08]].map(p=>new THREE.Vector2(p[0],p[1]));
@@ -1676,7 +1676,7 @@ const hero=(()=>{const g=new THREE.Group();const robe=std('#9fc0cf',.8),robe2=st
  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return {g,lower,arms,feet,head,torso,tail};})();
 function groundAt(x,z,feet){let g=hq(x,z);let fromTerrain=true;const k=Math.floor(x/CELL)+','+Math.floor(z/CELL);const l=colHash.get(k);if(l)for(const c of l){const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx+0.02&&Math.abs(lz)<=c.hz+0.02&&c.top<=feet+0.52&&c.top>g){g=c.top;fromTerrain=false;}}return [g,fromTerrain];}
 function blockedAt(x,y,z){const l=colHash.get(Math.floor(x/CELL)+','+Math.floor(z/CELL));if(l)for(const c of l){if(c.walk)continue;const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx+0.15&&Math.abs(lz)<=c.hz+0.15&&y>c.bot&&y<c.top+0.1)return true;}return false;}
-function pushOut(p,feet){const r=0.3;const k0=Math.floor(p.x/CELL),k1=Math.floor(p.z/CELL);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=colHash.get((k0+a)+','+(k1+b));if(!l)continue;for(const c of l){if(c.walk)continue;if(c.top<=feet+0.45||c.bot>feet+1.7)continue;
+function pushOut(p,feet){const r=0.3*walk.s;const k0=Math.floor(p.x/CELL),k1=Math.floor(p.z/CELL);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=colHash.get((k0+a)+','+(k1+b));if(!l)continue;for(const c of l){if(c.walk)continue;if(c.top<=feet+0.45||c.bot>feet+1.7)continue;
   const dx=p.x-c.x,dz=p.z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;const cx=clamp(lx,-c.hx,c.hx),cz=clamp(lz,-c.hz,c.hz);let ox=lx-cx,oz=lz-cz;const d=Math.hypot(ox,oz);
   if(d<r){let nx,nz,pen;if(d>1e-4){nx=ox/d;nz=oz/d;pen=r-d;}else{const ex=c.hx-Math.abs(lx),ez=c.hz-Math.abs(lz);if(ex<ez){nx=Math.sign(lx)||1;nz=0;pen=ex+r;}else{nx=0;nz=Math.sign(lz)||1;pen=ez+r;}}
    const wx=nx*c.c+nz*c.s,wz=-nx*c.s+nz*c.c;p.x+=wx*pen;p.z+=wz*pen;}}}}
@@ -1708,7 +1708,7 @@ addEventListener('keyup',(e)=>{walk.keys[e.code]=false;});
  renderer.domElement.addEventListener('pointerup',(e)=>{if(e.pointerId===lid)lid=null;});})();
 function surfaceAt(x,z){if(nearPath(x,z,1.6))return 'gravel';if(inZone(x,z,0))return 'stone';return 'grass';}
 function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS||k.ArrowDown?1:0)-walk.stick.y,sx=(k.KeyD||k.ArrowRight?1:0)-(k.KeyA||k.ArrowLeft?1:0)+walk.stick.x;
- const run=k.ShiftLeft||k.ShiftRight;const sp=run?7:3.2;const f=new V3(-Math.sin(walk.yaw),0,-Math.cos(walk.yaw)),r=new V3(Math.cos(walk.yaw),0,-Math.sin(walk.yaw));
+ const run=k.ShiftLeft||k.ShiftRight;const sp=(run?7:3.2)*walk.s;const f=new V3(-Math.sin(walk.yaw),0,-Math.cos(walk.yaw)),r=new V3(Math.cos(walk.yaw),0,-Math.sin(walk.yaw));
  const wish=f.multiplyScalar(fx).addScaledVector(r,sx);if(wish.lengthSq()>1)wish.normalize();const moving=wish.lengthSq()>0.01;wish.multiplyScalar(sp);walk.vel.lerp(wish,1-Math.exp(-(walk.grounded?12:2.5)*dt));
  const p=walk.pos.clone();const old=p.clone();p.x+=walk.vel.x*dt;p.z+=walk.vel.z*dt;pushOut(p,walk.feet);
  let [g,fromT]=groundAt(p.x,p.z,walk.feet);if(fromT&&g<0.2){p.x=old.x;p.z=old.z;[g,fromT]=groundAt(p.x,p.z,walk.feet);}
@@ -1722,15 +1722,15 @@ function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS
  // footsteps & anim
  const spd=moved/Math.max(dt,1e-4);walk.phase+=moved*(run?1.9:2.6);walk.step+=moved;if(walk.grounded&&walk.step>(run?0.9:0.62)){walk.step=0;if(A.on)footstep(surfaceAt(p.x,p.z),run?1.1:0.8);}
  if(moving){const mv=Math.atan2(-walk.vel.x,-walk.vel.z);let dy=mv-walk.charYaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));walk.charYaw+=dy*(1-Math.exp(-10*dt));}
- const amp=clamp(spd/3.2,0,1.6);const sw=Math.sin(walk.phase);
+ const amp=clamp(spd/(3.2*walk.s),0,1.6);const sw=Math.sin(walk.phase);
  hero.g.position.set(p.x,walk.feet+walk.eyeOff+Math.abs(Math.cos(walk.phase))*0.035*amp,p.z);hero.g.rotation.y=walk.charYaw+Math.PI;
  hero.arms[0].rotation.x=sw*0.55*amp;hero.arms[1].rotation.x=-sw*0.55*amp;hero.lower.rotation.z=Math.sin(walk.phase)*0.04*amp;hero.lower.rotation.x=-0.05*amp;hero.torso.rotation.y=sw*0.06*amp;hero.head.rotation.y=-sw*0.05*amp;
  hero.feet[0].position.z=0.04+sw*0.14*amp;hero.feet[1].position.z=0.04-sw*0.14*amp;hero.tail.rotation.x=-0.2*amp+Math.sin(G.time.value*3)*0.05;
- hero.g.visible=walk.third;
- if(walk.third){const tgt=new V3(p.x,walk.feet+1.45+walk.eyeOff*0.5,p.z);const el=clamp(-walk.pitch,-0.5,1.2);let d=walk.dist;const dir=new V3(Math.sin(walk.yaw)*Math.cos(el),Math.sin(el),Math.cos(walk.yaw)*Math.cos(el));
+ hero.g.visible=walk.third;hero.g.scale.setScalar(walk.s);
+ if(walk.third){const tgt=new V3(p.x,walk.feet+1.45*walk.s+walk.eyeOff*0.5,p.z);const el=clamp(-walk.pitch,-0.5,1.2);let d=walk.dist;const dir=new V3(Math.sin(walk.yaw)*Math.cos(el),Math.sin(el),Math.cos(walk.yaw)*Math.cos(el));
   for(let s=1;s<=14;s++){const t=d*s/14;const q=tgt.clone().addScaledVector(dir,t);if(q.y<hq(q.x,q.z)+0.3||blockedAt(q.x,q.y,q.z)){d=Math.max(0.8,t-0.35);break;}}
   walk.camD=walk.camD==null?d:walk.camD+(d-walk.camD)*(1-Math.exp(-(d<walk.camD?20:4)*dt));camera.position.copy(tgt).addScaledVector(dir,walk.camD);camera.lookAt(tgt);}
- else{camera.position.set(p.x,walk.feet+1.62+walk.eyeOff+Math.sin(walk.phase*2)*0.03*amp,p.z);camera.rotation.set(walk.pitch,walk.yaw,0,'YXZ');}
+ else{camera.position.set(p.x,walk.feet+1.62*walk.s+walk.eyeOff+Math.sin(walk.phase*2)*0.03*amp,p.z);camera.rotation.set(walk.pitch,walk.yaw,0,'YXZ');}
  let zid=null;for(const pl of PLACES){if(!pl.pos)continue;const dx=pl.pos[0]-p.x,dz=pl.pos[2]-p.z;if(dx*dx+dz*dz<22*22){zid=pl.id;break;}}
  if(zid&&zid!==walk.zone){walk.zone=zid;select(zid,false,true);walk.cardT=9;}
  if(walk.cardT>0){walk.cardT-=dt;if(walk.cardT<=0)card.hidden=true;} }

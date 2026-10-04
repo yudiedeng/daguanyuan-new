@@ -221,6 +221,7 @@ body.g-playing .card{display:none!important}
 @keyframes gpulse{0%,100%{opacity:.35}50%{opacity:.9}}
 #g-fade{position:fixed;inset:0;z-index:58;background:#07080a;opacity:0;pointer-events:none;transition:opacity 1.1s ease;display:flex;align-items:center;justify-content:center}
 #g-fade.on{opacity:1;pointer-events:auto}
+#g-blink{position:fixed;inset:0;z-index:44;background:#07080a;opacity:0;pointer-events:none;transition:opacity .25s ease}#g-blink.on{opacity:1}
 #g-fade p{font-family:var(--f-disp);font-size:clamp(20px,3vw,28px);letter-spacing:.16em;color:#e9e3d3;max-width:720px;padding:0 28px;text-align:center;line-height:2}
 #g-lids{position:fixed;inset:0;z-index:59;pointer-events:none}
 #g-lids[hidden]{display:none}
@@ -238,6 +239,7 @@ document.body.insertAdjacentHTML('beforeend', `
 <div id="g-intro" hidden role="dialog" aria-modal="true" aria-live="polite"></div>
 <div id="g-lids" hidden><i></i><i></i></div>
 <div id="g-fade"><p></p></div>
+<div id="g-blink"></div>
 <div id="g-start" hidden></div>
 <aside id="g-quest" class="panel ui" hidden aria-live="polite"></aside>
 <div id="g-compass" class="panel ui" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l6 16-6-4-6 4z" fill="currentColor"/></svg><b></b><span></span></div>
@@ -339,6 +341,7 @@ function makeFigure(color, female = true, sit = false) {
     }
   }
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  g.scale.setScalar(walk.s);   // 与主角同比例
   return g;
 }
 /* 远处可见的淡金色光柱，指示下一个去处 */
@@ -747,7 +750,7 @@ function storyWorld() {
     if (leadFrom && !startGuide(f, leadFrom[0], leadFrom[1], dest.x, dest.z, true)) f.position.copy(dest);
     if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
     if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
-    addTag(() => T(n, 'who'), f, 2.15, i === 0);
+    addTag(() => T(n, 'who'), f, 2.15 * walk.s, i === 0);
   });
   renderStory();
 }
@@ -870,7 +873,7 @@ function followGuide(dt) {
   const G = guide; if (!G || !G.fig.parent) return; const f = G.fig, p = walk.pos, x = f.position.x, z = f.position.z;
   if (G.i >= G.path.length) { if (G.faceTo) f.rotation.y = Math.atan2(p.x - x, p.z - z); return; }
   if (Math.hypot(p.x - x, p.z - z) > 9 && G.moved) { f.position.y = groundAt(x, z, f.position.y + 0.6)[0]; return; }   // 等你跟上
-  const [tx, tz] = G.path[G.i], dx = tx - x, dz = tz - z, d = Math.hypot(dx, dz), step = Math.min(d, 2.6 * dt);
+  const [tx, tz] = G.path[G.i], dx = tx - x, dz = tz - z, d = Math.hypot(dx, dz), step = Math.min(d, 2.6 * walk.s * dt);
   if (d < 0.05) { G.i++; return; }
   f.position.x += dx / d * step; f.position.z += dz / d * step; G.moved = true; f.rotation.y = Math.atan2(dx, dz);
   f.position.y = groundAt(f.position.x, f.position.z, f.position.y + 0.6)[0] + Math.abs(Math.sin(performance.now() / 170)) * 0.03;
@@ -897,7 +900,7 @@ function liuIntro() {
   /* 睁眼：眼皮张开两次，画面由模糊转清 */
   const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
     if (walk.on) exitWalk(); walk.third = false; enterWalk(LIU.spawn); pauseGame(true);
-    if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62); }
+    if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62 * walk.s); }
     banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr);
     storyWorld();
     const cv = D.renderer.domElement; cv.style.transition = 'none'; cv.style.filter = 'blur(12px) brightness(.55)';
@@ -921,6 +924,7 @@ function renderGiftQuest() {
   questEl.innerHTML = `<div class="who"><b>${L('收礼', 'A Gift')}</b><span>${pn}</span></div><p class="tip">${EN() ? `${esc(g.f || 'Someone')} left the gift at ${pn}. Follow the beam of light.` : `${esc(g.f || '有人')}把礼放在了${pn}。跟着光柱走过去。`}</p>`;
 }
 function interact() {
+  if (!S.near && nearDoor) { goThroughDoor(); return; }
   const t = S.near; if (!t || t.stage !== S.stage || !t.obj.parent) return; S.near = null;
   if (S.stage === 'gift') { openGift(); return; }
   if (S.story) { storyInteract(t); return; }
@@ -1008,19 +1012,65 @@ addEventListener('keydown', (e) => {
   if (!modalEl.hidden) { e.stopImmediatePropagation();
     { const m = /^Digit([1-9])$/.exec(e.code), o = m && scrollEl.querySelectorAll('.g-opt')[+m[1] - 1]; if (o) { e.preventDefault(); o.click(); return; } } if ((e.code === 'KeyE' || e.code === 'Enter' || e.code === 'Space') && $('g-next') && !$('gf-make')) { e.preventDefault(); closeModal(); } return; }
   if (!startEl.hidden) { e.stopImmediatePropagation(); return; }
-  if (e.code === 'KeyE' && walk.on && S.near) { e.preventDefault(); interact(); }
+  if (e.code === 'KeyE' && walk.on && (S.near || nearDoor)) { e.preventDefault(); interact(); }
 }, true);
 promptEl.addEventListener('click', interact);
 
 /* ---------------------------------------------------------------------
    每帧：指引、提示、标签、道具浮动
    --------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------
+   门：走近任何一座建筑的门，提示「进门 / 出门」，按 E（手机点提示）穿过去
+   --------------------------------------------------------------------- */
+const GATES = [   // [建筑根节点 id, 局部 x, 局部 z, 中文名, 英文名]（局部坐标跟着建筑走）
+  ['hengwu', 0, 13.75, '蘅芜苑 · 院门', 'Alpinia Park · gate'],
+  ['yihong', -20.05, 11.05, '怡红院 · 院门', 'Happy Red Court · gate'],
+  ['daoxiang', -4, -0.8, '稻香村 · 柴门', 'Paddy-Sweet Cottage · door'],
+  ['daoxiang', 14.4, -14, '稻香村 · 院门', 'Paddy-Sweet Cottage · gate'],
+  ['longcui', 0, 7.7, '栊翠庵 · 山门', 'Green Lattice Nunnery · gate'],
+  ['tubi', 0, 1.2, '凸碧山庄', 'Convex Emerald Hall'],
+  ['aojing', 0, -3.2, '凹晶馆', 'Concave Crystal Lodge'],
+  ['luxue', 0, -5, '芦雪广', 'Reed Snow Cottage'],
+  ['qiushuang', 0, 12.6, '秋爽斋 · 院门', 'Autumn Freshness Studio · gate']];
+let DOORS = [], doorKey = '', nearDoor = null, doorBusy = false;
+function buildDoors() {
+  const key = D.BLD.length + ':' + D.INTER.length; if (key === doorKey) return; doorKey = key;
+  DOORS = [{ x: 0, z: 120, n: '大观园 · 正门', ne: 'Grand View Garden · Main Gate' }];
+  for (const [id, lx, lz, n, ne] of GATES) { const b = D.BLD.find(b => b.id === id); if (!b) continue; const v = b.root.localToWorld(new V3(lx, 0, lz)); DOORS.push({ x: v.x, z: v.z, n, ne }); }
+  for (const it of D.INTER) it.rooms.forEach((r, i) => {   // 室内房间：门在南面（局部 +z）边中点；r[6]==='e' 表示门在东面
+    const east = r[6] === 'e'; const v = it.root.localToWorld(new V3(east ? r[2] : (r[0] + r[2]) / 2, r[4], east ? (r[1] + r[3]) / 2 : r[3]));
+    DOORS.push({ x: v.x, z: v.z, room: { it, r }, n: (it.names && it.names[i]) || it.name, ne: (it.namesEn && it.namesEn[i]) || it.en || it.name }); });
+}
+const insideRoom = (rm, p) => { const v = rm.it.root.worldToLocal(p.clone()), r = rm.r; return v.x > r[0] && v.x < r[2] && v.z > r[1] && v.z < r[3] && v.y > r[4] - 0.6 && v.y < r[5] + 0.6; };
+function doorUpdate() {
+  buildDoors(); let best = null, bd = 1e9; const p = walk.pos;
+  if (walk.on && modalEl.hidden && startEl.hidden && !doorBusy && !window.__gamePause) {
+    const fx = -Math.sin(walk.yaw), fz = -Math.cos(walk.yaw);
+    for (const d of DOORS) { const dx = d.x - p.x, dz = d.z - p.z, dd = Math.hypot(dx, dz); if (dd > 3.0 || dd < 0.1) continue; if ((dx * fx + dz * fz) / dd < 0.2) continue; if (dd < bd) { bd = dd; best = d; } }
+  }
+  nearDoor = best;
+  if (!best) { promptEl.hidden = true; return; }
+  const ins = best.room ? insideRoom(best.room, p) : null;
+  best.label = (ins === true ? L('出门', 'Go out') : ins === false ? L('进门', 'Go in') : L('过门', 'Pass through')) + ' · ' + L(best.n, best.ne);
+  promptEl.innerHTML = (isTouch ? `<span>${L('点这里', 'Tap here')}</span>` : '<kbd>E</kbd>') + esc(best.label); promptEl.hidden = false;
+}
+function goThroughDoor() {
+  const d = nearDoor; if (!d || doorBusy) return; doorBusy = true; blip(540);
+  const p = walk.pos; let dx = d.x - p.x, dz = d.z - p.z; const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
+  let dest = null; for (const dist of [2.3, 1.8, 1.3]) { const x = d.x + dx * dist, z = d.z + dz * dist; if (okAt(x, z) != null) { dest = [x, z]; break; } }
+  if (!dest) dest = [d.x + dx * 1.3, d.z + dz * 1.3];
+  const blink = $('g-blink'); blink.classList.add('on'); pauseGame(true);
+  setTimeout(() => { const gy = groundAt(dest[0], dest[1], p.y + 0.6)[0]; walk.pos.set(dest[0], gy, dest[1]); walk.feet = gy; walk.vel.set(0, 0, 0); walk.vy = 0; walk.grounded = true; walk.yaw = walk.charYaw = Math.atan2(-dx, -dz); flash(d.label); blink.classList.remove('on'); }, 260);
+  setTimeout(() => { pauseGame(false); doorBusy = false; }, 640);
+}
+
 const _v = new V3(); let last = performance.now();
 function tick(now) {
   requestAnimationFrame(tick); const dt = Math.min(0.05, (now - last) / 1000); last = now; beaconMat.uniforms.t.value = now / 1000;
   const playing = (S.char || S.giftMode || S.story) && walk.on; if (S.story) { followBanEr(dt); followGuide(dt); }
   questEl.hidden = !(playing || (S.giftMode && walk.on));
-  if (!playing) { compassEl.hidden = true; promptEl.hidden = true; beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
+  if (!playing) { compassEl.hidden = true; doorUpdate(); beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
   for (const t of S.targets) if (t.bob) t.obj.position.y = t.obj.userData.baseY + Math.sin(now / 500) * 0.06, t.obj.rotation.y += dt * 0.6;
   const goal = currentGoal(); const p = walk.pos;
   if (goal) {
@@ -1036,7 +1086,7 @@ function tick(now) {
   // 最近的可交互目标
   let near = null; for (const t of S.targets) { if (t.stage !== S.stage) continue; const d = Math.hypot(t.pos.x - p.x, t.pos.z - p.z); if (d < t.r && Math.abs(t.pos.y - p.y) < 2.5) { near = t; break; } }
   S.near = modalEl.hidden ? near : null;
-  if (S.near) { promptEl.innerHTML = isTouch ? `<span>${L('点这里', 'Tap here')}</span>${esc(txt(S.near.label))}` : `<kbd>E</kbd>${esc(txt(S.near.label))}`; promptEl.hidden = false; } else promptEl.hidden = true;
+  if (S.near) { promptEl.innerHTML = isTouch ? `<span>${L('点这里', 'Tap here')}</span>${esc(txt(S.near.label))}` : `<kbd>E</kbd>${esc(txt(S.near.label))}`; promptEl.hidden = false; nearDoor = null; } else doorUpdate();
   // 头顶名签
   const W = innerWidth, H = innerHeight;
   for (const t of S.tags) { if (!t.obj.parent) { t.el.style.display = 'none'; continue; } _v.copy(t.obj.position); _v.y += t.dy; const dist = camera.position.distanceTo(_v); _v.project(camera);
