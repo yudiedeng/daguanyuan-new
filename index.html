@@ -692,7 +692,12 @@ let _plateMat=null;function plateMat(){if(_plateMat)return _plateMat;const c=doc
 const PROPS={
  longcui_in:[{f:'foxiang',p:[0,2.62,-8.6],h:1.45},{f:'xianglu',p:[0,2.56,-7.55],h:0.3},{f:'muyu',p:[-1.45,2.08,-6.95],h:0.24},{f:'fenglu',p:[9.7,1.29,-8.12],h:0.5,ry:-Math.PI/2}],  // 佛像、香炉、木鱼、风炉
  ouxiang_in:[{f:'xiepan',p:[0,1.74,-0.97],h:0.1,plate:0.24},{f:'xiepan',p:[3.05,1.74,-0.22],h:0.09,ry:1.2,plate:0.22},{f:'xiepan',p:[-2.02,1.70,2.28],h:0.08,ry:2.5,plate:0.19},{f:'fenglu',p:[-4.3,0.32,5.45],h:0.5,ry:Math.PI/2},{f:'fenglu',p:[4.3,0.32,5.45],h:0.5,ry:-Math.PI/2}],  // 螃蟹、风炉
- daguan_in:[{f:'baozuo',p:[0,2.582,-24.75],h:1.75},{f:'xianglu',p:[0,3.062,-21.75],h:0.6},{f:'hezhu',p:[-3.75,2.122,-22.2],h:1.9},{f:'hezhu',p:[3.75,2.122,-22.2],h:1.9}],  // 宝座、香炉、仙鹤烛台
+ daguan_in:[{f:'baozuo',p:[0,2.582,-8.75],h:1.75},{f:'xianglu',p:[0,3.062,-5.75],h:0.6},{f:'hezhu',p:[-3.75,2.122,-6.2],h:1.9},{f:'hezhu',p:[3.75,2.122,-6.2],h:1.9}],  // 宝座、香炉、仙鹤烛台（正殿改样后前移 16 m）
+ // 大观楼前：玉石牌坊（第十七回“龙蟠螭护，玲珑凿就”）、牌坊两旁石狮、甬路两旁石灯座、正殿阶前铜鼎、池岸湖石；占位与碰撞见 blender/scripts/sites/daguan_rebuild.py
+ daguan:[{f:'paifang',p:[0,0,22],h:12,ry:Math.PI/2},{f:'shishi',p:[-7,0,23.6],h:2.5},{f:'shishi',p:[7,0,23.6],h:2.5},
+   ...[31.5,26.5,17.6].flatMap(z=>[{f:'shideng',p:[-3.35,0,z],h:2.5},{f:'shideng',p:[3.35,0,z],h:2.5}]),
+   {f:'xianglu',p:[-5.2,1.5,7.4],h:1.3},{f:'xianglu',p:[5.2,1.5,7.4],h:1.3},
+   {f:'hushi',p:[-19.2,0,26],h:2.6,ry:0.4},{f:'hushi',p:[19.4,0,30.5],h:2.2,ry:2.1},{f:'hushi',p:[-5.4,0,32.4],h:1.5,ry:1.3},{f:'hushi',p:[5.6,0,24.6],h:1.3,ry:-0.7}],
  luxue_in:[{f:'meiping',p:[1.0,0.362,-2.62],h:1.7},{f:'tielu',p:[2.75,0.35,3.5],h:0.72}],  // 红梅大瓶、烤鹿肉铁炉
  tubi_in:[{f:'yuegong',p:[4.6,1.785,-1.0],h:0.3,ry:-Math.PI/2},{f:'xianglu',p:[4.3,1.785,-1.0],h:0.28,ry:-Math.PI/2}],  // 中秋月供
  aojing_in:[{f:'zhudun',p:[-0.62,0.51,-0.45],h:0.46,ry:0.3},{f:'zhudun',p:[0.62,0.51,-0.45],h:0.46,ry:-0.4}],  // 湘妃竹墩
@@ -710,7 +715,7 @@ const INTER_DEF={
  daoxiang_in:{name:'稻香村 · 茅屋',en:'Paddy-Sweet Cottage',rooms:[[-11.4,-18.2,3.4,-12.4,0.5,4.6]],lights:[[-4,3.1,-15.3],[-8.5,3.0,-15.3],[0.5,3.0,-15.3]]},
  xiaoxiang_in:{name:'潇湘馆',en:'Bamboo Lodge',names:['潇湘馆 · 明间书房','潇湘馆 · 东间卧室'],namesEn:['Bamboo Lodge · Study','Bamboo Lodge · East Bedroom'],rooms:[[-3.7,-2.55,1.4,1.78,0.48,5.02],[1.55,-2.55,3.7,1.78,0.48,5.02,[1.45,1.03]]],lights:[[0,4.0,-0.4],[-2.5,3.8,-0.4],[2.5,3.8,-0.4]]},
  qiushuang_in:{name:'秋爽斋',en:'Autumn Freshness Studio',names:['秋爽斋 · 晓翠堂','秋爽斋 · 探春屋'],namesEn:['Hall of Morning Green','Tanchun’s Rooms'],rooms:[[-7.65,-13.09,7.65,-1.8,0.81,5.6],[-13.37,2.5,-10.7,11.5,0.57,4.0,'e']],lights:[[0,4.4,-7.8],[-4.2,4.2,-7.8],[4.2,4.2,-7.8],[0,3.8,-3.6],[-12,3.5,4],[-12,3.5,7],[-12,3.5,10]]},
- daguan_in:{name:'大观楼',en:'Grand View Tower',names:['大观楼 · 顾恩思义殿','缀锦阁','含芳阁'],namesEn:['Hall of Mindful Favour','Variegated Brocade Pavilion','Fragrance-Holding Pavilion'],rooms:[[-14.3,-26.6,14.3,-15.2,2.12,7.24],[28.7,-22.78,37.28,-15.35,0.91,5.6],[-37.28,-22.78,-28.7,-15.35,0.91,5.6]],lights:[[0,6.4,-19],[-6,6.2,-21],[6,6.2,-21],[0,6.2,-24.5],[-11.5,6,-21],[11.5,6,-21],[33,4.8,-19],[-33,4.8,-19]]},
+ daguan_in:{name:'大观楼',en:'Grand View Tower',names:['大观楼 · 顾恩思义殿','缀锦阁','含芳阁'],namesEn:['Hall of Mindful Favour','Variegated Brocade Pavilion','Fragrance-Holding Pavilion'],rooms:[[-14.3,-10.6,14.3,0.8,2.12,7.24],[28.7,-22.78,37.28,-15.35,0.91,5.6],[-37.28,-22.78,-28.7,-15.35,0.91,5.6]],lights:[[0,6.4,-3],[-6,6.2,-5],[6,6.2,-5],[0,6.2,-8.5],[-11.5,6,-5],[11.5,6,-5],[33,4.8,-19],[-33,4.8,-19]]},
  luxue_in:{name:'芦雪广 · 地炕屋',en:'Reed Snow Cottage',rooms:[[-7.37,-3.05,7.37,2.65,0.36,4.6]],lights:[[-5,2.6,-1],[0,2.6,-0.5],[4.6,2.6,-0.6]]},
  longcui_in:{name:'栊翠庵',en:'Green Lattice Nunnery',names:['栊翠庵 · 佛殿','栊翠庵 · 东禅堂','栊翠庵 · 耳房'],namesEn:['Green Lattice Nunnery · Buddha Hall','Green Lattice Nunnery · East Meditation Hall','Green Lattice Nunnery · Side Chamber'],rooms:[[-4.84,-9.18,4.84,-4.83,1.64,7.4,[0,-4.83]],[8.36,-2.68,11.08,6.28,1.34,5.6,[8.36,1.8]],[7.47,-8.48,10.03,-5.54,1.29,5.3,[8.75,-5.54]]],lights:[[0,4.6,-7.0],[-3,4.2,-7],[3,4.2,-7],[9.7,4.0,1.8],[9.7,3.8,-1.4],[9.7,3.8,4.9],[8.75,3.6,-7.0]]},
  ouxiang_in:{name:'藕香榭',en:'Lotus Fragrance Pavilion',rooms:[[-4.66,-3.26,4.66,3.26,0.9,5.9,[0,3.3]]],lights:[[0,4.4,-1.0],[3.05,4.2,-0.2],[-2.6,4.2,-0.3],[0,4.2,2.2]]},
@@ -1230,8 +1235,11 @@ function buildDaguan(){const y=Z.daguan.y,M=T(0,y,-90,0);if(!GLB){
  if(GLB){const q=Z.daguan,W=q.hw+1.2,Dn=q.z+q.hd+0.8,Ds=q.z-q.hd-1.2;const WO={h:3.4};
   wall(-W,Dn,-5.2,Dn,WO);wall(5.2,Dn,W,Dn,WO);wall(W,Dn,W,Ds,WO);wall(W,Ds,-W,Ds,WO);wall(-W,Ds,-W,Dn,WO);
   for(const sx of[-1,1]){box('stone',T(sx*5.2,q.y,Dn),0.9,3.9,0.9,0,1.95,0);box('roofGrey',T(sx*5.2,q.y,Dn),1.4,0.22,1.4,0,4.05,0,{noCol:1});}}
- if(GLB){const y=Z.daguan.y;const pits=[[-16,-2.4,'pine'],[16,-2.4,'pine'],[-9.5,6,'pine'],[9.5,6,'pine'],[-18,6,'pine'],[18,6,'pine'],[-28,-5.5,'bai'],[28,-5.5,'bai'],[-28,-28,'bai'],[28,-28,'bai'],[-6.2,22,'blossom'],[6.2,22,'blossom']];
-  for(const [lx,lz,k] of pits){const x=lx,z=Z.daguan.z+lz;TREES[k].push({x,y:y+0.05,z,s:k==='pine'?R(1.0,1.2):k==='bai'?R(0.9,1.05):R(1.1,1.3),ry:rnd()*6.283,tint:k==='blossom'?HAITANG[0]:k==='bai'?'#3d5a3a':pick(['#3f5a3c','#46613f']),plum:false,v:Math.floor(rnd()*2)});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}}
+ if(GLB){const y=Z.daguan.y;const pits=[[-24.2,0,'pine'],[24.2,0,'pine'],[-21.5,-27.5,'pine'],[21.5,-27.5,'pine'],[-12.5,-33,'pine'],[12.5,-33,'pine'],[-5,-33,'pine'],[5,-33,'pine'],[-23.5,32,'pine'],[23.5,32,'pine'],
+   [-28,-5.5,'bai'],[28,-5.5,'bai'],[-28,-28,'bai'],[28,-28,'bai'],
+   ...[[5.4,15.2],[9.2,16.4],[13.2,15.6],[17.2,16.8],[7.4,19.4],[11.6,19.8],[15.8,20.2],[20.2,20.6],[21.5,24.5],[21.5,29],[21.5,33.2]].flatMap(([x,z])=>[[-x,z,'yulan'],[x,z,'yulan']])];  // 玉兰绕砌：牌坊到台阶之间、水池外侧；青松拂檐：台基两旁、楼后
+
+  for(const [lx,lz,k0] of pits){const x=lx,z=Z.daguan.z+lz,yl=k0==='yulan',k=yl?'blossom':k0;TREES[k].push({x,y:y+0.05,z,s:k==='pine'?R(1.1,1.35):k==='bai'?R(0.9,1.05):yl?R(0.95,1.15):R(1.1,1.3),ry:rnd()*6.283,tint:yl?pick(['#fbf8f0','#f8f4ec','#f6f1e6']):k==='blossom'?HAITANG[0]:k==='bai'?'#3d5a3a':pick(['#3f5a3c','#46613f']),plum:false,v:Math.floor(rnd()*2)});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}}
  for(let i=0;i<22;i++){const x=R(-30,30),z=GLB?Z.daguan.z+R(-44,-34):R(-117,-106);if(Math.abs(x)<3||!treeOK(x,z,2.2))continue;if(i%2)addTree('bai',x,z,R(.9,1.2),'#3d5a3a');else addTree('pine',x,z,R(.9,1.25),pick(['#3f5a3c','#46613f','#3a5238']));}}
 function buildYihong(){const y=Z.yihong.y;if(!GLB){court({x:85,z:65,hw:22,hd:18,h:3.6,gates:[{side:'w',pos:65,moon:true,w:5}]});pave(85,65,22,18,y);
  hall(T(88,y,53,0),{w:17,d:8.5,h:4.2,bays:5,roofH:2.6,plaque:'怡红快绿',lanterns:true});
