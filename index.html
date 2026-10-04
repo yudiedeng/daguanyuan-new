@@ -186,7 +186,7 @@ const PLACES=[
  {id:'gate',name:'正门',sub:'园门',eyebrow:'正门五间',pos:[0,10,121],quote:'只见正门五间，上面桶瓦泥鳅脊，那门栏窗槅皆是细雕新鲜花样，并无朱粉涂饰。',
   text:'两边是雪白粉墙，下面虎皮石随势砌去。贾政带着宝玉和清客们从这里进园，一路题写对额。',ch:'第十七回',view:{t:[0,4,114],c:[24,15,160]},spawn:[0,108,Math.PI]},
  {id:'rock',name:'翠嶂',sub:'曲径通幽',eyebrow:'一带翠嶂',pos:[0,12,96],quote:'只见一带翠嶂挡在前面。',
-  text:'一进门，假山就把园中景致都挡住了。众清客拟了“叠翠”“锦嶂”“赛香炉”“小终南”，宝玉借旧诗题作“曲径通幽处”。',ch:'第十七回',view:{t:[0,4,96],c:[-34,13,124]},spawn:[-27,94,Math.PI]},
+  text:'一进门，假山就把园中景致都挡住了。众清客拟了“叠翠”“锦嶂”“赛香炉”“小终南”，宝玉借旧诗题作“曲径通幽处”。',ch:'第十七回',view:{t:[0,4,96],c:[-34,13,124]},spawn:[2,110,0]},
  {id:'qinfang',name:'沁芳亭',sub:'桥上亭',eyebrow:'亭压水而成',pos:[0,9,50],quote:'有亭翼然。',
   text:'溪上石桥，桥上有亭。众人拟过“翼然”“泻玉”，宝玉嫌不雅，新题“沁芳”二字。第二十三回，宝玉和黛玉就在这一带沁芳闸桥边的桃花树下共读《西厢记》，黛玉在这里葬花。',ch:'第十七回 · 第二十三回',view:{t:[0,2,50],c:[-26,11,72]}},
  {id:'daguan',name:'大观楼',sub:'顾恩思义',eyebrow:'省亲别墅正殿',pos:[0,23,-69],quote:'天上人间诸景备，芳园应锡大观名。',
@@ -273,10 +273,10 @@ function hash3(a,b,c){const s=Math.sin(a*12.9898+b*78.233+c*37.719)*43758.5453;r
 function curve(pts,n){const c=new THREE.CatmullRomCurve3(pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');return c.getSpacedPoints(n).map(v=>[v.x,v.z]);}
 function distPoly(P,x,z){let b=1e18;for(let i=0;i<P.length-1;i++){const ax=P[i][0],az=P[i][1],vx=P[i+1][0]-ax,vz=P[i+1][1]-az;const t=clamp(((x-ax)*vx+(z-az)*vz)/(vx*vx+vz*vz||1),0,1);const dx=x-ax-vx*t,dz=z-az-vz*t;const d=dx*dx+dz*dz;if(d<b)b=d;}return Math.sqrt(b);}
 /* ---- 园子布局：水面、山形按参考平面图描出（tools/layout/make_layout.py → tex/layout.png，1 米一格）
-   R = 水深权重，G = 山高（0..12 米），B = 园内。园墙：主体 x -150..150、z -180..120，东南怡红院一块 x 20.6..150、z 120..190。 ---- */
+   R = 水深权重，G = 山高（0..24 米），B = 园内。园墙：主体 x -150..150、z -180..120，东南怡红院一块 x 20.6..150、z 120..190。 ---- */
 const LAY=await(async()=>{const img=new Image();img.src='tex/layout.png';await img.decode();const nx=img.width,nz=img.height,c=document.createElement('canvas');c.width=nx;c.height=nz;
  const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);const d=g.getImageData(0,0,nx,nz).data,w=new Float32Array(nx*nz),h=new Float32Array(nx*nz);
- for(let i=0;i<nx*nz;i++){w[i]=d[i*4]/255;h[i]=d[i*4+1]/255*12;}return {x0:-170,z0:-200,nx,nz,w,h};})();
+ for(let i=0;i<nx*nz;i++){w[i]=d[i*4]/255;h[i]=d[i*4+1]/255*24;}return {x0:-170,z0:-200,nx,nz,w,h};})();
 function layAt(a,x,z){const fx=clamp(x-LAY.x0,0,LAY.nx-1.001),fz=clamp(z-LAY.z0,0,LAY.nz-1.001),ix=fx|0,iz=fz|0,tx=fx-ix,tz=fz-iz,n=LAY.nx;
  return mix(mix(a[iz*n+ix],a[iz*n+ix+1],tx),mix(a[(iz+1)*n+ix],a[(iz+1)*n+ix+1],tx),tz);}
 const isWet=(x,z)=>layAt(LAY.w,x,z)>0.37;
@@ -284,13 +284,14 @@ function inGarden(x,z,m=0){return (Math.abs(x)<=150-m&&z>=-180+m&&z<=120-m)||(x>
 /* 岸线点：[x, z, 指向岸上的单位法向 nx, nz]，每 2 米一个 */
 const SHORE=[];for(let z=-178;z<=188;z+=2)for(let x=-148;x<=148;x+=2){if(!isWet(x,z))continue;let nx=0,nz=0;for(const [a,b] of[[2,0],[-2,0],[0,2],[0,-2]])if(!isWet(x+a,z+b)){nx+=a;nz+=b;}const l=Math.hypot(nx,nz);if(l>0)SHORE.push([x,z,nx/l,nz/l]);}
 /* 山：给布石、种树用的山头（x, z, 高, 半径） */
-const MOUNDS=[[-12,-153,10,22],[80,-129,8,16],[128,-80,6,12],[66,70,5,12],[96,96,4,10],[-112,88,3,8]];
+const MOUNDS=[[-12,-153,10,22],[80,-129,8,16],[128,-80,6,12],[66,70,5,12],[96,96,4,10],[-112,88,3,8],
+ [-41,85,8,12],[30,87,8,9],[38,157,14,14],[-121,-21,9,9]];// 后四座按原著补：翠嶂两翼、“大山阻路”、稻香村前“青山斜阻”（见 tools/layout/make_layout.py）
 function natural(x,z){
  let h=0.6+0.16*Math.sin(x*0.045+1.3)*Math.cos(z*0.05-0.4)+0.08*Math.sin(x*0.13+z*0.11);
  h+=layAt(LAY.h,x,z);
  h=mix(h,-1.8,sstep(0.25,0.75,layAt(LAY.w,x,z)));
  return h;}
-const ZDEF=GLB?{gate:[0,118,15,8],yihong:[104,147,22,19],xiaoxiang:[-70,93,14.6,15.6],daoxiang:[-105,-59,28,24],hengwu:[-70,-141,19,15],daguan:[0,-69,40,33],longcui:[105,44,12,15],mudan:[-102,-99,7.5,7.5],shaoyao:[-121,-96,7,5],qiangwei:[-117,-118,6,6],tumi:[-84,-92,5,4],tubi:[80,-129,9.5,9],qiushuang:[-86,18.5,15.5,14.5]}:{gate:[0,118,15,8],yihong:[85,65,23,19],xiaoxiang:[-80,30,16,13],daoxiang:[-92,-62,28,24],hengwu:[62,-92,19,15],daguan:[0,-88,40,16],paifang:[0,-56,9,4],longcui:[125,5,14,12]};
+const ZDEF=GLB?{gate:[0,118,15,8],yihong:[104,147,22,19],xiaoxiang:[-70,93,14.6,15.6],daoxiang:[-105,-59,28,24],hengwu:[-70,-141,19,15],daguan:[0,-69,40,33],longcui:[105,44,12,15],mudan:[-102,-99,7.5,7.5],shaoyao:[-121,-96,7,5],qiangwei:[-117,-118,6,6],tumi:[-84,-92,5,4],tubi:[80,-129,9.5,9],qiushuang:[-86,18.5,15.5,14.5],feilouW:[-19,31,7,6],feilouE:[21,33,7,6]}:{gate:[0,118,15,8],yihong:[85,65,23,19],xiaoxiang:[-80,30,16,13],daoxiang:[-92,-62,28,24],hengwu:[62,-92,19,15],daguan:[0,-88,40,16],paifang:[0,-56,9,4],longcui:[125,5,14,12]};
 /* 各院落从旧位置挪到新位置的位移（x, z）：院内手工摆的竹子、芭蕉、树等照原相对位置跟着走 */
 const MV={yihong:[19,82],xiaoxiang:[12,64],longcui:[-20,39],hengwu:[-132,-49],daoxiang:[-13,3],daguan:[0,21],ouxiang:[-118,-18]};
 const Z={};for(const k in ZDEF){const d=ZDEF[k];Z[k]={x:d[0],z:d[1],hw:d[2],hd:d[3],m:8,y:Math.max(0.6,natural(d[0],d[1]))};}
@@ -299,7 +300,7 @@ function height0(x,z){let h=natural(x,z);for(const q of ZL){const dx=Math.max(Ma
 /* path flattening: terrain is benched to a smoothed path grade within the path width, with a 3 m soft shoulder */
 const PFH=new Map();let PF_ON=false;
 function prepPaths(){for(const P of PATHS){const c=new THREE.CatmullRomCurve3(P.pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');const sp=c.getSpacedPoints(Math.max(6,Math.ceil(c.getLength()/0.8)));const hs=sp.map(v=>height0(v.x,v.z));
- sp.forEach((v,i)=>{if(hs[i]<0.3)return;let a=0,n=0;for(let k=-7;k<=7;k++){const j=i+k;if(j<0||j>=hs.length)continue;a+=hs[j]<0.3?0.95:hs[j];n++;}const key=Math.floor(v.x/4)+','+Math.floor(v.z/4);(PFH.get(key)||PFH.set(key,[]).get(key)).push([v.x,v.z,a/n,P.w/2]);});}PF_ON=true;}
+ sp.forEach((v,i)=>{if(hs[i]<0.3)return;let a=0,n=0;const wk=Math.min(7,i,hs.length-1-i);/* 窗口左右对称：路端（如正门外台阶顶）不被单边平均压低 */for(let k=-wk;k<=wk;k++){const j=i+k;a+=hs[j]<0.3?0.95:hs[j];n++;}const key=Math.floor(v.x/4)+','+Math.floor(v.z/4);(PFH.get(key)||PFH.set(key,[]).get(key)).push([v.x,v.z,a/n,P.w/2]);});}PF_ON=true;}
 function height(x,z){let h=height0(x,z);if(!PF_ON||h<0.3)return h;const ix=Math.floor(x/4),iz=Math.floor(z/4);let best=1e9,bh=0,bw=0;for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=PFH.get((ix+a)+','+(iz+b));if(l)for(const q of l){const d2=(q[0]-x)**2+(q[1]-z)**2;if(d2<best){best=d2;bh=q[2];bw=q[3];}}}
  if(best<(bw+3)**2){const d=Math.sqrt(best);h=mix(h,bh,1-sstep(bw+0.2,bw+3,d));}return h;}
 function inZone(x,z,m){for(const q of ZL){if(Math.abs(x-q.x)<q.hw+m&&Math.abs(z-q.z)<q.hd+m)return true;}return false;}
@@ -1060,6 +1061,21 @@ const PATH_S=[];const pathHash=new Map();
 function pathAdd(x,z){const k=Math.floor(x/4)+','+Math.floor(z/4);(pathHash.get(k)||pathHash.set(k,[]).get(k)).push([x,z]);PATH_S.push([x,z]);}
 function nearPath(x,z,r){const ix=Math.floor(x/4),iz=Math.floor(z/4),rr=Math.ceil(r/4);for(let a=-rr;a<=rr;a++)for(let b=-rr;b<=rr;b++){const l=pathHash.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<r*r)return true;}return false;}
 let QINFANG=null;const BRIDGES=[];
+/* 石磴：园路坡陡处铺台阶（第十七回“石磴穿云”）；rail 的路两侧加白石栏杆（“白石为栏”）。
+   台阶面是平的，每级高差约 0.16 米；碰撞按可踩的台面加（walk），两侧望柱挡人。 */
+const RAIL_GAPS=[[-4.6,66.8,2.4]];// 石磴栏杆留口：去潇湘馆的路从这里岔出
+function stairs(pts,hs,P){const hw=P.w/2+0.15,m=pts.length,tops=new Float32Array(m);let a=0;const runs=[];
+ for(let k=1;k<m;k++)if(Math.abs(hs[k]-hs[a])>=0.16||k===m-1){runs.push([a,k]);a=k;}
+ for(const [a,b] of runs){const p=pts[a],q=pts[b],cx=(p[0]+q[0])/2,cz=(p[1]+q[1])/2,len=Math.hypot(q[0]-p[0],q[1]-p[1])+0.05,ry=Math.atan2(q[0]-p[0],q[1]-p[1]);
+  let top=-1e9,lo=1e9;for(let k=a;k<=b;k++){top=Math.max(top,hs[k]);lo=Math.min(lo,hs[k]);}top+=0.07;const bot=lo-0.4;for(let k=a;k<=b;k++)tops[k]=top;
+  box('stone',T(cx,0,cz,ry),hw*2,top-bot,len,0,(top+bot)/2,0,{noCol:1});colAdd({x:cx,z:cz,c:Math.cos(ry),s:Math.sin(ry),hx:hw,hz:len/2,top,bot,walk:true});}
+ if(!P.rail)return;
+ for(const sd of[-1,1]){const posts=[];let acc=1e9;
+  for(let k=0;k<m;k++){if(k>0)acc+=Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]);if(acc<1.6&&k<m-1)continue;acc=0;
+   const b=pts[Math.min(m-1,k+1)],a2=pts[Math.max(0,k-1)];let tx=b[0]-a2[0],tz=b[1]-a2[1];const tl=Math.hypot(tx,tz)||1;const px=pts[k][0]-tz/tl*(hw+0.12)*sd,pz=pts[k][1]+tx/tl*(hw+0.12)*sd;if(RAIL_GAPS.some(g=>Math.hypot(px-g[0],pz-g[1])<g[2])){posts.push(null);continue;}posts.push([px,tops[k],pz]);}
+  for(let i=0;i<posts.length;i++){if(!posts[i])continue;const [x,y,z]=posts[i];box('marble',T(x,y,z),0.22,1.05,0.22,0,0.5,0);add('marble',new THREE.SphereGeometry(0.14,10,8),T(x,y+1.12,z));
+   if(i===0||!posts[i-1])continue;const [x0,y0,z0]=posts[i-1],dx=x-x0,dz=z-z0,dh=Math.hypot(dx,dz),dy=y-y0,sl=Math.hypot(dh,dy),rx=-Math.atan2(dy,dh),M=T((x+x0)/2,0,(z+z0)/2,Math.atan2(dx,dz)),yc=(y+y0)/2;
+   box('marble',M,0.16,0.14,sl,0,yc+0.88,0,{rx,noCol:1});box('marble',M,0.1,0.46,sl,0,yc+0.45,0,{rx,noCol:1});}}}
 function buildPath(P){
  const c=new THREE.CatmullRomCurve3(P.pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');const L=c.getLength();const sp=c.getSpacedPoints(Math.max(6,Math.ceil(L/0.8))).map(v=>[v.x,v.z]);
  const pos=[],uv=[],nor=[],col=[],idx=[];const hw=P.w/2;let acc=0;const n=sp.length-1;
@@ -1069,7 +1085,17 @@ function buildPath(P){
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);add('path',g,new THREE.Matrix4());
  let run=null,k=0;for(let i=0;i<=n;i++){const wet=height(sp[i][0],sp[i][1])<0.3;if(wet&&run===null)run=i;if((!wet||i===n)&&run!==null){if(i-run>=3){const a=sp[Math.max(0,run-3)],b=sp[Math.min(n,i+2)];bridge(a,b,(P.bridges&&P.bridges[k])||'flat');k++;}run=null;}}
  if(P.lamps){for(let i=12;i<n;i+=30){const p=sp[i],b=sp[Math.min(n,i+1)];let tx=b[0]-p[0],tz=b[1]-p[1];const tl=Math.hypot(tx,tz)||1;const x=p[0]-tz/tl*(hw+0.8),z=p[1]+tx/tl*(hw+0.8);const y=height(x,z);if(y<0.4)continue;
-   box('stone',T(x,y,z),0.5,0.3,0.5,0,0.15,0);cyl('post',T(x,y,z),0.07,0.09,2.5,0,1.4,0,10);box('post',T(x,y,z),0.7,0.08,0.08,0.25,2.6,0,{noCol:1});LANT.push(new V3(x+0.45,y+2.3,z));}}}
+   if(Math.abs(x)<21&&z>86&&z<106)continue;// 翠嶂石洞里不立灯
+   box('stone',T(x,y,z),0.5,0.3,0.5,0,0.15,0);cyl('post',T(x,y,z),0.07,0.09,2.5,0,1.4,0,10);box('post',T(x,y,z),0.7,0.08,0.08,0.25,2.6,0,{noCol:1});LANT.push(new V3(x+0.45,y+2.3,z));}}
+ {const S2=c.getSpacedPoints(Math.max(8,Math.ceil(L/0.2))).map(v=>[v.x,v.z]),m=S2.length,ds=L/(m-1),hs=S2.map(p=>height(p[0],p[1]));
+  const steep=hs.map((h,i)=>{const a=Math.max(0,i-5),b=Math.min(m-1,i+5);return h>0.3&&Math.abs(hs[b]-hs[a])/((b-a)*ds)>0.2;});
+  for(let i=0;i<m;){if(!steep[i]){i++;continue;}let j=i;while(j<m&&steep[j])j++;if((j-i)*ds>=2)stairs(S2.slice(i,j),hs.slice(i,j),P);i=j;}}}
+/* 第十七回“白石为栏，环抱池沿，石桥三港”：沁芳桥两岸池沿一圈白石栏杆（桥头、园路口留开） */
+function pondRail(){if(!QINFANG)return;const qx=QINFANG.x,qz=QINFANG.z;
+ for(const dir of[1,-1]){let prev=null;
+  for(let x=qx-30;x<=qx+30;x+=1.5){let bz=null;for(let k=1;k<=22;k+=0.5){const z=qz+dir*k;if(!isWet(x,z)){bz=z+dir*0.9;break;}}
+   const ok=bz!==null&&Math.abs(x-qx)>4.5&&Math.abs(bz-qz)>3&&!nearPath(x,bz,1.8)&&height(x,bz)<2.2&&height(x,bz)>0.3;
+   if(!ok){prev=null;continue;}if(prev&&Math.hypot(x-prev[0],bz-prev[1])<3.2)balustrade(T(0,0,0),prev[0],prev[1],x,bz,Math.min(height(prev[0],prev[1]),height(x,bz)));prev=[x,bz];}}}
 function bridge(a,b,type){const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,L=Math.hypot(b[0]-a[0],b[1]-a[1])+2,ry=Math.atan2(b[0]-a[0],b[1]-a[1]),M=T(cx,0,cz,ry);BRIDGES.push({x:cx,z:cz,L,ry,type});
  if(type==='arch'){const A=Math.min(2.8,L*0.16),W=3.6,n=18,base=0.75,r=L*0.33;
   for(let i=0;i<n;i++){const s0=i/n,s1=(i+1)/n,z0=-L/2+s0*L,z1=-L/2+s1*L,y0=base+A*Math.sin(Math.PI*s0),y1=base+A*Math.sin(Math.PI*s1),zc=(z0+z1)/2,yc=(y0+y1)/2,dz=z1-z0,dy=y1-y0,sl=Math.hypot(dz,dy)+0.04,rx=-Math.atan2(dy,dz);
@@ -1119,12 +1145,14 @@ const treeHash=new Map();
 function treeOK(x,z,r){const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<r*r)return false;}return true;}
 function treeAdd(x,z){const k=Math.floor(x/5)+','+Math.floor(z/5);(treeHash.get(k)||treeHash.set(k,[]).get(k)).push([x,z]);}
 const VIEWSEG=[],VIEWSEG_NEW=[];const NEW_PLACES=new Set(['luxue','tubi','aojing','qiushuang','xingye']);// 新景点的取景线单独放：不参与布树时的提前跳过（那会改变随机数），改为种完后隐藏
-function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c,t=p.view.t;(NEW_PLACES.has(p.id)?VIEWSEG_NEW:VIEWSEG).push([c[0],c[2],t[0],t[2],p.id==='all'?0:7]);}}
+function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c,t=p.view.t;(NEW_PLACES.has(p.id)?VIEWSEG_NEW:VIEWSEG).push([c[0],c[2],t[0],t[2],p.id==='all'?0:7]);}
+ // 第十七回 出翠嶂“俯而视之，则清溪泻雪，石磴穿云……桥上有亭”：出石洞北口往北望沁芳亭的视线不种树
+ VIEWSEG.push([-1,91,1,44,8]);}
 function inView(x,z,extra,segs){for(const v of segs||VIEWSEG){if(!v[4])continue;const dx=v[2]-v[0],dz=v[3]-v[1],L2=dx*dx+dz*dz;let u=((x-v[0])*dx+(z-v[1])*dz)/L2;if(u<0.15||u>0.92)continue;const px=v[0]+dx*u,pz=v[1]+dz*u;const r=v[4]+(extra||0);if((px-x)**2+(pz-z)**2<r*r)return true;}return false;}
 // 新景点（芦雪广、凹晶馆、凸碧山庄）占地：x, z, 半宽, 半深
 const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9]]:[];
 function inSite(x,z,extra){for(const f of SITE_FP)if(Math.abs(x-f[0])<f[2]&&Math.abs(z-f[1])<f[3])return true;return VIEWSEG_NEW.length>0&&inView(x,z,extra||0,VIEWSEG_NEW);}
-function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)){TREES[sp].pop();treeAdd(x,z);return;}/* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
+function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(nearStream(x,z,3))return;/* 清溪两岸不种树，叠水露出来 */if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)){TREES[sp].pop();treeAdd(x,z);return;}/* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
 const RC=['#c9c6bc','#d6d3ca','#bdbbb2','#c4c6b6','#aeb59e','#cfcbc0'];
 function rock(x,y,z,sx,sy,sz,c){ROCKS.push({v:Math.floor(rnd()*5),x,y,z,sx,sy,sz,ry:rnd()*6.28,c:c||pick(RC)});if(inSite(x,z)){ROCKS.pop();return;}if(sx>0.5)colAdd({x,z,c:1,s:0,hx:sx*0.8,hz:sz*0.8,top:y+sy*0.9,bot:y-sy});}
 const PINK=['#f0a0b4','#e88aa2','#f5bccb','#f7c6d2'],APRICOT=['#f6dcd6','#f7e8e4','#f0cccc','#fbeee8'],PLUM=['#b3303b','#c7424c','#a02835','#d0505a'],HAITANG=['#e79aab','#f2b8c2','#dd8599'],PEAR=['#fbfaf4','#f3f5ea','#f7f7f0'];
@@ -1153,7 +1181,7 @@ function buildTown(){const rr=mulberry32(909);let n=0;
  for(let x=-262;x<=262;x+=16)for(let z=-270;z<=274;z+=14){if(inGarden(x,z,-13))continue;if(Math.abs(x)>252||z<-262||z>266)continue;if(Math.abs(x)<10&&z>120)continue;if(rr()<0.4)continue;
   const inT=Math.abs(x)<166&&z>-196&&z<206;const y=inT?height(x,z):0.36;if(inT&&y<0.45)continue;house(x+(rr()-0.5)*3,y,z+(rr()-0.5)*3);}
  // a paved lane from the gate northward through the town
- for(let z=124;z<=214;z+=2.9)box('pave',T(0,0.38,z),5.2,0.1,3,0,0,0,{noCol:1});
+ for(let z=152;z<=214;z+=2.9)box('pave',T(0,0.38,z),5.2,0.1,3,0,0,0,{noCol:1});// 正门在高台上，门外先是白石台矶（PATHS），再接街面
  console.log('town houses',n);}
 // 翠嶂：GLB 模式用 Blender 精模（models/b/cuizhang.wasm，源 blender/cuizhang.blend）。
 // 下面仍照旧消耗随机数（rock() 每次 3 个），保证园中其余随机布置不变。
@@ -1164,7 +1192,24 @@ function buildRockery(){const cz=GLB,burn=()=>{rnd();rnd();rnd();};
  [[-12,95],[8,97],[16,94]].forEach(([x,z],i)=>{const y=height(x,z)+R(3,5);if(!cz){addTree('pine',x,z,0.6,'#3f5a3c',y);return;}
   const ok=!inView(x,z,0)&&!BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5)&&!(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9);
   const [px,pz,pt]=CZ_PINES[i];TREES.pine.push({x:px,y:height(0,96)-0.05+pt,z:pz,s:0.6,ry:ok?rnd()*6.283:i*2.1,tint:'#3f5a3c',plum:false,v:ok?Math.floor(rnd()*2):i%2});treeAdd(px,pz);});
- for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,2)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}}
+ for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,4.4)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
+ // 按原著补的几座山坡陡，满坡撒山石，免得一整面光坡（x, z, 半径 rx, rz, 块数；同 make_layout.py 的 EXTRA_HILLS）
+ for(const [cx,cz,rx,rz,k] of[[-41,85,20,10,26],[30,87,15,10,18],[38,157,16,21,46],[-121,-21,10,11,22]])for(let i=0;i<k;i++){const a=rnd()*6.28,d=R(0.25,0.95),x=cx+Math.cos(a)*rx*d,z=cz+Math.sin(a)*rz*d;if(nearPath(x,z,4.8)||inZone(x,z,1)||!inGarden(x,z,2)||height(x,z)<1.2)continue;const sx=R(1.4,3.8),sy=R(1.2,3.4);rock(x,height(x,z)+sy*0.25,z,sx,sy,R(1.2,2.8),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
+// 第十七回 出洞“两边飞楼插空，雕甍绣槛，皆隐于山坳树杪之间”：沁芳池北岸左右各一座两层阁，灰瓦朱柱，上层一圈栏杆，四周花木半掩
+/* 第十七回“开门只见一带翠嶂挡在前面”，“进入石洞来”：门内只有石洞一条路进园。翠嶂西头到园墙、东头沿东翼山脊到溪水源头，
+   各砌一道叠石、立看不见的挡墙；溪水下游与东墙之间的缺口也补上。东边唯一绕行的是怡红院一路
+  （原著游园出来“由山脚边忽一转，便是平坦宽阔大路，豁然大门前见”）。 */
+const BARRIERS=[[[-19.4,99],[-22,106],[-23.5,113],[-24,121]],[[19.4,99],[30,99.5],[40,97],[46.5,91],[48,85.5]],[[145,108.5],[150.5,109.5]]];
+function buildBarriers(){for(const L of BARRIERS){for(let k=1;k<L.length;k++){const [x0,z0]=L[k-1],[x1,z1]=L[k],len=Math.hypot(x1-x0,z1-z0),ry=Math.atan2(x1-x0,z1-z0),n=Math.ceil(len/1.5);
+  for(let i=0;i<n;i++){const t=(i+0.5)/n,x=mix(x0,x1,t),z=mix(z0,z1,t),g=height(x,z);colAdd({x,z,c:Math.cos(ry),s:Math.sin(ry),hx:0.45,hz:len/n/2+0.08,top:g+5,bot:g-3,walk:false});
+   if(L.length>2&&!nearPath(x,z,3.2)){const sx=R(1.0,1.9),sy=R(1.3,2.6);rock(x+R(-0.4,0.4),g+sy*0.35,z+R(-0.4,0.4),sx,sy,R(0.9,1.6));if(rnd()<0.5){const sy2=R(0.8,1.5);rock(x+R(-1,1),g+sy2*0.3,z+R(-1,1),R(0.6,1.1),sy2,R(0.6,1));}}}}}}
+function buildFeilou(){for(const k of['feilouW','feilouE']){const q=Z[k];if(!q)continue;const M=T(q.x,q.y,q.z,0);
+  hall(M,{w:8,d:6.5,h:4.0,bays:3,base:1.0,roofKey:'roofGrey',roofH:2.0,over:1.4,lift:1.0,lanterns:true});
+  const M2=at(M,0,1.0+4.0+0.9,0);hall(M2,{w:6.4,d:5,h:3.3,bays:3,noBase:true,roofKey:'roofGrey',roofH:2.8,over:1.5,lift:1.7,beasts:3,lanterns:true});
+  const bx=6.4/2+0.9,bz=5/2+0.9;box('wood',M2,2*bx+0.2,0.18,2*bz+0.2,0,-0.05,0,{noCol:1});
+  for(const [x1,z1,x2,z2] of[[-bx,bz,bx,bz],[bx,bz,bx,-bz],[bx,-bz,-bx,-bz],[-bx,-bz,-bx,bz]])balustrade(M2,x1,z1,x2,z2,0.05,'wood');
+  for(let n=0,t=0;n<7&&t<200;t++){const a=rnd()*6.28,r=R(8,13),x=q.x+Math.cos(a)*r,z=q.z+Math.sin(a)*r;if(height(x,z)<0.4||nearPath(x,z,2.5)||!treeOK(x,z,3.5))continue;
+   const sp=rnd()<0.35?'willow':rnd()<0.5?'blossom':'broad';addTree(sp,x,z,R(0.85,1.15),sp==='willow'?'#8fae4e':sp==='blossom'?pick(PINK):pick(GREENS));n++;}}}
 function buildDaguan(){const y=Z.daguan.y,M=T(0,y,-90,0);if(!GLB){
  box('marble',M,48,4.5,24,0,1.5-2.25,0,{ao:(yy)=>0.7+0.3*sstep(-0.5,1.5,yy)});for(let i=0;i<5;i++)box('marble',M,12,1.5*(5-i)/5,0.6,0,1.5*(5-i)/10,12+0.3+i*0.6);
  box('marble',M,1.6,0.9,3.2,-6.8,0.45,13.2);box('marble',M,1.6,0.9,3.2,6.8,0.45,13.2);
@@ -1261,7 +1306,7 @@ function buildOuxiang(){if(GLB){zigzag();return;}const M0=T(40,0,2,Math.PI/2);bo
  hall(at(M0,0,1.05,0),{w:10,d:7,h:3.5,noBase:true,facade:'open',roof:'hip',roofKey:'roofGreen',roofH:2.2,over:1.3,lift:1.1,bays:3,plaque:'藕香榭',pscale:0.72,lanterns:true,gapBack:true,railSides:true});
  zigzag();}
 
-function buildPathStones(){for(let i=0;i<PATH_S.length;i+=3){const p=PATH_S[i],q=PATH_S[Math.min(PATH_S.length-1,i+1)];let tx=q[0]-p[0],tz=q[1]-p[1];const l=Math.hypot(tx,tz)||1;tx/=l;tz/=l;if(rnd()<0.45)continue;const sd=rnd()<0.5?-1:1;const off=1.7+rnd()*0.9;const x=p[0]-tz*off*sd,z=p[1]+tx*off*sd;const h=height(x,z);if(h<0.4||inZone(x,z,0.5))continue;const sx=R(0.22,0.55);rock(x,h+sx*0.25,z,sx,sx*R(0.5,0.9),sx*R(0.7,1.2),pick(['#8a8a80','#9a978c','#7d7c74']));}}
+function buildPathStones(){for(let i=0;i<PATH_S.length;i+=3){const p=PATH_S[i],q=PATH_S[Math.min(PATH_S.length-1,i+1)];let tx=q[0]-p[0],tz=q[1]-p[1];const l=Math.hypot(tx,tz)||1;tx/=l;tz/=l;if(rnd()<0.45)continue;const sd=rnd()<0.5?-1:1;const off=1.7+rnd()*0.9;const x=p[0]-tz*off*sd,z=p[1]+tx*off*sd;const h=height(x,z);if(h<0.4||inZone(x,z,0.5)||nearPath(x,z,1.6))continue;/* 岔口处别压到别的路 */const sx=R(0.22,0.55);rock(x,h+sx*0.25,z,sx,sx*R(0.5,0.9),sx*R(0.7,1.2),pick(['#8a8a80','#9a978c','#7d7c74']));}}
 function buildShore(){
  const ok=(x,z)=>!nearPath(x,z,3.2)&&!inZone(x,z,0.5)&&!nearZig(x,z,4)&&!BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+2.5);
  for(let i=0;i<SHORE.length;i++){const [sx,sz,nx,nz]=SHORE[i];if(rnd()<0.45)continue;const x=sx+nx*(0.9+R(-0.3,0.3)),z=sz+nz*(0.9+R(-0.3,0.3));if(!ok(x,z))continue;
@@ -1274,7 +1319,7 @@ function buildVegetation(){
  const clear=(x,z,r)=>!nearPath(x,z,r);
  for(let i=0,k=0;i<SHORE.length;i+=5){const [sx,sz,nx,nz]=SHORE[i];const x=sx+nx*R(4,6),z=sz+nz*R(4,6);const h=height(x,z);if(h<0.45||h>2.2||inZone(x,z,1)||!clear(x,z,3.2)||!inGarden(x,z,4)||!treeOK(x,z,3.6))continue;k++;if(k%3===2)addTree('blossom',x,z,R(.85,1.05),pick(PINK));else addTree('willow',x,z,R(.9,1.2),pick(['#8fae52','#9db85c','#a3bd62']));}
  if(QINFANG){let n=0,t=0;while(n<14&&t<700){t++;const a=rnd()*6.28,r=R(7,24),x=QINFANG.x+Math.cos(a)*r,z=QINFANG.z+Math.sin(a)*r;if(height(x,z)<0.5||!clear(x,z,2.4)||inZone(x,z,1)||!treeOK(x,z,4))continue;addTree('blossom',x,z,R(.9,1.15),pick(PINK));n++;}}
- for(let b=0,tt=0;b<70&&tt<4000;tt++){const p=PATH_S[Math.floor(rnd()*PATH_S.length)];const a=rnd()*6.28,r=R(2.6,4.5),x=p[0]+Math.cos(a)*r,z=p[1]+Math.sin(a)*r;if(height(x,z)<0.5||inZone(x,z,1)||nearPath(x,z,2.2)||!treeOK(x,z,2.5)||!inGarden(x,z,3))continue;TREES.bush.push({x,y:height(x,z),z,s:R(0.8,1.3),ry:rnd()*6.283,tint:pick(GREENS),v:Math.floor(rnd()*2)});treeAdd(x,z);b++;}
+ for(let b=0,tt=0;b<70&&tt<4000;tt++){const p=PATH_S[Math.floor(rnd()*PATH_S.length)];const a=rnd()*6.28,r=R(2.6,4.5),x=p[0]+Math.cos(a)*r,z=p[1]+Math.sin(a)*r;if(height(x,z)<0.5||inZone(x,z,1)||nearPath(x,z,2.2)||!treeOK(x,z,2.5)||!inGarden(x,z,3)||Math.hypot(x-2.5,z-104)<5)continue;/* 别挡翠嶂镜面白石“曲径通幽” */TREES.bush.push({x,y:height(x,z),z,s:R(0.8,1.3),ry:rnd()*6.283,tint:pick(GREENS),v:Math.floor(rnd()*2)});treeAdd(x,z);b++;}
  const GROVES=[...MOUNDS.map(m=>[m[0],m[1],m[3]*1.1,m[2]>3.8?0.7:0.3]),[-132,-160,14,0.6],[132,-20,14,0.5],[-40,-112,10,0.3],[30,-112,10,0.3],[-138,60,10,0.4],[52,100,12,0.3],[132,160,12,0.4],[-22,76,8,0.2],[44,172,10,0.3]];
  for(const [cx,cz,r,pineP] of GROVES){let n=0,t=0;const want=Math.round(r*r*0.2);while(n<want&&t<900){t++;const a=rnd()*6.28,d=Math.sqrt(rnd())*r,x=cx+Math.cos(a)*d,z=cz+Math.sin(a)*d;const h=height(x,z);if(h<0.5||inZone(x,z,2.5)||!clear(x,z,2.6)||!inGarden(x,z,4)||(Math.abs(x)<24&&z>86&&z<106)||(Math.abs(x+68)<34&&Math.abs(z-94)<30)||!treeOK(x,z,2.7))continue;
    if(rnd()<pineP){if(rnd()<0.3)addTree('bai',x,z,R(.85,1.2),'#3d5a3a');else addTree('pine',x,z,R(.85,1.25),pick(['#3f5a3c','#46613f','#3a5238','#4a6644']));}else addTree('broad',x,z,R(.8,1.2),pick(GREENS));n++;}}
@@ -1340,15 +1385,17 @@ function crownGeo(kind,seed){const rr=mulberry32(seed);const P=[],N=[],U=[],C=[]
    for(let k=0;k<3;k++){const ang=k*Math.PI/3+rr()*0.5;const a1=new V3(Math.cos(ang),0,Math.sin(ang));const a2=new V3(rr()*0.4-0.2,1,rr()*0.4-0.2).normalize();const tilt=new THREE.Quaternion().setFromAxisAngle(new V3(rr()-0.5,0,rr()-0.5).normalize(),rr()*1.2);a1.applyQuaternion(tilt);a2.applyQuaternion(tilt);quad(c,a1,a2,sz,crownC,crownR,L.c,L.r);}}}};
  if(kind==='broad'||kind==='blossom'){const h=kind==='broad'?4.2:2.9,cr=kind==='broad'?2.6:2.0;const cc=new V3(0,h+cr*0.55,0);const lobes=[{c:cc.clone(),r:cr}];const nl=3+Math.floor(rr()*2);for(let i=0;i<nl;i++){const a=i/nl*6.28+rr();lobes.push({c:new V3(Math.cos(a)*cr*0.75,h+cr*(0.2+rr()*0.7),Math.sin(a)*cr*0.75),r:cr*(0.6+rr()*0.2)});}
   clumps(lobes,cc,cr*1.6,kind==='broad'?1.5:1.15,kind==='broad'?4.2:5.5);}
+ else if(kind==='bush'){const h=0.55,cr=1.05;const cc=new V3(0,h+cr*0.5,0);const lobes=[{c:cc.clone(),r:cr,fy:0.75}];const nl=3+Math.floor(rr()*2);for(let i=0;i<nl;i++){const a=i/nl*6.28+rr();lobes.push({c:new V3(Math.cos(a)*cr*0.7,h+cr*(0.15+rr()*0.35),Math.sin(a)*cr*0.7),r:cr*(0.55+rr()*0.2),fy:0.75});}
+  clumps(lobes,cc,cr*1.5,0.95,6.5);}// 灌木：低矮团状（原先缺这一支，远看只剩枝干）
  else if(kind==='pine'){const h=6.5;for(let t=0;t<4;t++){const y=h*0.45+t*1.3,a=rr()*6.28,off=t===3?0:1.2+rr()*0.8;const c=new V3(Math.cos(a)*off,y,Math.sin(a)*off);clumps([{c,r:2.2-t*0.35,fy:0.35}],new V3(0,h,0),3.5,1.4,4.5);}}
  else if(kind==='willow'){const h=4.8,cr=2.2;const cc=new V3(0,h+1.2,0);clumps([{c:cc,r:cr,fy:0.7}],cc,cr*1.5,1.3,3.2);nTop=I.length;
   const nS=60;for(let i=0;i<nS;i++){const a=rr()*6.28,r=0.6+rr()*2.8;const top=new V3(Math.cos(a)*r,h+1.6-r*0.3+rr()*0.6,Math.sin(a)*r);const len=2.4+rr()*2.8*(0.5+r/3.4);const out=new V3(Math.cos(a),0,Math.sin(a));const side=new V3(-Math.sin(a),0,Math.cos(a));
    const base=P.length/3;const segs=4;for(let s=0;s<=segs;s++){const f=s/segs;const c=top.clone().addScaledVector(out,f*0.5).add(new V3(0,-f*len,0));for(const q of[-1,1]){const v=c.clone().addScaledVector(side,q*0.2);P.push(v.x,v.y,v.z);const n=out.clone().multiplyScalar(0.7).add(new V3(0,0.3,0)).normalize();N.push(n.x,n.y,n.z);const ao=mix(0.6,1,1-f*0.5);C.push(ao,ao,ao);U.push(q<0?0:1,1-f);H.push(f);}}
    for(let s=0;s<segs;s++){const a0=base+s*2;I.push(a0,a0+1,a0+3,a0,a0+3,a0+2);}}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('hang',new THREE.Float32BufferAttribute(H,1));g.setIndex(I);if(nTop>=0){g.addGroup(0,nTop,0);g.addGroup(nTop,I.length-nTop,1);}g.computeBoundingSphere();return g;}
-function trunkGeo(kind,seed){const rr=mulberry32(seed+5);const parts=[];const h=kind==='pine'?6.8:kind==='willow'?5.2:kind==='blossom'?3.0:4.4;const r0=kind==='pine'?0.3:kind==='blossom'?0.18:0.28;
+function trunkGeo(kind,seed){const rr=mulberry32(seed+5);const parts=[];const h=kind==='pine'?6.8:kind==='willow'?5.2:kind==='blossom'?3.0:kind==='bush'?0.7:4.4;const r0=kind==='pine'?0.3:kind==='blossom'?0.18:kind==='bush'?0.08:0.28;
  const main=new THREE.CylinderGeometry(r0*0.55,r0,h,8,4);main.translate(0,h/2,0);const p=main.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i);p.setX(i,p.getX(i)+Math.sin(y*0.9+seed)*0.12*(y/h));p.setZ(i,p.getZ(i)+Math.cos(y*0.7+seed)*0.1*(y/h));}main.computeVertexNormals();parts.push(main);
- const nb=kind==='pine'?5:kind==='blossom'?5:4;for(let i=0;i<nb;i++){const a=i/nb*6.28+rr();const len=(kind==='pine'?1.8:1.6)+rr();const b=new THREE.CylinderGeometry(r0*0.18,r0*0.32,len,6);b.translate(0,len/2,0);const q=new THREE.Quaternion().setFromUnitVectors(UP,new V3(Math.cos(a),kind==='pine'?0.25:0.9,Math.sin(a)).normalize());b.applyQuaternion(q);b.translate(0,h*(0.55+rr()*0.35),0);parts.push(b);}
+ const nb=kind==='pine'?5:kind==='blossom'?5:4;for(let i=0;i<nb;i++){const a=i/nb*6.28+rr();const len=kind==='bush'?0.45+rr()*0.35:(kind==='pine'?1.8:1.6)+rr();const b=new THREE.CylinderGeometry(r0*0.18,r0*0.32,len,6);b.translate(0,len/2,0);const q=new THREE.Quaternion().setFromUnitVectors(UP,new V3(Math.cos(a),kind==='pine'?0.25:0.9,Math.sin(a)).normalize());b.applyQuaternion(q);b.translate(0,h*(0.55+rr()*0.35),0);parts.push(b);}
  for(const g of parts){uvScale(g,1,g.parameters?g.parameters.height:1);}
  return mergeGeos(parts.map(g=>{setAO(g,(x,y)=>0.6+0.4*sstep(0,2,y));return g;}));}
 const WILLOW_HANG=`{float hg=hang;float ph2=wpos_.x*0.21+wpos_.z*0.17;float gs=gustAt(wpos_.xz);float kk=pow(hg,1.5);wpos_.x+=(sin(gTime*1.2+ph2)*0.35+gs*gWind*0.9)*kk;wpos_.z+=(cos(gTime*0.9+ph2*1.3)*0.25+gs*gWind*0.35)*kk;}`;
@@ -1444,7 +1491,7 @@ function buildTerrain(){
  const p=g.attributes.position;HG.data=new Float32Array(p.count);
  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);const h=height(x,z);p.setY(i,h);const ix=Math.round(x-HG.x0),iz=Math.round(z-HG.z0);HG.data[iz*HG.nx+ix]=h;}
  g.computeVertexNormals();const nrm=g.attributes.normal;const cols=new Float32Array(p.count*3);
- for(let i=0;i<p.count;i++){const h=p.getY(i);const wet=sstep(0.62,0.12,h);const slope=1-nrm.getY(i);cols[i*3]=wet;cols[i*3+1]=clamp(slope*3,0,1);cols[i*3+2]=sstep(2,9,h);}
+ for(let i=0;i<p.count;i++){const h=p.getY(i);const wet=sstep(0.62,0.12,h);const slope=1-nrm.getY(i);cols[i*3]=wet;cols[i*3+1]=clamp((slope-0.12)*2.2,0,1);/* 坡陡才露石：45° 坡仍以草为主，近 60° 才成石壁（“翠嶂”“青山”） */cols[i*3+2]=sstep(2,9,h);}
  g.setAttribute('color',new THREE.BufferAttribute(cols,3));
  const TU=window.GTU={tGA:{value:null},tGN:{value:null},tSA:{value:null},tRA:{value:null},tRN:{value:null},tReady:{value:0}};
  {const L=new THREE.TextureLoader();let n=0;const need={tGA:['tex/g_a.jpg',1],tGN:['tex/g_n.jpg',0],tSA:['tex/s_a.jpg',1],tRA:['tex/r_a.jpg',1],tRN:['tex/r_n.jpg',0]};
@@ -1487,7 +1534,7 @@ const CAVE=[[-0.9,105],[-0.9,103.2],[-1.06,102.1],[-1.35,101],[-1.91,100],[-2.45
 function inCave(x,z,r){if(Math.abs(x)>8||z<86||z>106)return false;for(let i=1;i<CAVE.length;i++){const [ax,az]=CAVE[i-1],[bx,bz]=CAVE[i],dx=bx-ax,dz=bz-az,t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz)));if(Math.hypot(x-ax-dx*t,z-az-dz*t)<r)return true;}return false;}
 function buildHeightTex(){const nx=HG.nx,nzz=HG.nz;const data=new Uint16Array(nx*nzz*4);
  for(let j=0;j<nzz;j++)for(let i=0;i<nx;i++){const x=HG.x0+i,z=HG.z0+j,h=HG.data[j*nx+i];let d=1;
-  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(inCave(x,z,1.6))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
+  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(inCave(x,z,1.6))d=0;else if(Math.abs(x-8)<6&&z>60&&z<90&&nearStream(x,z,1.5))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
   if(d>0)d*=(0.55+0.45*nz(NOISE.d,x*2,z*2))*sstep(0.28,0.45,h);if(d>0&&h>3)d*=0.7;
   let can=0;{const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l){const dd=Math.hypot(p[0]-x,p[1]-z);can+=Math.max(0,1-dd/5.5);}}can=Math.min(1,can*0.8);}
   if(inZone(x,z,0.5))can=Math.abs(x-Z.xiaoxiang.x)<Z.xiaoxiang.hw&&Math.abs(z-Z.xiaoxiang.z)<Z.xiaoxiang.hd?1:0;d*=1-0.85*can;  // 潇湘馆院内按竹荫下处理：“土地下苍苔布满”
@@ -1612,6 +1659,88 @@ function buildLanterns(){const prof=[];for(let i=0;i<=12;i++){const t=i/12;const
 let plTimer=0;function updatePointLights(){const c=camera.position;const s=LANT.map(p=>[p.distanceToSquared(c),p]).sort((a,b)=>a[0]-b[0]);PL.forEach((l,i)=>{if(s[i]){l.position.copy(s[i][1]);l.position.y-=0.1;}});}
 
 /* particles */
+/* =====================================================================
+   出翠嶂石洞一带（第十七回）：“佳木茏葱，奇花闪灼，一带清流，从花木深处曲折泻于石隙之下”
+   “俯而视之，则清溪泻雪，石磴穿云”——石磴两旁花木、山石，池边垂柳；清溪从翠嶂石缝流出、跌下石坡入池；池谷晨雾
+   ===================================================================== */
+const FX=[];
+// 清溪：翠嶂后口东侧石缝出水，在平地上曲折几弯，顺坡跌下，入沁芳池（终点在水里）
+const CASCADE=[[6,87.2],[8.6,84],[6.4,80.6],[8.2,77.2],[9.8,73],[8.4,69.4],[10.4,66],[11,62]];
+const STREAM_PTS=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal').getSpacedPoints(120);
+function nearStream(x,z,r){for(const p of STREAM_PTS)if((p.x-x)**2+(p.z-z)**2<r*r)return true;return false;}// 溪边不长草
+/* 叠水布局：沿溪每 0.25 米取点；平处水面随地，坡上水面保持一级，地面比水面低出 0.75 米就跌一道水（“泻雪”），下一级从坎下接着走 */
+function cascadeLayout(){if(cascadeLayout.r)return cascadeLayout.r;
+ const cc=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal'),n=Math.ceil(cc.getLength()/0.25),sp=cc.getSpacedPoints(n),pts=[];
+ for(let i=0;i<=n;i++){const p=sp[i],wet=isWet(p.x,p.z);pts.push({x:p.x,z:p.z,h:wet?-0.3:height(p.x,p.z),wet});if(wet)break;}
+ for(let i=0;i<pts.length;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)];let tx=b.x-a.x,tz=b.z-a.z;const l=Math.hypot(tx,tz)||1;pts[i].tx=tx/l;pts[i].tz=tz/l;}
+ const falls=[];let lvl=pts[0].h+0.1;
+ for(let i=0;i<pts.length;i++){const p=pts[i],g=p.wet?0.03:p.h+0.1;if(g>lvl)lvl=g;if(lvl-g>=0.75||(p.wet&&lvl-g>0.2)){falls.push({i,top:lvl,bot:g});lvl=g;}p.lvl=lvl;}
+ return cascadeLayout.r={pts,falls};}
+function buildQinfangScene(){const SH=['#6a8a42','#5b7d3a','#7a9a4c','#4f7034'],FL=[...PINK,...APRICOT,'#f3f0e6'];
+ const bush=(x,z,s,tint)=>{if(nearPath(x,z,1.9)||!treeOK(x,z,1.1)||height(x,z)<0.35)return false;if(nearStream(x,z,2.5))return false;TREES.bush.push({x,y:height(x,z),z,s:s*0.72,ry:rnd()*6.283,tint,fl:FL.includes(tint),v:Math.floor(rnd()*2)});treeAdd(x,z);return true;};
+ // 石磴两旁：灌木、花丛、山石，一路从出洞口铺到池边
+ const ax=new THREE.CatmullRomCurve3([[-0.5,86.4],[-2,81],[-5,75],[-3,67],[0,60]].map(p=>new V3(p[0],0,p[1])),false,'centripetal');
+ const sp=ax.getSpacedPoints(24);
+ for(let i=0;i<sp.length;i++){const a=sp[Math.max(0,i-1)],b=sp[Math.min(sp.length-1,i+1)];let tx=b.x-a.x,tz=b.z-a.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;
+  for(const sd of[-1,1])for(const off of[2.4,3.6,5.2]){const x=sp[i].x-tz*off*sd+R(-0.5,0.5),z=sp[i].z+tx*off*sd+R(-0.5,0.5);bush(x,z,R(0.7,1.15),rnd()<0.42?pick(FL):pick(SH));}
+  if(i%3===1)for(const sd of[-1,1]){const off=R(2.2,3.4),x=sp[i].x-tz*off*sd,z=sp[i].z+tx*off*sd;if(!nearPath(x,z,1.9)){const sx=R(0.8,1.8),sy=R(0.8,1.9);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(0.8,1.6));}}}
+ // 出洞口“佳木茏葱，奇花闪灼”：平地两侧花木；西侧一丛竹
+ for(let i=0;i<46;i++){const x=R(-24,22),z=R(78,88);if(Math.abs(x+1)<3.2)continue;bush(x,z,R(0.75,1.2),rnd()<0.5?pick(FL):pick(SH));}
+ for(let i=0;i<70;i++){const a=rnd()*6.28,d=Math.sqrt(rnd())*3.2,x=-20+Math.cos(a)*d,z=83+Math.sin(a)*d;if(!nearPath(x,z,1.8))bambooAt(x,z);}
+ // 桃杏夹在视线两侧（视线上的会被 addTree 自动跳过）
+ for(let n=0,t=0;n<14&&t<500;t++){const x=R(-30,28),z=R(60,88);if(height(x,z)<0.4||nearPath(x,z,3)||!treeOK(x,z,3.2))continue;addTree('blossom',x,z,R(0.75,1.0),pick(rnd()<0.6?PINK:APRICOT));n++;}
+ // 池边垂柳
+ if(QINFANG)for(let n=0,t=0;n<10&&t<600;t++){const s2=SHORE[Math.floor(rnd()*SHORE.length)];if(Math.hypot(s2[0]-QINFANG.x,s2[1]-QINFANG.z)>34)continue;const x=s2[0]+s2[2]*R(1.2,2.4),z=s2[1]+s2[3]*R(1.2,2.4);if(height(x,z)<0.35||nearPath(x,z,2.2)||!treeOK(x,z,4))continue;addTree('willow',x,z,R(0.85,1.1),pick(['#8fae4e','#9ab85a','#86a648']));n++;}
+ // 清溪：坡上叠水的石砌水槽（水面高出地面处垫石），每道跌水坎口压一块石、两旁夹大石（“泻于石隙之下”）
+ {const {pts,falls}=cascadeLayout();
+  for(let i=0;i<pts.length;i++){const p=pts[i];if(p.wet)break;const lift=p.lvl-p.h;if(lift<0.06||i%1)continue;const ry=Math.atan2(p.tx,p.tz);
+   box('stone',T(p.x,0,p.z,ry),1.9,lift+0.35,0.3,0,p.h-0.35+(lift+0.35)/2-0.04,0,{noCol:1});}
+  for(const f of falls){const p=pts[Math.max(0,f.i-1)];
+   for(const sd of[-1,1]){if(rnd()<0.3)continue;const sx=R(0.35,0.6),sy=R(0.4,0.7),x=p.x-p.tz*(1.55+sx*0.6)*sd,z=p.z+p.tx*(1.55+sx*0.6)*sd;rock(x,Math.max(height(x,z),f.bot)+sy*0.3,z,sx,sy,R(0.35,0.55));}}
+  for(let i=6;i<pts.length;i+=7){const p=pts[i];if(p.wet)break;for(const sd of[-1,1]){if(rnd()<0.5)continue;const sx=R(0.2,0.4),sy=R(0.2,0.35),off=1.45+sx*0.8,x=p.x-p.tz*off*sd,z=p.z+p.tx*off*sd;rock(x,Math.max(height(x,z),p.lvl-0.3)+sy*0.2,z,sx,sy,R(0.2,0.4));}
+   if(rnd()<0.4){const sd=rnd()<0.5?-1:1,off=R(2.6,3.6);bush(p.x-p.tz*off*sd,p.z+p.tx*off*sd,R(0.6,1.0),rnd()<0.5?pick(FL):pick(SH));}}}
+}
+function buildQinfangFX(){
+ // ---- 清溪泻雪：平处清碧水面；坡上一级级小潭，潭口跌下雪白水帘，帘底翻水花、溅水雾
+ const streak=(n,lo,hi,a0,a1)=>{const c=cnv(64,256,(g)=>{g.clearRect(0,0,64,256);for(let i=0;i<n;i++){const x=Math.random()*64,y=Math.random()*256,l=lo+Math.random()*(hi-lo),w=1.5+Math.random()*4;const gr=g.createLinearGradient(0,y,0,y+l);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(0.5,'rgba(255,255,255,'+(a0+Math.random()*(a1-a0))+')');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;for(const [dx,dy] of[[0,0],[-64,0],[0,-256],[0,256]])g.fillRect(x+dx,y+dy,w,l);}});
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t;};
+ const tex=streak(60,18,60,0.25,0.7),texF=streak(260,24,110,0.7,1.0);
+ const {pts,falls}=cascadeLayout(),fallAt=new Set(falls.map(f=>f.i));
+ // 水面（潭与平溪）：每到跌水处断开另起一段
+ const pos=[],uv=[],col=[],idx=[];let acc=0,prev=-1;
+ for(let i=0;i<pts.length;i++){const p=pts[i];if(i>0)acc+=Math.hypot(p.x-pts[i-1].x,p.z-pts[i-1].z);const w=0.72;const lv=fallAt.has(i)?falls.find(f=>f.i===i).bot:p.lvl;
+  const base=pos.length/3;for(const sd of[-1,1]){const x=p.x-p.tz*w*sd,z=p.z+p.tx*w*sd;pos.push(x,Math.max(lv,p.wet?0.03:height(x,z)+0.1),z);uv.push(sd<0?0:1,acc/2.2);let nf=99;for(const f of falls)nf=Math.min(nf,Math.abs(f.i-i));const wh=nf<4?1-nf/4:0;const c0=0.66+0.34*wh;col.push(c0,0.84+0.16*wh,0.86+0.14*wh);}
+  if(prev>=0&&!fallAt.has(i))idx.push(prev,base,prev+1,prev+1,base,base+1);prev=base;if(p.wet)break;}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+ const base=new THREE.Mesh(g,std('#6fa9b0',0.08,{vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.86,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));base.renderOrder=2;base.name='清溪';scene.add(base);
+ const foam=new THREE.Mesh(g,std('#ffffff',0.5,{map:tex,vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.9,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3}));foam.renderOrder=3;scene.add(foam);
+ // 水帘：从潭口外探一点再落下，帘面雪白、纹理快速下泻
+ const fp=[],fu=[],fi=[];
+ for(const f of falls){const a=pts[Math.max(0,f.i-1)],tx=a.tx,tz=a.tz,drop=f.top-f.bot,R0=7;
+  for(let r=0;r<=R0;r++){const t=r/R0,fw=0.1+0.2*t+0.1*t*t,y=f.top-drop*t,wd=0.62+0.12*t;const b0=fp.length/3;
+   for(const sd of[-1,1])fp.push(a.x+tx*fw-tz*wd*sd,y,a.z+tz*fw+tx*wd*sd),fu.push(sd<0?0:1,t*drop/0.7);
+   if(r>0)fi.push(b0-2,b0,b0-1,b0-1,b0,b0+1);}}
+ const gf=new THREE.BufferGeometry();gf.setAttribute('position',new THREE.Float32BufferAttribute(fp,3));gf.setAttribute('uv',new THREE.Float32BufferAttribute(fu,2));gf.setIndex(fi);gf.computeVertexNormals();
+ const curtainB=new THREE.Mesh(gf,std('#f4fbfb',0.35,{side:THREE.DoubleSide,transparent:true,opacity:0.88,depthWrite:false,emissive:new THREE.Color('#4a5252')}));curtainB.renderOrder=3;scene.add(curtainB);
+ const curtain=new THREE.Mesh(gf,std('#ffffff',0.6,{map:texF,side:THREE.DoubleSide,transparent:true,opacity:1,depthWrite:false,emissive:new THREE.Color('#5a6464')}));curtain.renderOrder=4;scene.add(curtain);
+ // 帘底水花（白沫圈）与溅起的水雾
+ const sp0=cnv(128,128,(g2)=>{const gr=g2.createRadialGradient(64,64,4,64,64,62);gr.addColorStop(0,'rgba(255,255,255,0.95)');gr.addColorStop(0.45,'rgba(255,255,255,0.4)');gr.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=gr;g2.fillRect(0,0,128,128);});const stx=new THREE.CanvasTexture(sp0);
+ const sm=[],spray=[];
+ for(const f of falls){const a=pts[Math.max(0,f.i-1)],x=a.x+a.tx*0.62,z=a.z+a.tz*0.62;
+  for(let k=0;k<2;k++){const mm=new THREE.Mesh(new THREE.CircleGeometry(0.8,24).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:stx,transparent:true,depthWrite:false,opacity:0.85}));mm.position.set(x,f.bot+0.03+k*0.004,z);mm.renderOrder=4;mm.userData.ph=k*0.5+f.i*0.13;scene.add(mm);sm.push(mm);}
+  for(let k=0;k<5;k++){const s2=new THREE.Sprite(new THREE.SpriteMaterial({map:stx,transparent:true,depthWrite:false,opacity:0}));s2.userData={x,z,y:f.bot,ph:Math.random(),dx:(Math.random()-0.5)*0.8,dz:(Math.random()-0.5)*0.8};s2.renderOrder=5;scene.add(s2);spray.push(s2);}}
+ // ---- 池谷晨雾：低处的软雾团，清晨最浓、白天淡淡一层，人走近了就散开
+ const mt=cnv(256,256,(g2)=>{for(let i=0;i<26;i++){const x=40+Math.random()*176,y=70+Math.random()*116,r=30+Math.random()*60;const gr=g2.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(255,255,255,0.22)');gr.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=gr;g2.fillRect(0,0,256,256);}});
+ const mtx=new THREE.CanvasTexture(mt);mtx.colorSpace=THREE.SRGBColorSpace;const mist=[];const rr=mulberry32(4242);
+ const cx=QINFANG?QINFANG.x:0,cz=QINFANG?QINFANG.z:50;
+ for(let k=0;k<22;k++){const x=cx+(rr()-0.5)*64,z=cz+4+rr()*30,s=9+rr()*10;const y=Math.max(0,height(x,z))+0.8+rr()*2.2;const sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:mtx,transparent:true,depthWrite:false,opacity:0,fog:false}));sp2.scale.set(s*1.6,s*0.55,1);sp2.position.set(x,y,z);sp2.userData={x,z,y,ph:rr()*6.28,sp:0.15+rr()*0.25};sp2.renderOrder=4;scene.add(sp2);mist.push(sp2);}
+ FX.push((dt,et)=>{tex.offset.y-=dt*1.4;texF.offset.y-=dt*3.2;
+  for(const mm of sm){const t=(et*0.9+mm.userData.ph)%1;mm.scale.setScalar(0.7+t*1.2);mm.material.opacity=0.9*(1-t);}
+  for(const s2 of spray){const u=s2.userData,t=(et*0.7+u.ph)%1;s2.position.set(u.x+u.dx*t,u.y+0.15+t*0.9,u.z+u.dz*t);s2.scale.setScalar(0.5+t*1.7);s2.material.opacity=0.6*Math.sin(Math.PI*t);}
+  const morn=sstep(4.5,6.0,hour)*(1-sstep(8.5,11,hour)),eve=sstep(17.5,19,hour)*(1-sstep(21,23,hour));const dens=(0.2+0.62*morn+0.3*eve)*(1-snowAmt*0.5);const lum=0.35+0.65*(1-night);
+  for(const sp2 of mist){const u=sp2.userData;sp2.position.x=u.x+Math.sin(et*0.05*u.sp*6+u.ph)*3;sp2.position.z=u.z+Math.cos(et*0.04*u.sp*6+u.ph)*1.5;const d=sp2.position.distanceTo(camera.position);
+   sp2.material.opacity=dens*sstep(5,14,d)*(0.75+0.25*Math.sin(et*0.2+u.ph));sp2.material.color.setScalar(lum);}});
+}
 let petals=null,fireflies=null,snowP=null,motes=null;const BIRDS=[];
 function buildParticles(){
  {const cx=QINFANG?QINFANG.x:0,cz=QINFANG?QINFANG.z:50,n=500,pos=new Float32Array(n*3),vel=[];for(let i=0;i<n;i++){pos[i*3]=cx+R(-30,30);pos[i*3+1]=Math.random()*12;pos[i*3+2]=cz+R(-26,26);vel.push(0.3+Math.random()*0.5);}
@@ -1897,7 +2026,7 @@ const AUTUMN=['#c2461f','#d8762a','#e3b03c','#a0361a','#bb8a2c','#86913a','#cf5a
 function crownLook(kind,t,ss){const h=hash3(t.x,t.z,7);
  if(kind==='pine'||kind==='gui'||kind==='bai')return [1,ss===3?'#50684a':t.tint];
  if(kind==='willow')return [[1,1,0.95,0][ss],['#b3cf62','#86a84c','#cdb85a','#000'][ss]];
- if(kind==='bush')return [[1,1,1,0][ss],['#9ec25a','#6f9444','#b86a2c','#000'][ss]];
+ if(kind==='bush')return [[1,1,1,0][ss],t.fl&&ss<2?t.tint:['#9ec25a','#6f9444','#b86a2c','#000'][ss]];// fl：开花灌木，春夏显花色
  if(kind==='broad')return [[1,1,1,0][ss],ss===0?new THREE.Color(t.tint).lerp(new THREE.Color('#b9d97a'),0.45).getStyle():ss===1?new THREE.Color(t.tint).lerp(new THREE.Color('#8fb04e'),0.25).getStyle():ss===2?AUTUMN[Math.floor(h*AUTUMN.length)]:'#000'];
  if(t.plum)return [1,ss===3?t.tint:ss===2?'#b9772f':ss===1?'#5f8a3e':'#86a855'];
  return [[1,1,0.95,0][ss],ss===0?t.tint:ss===1?'#62903f':'#c07e34'];}
@@ -1978,6 +2107,7 @@ function frame(){
  if(night>0.05){const a=fireflies.geometry.attributes.position,b=fireflies.userData.base;for(let i=0;i<b.length;i++)a.setXYZ(i,b[i][0]+Math.sin(et*0.6+i)*1.2,b[i][1]+Math.sin(et*0.9+i*2.1)*0.5,b[i][2]+Math.cos(et*0.5+i*1.3)*1.2);a.needsUpdate=true;}
  if(snowP.visible){snowP.material.opacity=0.9*snowAmt;const a=snowP.geometry.attributes.position,cx=camera.position.x,cz=camera.position.z;for(let i=0;i<a.count;i++){let y=a.getY(i)-1.5*dt,x=a.getX(i)+(Math.sin(et*0.5+i)*0.4+A.gust*0.8)*dt,z=a.getZ(i);if(y<0||Math.abs(x-cx)>90||Math.abs(z-cz)>90){y=camera.position.y+R(-10,45);x=cx+R(-90,90);z=cz+R(-90,90);}a.setXYZ(i,x,y,z);}a.needsUpdate=true;}
  const dayv=1-night;for(const b of BIRDS){const u=b.userData;u.ph+=dt*u.sp;b.visible=dayv>0.3&&snowAmt<0.5;b.position.set(u.cx+Math.cos(u.ph)*u.rad,u.h+Math.sin(u.ph*2.3)*2,u.cz+Math.sin(u.ph)*u.rad);b.rotation.y=-u.ph+(u.sp>0?0:Math.PI)+Math.PI;const f=Math.sin(et*9+u.ph*10)*0.7;u.l.rotation.z=f;u.r.rotation.z=-f;}
+ for(const f of FX)f(dt,et);
  if(FLAG)FLAG.rotation.y=Math.PI/2+Math.sin(et*1.3)*(0.1+A.gust*0.25);
  for(const l of BANLEAVES)l.rotation.x=l.userData.bx+Math.sin(et*1.2+l.userData.ph)*(0.03+A.gust*0.08);
  // camera
@@ -2010,10 +2140,10 @@ function frame(){
    ===================================================================== */
 /* 园路：tools/layout/paths.json（python3 tools/layout/check_paths.py 检查跨水与穿院）。跨水处自动架桥，bridges 依次指定桥型 */
 const PATHS=[
- {pts:[[0,113],[-14,108],[-26,100],[-28,88],[-18,76],[-6,68],[0,60],[0,44],[0,32],[0,14],[0,-4],[0,-20],[0,-37]],w:3,bridges:['qinfang','arch'],lamps:true}, // 中轴
- {pts:[[-26,100],[-40,96],[-52,94]],w:2.4}, // 潇湘馆
+ {pts:[[0,113],[-0.9,108],[-0.9,105.6],[-0.9,103.2],[-1.35,101],[-2.45,99],[-2.7,97.2],[-2.05,95.5],[-1.05,94],[-0.55,92.4],[-0.5,90.5],[-0.5,86.4],[-2,81],[-5,75],[-3,67],[0,60],[0,44],[0,32],[0,14],[0,-4],[0,-20],[0,-37]],w:3,bridges:['qinfang','arch'],lamps:true,rail:true}, // 中轴
+ {pts:[[-3,66.5],[-14,69],[-28,70],[-40,71],[-48,73],[-50.5,80],[-51,88],[-51.5,93.5],[-53,94]],w:2.4}, // 潇湘馆
  {pts:[[0,113],[14,110],[30,112],[44,120],[56,138],[66,156],[76,158.5],[83,158.5]],w:2.6,lamps:true}, // 怡红院
- {pts:[[30,112],[36,98],[42,84],[44,70],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4}, // 东路·栊翠庵
+ {pts:[[56,138],[60,124],[62,110],[60,98],[57,88],[52,78],[46,68],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4}, // 东路·栊翠庵
  {pts:[[50,40],[62,26],[82,18],[100,8],[114,-12],[118,-40],[118,-70],[110,-92],[96,-100],[86,-94]],w:2.2}, // 东路·凹晶馆
  {pts:[[-30,34],[-56,37],[-72,36],[-86,36],[-100,35],[-108,28],[-109,14],[-108,2],[-118,0]],w:2.2}, // 西路·芦雪广
  {pts:[[-48,-40],[-46,-90],[-40,-112],[-20,-120],[20,-120],[44,-110],[50,-80],[48,-40]],w:2.2}, // 大观楼后
@@ -2025,19 +2155,20 @@ const PATHS=[
  {pts:[[-70,-124],[-54,-122],[-40,-112]],w:2.2}, // 蘅芜苑东
  {pts:[[0,-20],[24,-22],[46,-14],[60,-4],[76,6],[82,18]],w:2.4}, // 沁芳闸
  {pts:[[-86,36],[-86,33.5]],w:2.2}, // 秋爽斋门
- {pts:[[-108.5,24],[-111.5,21]],w:2} // 荇叶渚
+ {pts:[[-108.5,24],[-111.5,21]],w:2}, // 荇叶渚
+ {pts:[[0,151],[0,126]],w:5.2,rail:true} // 正门外白石台矶
 ];
 const tick=(msg)=>new Promise(r=>{loadStep.textContent=tr(msg);requestAnimationFrame(()=>setTimeout(r,0));});
 async function build(){
  await tick('堆山凿池');prepPaths();prepViews();buildTerrain();buildWater();
- await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);
+ await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);pondRail();
  await tick('起楼阁，砌粉墙');buildGate();buildRockery();try{buildTown();}catch(e){console.warn('town',e);}buildDaguan();buildYihong();
  await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();buildDaoxiang();buildLongcui();buildOuxiang();
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
- await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
+ await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildBarriers();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}try{buildCrops();}catch(e){console.warn('crops',e);}try{buildBeds();}catch(e){console.warn('beds',e);}
- await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();
+ await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
