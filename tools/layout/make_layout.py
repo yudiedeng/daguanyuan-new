@@ -4,7 +4,7 @@
   ref_water.png / ref_hill.png  参考平面图（1080×1439 像素）上按颜色描出的水面、山形
   换算：x = (px-575)*K，z = 120 + (py-1020)*K，K = 0.411 米/像素（正门 = (0,120)）
   输出 tex/layout.png：1 米一格，x -170..170（341 列），z -200..210（411 行）
-    R = 水深权重（0 = 岸上，255 = 深水），G = 山高（0..255 → 0..12 米），B = 园内标记
+    R = 水深权重（0 = 岸上，255 = 深水），G = 山高（0..255 → 0..24 米），B = 园内标记
 用法：python3 tools/layout/make_layout.py
 """
 import json, os
@@ -15,7 +15,7 @@ from scipy import ndimage as nd
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 K = 0.411
 X0, Z0, NX, NZ = -170, -200, 341, 411
-HILL_MAX = 12.0
+HILL_MAX = 24.0          # layout.png 里 G 通道的满量程（米）；网页端、check_paths.py 按同一数换算
 
 xs = X0 + np.arange(NX); zs = Z0 + np.arange(NZ)
 XX, ZZ = np.meshgrid(xs, zs)          # [row=z, col=x]
@@ -57,29 +57,32 @@ for s in SITES:
 din = nd.distance_transform_edt(water); dout = nd.distance_transform_edt(~water)
 sd = np.where(water, din, -dout)
 W = np.clip((sd + 1.0) / 3.0, 0, 1)
-# 山：参考图画的是等高线，先把每座山填实，再按离山脚的距离起坡；山越大越高
+# 山：参考图画的是等高线，先把每座山填实，再按离山脚的距离起坡；山越大越高。
+# 园里大树十几米高，山要比树高出一截才像山，不像土坡：山脚陡、山顶圆（指数 < 1）
 hb = nd.binary_closing(hill > 40, iterations=3); hb = nd.binary_fill_holes(hb) & ~water
 lab, n = nd.label(hb); Hs = np.zeros_like(hill)
 for i in range(1, n + 1):
     reg = lab == i; area = reg.sum()
     if area < 120: continue
-    d = nd.distance_transform_edt(reg); peak = float(np.clip(np.sqrt(area) / 7, 2.5, HILL_MAX))
-    Hs = np.maximum(Hs, peak * np.power(np.clip(d / max(d.max(), 1), 0, 1), 0.75))
+    d = nd.distance_transform_edt(reg); peak = float(np.clip(np.sqrt(area) / 5, 4.0, 16.0))
+    Hs = np.maximum(Hs, peak * np.power(np.clip(d / max(d.max(), 1), 0, 1), 0.6))
 # 参考图上贴着园墙、等高线没闭合的山，直接按位置补：中心 x, z，半径 rx, rz，高（米）
-EXTRA_HILLS = [(-12, -153, 52, 20, 10.0),
+EXTRA_HILLS = [(-12, -153, 52, 20, 15.0),
 # 以下按原著补的山（院落占地 + 8 米过渡带内会被网页端压平，所以都放在占地之外）
 # 第十七回 进门“只见一带翠嶂挡在前面”：翠嶂石山（模型在 x ±20）两翼接土山，连成一带；
-#   中轴园路从西翼翻过去，到山脊上“俯而视之”，往北正好望见沁芳亭、石桥
-    (-33, 88, 19, 11, 7.5), (33, 88, 19, 10, 6.5),
+#   中轴园路从石山与西翼之间的山坳穿过（“其中微露羊肠小径”），坳口上“俯而视之”，往北正好望见沁芳亭、石桥
+    (-41, 85, 20, 10, 11.0), (36, 87, 18, 10, 10.0),
 # 第十七回 出怡红院往回走“忽见大山阻路，众人都道迷了路了”，“由山脚边忽一转”就是大门前大路
-    (38, 157, 16, 21, 10.5),
+    (38, 157, 16, 21, 19.0),
 # 第十七回 往稻香村“倏尔青山斜阻，转过山怀中，隐隐露出一带黄泥筑就矮墙”；
 #   第四十九回 芦雪广“就在傍山临水河滩之上”：两处之间这座山，园路从山脚东边绕过去
-    (-121, -21, 10, 11, 7.0)]
+    (-121, -21, 10, 11, 12.0)]
+# 山势起伏：几组正弦叠出的低频扰动，让山脊有峰有坳，不是光滑的馒头
+RUG = 0.82 + 0.18 * (0.5 + 0.5 * np.sin(XX * 0.21 + np.cos(ZZ * 0.17) * 2.0) * np.cos(ZZ * 0.23 - XX * 0.07))
 for cx, cz, rx, rz, pk in EXTRA_HILLS:
     e = np.hypot((XX - cx) / rx, (ZZ - cz) / rz)
-    Hs = np.maximum(Hs, pk * np.clip(1 - e, 0, 1) ** 0.8 * garden)
-H = nd.gaussian_filter(Hs, 2.0) * np.clip((-sd - 1) / 4, 0, 1)
+    Hs = np.maximum(Hs, pk * np.clip(1 - e, 0, 1) ** 0.6 * RUG * garden)
+H = nd.gaussian_filter(Hs, 1.5) * np.clip((-sd - 1) / 4, 0, 1)
 
 img = np.zeros((NZ, NX, 3), np.uint8)
 img[..., 0] = np.round(W * 255); img[..., 1] = np.round(H / HILL_MAX * 255); img[..., 2] = garden * 255

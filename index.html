@@ -273,10 +273,10 @@ function hash3(a,b,c){const s=Math.sin(a*12.9898+b*78.233+c*37.719)*43758.5453;r
 function curve(pts,n){const c=new THREE.CatmullRomCurve3(pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');return c.getSpacedPoints(n).map(v=>[v.x,v.z]);}
 function distPoly(P,x,z){let b=1e18;for(let i=0;i<P.length-1;i++){const ax=P[i][0],az=P[i][1],vx=P[i+1][0]-ax,vz=P[i+1][1]-az;const t=clamp(((x-ax)*vx+(z-az)*vz)/(vx*vx+vz*vz||1),0,1);const dx=x-ax-vx*t,dz=z-az-vz*t;const d=dx*dx+dz*dz;if(d<b)b=d;}return Math.sqrt(b);}
 /* ---- 园子布局：水面、山形按参考平面图描出（tools/layout/make_layout.py → tex/layout.png，1 米一格）
-   R = 水深权重，G = 山高（0..12 米），B = 园内。园墙：主体 x -150..150、z -180..120，东南怡红院一块 x 20.6..150、z 120..190。 ---- */
+   R = 水深权重，G = 山高（0..24 米），B = 园内。园墙：主体 x -150..150、z -180..120，东南怡红院一块 x 20.6..150、z 120..190。 ---- */
 const LAY=await(async()=>{const img=new Image();img.src='tex/layout.png';await img.decode();const nx=img.width,nz=img.height,c=document.createElement('canvas');c.width=nx;c.height=nz;
  const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);const d=g.getImageData(0,0,nx,nz).data,w=new Float32Array(nx*nz),h=new Float32Array(nx*nz);
- for(let i=0;i<nx*nz;i++){w[i]=d[i*4]/255;h[i]=d[i*4+1]/255*12;}return {x0:-170,z0:-200,nx,nz,w,h};})();
+ for(let i=0;i<nx*nz;i++){w[i]=d[i*4]/255;h[i]=d[i*4+1]/255*24;}return {x0:-170,z0:-200,nx,nz,w,h};})();
 function layAt(a,x,z){const fx=clamp(x-LAY.x0,0,LAY.nx-1.001),fz=clamp(z-LAY.z0,0,LAY.nz-1.001),ix=fx|0,iz=fz|0,tx=fx-ix,tz=fz-iz,n=LAY.nx;
  return mix(mix(a[iz*n+ix],a[iz*n+ix+1],tx),mix(a[(iz+1)*n+ix],a[(iz+1)*n+ix+1],tx),tz);}
 const isWet=(x,z)=>layAt(LAY.w,x,z)>0.37;
@@ -285,7 +285,7 @@ function inGarden(x,z,m=0){return (Math.abs(x)<=150-m&&z>=-180+m&&z<=120-m)||(x>
 const SHORE=[];for(let z=-178;z<=188;z+=2)for(let x=-148;x<=148;x+=2){if(!isWet(x,z))continue;let nx=0,nz=0;for(const [a,b] of[[2,0],[-2,0],[0,2],[0,-2]])if(!isWet(x+a,z+b)){nx+=a;nz+=b;}const l=Math.hypot(nx,nz);if(l>0)SHORE.push([x,z,nx/l,nz/l]);}
 /* 山：给布石、种树用的山头（x, z, 高, 半径） */
 const MOUNDS=[[-12,-153,10,22],[80,-129,8,16],[128,-80,6,12],[66,70,5,12],[96,96,4,10],[-112,88,3,8],
- [-33,88,6,12],[33,88,5,11],[38,157,8,14],[-121,-21,5,9]];// 后四座按原著补：翠嶂两翼、“大山阻路”、稻香村前“青山斜阻”（见 tools/layout/make_layout.py）
+ [-41,85,9,12],[36,87,8,11],[38,157,14,14],[-121,-21,9,9]];// 后四座按原著补：翠嶂两翼、“大山阻路”、稻香村前“青山斜阻”（见 tools/layout/make_layout.py）
 function natural(x,z){
  let h=0.6+0.16*Math.sin(x*0.045+1.3)*Math.cos(z*0.05-0.4)+0.08*Math.sin(x*0.13+z*0.11);
  h+=layAt(LAY.h,x,z);
@@ -1089,7 +1089,9 @@ const treeHash=new Map();
 function treeOK(x,z,r){const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<r*r)return false;}return true;}
 function treeAdd(x,z){const k=Math.floor(x/5)+','+Math.floor(z/5);(treeHash.get(k)||treeHash.set(k,[]).get(k)).push([x,z]);}
 const VIEWSEG=[],VIEWSEG_NEW=[];const NEW_PLACES=new Set(['luxue','tubi','aojing','qiushuang','xingye']);// 新景点的取景线单独放：不参与布树时的提前跳过（那会改变随机数），改为种完后隐藏
-function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c,t=p.view.t;(NEW_PLACES.has(p.id)?VIEWSEG_NEW:VIEWSEG).push([c[0],c[2],t[0],t[2],p.id==='all'?0:7]);}}
+function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c,t=p.view.t;(NEW_PLACES.has(p.id)?VIEWSEG_NEW:VIEWSEG).push([c[0],c[2],t[0],t[2],p.id==='all'?0:7]);}
+ // 第十七回 出翠嶂“俯而视之，则清溪泻雪，石磴穿云……桥上有亭”：中轴园路翻过翠嶂西翼，山脊上往北望沁芳亭的视线不种树
+ VIEWSEG.push([-33,97,2,44,7]);}
 function inView(x,z,extra,segs){for(const v of segs||VIEWSEG){if(!v[4])continue;const dx=v[2]-v[0],dz=v[3]-v[1],L2=dx*dx+dz*dz;let u=((x-v[0])*dx+(z-v[1])*dz)/L2;if(u<0.15||u>0.92)continue;const px=v[0]+dx*u,pz=v[1]+dz*u;const r=v[4]+(extra||0);if((px-x)**2+(pz-z)**2<r*r)return true;}return false;}
 // 新景点（芦雪广、凹晶馆、凸碧山庄）占地：x, z, 半宽, 半深
 const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9]]:[];
