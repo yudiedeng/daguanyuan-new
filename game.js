@@ -264,7 +264,7 @@ const dockLang = () => { dockBtn.textContent = L('入园', 'Play'); dockBtn.titl
 const placeById = id => PLACES.find(p => p.id === id);
 function spawnOf(id) { const p = placeById(id); if (p.spawn) return p.spawn; return [p.pos[0] + 6, p.pos[2] + 10, 0]; }
 /* 落脚面：只认离地形 3 m 以内的面（地坪、台基、桥），不把屋顶当地面，这样寻路能进屋 */
-function okAt(x, z) { const [g, fromT] = groundAt(x, z, D.hq ? D.hq(x, z) + 3 : 99); if (fromT && g < 0.25) return null; if (blockedAt(x, g + 1.0, z) || blockedAt(x, g + 0.4, z)) return null; return g; }
+function okAt(x, z) { const [g, fromT] = groundAt(x, z, D.hq ? Math.max(D.hq(x, z), 0) + 3.6 : 99); if (fromT && g < 0.25) return null; if (blockedAt(x, g + 1.0, z) || blockedAt(x, g + 0.4, z)) return null; return g; }
 const anchorCache = {};
 /* 从出生点做一次可达搜索（0.5 米网格，考虑台阶高差与碰撞），取离建筑中心最近、四周留有余地的一格 */
 function reachable(sx, sz, R = 34) {
@@ -765,7 +765,9 @@ const CH17 = {
                       ['', '', '你只得随往。贾政先秉正看门：正门五间，桶瓦泥鳅脊；门栏窗槅皆是细雕新鲜花样，并无朱粉涂饰；一色水磨群墙，下面白石台矶；左右一望，皆雪白粉墙，下面虎皮石随势砌去。', 'You have no choice but to follow. Your father first stands back to look at the gate: five bays, a rounded tiled ridge; doors and lattices carved in fresh patterns, with no red or white paint; walls of ground brick on white stone steps; and on either side, white-plastered walls on tiger-skin stone, running with the lie of the land.'],
                       ['贾政', 'Jia Zheng', '不落富丽俗套。进去罢。', 'Not the usual vulgar opulence. Let us go in.']], btn: ['跟着进园', 'Follow him in'] }] },
     { tip: '一进门，迎面一带翠嶂挡住了园景。跟着老爷走过去。', tipEn: 'Just inside, a green screen of rockwork blocks the view. Follow your father there.',
-      label: '题翠嶂', labelEn: 'Name the rock screen', place: 'rock', npcs: tour('rock'),
+      label: '题翠嶂', labelEn: 'Name the rock screen', place: 'rock',
+      // 站在翠嶂南面「镜面白石」（曲径通幽匾）前
+      npcs: [{ ...ZHENG, at: () => [0.6, 105.4], look: [2.5, 102.2], guide: true }, { ...KE1, at: () => [2.6, 106.2], look: [2.5, 102.2] }, { ...KE2, at: () => [-1.3, 106.0], look: [2.5, 102.2] }],
       pages: [{ say: [['贾政', 'Jia Zheng', '非此一山，一进来园中所有之景悉入目中，则有何趣？诸公看此处题以何名方妙？', 'Without this hill, the whole garden would be seen the moment one entered — where would be the charm? Gentlemen, what shall we inscribe here?'],
                       ['清客', 'A guest', '也有说该题“叠翠”二字，也有说该题“锦嶂”的，又有说“赛香炉”的，又有说“小终南”的。', 'Some propose “Piled Green”, others “Brocade Screen”, others “Rival of Incense-Burner Peak”, others again “Little Zhongnan”.'],
                       ['贾政', 'Jia Zheng', '宝玉，你也拟来。', 'Baoyu — you propose one too.']], btn: ['想一想', 'Think'] },
@@ -917,7 +919,7 @@ function storyWorld() {
     const dest = v.clone(); let leadFrom = null;
     if (n.guide && S.lastNpc && S.lastNpc.who === n.who) { leadFrom = S.lastNpc.pos; v = new V3(leadFrom[0], standY(leadFrom[0], leadFrom[1]), leadFrom[1]); }
     const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male, !!n.sit), v, face);
-    if (leadFrom && !startGuide(f, leadFrom[0], leadFrom[1], dest.x, dest.z, true)) f.position.copy(dest);
+    if (leadFrom && !startGuide(f, leadFrom[0], leadFrom[1], dest.x, dest.z, true, typeof n.via === 'function' ? n.via() : n.via)) f.position.copy(dest);
     if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
     if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: leadFrom ? f.position : v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
     addTag(() => T(n, 'who'), f, 2.15 * walk.s, i === 0);
@@ -1039,8 +1041,11 @@ function findPath(ax, az, bx, bz, maxNodes = 400000) {
     if (u && u < m && Math.min(Math.hypot(x - p[0], z - p[1]), Math.hypot(x - q[0], z - q[1])) > 2.5 && lawn(...toI(x, z))) return false; } return true; };
   const out = [pts[0]]; let i = 0; while (i < pts.length - 1) { let j = pts.length - 1; while (j > i + 1 && !los(pts[i], pts[j])) j--; out.push(pts[j]); i = j; } return out;
 }
-function startGuide(fig, ax, az, bx, bz, faceTo) {
-  const path = findPath(ax, az, bx, bz); guide = path && path.length > 1 ? { fig, path, i: 1, faceTo } : null; return !!guide;
+function startGuide(fig, ax, az, bx, bz, faceTo, via) {   // via：途经点（如穿山洞），逐段寻路再接起来
+  const pts = [[ax, az], ...(via || []), [bx, bz]]; let path = [];
+  for (let k = 1; k < pts.length; k++) { const seg = findPath(pts[k - 1][0], pts[k - 1][1], pts[k][0], pts[k][1]); if (!seg || seg.length < 2) { path = null; break; } path.push(...(k > 1 ? seg.slice(1) : seg)); }
+  if (!path && via) path = findPath(ax, az, bx, bz);
+  guide = path && path.length > 1 ? { fig, path, i: 1, faceTo } : null; return !!guide;
 }
 function followGuide(dt) {
   const G = guide; if (!G || !G.fig.parent) return; const f = G.fig, p = walk.pos, x = f.position.x, z = f.position.z;
