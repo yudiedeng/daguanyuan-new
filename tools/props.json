@@ -51,5 +51,35 @@
   "prompt": "antique Chinese hanging parrot perch stand: a brass hook and ring at the top, a vertical brass rod, a horizontal T-shaped wooden perch bar with two small blue and white porcelain food cups at its ends, a green parakeet with a red beak sitting on the bar, Qing dynasty, isolated object",
   "faces": 8000,
   "neg": "cage, ground plane, base, pedestal, table, text, low quality"
+ },
+ "niaolong": {
+  "prompt": "antique Chinese hanging bird cage, round domed bamboo cage with thin vertical bamboo bars, brass hook on top, small blue and white porcelain water cup inside, a small colorful songbird on a perch, Qing dynasty, isolated object",
+  "faces": 8000,
+  "neg": "ground plane, base, pedestal, table, stand, text, low quality"
+ },
+ "niaolong2": {
+  "prompt": "antique Chinese hanging bird cage, square cage with red lacquered wooden frame and thin brass bars, gilded roof-shaped top with a hook, a small yellow bird inside on a perch, Qing dynasty palace, isolated object",
+  "faces": 8000,
+  "neg": "ground plane, base, pedestal, table, stand, text, low quality"
+ },
+ "xianhe": {
+  "prompt": "a red-crowned crane standing on one leg preening its feathers, white body, black neck and tail feathers, red crown patch, long thin legs, realistic bird",
+  "faces": 8000,
+  "neg": "ground plane, base, pedestal, rock, water, text, low quality"
+ },
+ "xianhe2": {
+  "prompt": "a red-crowned crane standing upright with its neck raised, white body, black neck and black tail feathers, red crown patch on head, long thin dark legs, realistic bird",
+  "faces": 8000,
+  "neg": "ground plane, base, pedestal, rock, water, text, low quality"
+ },
+ "yuedongmen": {
+  "prompt": "Chinese garden flowering fence screen woven from bamboo poles and lattice, with a large circular moon gate opening in the middle, covered with climbing vines of small pink flowers and green leaves, freestanding wide fence panel, flat front",
+  "faces": 14000,
+  "neg": "wall, roof, building, ground plane, base, text, low quality"
+ },
+ "huacong_mudan": {
+  "prompt": "a Chinese tree peony shrub in full bloom, several large deep red and pink double peony flowers, broad green leaves, garden plant, realistic",
+  "faces": 12000,
+  "neg": "pot, vase, planter, ground plane, base, text, low quality"
  }
 }
