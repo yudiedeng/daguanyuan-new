@@ -1,15 +1,22 @@
 """Blender 离线预览：用 Workbench 引擎（CPU 可跑）从指定机位渲染 .blend / .glb，检查门、陈设、座位等。
-用法：python3 tools/bl_render.py <in.blend|in.glb> <outdir> '<json 机位列表>' [hide_roof=1]
+用法：python3 tools/bl_render.py <in.blend|in.glb>[,<另一个.blend>] <outdir> '<json 机位列表>' [hide_roof=1]
 机位：[{"name":"a","loc":[x,y,z],"look":[x,y,z],"lens":24}]（Blender 坐标：网页 x→X，网页 z→−Y，网页 y→Z）
 """
 import bpy, sys, json, os, re, math
 from mathutils import Vector
 src, outdir, cams = sys.argv[-4], sys.argv[-3], json.loads(sys.argv[-2]); hide_roof = sys.argv[-1] != '0'
 os.makedirs(outdir, exist_ok=True)
+srcs = src.split(',')      # 可以同时给外壳和室内两个 .blend：逗号隔开，后面的并入第一个
+src = srcs[0]
 if src.endswith('.glb'):
     bpy.ops.wm.read_factory_settings(use_empty=True); bpy.ops.import_scene.gltf(filepath=src)
 else:
     bpy.ops.wm.open_mainfile(filepath=src)
+for extra in srcs[1:]:
+    with bpy.data.libraries.load(extra, link=False) as (a, b):
+        b.objects = [n for n in a.objects]
+    for o in b.objects:
+        if o is not None and o.type == 'MESH': bpy.context.scene.collection.objects.link(o)
 sc = bpy.context.scene
 for m in bpy.data.materials:
     c = None
