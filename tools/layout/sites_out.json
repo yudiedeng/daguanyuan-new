@@ -3,14 +3,14 @@
   "id": "gate",
   "x": 0,
   "z": 118,
-  "hill_m": 0.0,
+  "hill_m": 6.0,
   "water_dir": null
  },
  {
   "id": "rock",
   "x": 0,
   "z": 96,
-  "hill_m": 0.0,
+  "hill_m": 6.0,
   "water_dir": [
    7.0,
    -31.0,
