@@ -317,7 +317,7 @@ function makeItem(kind) {
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
   return g;
 }
-function makeFigure(color, female = true) {
+function makeFigure(color, female = true, sit = false) {
   const g = new THREE.Group(), robe = std(color, .85), dark = std(new THREE.Color(color).multiplyScalar(0.8).getStyle(), .85), skin = std('#efd3bb', .6), hair = std('#16130f', .5);
   const prof = [[0, 0], [0.31, 0], [0.29, 0.15], [0.25, 0.55], [0.2, 0.9], [0.18, 1.08]].map(p => new THREE.Vector2(p[0], p[1]));
   const sk = new THREE.Mesh(new THREE.LatheGeometry(prof, 18), robe); sk.position.y = 0.05; g.add(sk);
@@ -327,6 +327,17 @@ function makeFigure(color, female = true) {
   const hr = new THREE.Mesh(new THREE.SphereGeometry(0.117, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), hair); hr.rotation.x = -0.35; hr.position.set(0, 1.69, -0.012); g.add(hr);
   if (female) { for (const s of [-1, 1]) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 8), hair); b.position.set(s * 0.08, 1.8, -0.04); g.add(b); } }
   else { const b = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), hair); b.position.set(0, 1.81, -0.03); g.add(b); }
+  if (sit) {   // 坐姿：原点在座面上。裙摆压扁摊在座上，上身整体降到座面，双膝向前，小腿垂下
+    const lap = g.children[0]; lap.scale.y = 0.3;
+    for (let i = 1; i < g.children.length; i++) { const ch = g.children[i]; ch.position.y -= 0.93; }
+    for (const ch of g.children) if (ch.geometry && ch.geometry.type === 'CylinderGeometry' && ch.rotation.z !== 0) ch.rotation.x = -0.85;
+    const darkM = std(new THREE.Color(color).multiplyScalar(0.6).getStyle(), .85);
+    for (const s of [-1, 1]) {
+      const knee = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.44), lap.material); knee.position.set(s * 0.1, 0.17, 0.28); g.add(knee);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.5, 8), darkM); shin.position.set(s * 0.1, -0.1, 0.5); g.add(shin);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.18), darkM); foot.position.set(s * 0.1, -0.36, 0.56); g.add(foot);
+    }
+  }
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   return g;
 }
@@ -524,7 +535,7 @@ const LIU = {
     { tip: '进屋去。紫鹃早打起湘帘，老太太已在屋里坐下了。', tipEn: 'Go inside. Zijuan has raised the bamboo blind; the old lady is already seated.', label: '在屋里看看', labelEn: 'Look around the room', place: 'xiaoxiang',
       face: () => [-70, 86],
       npcs: [{ who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-68.2, 89.6], floor: () => roomY('xiaoxiang_in') },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-71.6, 91.3], floor: () => roomY('xiaoxiang_in') },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-70.75, 89.95], floor: () => roomY('xiaoxiang_in'), sit: 0.5, seat: 'none', look: [-62, 90.4] },
              { who: '紫鹃', whoEn: 'Zijuan', color: '#9d8fb0', at: () => [-66.6, 91.7], floor: () => roomY('xiaoxiang_in') }],
       pages: [{ say: [['', '', '林黛玉亲自用小茶盘捧了一盏茶来奉与老太太。你因见窗下案上设着笔砚，又见书架上磊着满满的书——', 'Lin Daiyu herself brought the old lady a cup of tea on a little tray. You noticed brushes and inkstones laid out on the desk by the window, and bookshelves crammed full of books —']], btn: ['……', '…'] },
               { ask: { q: ['你心想，这是谁的屋子？', 'Whose room do you suppose this is?'],
@@ -547,12 +558,12 @@ const LIU = {
     { tip: '往秋爽斋去。早饭摆在晓翠堂，鸳鸯在院里等你。', tipEn: 'Go to the Autumn Freshness Studio. Breakfast is laid in the Hall of Morning Green; Yuanyang is waiting in the court.',
       label: '和鸳鸯说话', labelEn: 'Talk to Yuanyang', place: 'qiushuang', face: () => [-86, 34],
       npcs: [{ who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [-83.4, 25.6] },
-             { prop: 'table', at: () => [-86, 22.6] },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-86, 21.2] },
-             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [-88.6, 24.2] },
-             { who: '史湘云', whoEn: 'Shi Xiangyun', color: '#c98a4e', at: () => [-84.2, 21.6] },
-             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-87.9, 21.6] },
-             { who: '贾宝玉', whoEn: 'Jia Baoyu', color: '#a8342b', at: () => [-89.4, 22.4], male: 1 }],
+             { prop: 'table', at: () => [-86, 11.2], look: [-85, 11.2] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-86, 9.9], sit: 0.5, look: [-86, 11.2] },
+             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [-88.2, 12.9], look: [-86, 11.2] },
+             { who: '史湘云', whoEn: 'Shi Xiangyun', color: '#c98a4e', at: () => [-84.6, 9.9], sit: 0.5, look: [-84.6, 11.2] },
+             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-87.4, 9.9], sit: 0.5, look: [-87.4, 11.2] },
+             { who: '贾宝玉', whoEn: 'Jia Baoyu', color: '#a8342b', at: () => [-84.0, 11.2], male: 1, sit: 0.5, look: [-86, 11.2] }],
       pages: [{ say: [['', '', '早饭摆在秋爽斋晓翠堂上。鸳鸯拉你出来，悄悄的嘱咐了一席话，又说：', 'Breakfast was laid in the Hall of Morning Green. Yuanyang drew you aside, whispered a long string of instructions, and added:'],
                       ['鸳鸯', 'Yuanyang', '这是我们家的规矩，若错了我们就笑话呢。', 'That’s the custom in our house — if you get it wrong, we’ll laugh at you.'],
                       ['', '', '调停已毕，你入了座，拿起箸来，沉甸甸的不伏手——原是凤姐和鸳鸯商议定了，单拿一双老年四楞象牙镶金的筷子与你。', 'All arranged, you took your seat and picked up your chopsticks — heavy, and they wouldn’t sit right in your hand. Xifeng and Yuanyang had plotted to give you alone an old pair of square ivory chopsticks inlaid with gold.'],
@@ -607,13 +618,13 @@ const LIU = {
     /* ---------------- 第四十回：缀锦阁下，鸳鸯行牙牌令 ---------------- */
     { tip: '到大观楼东边的缀锦阁下入席。鸳鸯做令官，要行牙牌令了。', tipEn: 'Go to the foot of the Brocade Pavilion, east of the Grand View Tower, and take your seat. Yuanyang is master of the drinking game.',
       label: '入席', labelEn: 'Take your seat', where: '缀锦阁', whereEn: 'Brocade Pavilion', place: 'daguan', ch: ['第四十回', 'Chapter 40'], face: () => [24, -70],
-      npcs: [{ who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [26.4, -45.4] },
-             { prop: 'table', at: () => [24, -47.6] },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [24, -49.2] },
-             { who: '薛姨妈', whoEn: 'Aunt Xue', color: '#7d6a8a', at: () => [21.6, -48.6] },
-             { who: '史湘云', whoEn: 'Shi Xiangyun', color: '#c98a4e', at: () => [26.6, -48.6] },
-             { who: '薛宝钗', whoEn: 'Xue Baochai', color: '#e5d9b6', at: () => [21.8, -46.2] },
-             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [20.6, -47.4] }],
+      npcs: [{ who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [26.4, -45.2] },
+             { prop: 'table', at: () => [24, -47.6], look: [25, -47.6] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [24, -48.5], sit: 0.5, look: [24, -47.6] },
+             { who: '薛姨妈', whoEn: 'Aunt Xue', color: '#7d6a8a', at: () => [22.4, -47.6], sit: 0.5, look: [24, -47.6] },
+             { who: '史湘云', whoEn: 'Shi Xiangyun', color: '#c98a4e', at: () => [25.7, -47.6], sit: 0.5, look: [24, -47.6] },
+             { who: '薛宝钗', whoEn: 'Xue Baochai', color: '#e5d9b6', at: () => [23.1, -46.7], sit: 0.5, look: [23.1, -47.6] },
+             { who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [24.9, -46.7], sit: 0.5, look: [24.9, -47.6] }],
       pages: [{ say: [['', '', '藕香榭那边，梨香院的女孩子们奏起乐来，乐声穿林度水而来，自然使人神怡心旷。众人在缀锦阁下吃酒，鸳鸯做了令官，行牙牌令：她说一句，各人照着牌对一句，要押韵。', 'Over at the Lotus Fragrance Pavilion the girls struck up their music, which came threading through the trees and across the water, lifting everyone’s spirits. They drank at the foot of the Brocade Pavilion with Yuanyang as master of the game: she calls out a domino, and each person answers with a rhyming line.'],
                       ['鸳鸯', 'Yuanyang', '轮到刘姥姥了。', 'Granny Liu’s turn now.'],
                       ['刘姥姥', 'Granny Liu', '我们庄家人闲了，也常会几个人弄这个，但不如说的这么好听。少不得我也试一试。', 'We country folk play this too when we’re idle, only we don’t say it so prettily. Well, I suppose I must try.']], btn: ['来吧', 'Go on'] },
@@ -640,10 +651,10 @@ const LIU = {
     /* ---------------- 第四十一回：茄鲞 ---------------- */
     { tip: '凤姐叫你过去，要夹菜给你尝。', tipEn: 'Xifeng is calling you over to try a dish.', label: '尝凤姐夹的菜', labelEn: 'Taste Xifeng’s dish', where: '缀锦阁', whereEn: 'Brocade Pavilion', place: 'daguan',
       ch: ['第四十一回', 'Chapter 41'], face: () => [24, -70],
-      npcs: [{ who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [22.2, -45.2] },
-             { prop: 'table', at: () => [24, -47.6] },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [24, -49.2] },
-             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [26.4, -45.4] }],
+      npcs: [{ who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [22.2, -45.4], look: [24, -47.6] },
+             { prop: 'table', at: () => [24, -47.6], look: [25, -47.6] },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [24, -48.5], sit: 0.5, look: [24, -47.6] },
+             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [26.4, -45.2], look: [24, -47.6] }],
       pages: [{ say: [['贾母', 'The Lady Dowager', '你把茄鲞搛些喂她。', 'Pick out some of the aubergine relish and feed her.'],
                       ['', '', '凤姐儿听说，依言搛些茄鲞送入你口中，笑道：“你们天天吃茄子，也尝尝我们的茄子弄的可口不可口。”', 'Xifeng did as she was told and popped some aubergine relish into your mouth, laughing: “You eat aubergine every day — try ours and see if it’s any good.”'],
                       ['刘姥姥', 'Granny Liu', '别哄我了，茄子跑出这味儿来了，我们也不用种粮食，只种茄子了。', 'Don’t tease me! If aubergine could taste like this, we’d stop growing grain and plant nothing but aubergines.'],
@@ -660,7 +671,7 @@ const LIU = {
     { tip: '跟老太太去栊翠庵。妙玉在庵里奉茶。', tipEn: 'Follow the old lady to the Green Lattice Nunnery. Miaoyu is serving tea.', label: '吃茶', labelEn: 'Have tea', place: 'longcui',
       ch: ['第四十一回', 'Chapter 41'],
       npcs: [{ who: '妙玉', whoEn: 'Miaoyu', color: '#d8d2c4', anchor: 'longcui' },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', anchor: 'longcui', off: 2.2 }],
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', anchor: 'longcui', off: 2.2, sit: 0.5 }],
       pages: [{ say: [['贾母', 'The Lady Dowager', '我们才都吃了酒肉，你这里头有菩萨，冲了罪过。我们这里坐坐，把你的好茶拿来，我们吃一杯就去了。', 'We’ve all just had wine and meat, and you have the Buddha here — we mustn’t offend. We’ll sit out here; bring your good tea, we’ll have a cup and go.'],
                       ['', '', '妙玉亲自捧了一个海棠花式雕漆填金云龙献寿的小茶盘，里面放一个成窑五彩小盖钟，捧与老太太。', 'Miaoyu herself brought a small carved-lacquer tray shaped like a crab-apple blossom, gilded with clouds and dragons, holding a little covered cup of Chenghua five-colour porcelain, and offered it to the old lady.'],
                       ['贾母', 'The Lady Dowager', '我不吃六安茶。', 'I don’t drink Lu’an tea.'],
@@ -725,11 +736,14 @@ function storyWorld() {
   const fa = st.face ? st.face() : null;
   st.npcs.forEach((n, i) => {
     let v = npcAt(n); let face;
-    if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
+    if (n.look) face = new V3(n.look[0], 0, n.look[1]); else if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
     if (n.prop) { place(makeProp(n.prop), v, face); return; }
+    const seatH = n.sit ? (typeof n.sit === 'number' ? n.sit : 0.5) : 0;
+    if (n.sit && n.seat !== 'none') place(makeProp(n.seat || 'chair'), v.clone(), face);   // 座下垫一把椅子（室内已有家具的用 seat:'none'）
+    if (n.sit) v = v.clone().setY(v.y + seatH);
     const dest = v.clone(); let leadFrom = null;
     if (n.guide && S.lastNpc && S.lastNpc.who === n.who) { leadFrom = S.lastNpc.pos; v = new V3(leadFrom[0], standY(leadFrom[0], leadFrom[1]), leadFrom[1]); }
-    const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male), v, face);
+    const f = place(n.ghost ? new THREE.Group() : makeFigure(n.color, !n.male, !!n.sit), v, face);
     if (leadFrom && !startGuide(f, leadFrom[0], leadFrom[1], dest.x, dest.z, true)) f.position.copy(dest);
     if (n.ghost) { if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.2, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') }); return; }
     if (i === 0) S.targets.push({ stage: 'story', obj: f, pos: v, r: 2.6, label: () => T(st, 'label'), where: () => st.place ? pname(placeById(st.place)) : T(st, 'where') });
@@ -808,6 +822,14 @@ function makeProp(kind) {
     for (const sx of [-0.82, 0.82]) for (const sz of [-0.4, 0.4]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.76, 0.07), wood); l.position.set(sx, 0.38, sz); g.add(l); }
     const cols = ['#f2efe6', '#c8322e', '#e3b23c', '#7aa0b8'];
     for (let k = 0; k < 7; k++) { const d = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.08, 0.05, 14), new THREE.MeshStandardMaterial({ color: cols[k % 4], roughness: 0.4 })); d.position.set(-0.66 + k * 0.22, 0.84, (k % 2 ? 0.18 : -0.16)); g.add(d); } }
+  if (kind === 'chair' || kind === 'stool') {   // 座面高 0.46；椅的椅背在 -z（人脸朝 +z）
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.05, kind === 'chair' ? 0.48 : 0.5), wood); seat.position.y = 0.44; g.add(seat);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), wood); l.position.set(sx * 0.24, 0.21, sz * 0.2); g.add(l); }
+    if (kind === 'chair') {
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.52, 0.045), wood); back.position.set(0, 0.74, -0.22); g.add(back);
+      for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.44), wood); arm.position.set(sx * 0.27, 0.66, -0.02); g.add(arm); }
+    }
+  }
   g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return g;
 }
 /* 苍苔上滑一跤：人往前扑倒，停一会儿，再爬起来 */
@@ -1033,7 +1055,7 @@ addEventListener('dgy-lang', () => {
 });
 
 /* 调试接口（测试用） */
-window.__game = { get guide() { return guide; }, followGuide, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
+window.__game = { get guide() { return guide; }, followGuide, findPath, okAt, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
 /* 开场：链接里带礼 → 收礼；否则显示选人 */
 { const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else if (liuDone()) showStart(); else liuIntro(); }

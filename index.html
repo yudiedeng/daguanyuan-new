@@ -642,7 +642,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
    2) 矮而大的盒子（顶 ≤0.95 m）当台基/台阶：可以站上去；比一步高的，四周补两级踏步
    3) 窄长、离地 0.3–0.6 m 起的高盒子当游廊：只留顶，人从下面走 */
 const DOOR={hengwu:[[0,13.75,0.95,1.4]],yihong:[[-20.05,11.05,0.9,0.85]],daoxiang:[[-4,-0.8,1.1,1.2],[14.4,-14,1.2,1.0]],
- qiushuang:[[0,12.6,1.0,2.4],[0,-3.4,1.3,3.0],[-9.0,7.0,2.4,0.8]],longcui:[[0,7.7,1.0,2.6]],tubi:[[0,1.2,1.2,1.2]],aojing:[[0,-3.2,1.2,1.2]],luxue:[[0,-5,1.2,3.6]]};
+ longcui:[[0,7.7,1.0,2.6]],tubi:[[0,1.2,1.2,1.2]],aojing:[[0,-3.2,1.2,1.2]],luxue:[[0,-5,1.2,3.6]]};
 // DROP：整组包围盒（把整座院子罩住），删掉；ROOF：敞厅、水榭，只留顶；HOLLOW：实心殿身改成四面薄墙，[盒号…, 开门的一面, 门半宽]
 const DROP={longcui:[2,16]},ROOF={ouxiang:[1,2,3,4,5,6,8,11]},HOLLOW={longcui:[[[17,18],'+z',1.0]]};
 function patchCol(id,L){if(/^(qinfang|cuizhang|mudanting|xingye|tangmu)/.test(id))return L;const cuts=[...(DOOR[id]||[])];let out=[];L=L.map(b=>[...b]);const vox=L.some(b=>Math.abs(b[5]+1)<0.01);
