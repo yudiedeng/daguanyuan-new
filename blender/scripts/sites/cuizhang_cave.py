@@ -31,8 +31,8 @@ REPO = os.path.abspath(os.path.join(HERE, '..', '..', '..'))
 # 洞中心线（网页局部 x, z），从南（园门）到北（沁芳溪）。南口在镜面白石西侧，先西偏、再折回东北出洞。
 PATH = [(-0.9, 9.6), (-0.9, 7.2), (-1.35, 5.0), (-2.45, 3.0), (-2.7, 1.2), (-2.05, -0.5),
         (-1.05, -2.0), (-0.55, -3.6), (-0.5, -5.5), (-0.5, -9.6)]
-W = 0.80          # 洞半宽基数（洞壁再向外随机 0–0.14 m）→ 洞宽 1.6–1.88，均约 1.74
-VS, H = 1.45, 1.2  # 拱脚高、拱高 → 拱顶 2.6–2.8 m（随机 −0.05…+0.15）
+W = 0.80          # 洞半宽基数（洞壁再向外随机 0–0.22 m）→ 洞宽 1.6–2.0，均约 1.75
+VS, H = 1.45, 1.2  # 拱脚高、拱高 → 拱顶约 2.6–2.9 m（随机 −0.05…+0.31）
 FLOOR_Y = 0.08    # 洞底（网页局部 y）
 STEP = 0.25       # 扫掠步长
 
@@ -110,11 +110,11 @@ def profile(i, vb, off, outer=0.0):
         else:
             u, v = e[0] * W, e[1]; dn = Vector((e[0], 0.0))
         base = c + n * u + UP * max(v, 0.0)
-        r = nz(base, 1.1)
+        r = nz(base, 1.1); bump = max(0.0, nz(base, 2.6, 3.3))   # 低频起伏 + 高频凸凹（只向外）
         if e[1] is not None and v <= VS:
-            d = 0.07 + 0.07 * r                       # 洞壁只向外：0–0.14
+            d = 0.07 + 0.07 * r + 0.08 * bump          # 洞壁只向外：0–0.22
         else:
-            d = 0.05 + 0.10 * r                       # 拱：−0.05…+0.15
+            d = 0.05 + 0.10 * r + 0.16 * bump          # 拱：−0.05…+0.31（拱顶 2.6 m 以上，参差）
         d += off
         if outer: d += outer * (0.6 + 0.4 * nz(base, 0.7, 9.0)) * (0.4 + 0.6 * max(0.0, dn.y))
         out.append(c + n * (u + dn.x * d) + UP * (v + dn.y * d))
@@ -167,7 +167,7 @@ bpy.data.objects.remove(cutter, do_unlink=True)
 mi = [m.name for m in rock.data.materials].index('M_太湖石')
 bm = bmesh.new(); bm.from_mesh(rock.data)
 def in_tube(p, pad=0.0, vmax=None):
-    """点是否落在洞道（中心线附近 W+0.14+pad、高到拱顶+pad）"""
+    """点是否落在洞道（中心线附近 W+0.22+pad、高到拱顶+pad）"""
     best, bi = 1e9, 0
     for i, c in enumerate(CEN):
         d = (Vector((p.x, p.y, 0)) - c).length_squared
@@ -175,11 +175,11 @@ def in_tube(p, pad=0.0, vmax=None):
     q = Vector((p.x, p.y, 0)) - CEN[bi]
     if abs(q.dot(TAN[bi])) > STEP: return False          # 超出两端
     u = abs(q.dot(LAT[bi])); z = p.z
-    top = vmax if vmax is not None else VS + H + 0.15 + pad
+    top = vmax if vmax is not None else VS + H + 0.31 + pad
     if z > top or z < -1.0: return False
-    if z <= VS: return u <= W + 0.14 + pad
-    t = (z - VS) / (H + 0.15 + pad)
-    return u <= (W + 0.14 + pad) * math.sqrt(max(0.0, 1 - t * t))
+    if z <= VS: return u <= W + 0.22 + pad
+    t = (z - VS) / (H + 0.31 + pad)
+    return u <= (W + 0.22 + pad) * math.sqrt(max(0.0, 1 - t * t))
 n_m = 0
 for f in bm.faces:
     if f.material_index != mi and in_tube(f.calc_center_median(), 0.03):
