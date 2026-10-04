@@ -46,5 +46,10 @@
  "hushi": {
   "prompt": "tall Chinese Taihu scholar garden rock with many holes, grey eroded limestone, on a small stone base",
   "faces": 10000
+ },
+ "yingwu": {
+  "prompt": "antique Chinese hanging parrot perch stand: a brass hook and ring at the top, a vertical brass rod, a horizontal T-shaped wooden perch bar with two small blue and white porcelain food cups at its ends, a green parakeet with a red beak sitting on the bar, Qing dynasty, isolated object",
+  "faces": 8000,
+  "neg": "cage, ground plane, base, pedestal, table, text, low quality"
  }
 }
