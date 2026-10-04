@@ -540,7 +540,7 @@ const BM={},BM_EM=[];
 const BMR={ // name -> [color, roughness, tri, extra]
  'TRIPO占位':['#888888',1,null,{hide:true}], // 室内脚本里的占位块：网页隐藏，换成 Tripo 生成的道具（PROPS）
  'YZ_苍苔泥地':['#5c6e3a',.95,{a:'g_a.jpg',s:2.0,k:0.7}],'YZ_梨叶':['#5a8a3e',.7,null,{side:2}],'YZ_梨树皮':['#6a5a48',.9,{a:'bark_c.jpg',n:'bark_n.jpg',s:1.0,k:0.6,nk:0.6}],'YZ_梨花':['#f8f3ee',.6,null,{side:2}],
- 'YZ_泉水':['#a6d6d0',.04,null,{alpha:0.82,metal:0.12}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#9a948a',.95,{a:'pave_r.jpg',n:'pave_n.jpg',s:3.0,mode:'replace',nk:0.9},{macro:1}],
+ 'YZ_泉水':['#46625a',.04,null,{alpha:0.66,metal:0.12}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#9a948a',.95,{a:'pave_r.jpg',n:'pave_n.jpg',s:3.0,mode:'replace',nk:0.9},{macro:1}],
  'YZ_虎皮石':['#b39a7e',.92,{a:'r_a.jpg',n:'r_n.jpg',s:1.4,mode:'replace',nk:1.0},{macro:1}],'YZ_芭蕉茎':['#7a9a48',.8],'YZ_芭蕉叶':['#4f8033',.65,null,{side:2}],'YZ_芭蕉枯叶':['#9a8a4a',.9,null,{side:2}],'SAMPLE_旧绿漆木':['#3b5d4c',.55,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.35,nk:0.3}],'YZ_描金':['#e0b855',.4,null,{metal:0.35}],'匾额_院门':['#4b2e1f',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],
  'MAT_青灰石_微风化_养护旧化_steps':['#a9aba4',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],'MAT_青灰石_微风化_养护旧化_coping':['#a6a8a1',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],
  'MAT_青灰石_微风化_养护旧化_wall':['#9fa19a',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],'MAT_青灰石_微风化_养护旧化_footing':['#93958f',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],
@@ -597,7 +597,7 @@ function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];let
  const [col,rough,tri,ex]=r,e=ex||{};const m=std(col,rough,{metalness:e.metal||0,side:THREE.DoubleSide,transparent:!!e.alpha,opacity:e.alpha||1});
  if(e.em){m.emissive=new THREE.Color('#ffb060');m.emissiveIntensity=0;BM_EM.push(m);}
  const o={key:'bm_'+k};if(tri)o.tri=tri;
- if(k==='YZ_泉水')o.fOut='{float t_=gTime;vec2 q_=vWPos.xz;float r1=sin(q_.x*11.0+q_.y*8.0-t_*2.6),r2=sin(q_.x*-7.0+q_.y*13.0-t_*2.0),r3=sin((q_.x+q_.y)*21.0-t_*3.4);float rp=(r1*r2*0.6+r3*0.4)*0.5+0.5;float sp=smoothstep(0.78,1.0,rp);vec3 vd_=normalize(cameraPosition-vWPos);float fr_=pow(1.0-clamp(vd_.y,0.0,1.0),2.2);outgoingLight=mix(outgoingLight,vec3(0.96,1.0,1.0),clamp(sp*0.6+fr_*0.3,0.0,0.85));diffuseColor.a=clamp(mix(diffuseColor.a,0.97,sp*0.5+fr_*0.4),0.0,1.0);}';if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
+ if(k==='YZ_泉水')o.fOut='{float t_=gTime;vec2 q_=vWPos.xz;float r1=sin(q_.x*11.0+q_.y*8.0-t_*2.6),r2=sin(q_.x*-7.0+q_.y*13.0-t_*2.0),r3=sin((q_.x+q_.y)*21.0-t_*3.4);float rp=(r1*r2*0.6+r3*0.4)*0.5+0.5;float sp=smoothstep(0.78,1.0,rp);vec3 vd_=normalize(cameraPosition-vWPos);float fr_=pow(1.0-clamp(vd_.y,0.0,1.0),2.2);outgoingLight=mix(outgoingLight,vec3(0.86,0.95,0.92),clamp(sp*0.35+fr_*0.2,0.0,0.45));diffuseColor.a=clamp(mix(diffuseColor.a,0.9,sp*0.3+fr_*0.3),0.0,1.0);}';if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
  const W=BMW[k]||'';let wg='';
  if(W.includes('m'))wg+='{vec3 wn_=normalize(cross(dFdx(vWPos),dFdy(vWPos)));float up=smoothstep(0.3,0.8,abs(wn_.y));float mn=texture2D(gNoise,vWPos.xz*0.31+vWPos.y*0.13).g*0.6+texture2D(gNoise,vWPos.xz*0.05).b*0.4;float mk=up*smoothstep(0.5,0.72,mn);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.15,0.18,0.085)*(0.7+0.6*mn),mk*0.75);float dk=texture2D(gNoise,vWPos.xz*0.9+vWPos.y*0.4).r;diffuseColor.rgb*=0.86+0.2*dk;}';
  if(W.includes('f'))wg+='{float fn=texture2D(gNoise,vWPos.xz*0.09+vWPos.y*0.21).r;float fl=dot(diffuseColor.rgb,vec3(0.3,0.59,0.11));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(fl)*0.88,smoothstep(0.42,0.85,fn)*0.42);float dk=texture2D(gNoise,vWPos.xz*0.7+vWPos.y*1.3).a;diffuseColor.rgb*=0.88+0.18*dk;}';
@@ -610,7 +610,8 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'yihong',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0},{id:'hengwu',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0},{id:'daoxiang',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},
   {id:'daguan',p:[0,Z.daguan.y,Z.daguan.z],ry:0},{id:'longcui',p:[Z.longcui.x,Z.longcui.y,Z.longcui.z],ry:-Math.PI/2},{id:'ouxiang',p:[40+MV.ouxiang[0],0,2+MV.ouxiang[1]],ry:Math.PI/2},
   {id:'qinfang',p:[QINFANG?QINFANG.x:0,0,QINFANG?QINFANG.z:50],ry:QINFANG?QINFANG.ry:0},
-  {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0},
+  {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,grow:{re:/^梨树_/,at:[-1.95,0.6,-8.6],k:1.6}},  // 后院“大株梨花”：模型里的梨树以树根为心放大到约 5.7 m
+
   {id:'cuizhang',p:[0,height(0,96)-0.05,96],ry:0},
   // 新景点（Blender：blender/scripts/sites/build_sites.py）。正面均朝局部 +z，这里转成面向水：芦雪广面西、凹晶馆面南临池、凸碧山庄在山顶朝南俯看凹晶馆。
   {id:'luxue',p:[-131.5,1.15,0],ry:-Math.PI/2},
@@ -622,6 +623,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'mudanting',file:'qinfang',keep:/亭柱|额枋|彩画|匾_匾底|亭顶瓦|望板|垂脊/,p:[Z.mudan.x,Z.mudan.y+0.14,Z.mudan.z],ry:0}];
  const one=async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
+  if(d.grow){const {re,at,k}=d.grow,c=new V3(...at);root.traverse(m=>{if(m.isMesh&&re.test(m.name)){m.position.sub(c).multiplyScalar(k).add(c);m.scale.multiplyScalar(k);}});}
   root.traverse(m=>{if(!m.isMesh)return;const nm=m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
@@ -693,11 +695,13 @@ const PROPS={
  luxue_in:[{f:'meiping',p:[1.0,0.362,-2.62],h:1.7},{f:'tielu',p:[2.75,0.35,3.5],h:0.72}],  // 红梅大瓶、烤鹿肉铁炉
  tubi_in:[{f:'yuegong',p:[4.6,1.785,-1.0],h:0.3,ry:-Math.PI/2},{f:'xianglu',p:[4.3,1.785,-1.0],h:0.28,ry:-Math.PI/2}],  // 中秋月供
  aojing_in:[{f:'zhudun',p:[-0.62,0.51,-0.45],h:0.46,ry:0.3},{f:'zhudun',p:[0.62,0.51,-0.45],h:0.46,ry:-0.4}],  // 湘妃竹墩
- xiaoxiang_ct:[{f:'hushi',p:[-6.6,0,11.6],h:2.3,ry:0.6,r:0.6},{f:'hushi',p:[-10.9,0.1,9.7],h:1.4,ry:2.2,r:0.4}],  // 潇湘馆院中太湖石
+ xiaoxiang_ct:[{f:'hushi',p:[-6.6,0,11.6],h:2.3,ry:0.6,r:0.6},{f:'hushi',p:[-10.9,0.1,9.7],h:1.4,ry:2.2,r:0.4},
+   {f:'yingwu',p:[-4.75,2.0,0.55],h:0.9,ry:0,hang:5.15}],  // 潇湘馆院中太湖石；鹦鹉架——第三十五回黛玉“令将架摘下来，另挂在月洞窗外的钩上”：正房西山墙月洞窗外的廊下，hang 是绳子拴到廊顶的高度
 };
 function addProps(L,id,root){for(const q of PROPS[id]||[])L.loadAsync('models/p/'+q.f+'.glb').then(g=>{const o=g.scene;o.scale.setScalar(q.h);o.position.set(q.p[0],q.p[1]+(q.plate?0.018:0),q.p[2]);o.rotation.y=q.ry||0;
  if(q.plate){const r=q.plate,pl=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[r*0.55,0],[r*0.6,0.006],[r*0.72,0.012],[r,0.03],[r*1.02,0.032],[r*0.98,0.028],[r*0.7,0.018],[0,0.018]].map(([a,b])=>new THREE.Vector2(a,b)),40),plateMat());{const P=pl.geometry.attributes.position,U=pl.geometry.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*r*1.02)+0.5,P.getZ(i)/(2*r*1.02)+0.5);}pl.position.set(q.p[0],q.p[1],q.p[2]);pl.castShadow=pl.receiveShadow=true;root.add(pl);}
  o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ if(q.hang){const len=q.hang-q.p[1]-q.h,cord=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,len,5),std('#3a2c22',.9));cord.position.set(q.p[0],q.p[1]+q.h+len/2,q.p[2]);root.add(cord);}
  if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}}).catch(e=>console.warn('prop',q.f,e));}
 // rooms：房间范围（模型局部，网页坐标 x0,z0,x1,z1,地面 y,顶 y）；lights：补光位置
 const INTER_DEF={
@@ -1194,19 +1198,25 @@ function buildYihong(){const y=Z.yihong.y;if(!GLB){court({x:85,z:65,hw:22,hd:18,
 function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,hd:12,h:3.2,gates:[{side:'e',pos:30,plaque:'潇湘馆'}]});
  if(!GLB)hall(T(-83,y,23.5,0),{w:10.5,d:6,h:3.6,bays:3,base:0.5,pad:0.9,roof:'gable',roofH:2.1,over:1.0,plaque:'有凤来仪',pscale:0.72,lanterns:true});
  buildPath(GLB?{pts:[[-64,30],[-63.5,37],[-66,44],[-70.5,47.5],[-74.5,46.5],[-74.5,44.5]].map(([x,z])=>[x+MV.xiaoxiang[0],z+MV.xiaoxiang[1]]),w:1.4}:{pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
- const [XD,XZ]=MV.xiaoxiang;addTree('blossom',-91+XD,37+XZ,0.8,PEAR[0],y);BANANAS.push([-70+XD,38+XZ,1.8,y],[-69+XD,39+XZ,1.5,y]);
+ const [XD,XZ]=MV.xiaoxiang;if(!GLB){addTree('blossom',-91+XD,37+XZ,0.8,PEAR[0],y);BANANAS.push([-70+XD,38+XZ,1.8,y],[-69+XD,39+XZ,1.5,y]);}  // 有院落模型时梨花、芭蕉在模型的后院里
  const bamb=(x,z,inside)=>{const gy=height(x,z);const h=inside?R(5,8):R(6,10),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.07,.07),R(0,6.28),R(-.07,.07))),sx=R(0.8,1.3);
-  STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:pick(['#a6bb72','#93ab63','#b3c47e','#86a058'])});const axis=new V3(0,1,0).applyQuaternion(lean);
-  for(let k=0;k<5;k++){const t=R(0.45,1.0);const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.12,.45),s=R(1,1.6);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
+  // 院内的竹子颜色深些，竹下幽暗
+  STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:inside?pick(['#62803c','#557233','#6d8a45','#4a652c']):pick(['#a6bb72','#93ab63','#b3c47e','#86a058'])});const axis=new V3(0,1,0).applyQuaternion(lean);
+  for(let k=0;k<5;k++){const t=R(0.45,1.0);const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.12,.45),s=R(1,1.6);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:inside?pick(['#44602a','#3b5524','#4d6a31','#334c1f']):pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
   if(sx>1.05)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});};
  const CX=GLB?-82:-80,CZ=GLB?29:30,HW=GLB?13.6:15,HD=GLB?14.6:12;
- let n=0,tries=0;while(n<600&&tries<22000){tries++;const x=R(-112,-50),z=R(2,58);const inside=Math.abs(x-CX)<HW-0.6&&Math.abs(z-CZ)<HD-0.6;
+ /* 院内、院外各有定额：院内单独取样，不再被院外大片空地摊薄。
+    院内哪里能种竹由掩码定：院落与正房模型的占地（游廊、甬路、泉沟、梨树、芭蕉…），见 blender/scripts/web/xx_bamboo_mask.mjs */
+ const XXMASK=GLB?Uint8Array.from(atob('////////////////////////////////////////////////AwD4g/9//gcA/z////wPAP9////5HwD+////8T8A/P///+N/APj////H/wDw////j/8B+P//AwD/A/j//wcA/gfw////AfwP8P///wP4H+D///8H8D/g////D+B/gP///x/A/wD///8/gP8B/v//fwD/A/7///8A/gf8////AfwP+P///wP4H/j///8/8D/w////f+B/4P/////A/8D/////gf8B/////wH/A/7///8D/gf+////D/wP/P///3/4H/j/////8T/w/////+9/gP///////wD///////8B/v//////A/jjP/D//wfA/w6A//8PAP4fAPz/HwDAPwDw/z8AAP4AgP9/AODvAQD//w/4zwcA/v8/+I8PAPz/f/jhPwD8///8//8A/P///f/nA/7///3/wX/8/z/8DwD/+////B8A/P////8/AMD///9ffwAA/P//P3wAAOD/v/8AAADw/z/+AwAA4P8//P//////f/j//////3+w//////9/AP7/////fwD4//////8A'),c=>c.charCodeAt(0)):null;
+ const masked=(x,z)=>{const i=Math.round((x+82+14)/0.5),j=Math.round((z-27+13)/0.5);if(i<0||i>=57||j<0||j>=61)return true;const k=j*57+i;return (XXMASK[k>>3]>>(k&7)&1)===1;};
+ const NI=GLB?520:440,NO=460;let ni=0,no=0,tries=0;while((ni<NI||no<NO)&&tries<40000){tries++;const wantIn=ni<NI&&(no>=NO||tries%2===0);
+  const x=wantIn?R(CX-HW+0.6,CX+HW-0.6):R(-112,-50),z=wantIn?R(CZ-HD+0.6,CZ+HD-0.6):R(2,58);const inside=Math.abs(x-CX)<HW-0.6&&Math.abs(z-CZ)<HD-0.6;if(inside?ni>=NI:no>=NO)continue;
   if(!inside){const dx=Math.max(Math.abs(x-CX)-HW,0),dz=Math.max(Math.abs(z-CZ)-HD,0);if(rnd()>1-sstep(3,16,Math.hypot(dx,dz)))continue;}
-  if(GLB){if(inside){if(x>-91&&x<-73&&z>20.5&&z<34)continue;if(x>-77.5&&x<-69&&z>28.3&&z<43.5)continue;if(x>-79&&x<-72&&z>14.5&&z<19.5)continue;if(x>-86.5&&x<-73&&z>31.5&&z<43.5&&Math.abs((x+74.5)-(z-43)*0.8)<2.2)continue;if(x>-92&&x<-81&&z>35.5&&z<40)continue;}}
+  if(GLB){if(inside&&masked(x,z))continue;}
   else{if(inside&&x>-89.5&&x<-76.5&&z<30.5)continue;if(inside&&z>27.5&&z<34&&x>-85)continue;}
   if(Math.abs(Math.abs(x-CX)-HW)<0.9&&Math.abs(z-CZ)<HD+1)continue;if(Math.abs(Math.abs(z-CZ)-HD)<0.9&&Math.abs(x-CX)<HW+1)continue;
-  if((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3)continue;
-  if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);n++;}}
+  if(!GLB&&((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3))continue;
+  if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);if(inside)ni++;else no++;}}
 function buildQiushuang(){if(!GLB)return;const q=Z.qiushuang,y=q.y;
  for(const [lx,lz] of[[8,10],[11,2.5],[-6,-15.8],[6,-15.8]]){const x=-86+lx,z=19+lz;TREES.broad.push({x,y:y+0.05,z,s:R(0.75,0.9),ry:rnd()*6.283,tint:pick(GREENS),plum:false,v:1});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}
  BANANAS.push([-86+3.2,19+6.0,2.3,y],[-86+4.4,19+7.2,1.9,y],[-86+3.6,19+8.3,1.6,y],[-86+12.5,19+9.5,2.1,y],[-86+13.2,19+11,1.7,y]);}
@@ -1474,7 +1484,7 @@ function buildHeightTex(){const nx=HG.nx,nzz=HG.nz;const data=new Uint16Array(nx
   if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(inCave(x,z,1.6))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
   if(d>0)d*=(0.55+0.45*nz(NOISE.d,x*2,z*2))*sstep(0.28,0.45,h);if(d>0&&h>3)d*=0.7;
   let can=0;{const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l){const dd=Math.hypot(p[0]-x,p[1]-z);can+=Math.max(0,1-dd/5.5);}}can=Math.min(1,can*0.8);}
-  if(inZone(x,z,0.5))can=0;d*=1-0.85*can;
+  if(inZone(x,z,0.5))can=Math.abs(x-Z.xiaoxiang.x)<Z.xiaoxiang.hw&&Math.abs(z-Z.xiaoxiang.z)<Z.xiaoxiang.hd?1:0;d*=1-0.85*can;  // 潇湘馆院内按竹荫下处理：“土地下苍苔布满”
   const k=(j*nx+i)*4;data[k]=THREE.DataUtils.toHalfFloat(h);data[k+1]=THREE.DataUtils.toHalfFloat(d);data[k+2]=THREE.DataUtils.toHalfFloat(can);data[k+3]=THREE.DataUtils.toHalfFloat(1);}
  const t=new THREE.DataTexture(data,nx,nzz,THREE.RGBAFormat,THREE.HalfFloatType);t.magFilter=t.minFilter=THREE.LinearFilter;t.needsUpdate=true;G.hmap.value=t;
  // coarse cell occupancy
@@ -1780,6 +1790,8 @@ function startAudio(){const ctx=new (window.AudioContext||window.webkitAudioCont
  {const s=loop(2.1),f=ctx.createBiquadFilter(),f2=ctx.createBiquadFilter(),g=ctx.createGain();f.type='highpass';f.frequency.value=1800;f2.type='lowpass';f2.frequency.value=7000;g.gain.value=0;s.connect(f);f.connect(f2);f2.connect(g);g.connect(master);A.leaves={g};}
  {const s=loop(3.7),f=ctx.createBiquadFilter(),g=ctx.createGain(),am=ctx.createGain(),lfo=ctx.createOscillator(),lfoG=ctx.createGain();f.type='bandpass';f.frequency.value=1100;f.Q.value=0.6;g.gain.value=0;am.gain.value=0.7;lfo.frequency.value=7.3;lfoG.gain.value=0.3;lfo.connect(lfoG);lfoG.connect(am.gain);lfo.start();s.connect(f);f.connect(am);am.connect(g);g.connect(master);A.water={g,f};}
  {const s=loop(4.4),f=ctx.createBiquadFilter(),g=ctx.createGain();f.type='lowpass';f.frequency.value=320;g.gain.value=0;s.connect(f);f.connect(g);g.connect(master);A.lap={g};}
+ // 潇湘馆的泉沟：细碎的涓涓水声（两路快慢不一的颤动叠在带通噪声上）
+ {const s=loop(1.3),f=ctx.createBiquadFilter(),g=ctx.createGain(),am=ctx.createGain();f.type='bandpass';f.frequency.value=2600;f.Q.value=1.4;g.gain.value=0;am.gain.value=0.5;for(const [hz,dep] of[[11.3,0.3],[17.9,0.2]]){const o=ctx.createOscillator(),og=ctx.createGain();o.frequency.value=hz;og.gain.value=dep;o.connect(og);og.connect(am.gain);o.start();}s.connect(f);f.connect(am);am.connect(g);g.connect(master);A.rill={g};}
  {const g=ctx.createGain();g.gain.value=0;g.connect(master);A.insects={g,voices:[]};for(let i=0;i<4;i++){const o=ctx.createOscillator();o.frequency.value=4300+i*380;const am=ctx.createGain();am.gain.value=0;const l1=ctx.createOscillator();l1.type='square';l1.frequency.value=24+i*3;const l1g=ctx.createGain();l1g.gain.value=0.5;const l2=ctx.createOscillator();l2.frequency.value=0.6+i*0.27;const l2g=ctx.createGain();l2g.gain.value=0.5;const mixg=ctx.createGain();mixg.gain.value=0.03;
   l1.connect(l1g);l1g.connect(am.gain);l2.connect(l2g);l2g.connect(am.gain);o.connect(am);am.connect(mixg);const pan=ctx.createStereoPanner();pan.pan.value=(i/3)*1.6-0.8;mixg.connect(pan);pan.connect(g);o.start();l1.start();l2.start();}}
  {const o=ctx.createOscillator();o.frequency.value=5600;const am=ctx.createGain();am.gain.value=0;const l=ctx.createOscillator();l.type='square';l.frequency.value=95;const lg=ctx.createGain();lg.gain.value=0.5;l.connect(lg);lg.connect(am.gain);const l2=ctx.createOscillator();l2.frequency.value=0.35;const l2g=ctx.createGain();l2g.gain.value=0.5;l2.connect(l2g);l2g.connect(am.gain);const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=5600;bp.Q.value=3;const g=ctx.createGain();g.gain.value=0;o.connect(am);am.connect(bp);bp.connect(g);g.connect(master);o.start();l.start();l2.start();A.cicada={g};}
@@ -1800,10 +1812,12 @@ function updateAudio(dt,day){if(!A.on)return;const ctx=A.ctx,t=ctx.currentTime,c
  const L=ctx.listener;const fwd=new V3();camera.getWorldDirection(fwd);if(L.positionX){L.positionX.value=c.x;L.positionY.value=c.y;L.positionZ.value=c.z;L.forwardX.value=fwd.x;L.forwardY.value=fwd.y;L.forwardZ.value=fwd.z;L.upX.value=0;L.upY.value=1;L.upZ.value=0;}else{L.setPosition(c.x,c.y,c.z);L.setOrientation(fwd.x,fwd.y,fwd.z,0,1,0);}
  const alt=clamp((c.y-hq(c.x,c.z))/80,0,1);const g=A.gust;const snowM=1-snowAmt*0.6;
  A.wind.g.gain.setTargetAtTime((0.08+g*0.22+alt*0.2)*snowM,t,0.5);A.wind.f.frequency.setTargetAtTime(350+g*700+alt*400,t,0.5);
- A.leaves.g.gain.setTargetAtTime((0.02+g*0.07)*(1-alt)*snowM,t,0.4);
+ /* 潇湘馆院内：凤尾森森，龙吟细细——竹声大些、泉声近，园子其余的声音隔着竹子闷一点 */
+ const XQ=Z.xiaoxiang,xin=(1-sstep(0,10,Math.hypot(Math.max(Math.abs(c.x-XQ.x)-XQ.hw,0),Math.max(Math.abs(c.z-XQ.z)-XQ.hd,0))))*(1-alt);
+ A.leaves.g.gain.setTargetAtTime((0.02+g*0.07)*(1+1.6*xin)*(1-alt)*snowM,t,0.4);A.rill.g.gain.setTargetAtTime(xin*0.08,t,0.8);
  const wd=waterDist(c.x,c.z);const wn=clamp(1-wd/40,0,1)*(1-alt);A.water.g.gain.setTargetAtTime(wn*0.16*(1-snowAmt*0.5),t,0.6);A.lap.g.gain.setTargetAtTime(wn*0.12,t,0.6);
  A.insects.g.gain.setTargetAtTime(night*(1-alt)*(1-snowAmt)*0.9*SEASONS[season].insect,t,1.5);if(A.cicada)A.cicada.g.gain.setTargetAtTime((season===1?1:0)*(1-night)*sstep(9,12,hour)*(1-sstep(17.5,19,hour))*(1-alt)*0.05,t,2);
- A.lp.frequency.setTargetAtTime(mix(16000,1600,snowAmt),t,1);
+ A.lp.frequency.setTargetAtTime(mix(16000,1600,snowAmt)*(1-0.45*xin),t,1);
  A.next-=dt;if(A.next<=0){A.next=2+Math.random()*6;const act=(sstep(5.5,7,hour)*(1-sstep(18.5,19.5,hour)))*(1-snowAmt)*(1-alt*0.8)*SEASONS[season].birds;
   if(Math.random()<act){const a=Math.random()*6.28,r=10+Math.random()*50;chirp(c.x+Math.cos(a)*r,c.y+3+Math.random()*8,c.z+Math.sin(a)*r);}
   if(g>0.62){for(const p of CHIMES){const d=c.distanceTo(p);if(d<70&&Math.random()<0.6)chime(p.x,p.y,p.z);}}}
