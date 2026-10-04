@@ -539,7 +539,7 @@ MAT.bark=patch(std('#6b5846',.95,{map:WOOD.map,normalMap:WOOD.nrm}),{key:'ba'});
 const BM={},BM_EM=[];
 const BMR={ // name -> [color, roughness, tri, extra]
  'YZ_苍苔泥地':['#5c6e3a',.95,{a:'g_a.jpg',s:2.0,k:0.7}],'YZ_梨叶':['#5a8a3e',.7,null,{side:2}],'YZ_梨树皮':['#6a5a48',.9,{a:'bark_c.jpg',n:'bark_n.jpg',s:1.0,k:0.6,nk:0.6}],'YZ_梨花':['#f8f3ee',.6,null,{side:2}],
- 'YZ_泉水':['#5f8a86',.08,null,{alpha:0.6}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#9a948a',.95,{a:'pave_r.jpg',n:'pave_n.jpg',s:3.0,mode:'replace',nk:0.9},{macro:1}],
+ 'YZ_泉水':['#a6d6d0',.04,null,{alpha:0.82,metal:0.12}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#9a948a',.95,{a:'pave_r.jpg',n:'pave_n.jpg',s:3.0,mode:'replace',nk:0.9},{macro:1}],
  'YZ_虎皮石':['#b39a7e',.92,{a:'r_a.jpg',n:'r_n.jpg',s:1.4,mode:'replace',nk:1.0},{macro:1}],'YZ_芭蕉茎':['#7a9a48',.8],'YZ_芭蕉叶':['#4f8033',.65,null,{side:2}],'YZ_芭蕉枯叶':['#9a8a4a',.9,null,{side:2}],'SAMPLE_旧绿漆木':['#3b5d4c',.55,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.35,nk:0.3}],'YZ_描金':['#e0b855',.4,null,{metal:0.35}],'匾额_院门':['#4b2e1f',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],
  'MAT_青灰石_微风化_养护旧化_steps':['#a9aba4',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],'MAT_青灰石_微风化_养护旧化_coping':['#a6a8a1',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],
  'MAT_青灰石_微风化_养护旧化_wall':['#9fa19a',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],'MAT_青灰石_微风化_养护旧化_footing':['#93958f',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],
@@ -595,7 +595,8 @@ function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];let
  if(!r){const c=src&&src.color?'#'+src.color.getHexString():'#b0aaa0';r=[c,src?src.roughness:0.8];console.warn('bmat: no recipe for',name);}
  const [col,rough,tri,ex]=r,e=ex||{};const m=std(col,rough,{metalness:e.metal||0,side:THREE.DoubleSide,transparent:!!e.alpha,opacity:e.alpha||1});
  if(e.em){m.emissive=new THREE.Color('#ffb060');m.emissiveIntensity=0;BM_EM.push(m);}
- const o={key:'bm_'+k};if(tri)o.tri=tri;if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
+ const o={key:'bm_'+k};if(tri)o.tri=tri;
+ if(k==='YZ_泉水')o.fOut='{float t_=gTime;vec2 q_=vWPos.xz;float r1=sin(q_.x*11.0+q_.y*8.0-t_*2.6),r2=sin(q_.x*-7.0+q_.y*13.0-t_*2.0),r3=sin((q_.x+q_.y)*21.0-t_*3.4);float rp=(r1*r2*0.6+r3*0.4)*0.5+0.5;float sp=smoothstep(0.78,1.0,rp);vec3 vd_=normalize(cameraPosition-vWPos);float fr_=pow(1.0-clamp(vd_.y,0.0,1.0),2.2);outgoingLight=mix(outgoingLight,vec3(0.96,1.0,1.0),clamp(sp*0.6+fr_*0.3,0.0,0.85));diffuseColor.a=clamp(mix(diffuseColor.a,0.97,sp*0.5+fr_*0.4),0.0,1.0);}';if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
  const W=BMW[k]||'';let wg='';
  if(W.includes('m'))wg+='{vec3 wn_=normalize(cross(dFdx(vWPos),dFdy(vWPos)));float up=smoothstep(0.3,0.8,abs(wn_.y));float mn=texture2D(gNoise,vWPos.xz*0.31+vWPos.y*0.13).g*0.6+texture2D(gNoise,vWPos.xz*0.05).b*0.4;float mk=up*smoothstep(0.5,0.72,mn);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.15,0.18,0.085)*(0.7+0.6*mn),mk*0.75);float dk=texture2D(gNoise,vWPos.xz*0.9+vWPos.y*0.4).r;diffuseColor.rgb*=0.86+0.2*dk;}';
  if(W.includes('f'))wg+='{float fn=texture2D(gNoise,vWPos.xz*0.09+vWPos.y*0.21).r;float fl=dot(diffuseColor.rgb,vec3(0.3,0.59,0.11));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(fl)*0.88,smoothstep(0.42,0.85,fn)*0.42);float dk=texture2D(gNoise,vWPos.xz*0.7+vWPos.y*1.3).a;diffuseColor.rgb*=0.88+0.18*dk;}';
