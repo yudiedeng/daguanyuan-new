@@ -861,125 +861,42 @@ function buildBeds(){if(!GLB)return;const TL=new THREE.TextureLoader();const rr=
   const im=new THREE.InstancedMesh(g,m,list.length);const cc=new THREE.Color();list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.92+0.16*((i*7)%5)/5),it[4]));im.setMatrixAt(i,_m4);const b=0.82+rr()*0.24;cc.setRGB(b*(1+rr()*0.08),b,b*(1+rr()*0.06));im.setColorAt(i,cc);});im.instanceColor.needsUpdate=true;
   im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);}}
 /* ---- 蘅芜苑院内异草：第十七回“一株花木也无，只见许多异草：或有牵藤的，或有引蔓的……或实若丹砂，或花如金桂，味香气馥” ----
-   院落模型里原有的异草只是几道窄边，院土大片空着。这里在院内所有空地上铺满四种画在画布上的草卡（十字插片，实例化）：
-   杜蘅（心形叶，贴地）、白芷（羽状复叶）、兰蕙（长带叶，抽几枝金桂似的小黄花）、珊瑚豆（小圆叶，结红果——第四十回“都结了实，似珊瑚豆子一般”）。
+   院落模型里原有的异草只是几道窄边，院土大片空着。这里在院内空地上实例化四种 Blender 建的单株（models/p/hw_plants.glb，见 blender/scripts/web/hw_plants.py）：
+   杜蘅（心形叶，贴地）、白芷（羽状复叶）、兰蕙（长带叶，两枝金桂似的小黄花）、珊瑚豆（小叶，结红果——第四十回“都结了实，似珊瑚豆子一般”）。
    哪里能铺由掩码定：院落模型的占地（房、游廊、墙、甬路、台阶），山石只算贴地一圈，异草要长到石脚、石缝里。见 blender/scripts/web/hw_herb_mask.mjs */
+/* Blender 建的植物：单株异草 herb_0..3、垂藤 strand_0..3（2 m，顶端为原点），顶点色上色 */
+let PLANTS=null;
+function plants(){return PLANTS??=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hw_plants.glb').then(g=>{const geo={};g.scene.traverse(o=>{if(o.isMesh)geo[o.name]=o.geometry;});
+ const mk=(key,sway)=>patch(new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.72,metalness:0}),{key,vWorld:sway,fOut:LEAF_OUT,snowLo:'0.6',snowHi:'0.98'});
+ return {herb:[0,1,2,3].map(i=>geo['herb_'+i]),strand:[0,1,2,3].map(i=>geo['strand_'+i]),herbM:mk('hwherb3',FLORA_SWAY),strandM:mk('hwstrand3',HANG_SWAY),bakedM:mk('hwvine3')};});}
 function buildHengwuYard(){if(!GLB)return;const q=Z.hengwu,rr=mulberry32(1717);const HWMASK=Uint8Array.from(atob('////////////////////////APj//////wB4APz/////fwA8GP7/////PwweHP//////HwcPjv//////j4MHwv//////B8AD4P//////A+AB8P//////AfAA+P//////AHgA/P////9/APz//////////////////////////////////////////////////////////////////////////////////wf8/////3/A/wP+/////z/g/wH//////x/w/4D//////w/4f8D//////wf8P+DB////zwP+HwDg////AAD/DwDw//9/AID/BwD4//8/AMD/AwCA//8AAOD/AQDw//8BAPD/AAD8//8BAPh/AIB/APwDAPw/AMwfAPgBAP4fAPcDAPgNAP8PAP8AAPgPgP8HAD4AAPgDwP8DAA8ABngA4P8BwAeAA3wA8P8A4MPeHz4A+H8A8Gzrbx4A/D8AeA9Adg8A/h8A/DsM8wcA/w8A/p/v+wOA/wcA/////wHA/wOA/////wDg/wHA////fwDw/wDg/f//PQD4fwDw/P//HgD8PwB4+P8HDwD+//////////////////////////////////////////////////////////////////////8B'),c=>c.charCodeAt(0));
  const free=(x,z)=>{const i=Math.round((x+17.5)/0.5),j=Math.round((z+13.5)/0.5);if(i<0||i>=71||j<0||j>=55)return false;const k=j*71+i;return (HWMASK[k>>3]>>(k&7)&1)===0;};
- const C=256,atlas=cnv(C*4,C,(g)=>{const r=mulberry32(29);const R2=(a,b)=>a+r()*(b-a);
-  const leaf=(x,y,a,L,W,col,vein)=>{g.save();g.translate(x,y);g.rotate(a);g.fillStyle=col;g.beginPath();g.moveTo(0,0);g.bezierCurveTo(W,-L*0.25,W*0.7,-L*0.8,0,-L);g.bezierCurveTo(-W*0.7,-L*0.8,-W,-L*0.25,0,0);g.fill();if(vein){g.strokeStyle=vein;g.lineWidth=1;g.beginPath();g.moveTo(0,-1);g.lineTo(0,-L*0.85);g.stroke();}g.restore();};
-  const heart=(x,y,a,S,col,vein)=>{g.save();g.translate(x,y);g.rotate(a);g.fillStyle=col;g.beginPath();g.moveTo(0,0);g.bezierCurveTo(S*0.9,S*0.1,S*0.75,-S*0.9,0,-S*1.05);g.bezierCurveTo(-S*0.75,-S*0.9,-S*0.9,S*0.1,0,0);g.fill();g.strokeStyle=vein;g.lineWidth=1.2;g.beginPath();g.moveTo(0,-2);g.lineTo(0,-S*0.9);for(const sd of[-1,1]){g.moveTo(0,-S*0.3);g.quadraticCurveTo(sd*S*0.3,-S*0.45,sd*S*0.5,-S*0.65);}g.stroke();g.restore();};
-  const stem=(pts,w,col)=>{g.strokeStyle=col;g.lineWidth=w;g.lineCap='round';g.beginPath();g.moveTo(pts[0][0],pts[0][1]);if(pts.length===3)g.quadraticCurveTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1]);else g.lineTo(pts[1][0],pts[1][1]);g.stroke();};
-  // 0 杜蘅：一丛心形叶，长柄，深绿带白脉
-  {const ox=C*0.5,oy=C-4;for(let i=0;i<13;i++){const a=R2(-1.25,1.25),L=R2(55,120),ex=ox+Math.sin(a)*L,ey=oy-Math.cos(a)*L*0.8;stem([[ox+R2(-6,6),oy],[ox+Math.sin(a)*L*0.4,oy-L*0.6],[ex,ey]],2.2,'#3e5a2a');
-   heart(ex,ey+R2(4,10),a*0.6+R2(-0.3,0.3),R2(26,40),['#2c5426','#34602b','#3d6a30','#28491f'][i%4],'rgba(196,214,160,0.55)');}}
-  // 1 白芷：羽状复叶，几枝斜出
-  {const ox=C*1.5,oy=C-4;for(let i=0;i<7;i++){const a=R2(-0.9,0.9),L=R2(120,200),bend=R2(-0.4,0.4),col=['#4b7a36','#56853c','#426e30'][i%3];const P=t=>[ox+Math.sin(a+bend*t)*L*t,oy-Math.cos(a+bend*t)*L*t];
-   stem([[ox,oy],P(0.5),P(1)],2.4,'#5b7a34');for(let t=0.2;t<0.98;t+=0.085){const [x,y]=P(t),sz=(1-t)*26+8;for(const sd of[-1,1])leaf(x,y,a+bend*t+sd*R2(0.9,1.3),sz,sz*0.32,col,'rgba(30,50,20,0.5)');}leaf(...P(1),a+bend,14,5,col);}}
-  // 2 兰蕙：长带叶弯垂，抽几枝小黄花（“花如金桂”）
-  {const ox=C*2.5,oy=C-4;for(let i=0;i<16;i++){const a=R2(-1.1,1.1),L=R2(110,220),c1=[ox+Math.sin(a)*L*0.5,oy-L*0.75],c2=[ox+Math.sin(a)*L*(0.9+R2(0,0.3)),oy-L*R2(0.35,0.7)];
-   g.strokeStyle=['#3f6e33','#4a7a3a','#355f2c','#5a8642'][i%4];g.lineWidth=R2(3.5,6);g.lineCap='round';g.beginPath();g.moveTo(ox+R2(-5,5),oy);g.quadraticCurveTo(c1[0],c1[1],c2[0],c2[1]);g.stroke();}
-   for(let i=0;i<2;i++){const x1=ox+R2(-40,40),y1=oy-R2(130,190);stem([[ox+R2(-4,4),oy],[x1*0.5+ox*0.5,(oy+y1)/2],[x1,y1]],1.6,'#6a7a3a');for(let k=0;k<14;k++){const t=R2(0.7,1),x=ox+(x1-ox)*t+R2(-7,7),y=oy+(y1-oy)*t+R2(-5,5);g.fillStyle=['#d9b048','#e6c460','#c89a34'][k%3];g.beginPath();g.arc(x,y,R2(1.8,2.8),0,6.283);g.fill();}}}
-  // 3 珊瑚豆：分枝的细茎、小圆叶，结一串串红果
-  {const ox=C*3.5,oy=C-4;for(let i=0;i<8;i++){const a=R2(-1,1),L=R2(90,170),P=t=>[ox+Math.sin(a)*L*t+Math.sin(t*5+i)*6,oy-Math.cos(a)*L*t];stem([[ox,oy],P(0.5),P(1)],2,'#4a5a2c');
-   for(let t=0.25;t<1;t+=0.12){const [x,y]=P(t);for(const sd of[-1,1])leaf(x,y,a+sd*R2(0.7,1.2),R2(14,22),R2(6,9),['#3f6a30','#4b7838','#355c29'][Math.floor(r()*3)]);}
-   if(i%3!==2)for(let k=0;k<9;k++){const [x,y]=P(R2(0.55,1));const bx=x+R2(-12,12),by=y+R2(-6,14);g.fillStyle=['#c8342a','#b52a22','#d84a32'][k%3];g.beginPath();g.arc(bx,by,R2(4,6),0,6.283);g.fill();g.fillStyle='rgba(255,220,200,0.55)';g.beginPath();g.arc(bx-1.5,by-1.5,1.4,0,6.283);g.fill();}}}});
- const t=tex(atlas,true,false);const S=[0.55,0.85,0.8,0.65];
- const geos=S.map((s,v)=>{const q1=new THREE.PlaneGeometry(s,s);q1.translate(0,s/2-0.03,0);const uv=q1.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,(v+uv.getX(i))/4);const q2=q1.clone();q2.rotateY(Math.PI/3);const q3=q1.clone();q3.rotateY(-Math.PI/3);const g=mergeGeos([q1,q2,q3]);const nn=g.attributes.normal;for(let i=0;i<nn.count;i++)nn.setXYZ(i,0,1,0);return g;});
- const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.8,metalness:0}),{alphaFix:1,key:'hwherb',vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'}));
  /* 不铺满：异草簇在石脚、墙根、阶边（离占地近的格子密），开阔处只零星几丛，露出苔地——要“素” */
  const NX=71,NZ=55,dist=new Uint8Array(NX*NZ).fill(255),qq=[];for(let j=0;j<NZ;j++)for(let i=0;i<NX;i++){const k=j*NX+i;if((HWMASK[k>>3]>>(k&7)&1)===1){dist[k]=0;qq.push(k);}}
  for(let h=0;h<qq.length;h++){const k=qq[h],i=k%NX,j=(k/NX)|0;for(const [a,b] of[[1,0],[-1,0],[0,1],[0,-1]]){const ni=i+a,nj=j+b;if(ni<0||nj<0||ni>=NX||nj>=NZ)continue;const nk=nj*NX+ni;if(dist[nk]>dist[k]+1){dist[nk]=dist[k]+1;qq.push(nk);}}}
  const items=[[],[],[],[]];for(let z=-13.5;z<=13.5;z+=0.5)for(let x=-17.5;x<=17.5;x+=0.5){if(!free(x,z))continue;const dd=dist[Math.round((z+13.5)/0.5)*NX+Math.round((x+17.5)/0.5)];
   const n=dd<=1?3:dd===2?2:dd===3?(rr()<0.6?1:0):(rr()<0.18?1:0);
   for(let k=0;k<(Q===0?Math.min(n,1):n);k++){const px=x+(rr()-0.5)*0.5,pz=z+(rr()-0.5)*0.5;if(!free(px,pz))continue;const u=rr(),v=u<0.4?0:u<0.72?1:u<0.84?2:3;items[v].push([q.x+px,q.y+0.01,q.z+pz,rr()*6.283,(0.7+rr()*0.6)*(dd<=2?1:0.8)]);}}
- const cc=new THREE.Color();items.forEach((list,v)=>{if(!list.length)return;const im=new THREE.InstancedMesh(geos[v],m,list.length);
-  list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.85+rr()*0.3),it[4]));im.setMatrixAt(i,_m4);const b=0.6+rr()*0.22;cc.setRGB(b*(0.9+rr()*0.06),b,b*(0.92+rr()*0.1));im.setColorAt(i,cc);});  // 深一些、偏冷
-  im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});
+ plants().then(({herb,herbM})=>{const cc=new THREE.Color();items.forEach((list,v)=>{if(!list.length||!herb[v])return;const im=new THREE.InstancedMesh(herb[v],herbM,list.length);
+  list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.85+rr()*0.3),it[4]));im.setMatrixAt(i,_m4);const b=0.85+rr()*0.25;cc.setRGB(b*(0.94+rr()*0.06),b,b*(0.94+rr()*0.08));im.setColorAt(i,cc);});
+  im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});}).catch(e=>console.warn('hw herbs',e));
  window.__hwherb=items.map(l=>l.length);
  hengwuVines(q).catch(e=>console.warn('hengwu vines',e));}
 /* 藤萝：“或垂山巅，或穿石隙，甚至垂檐绕柱，萦砌盘阶，或如翠带飘摇，或如金绳蟠屈，或实若丹砂，或花如金桂”。
-   四种垂挂的藤条卡（翠带、金绳、珊瑚豆、细叶垂帘），顶端是挂点，往下垂。挂点：
-   山石的肩顶与石缝（models/b/hw_vines.json，由 blender/scripts/web/hw_vines.mjs 从院落模型算出，长度按向下碰到山石为止）、
-   游廊内侧檐柱（每根三条绕着柱子垂下）、檐枋、清厦前檐、台基前沿、院门门柱、南墙内外两面（门外两侧也爬满）。 */
+   全部在 Blender 里按位置建好烘成一个模型 models/b/hw_vines.wasm（院落模型坐标，见 blender/scripts/web/hw_plants.py）：
+   山石上贴着石面往下爬的藤（路径由 hw_vines.mjs 算）、柱上螺旋缠绕、檐下垂挂、台基沿上垂下再沿阶脚爬开、甬路边贴地、南墙内外两面。
+   四种藤：翠带（常春藤似的叶）、金绳（金黄细藤缀小金花）、珊瑚豆（一串串红果）、细叶（薜荔似的小叶）。 */
 const HANG_SWAY=`{float hb=instanceMatrix[3].y;float k=clamp((hb-wpos_.y)*0.35,0.0,1.0);float ph=instanceMatrix[3].x*0.9+instanceMatrix[3].z*0.6;float gs=gustAt(wpos_.xz);wpos_.x+=(sin(gTime*1.1+ph)*0.025+gs*gWind*0.06)*k;wpos_.z+=cos(gTime*0.9+ph)*0.02*k;}`;
-/* 垂挂藤条卡：画布图集 + 两片交叉的垂挂面（顶端为原点），蘅芜苑、花溆共用 */
-let VINEKIT=null;
-function vineKit(){if(VINEKIT)return VINEKIT;
- const W=128,H=512,atlas=cnv(W*4,H,(g)=>{const r=mulberry32(61);const R2=(a,b)=>a+r()*(b-a);
-  const leaf=(x,y,a,L,Wd,col)=>{g.save();g.translate(x,y);g.rotate(a);g.fillStyle=col;g.beginPath();g.moveTo(0,0);g.bezierCurveTo(Wd,L*0.25,Wd*0.7,L*0.8,0,L);g.bezierCurveTo(-Wd*0.7,L*0.8,-Wd,L*0.25,0,0);g.fill();g.strokeStyle='rgba(20,40,15,0.45)';g.lineWidth=0.8;g.beginPath();g.moveTo(0,1);g.lineTo(0,L*0.8);g.stroke();g.restore();};
-  const ivy=(x,y,a,S,col)=>{g.save();g.translate(x,y);g.rotate(a);g.fillStyle=col;g.beginPath();g.moveTo(0,0);g.lineTo(S*0.55,S*0.3);g.lineTo(S*0.4,S*0.55);g.lineTo(S*0.2,S*0.5);g.lineTo(0,S);g.lineTo(-S*0.2,S*0.5);g.lineTo(-S*0.4,S*0.55);g.lineTo(-S*0.55,S*0.3);g.closePath();g.fill();g.restore();};
-  const berries=(x,y,n,rad)=>{for(let k=0;k<n;k++){const bx=x+R2(-rad,rad),by=y+R2(-rad*0.4,rad*1.4);g.strokeStyle='rgba(70,60,30,0.7)';g.lineWidth=0.8;g.beginPath();g.moveTo(x,y-2);g.lineTo(bx,by);g.stroke();g.fillStyle=['#b8321f','#9e2a1c','#c9452a','#ad3a22'][k%4];g.beginPath();g.arc(bx,by,R2(3.2,4.8),0,6.283);g.fill();g.fillStyle='rgba(255,215,190,0.6)';g.beginPath();g.arc(bx-1.2,by-1.2,1.1,0,6.283);g.fill();}};
-  const golds=(x,y,n,rad)=>{for(let k=0;k<n;k++){g.fillStyle=['#e6bd45','#f3d468','#d4a434'][k%3];g.beginPath();g.arc(x+R2(-rad,rad),y+R2(-rad,rad),R2(1.8,3),0,6.283);g.fill();}};
-  const path=(ox,amp,fr,ph)=>t=>ox+Math.sin(t*fr+ph)*amp;
-  const stem=(f,col,w,y0=0,y1=H)=>{g.strokeStyle=col;g.lineWidth=w;g.lineCap='round';g.beginPath();for(let y=y0;y<=y1;y+=6){const x=f(y/H);y===y0?g.moveTo(x,y):g.lineTo(x,y);}g.stroke();};
-  // 0 翠带：常春藤似的藤，叶子越往下越稀，几串红果
-  {const ox=W*0.5;for(let s=0;s<3;s++){const f=path(ox+R2(-14,14),R2(8,16),R2(6,11),R2(0,6));const y1=H*R2(0.75,1);stem(f,'#4a4a2c',2.2,0,y1);
-   for(let y=6;y<y1;y+=R2(10,18)){const t=y/H;if(r()<t*0.55)continue;const sd=r()<0.5?-1:1;ivy(f(t),y,sd*R2(0.5,1.3),R2(14,24)*(1.1-t*0.4),['#2f5a2a','#3a6630','#28501f','#447336'][Math.floor(r()*4)]);}
-   for(let k=0;k<2;k++){const t=R2(0.15,0.7);berries(f(t)+R2(-6,6),t*H,6,8);}}}
-  // 1 金绳：金黄的细藤盘曲，叶小而稀，缀小金花
-  {const ox=W*1.5;for(let s=0;s<3;s++){const f=path(ox+R2(-18,18),R2(10,22),R2(9,16),R2(0,6));const y1=H*R2(0.7,1);stem(f,['#9c7a2c','#ab8836','#8c6c26'][s],2.4,0,y1);stem(t=>f(t)+Math.sin(t*40)*3,'rgba(150,120,40,0.8)',1,0,y1*0.9);
-   for(let y=10;y<y1;y+=R2(16,28)){const t=y/H;const sd=r()<0.5?-1:1;leaf(f(t),y,sd*R2(0.7,1.2),R2(10,16),R2(4,6),['#4f7a34','#5c8a3c','#6a8a3a'][Math.floor(r()*3)]);if(r()<0.25)golds(f(t)+sd*8,y+6,7,6);}}}
-  // 2 珊瑚豆：叶密，一串串红果垂累（第四十回“都结了实，似珊瑚豆子一般，累垂可爱”）
-  {const ox=W*2.5;for(let s=0;s<3;s++){const f=path(ox+R2(-16,16),R2(6,12),R2(5,9),R2(0,6));const y1=H*R2(0.7,1);stem(f,'#4a4a2c',2,0,y1);
-   for(let y=4;y<y1;y+=R2(8,13)){const t=y/H;if(r()<t*0.5)continue;const sd=r()<0.5?-1:1;leaf(f(t),y,sd*R2(0.6,1.4),R2(14,22),R2(6,9),['#2f5a2a','#3d6a30','#2a4f22','#4a7a38'][Math.floor(r()*4)]);}
-   for(let y=R2(30,60);y<y1;y+=R2(60,100))berries(f(y/H)+R2(-8,8),y,R2(6,10)|0,10);}}
-  // 3 细叶垂帘：好几缕细藤并垂，叶极小（薜荔一类），下端参差
-  {const ox=W*3.5;for(let s=0;s<7;s++){const f=path(ox+R2(-40,40),R2(3,7),R2(4,8),R2(0,6));const y1=H*R2(0.45,1);stem(f,'#3e5a2c',1.4,0,y1);
-   for(let y=3;y<y1;y+=R2(5,9)){const t=y/H;const sd=r()<0.5?-1:1;leaf(f(t),y,sd*R2(0.5,1.5),R2(6,10),R2(3,4.5),['#2c5626','#386a2e','#447a36','#2a4a20'][Math.floor(r()*4)]);}
-   if(r()<0.5)berries(f(0.5),H*R2(0.3,0.6),4,6);}}});
- const t=tex(atlas,true,false);t.generateMipmaps=true;
- const geos=[0,1,2,3].map(v=>{const q1=new THREE.PlaneGeometry(0.5,1);q1.translate(0,-0.5,0);const uv=q1.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,(v+uv.getX(i))/4);const q2=q1.clone();q2.rotateY(0.9);return mergeGeos([q1,q2]);});
- const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.75,metalness:0}),{alphaFix:1,key:'hwvine',vWorld:HANG_SWAY,fOut:LEAF_OUT,snowLo:'0.6',snowHi:'0.98'}));
-
- // 贴着石面、绕着柱子的藤带：沿折线铺一条带子，纵向贴图重复（v 按 1.1 m 一段），尾端收窄
- const t2=tex(atlas,true,true);const rm=a2c(patch(new THREE.MeshStandardMaterial({map:t2,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.75,metalness:0}),{alphaFix:1,key:'hwribbon',fOut:LEAF_OUT,snowLo:'0.6',snowHi:'0.98'}));
- return VINEKIT={geos,m,rm};}
-/* 藤带几何：list 每项 {v 图集列, w 宽, pts:[[x,y,z]…], wd:[x,y,z] 带宽方向（可为函数 i=>[…]）, off:[x,y,z] 每点外移} */
-function ribbonGeo(list){const pos=[],uv=[],nor=[],idx=[];let base=0;
- for(const r of list){const P=r.pts,n=P.length;if(n<2)continue;let acc=0;
-  for(let i=0;i<n;i++){if(i)acc+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1],P[i][2]-P[i-1][2]);const f=i/(n-1),w=r.w*(f<0.7?1:1-(f-0.7)/0.3*0.75)/2;const d=typeof r.wd==='function'?r.wd(i):r.wd,o=r.off||[0,0,0];
-   for(const s of[-1,1]){pos.push(P[i][0]+d[0]*w*s+o[0],P[i][1]+d[1]*w*s+o[1],P[i][2]+d[2]*w*s+o[2]);uv.push((r.v+(s<0?0.04:0.96))/4,1-acc/1.1);nor.push(o[0]||0,1,o[2]||0);}}
-  for(let i=0;i<n-1;i++){const a=base+i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}base+=n*2;}
- const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));g.setIndex(idx);g.computeVertexNormals();return g;}
-async function hengwuVines(q){const J=await (await fetch('models/b/hw_vines.json')).json();const rr=mulberry32(4040);
- const {geos,m}=vineKit();
- const L=[[],[],[],[]];const pv=(w)=>{let u=rr();for(let i=0;i<4;i++){u-=w[i];if(u<=0)return i;}return 3;};
- const put=(x,y,z,dx,dz,len,wd,w)=>{L[pv(w)].push([q.x+x,q.y+y,q.z+z,Math.atan2(dx,dz)+(rr()-0.5)*0.6,wd*(0.8+rr()*0.45),len]);};
- const WR=[0.4,0.17,0.2,0.23],WS=[0.45,0.3,0.25,0];
- const RB=[];const pv2=w=>pv(w);
- // 垂山巅、穿石隙：贴着石面往下爬的藤带（折线由 hw_vines.mjs 沿石面算出）；长的再并一条窄些的
- for(const d of J.D){const dx=d[0],dz=d[1],pts=[];for(let i=2;i<d.length;i+=3)pts.push([q.x+d[i],q.y+d[i+1],q.z+d[i+2]]);const long=pts.length>6;
-  RB.push({v:pv2(WR),w:(long?0.55:0.4)*(0.8+rr()*0.5),pts,wd:[-dz,0,dx],off:[dx*0.03,0,dz*0.03]});
-  if(long&&rr()<0.5)RB.push({v:pv2(WR),w:0.3+rr()*0.2,pts:pts.slice(0,Math.max(3,(pts.length*(0.4+rr()*0.5))|0)).map(p=>[p[0]+dz*0.18,p[1],p[2]-dx*0.18]),wd:[-dz,0,dx],off:[dx*0.05,0,dz*0.05]});}
- // 绕柱：游廊内侧檐柱、清厦两侧廊前柱、院门门柱，各缠两道螺旋
- const COLS=[];for(const sx of[-1,1]){for(const z of[-6.81,-5.1,-2.9,-0.6,1.58,3.9,6.1,8.4,10.6,12.8])COLS.push([sx*15.45,z,0.42,2.9]);for(const x of[10.5,12.2,13.81])COLS.push([sx*x,-5.1,0.42,2.9]);}
- for(const [x,z] of[[-0.85,12.55],[0.85,12.55],[-0.85,13.45],[0.85,13.45]])COLS.push([x,z,0.05,2.7]);
- for(const [x,z,lo,hi] of COLS){if(rr()<0.12)continue;const a0=rr()*6.283,turns=1.6+rr()*1.2;for(let k=0;k<2;k++){const pts=[],N=36,end=lo+(hi-lo)*(k?0.3+rr()*0.4:0);
-  for(let i=0;i<=N;i++){const t=i/N,a=a0+k*Math.PI+t*turns*6.283*(k?-1:1),y=hi-(hi-end)*t,r=0.16+0.02*Math.sin(t*9);pts.push([q.x+x+Math.cos(a)*r,q.y+y,q.z+z+Math.sin(a)*r]);}
-  RB.push({v:pv2([0.45,0.2,0.25,0.1]),w:0.32,pts,wd:[0,1,0]});}}
- // 盘阶：藤蔓从清厦台基沿上垂下，落地再沿阶脚爬开
- for(let x=-8.2;x<=8.2;x+=0.4+rr()*0.5){if(Math.abs(x)<1.7&&rr()>0.25)continue;const sd=rr()<0.5?-1:1,run=0.4+rr()*1.0;
-  RB.push({v:pv2([0.4,0.3,0.2,0.1]),w:0.35+rr()*0.2,pts:[[x,0.82,-3.2],[x,0.82,-2.88],[x,0.55,-2.8],[x,0.25,-2.76],[x,0.04,-2.66],[x+sd*run*0.5,0.03,-2.45],[x+sd*run,0.03,-2.3+rr()*0.4]].map(p=>[q.x+p[0],q.y+p[1],q.z+p[2]]),wd:[1,0,0]});}
- {const {rm}=vineKit();const rg=new THREE.Mesh(ribbonGeo(RB),rm);rg.castShadow=Q>0;rg.receiveShadow=true;scene.add(rg);window.__hwribbon=RB.length;}
+async function hengwuVines(q){const J=await (await fetch('models/b/hw_vines.json')).json();
+ const [{bakedM},g]=await Promise.all([plants(),new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/b/hw_vines.wasm')]);
+ g.scene.traverse(o=>{if(o.isMesh){o.material=bakedM;o.castShadow=Q>0;o.receiveShadow=true;}});g.scene.position.set(q.x,q.y,q.z);scene.add(g.scene);
  // 插天的大玲珑山石：巨石正面补几块带孔的太湖石，迎门一立
  new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hushi.glb').then(g=>{let src=null;g.scene.traverse(o=>{if(o.isMesh&&!src)src=o;});if(!src)return;
   const mat=src.material.clone();mat.color=new THREE.Color('#b8b8ae');mat.roughness=0.95;const im=new THREE.InstancedMesh(src.geometry,mat,J.H.length);
   J.H.forEach(([x,y,z,ry,h,k],i)=>{_m4.compose(new V3(q.x+x,q.y+y,q.z+z),new THREE.Quaternion().setFromAxisAngle(UP,ry),new V3(h*k,h,h*k));im.setMatrixAt(i,_m4);
    colAdd({x:q.x+x,z:q.z+z,c:1,s:0,hx:h*k*0.26,hz:h*k*0.28,top:q.y+y+h,bot:q.y-1,walk:false});});
   im.castShadow=true;im.receiveShadow=true;scene.add(im);}).catch(e=>console.warn('hushi',e));
- // 垂檐：游廊内侧檐枋、清厦前檐
- for(const sx of[-1,1])for(let z=-6.5;z<12.8;z+=0.55+rr()*0.5)if(rr()<0.75)put(sx*15.3,2.85,z,-sx,0,0.4+rr()*1.3,0.9,[0.3,0.15,0.25,0.3]);
- for(let x=-8;x<=8;x+=0.5+rr()*0.5)if(rr()<0.8)put(x,4.1,-2.55,0,1,0.5+rr()*1.6,0.9,[0.3,0.15,0.25,0.3]);
- // 甬路边沿的藤贴地斜铺（见下 flat）
- // 南墙：内侧满墙垂挂；门外两侧也爬出墙头（院门左右各 4 m）
- for(let x=-14.5;x<=14.5;x+=0.45+rr()*0.5){if(Math.abs(x)<2.3)continue;if(rr()<0.8)put(x,3.35,13.1,0,-1,1.2+rr()*2.1,1.1,WR);if(Math.abs(x)<7&&rr()<0.75)put(x,3.35,14.4,0,1,1.0+rr()*2.2,1.1,WR);}
- const flat=[];for(const [x,z,a] of J.P)flat.push([q.x+x,q.y+0.03,q.z+z,a,0.6+rr()*0.4,0.8+rr()*0.8,rr()<0.5?1:0]);
- L.forEach((list,v)=>{const ff=flat.filter(f=>(v===0&&f[6]===0)||(v===1&&f[6]===1));const n=list.length+ff.length;if(!n)return;const im=new THREE.InstancedMesh(geos[v],m,n);const cc=new THREE.Color();let i=0;
-  for(const it of list){_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[5],it[4]));im.setMatrixAt(i,_m4);const b=0.82+rr()*0.25;cc.setRGB(b,b,b*(0.92+rr()*0.08));im.setColorAt(i++,cc);}
-  for(const f of ff){const qq=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+0.08,f[3],0,'YXZ'));_m4.compose(new V3(f[0],f[1],f[2]),qq,new V3(f[4],f[5],f[4]));im.setMatrixAt(i,_m4);cc.setRGB(0.9,0.9,0.86);im.setColorAt(i++,cc);}
-  im.instanceColor.needsUpdate=true;im.castShadow=Q>0;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});
- window.__hwvine=L.map(l=>l.length);}
+ window.__hwvine=1;}
 
 /* ---- 蓼汀花溆（第十七回）：“忽闻水声潺湲，泻出石洞，上则萝薄垂引，下则落花浮荡。”“只见水上落花愈多，其水愈加清溜……沿堤柳垂金线，桃吐丹霞。”
    “忽见柳阴中又露出一个折带朱栏板桥来，度过桥去，诸路可通，便见一所清凉瓦舍”——就是蘅芜苑。
@@ -1022,11 +939,11 @@ async function buildHuaxuCave(){if(!GLB)return;const [cx,cz]=HX.c,rr=mulberry32(
  S.forEach((t,i)=>{e.set(0,t[3],t[4],'YXZ');q.setFromEuler(e);_m4.compose(new V3(t[0],t[1],t[2]),q,new V3(t[5],t[6],t[7]));im.setMatrixAt(i,_m4);});
  im.castShadow=true;im.receiveShadow=true;scene.add(im);
  // 萝薄垂引：两个洞口、石墩外侧、峰顶垂下藤萝
- const {geos,m}=vineKit(),Lv=[[],[],[],[]];const put=(x,y,z,dx,dz,len,wd)=>{const u=rr(),v=u<0.35?0:u<0.5?1:u<0.8?2:3;Lv[v].push([x,y,z,Math.atan2(dx,dz)+R2(-0.3,0.3),wd*R2(0.8,1.25),len]);};
- for(const sz of[-1,1])for(let x=-5.6;x<=5.6;x+=0.22+rr()*0.2)put(cx+x,R2(4.3,4.8),cz+sz*R2(4.3,4.9),0,sz,Math.abs(x)<3.4?R2(0.8,1.8):R2(2.0,4.8),2.0);
- for(const sx of[-1,1])for(let z=-4;z<=4;z+=0.35+rr()*0.3)put(cx+sx*R2(8.6,9.4),R2(3.0,4.2),cz+z,sx,0,R2(1.6,3.6),1.8);
+ const {strand,strandM}=await plants(),Lv=[[],[],[],[]];const put=(x,y,z,dx,dz,len,wd)=>{const u=rr(),v=u<0.35?0:u<0.5?1:u<0.8?2:3;Lv[v].push([x,y,z,Math.atan2(dx,dz)+R2(-0.3,0.3),wd*R2(0.8,1.25),len]);};
+ for(const sz of[-1,1])for(let x=-5.6;x<=5.6;x+=0.22+rr()*0.2)put(cx+x,R2(4.3,4.8),cz+sz*R2(4.3,4.9),0,sz,Math.abs(x)<3.4?R2(0.8,1.8):R2(2.0,4.8),1.2);
+ for(const sx of[-1,1])for(let z=-4;z<=4;z+=0.35+rr()*0.3)put(cx+sx*R2(8.6,9.4),R2(3.0,4.2),cz+z,sx,0,R2(1.6,3.6),1.15);
  for(let k=0;k<40;k++){const a=rr()*6.28;put(cx+Math.cos(a)*R2(2,7),R2(5.2,6.8),cz+Math.sin(a)*R2(1.5,4),Math.cos(a),Math.sin(a),R2(1.2,2.8),1);}
- Lv.forEach((list,v)=>{if(!list.length)return;const vm=new THREE.InstancedMesh(geos[v],m,list.length);list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[5],it[4]));vm.setMatrixAt(i,_m4);});vm.castShadow=Q>0;vm.receiveShadow=true;vm.frustumCulled=false;scene.add(vm);});
+ Lv.forEach((list,v)=>{if(!list.length)return;const vm=new THREE.InstancedMesh(strand[v],strandM,list.length);list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[5]/2,it[4]));vm.setMatrixAt(i,_m4);});vm.castShadow=Q>0;vm.receiveShadow=true;vm.frustumCulled=false;scene.add(vm);});
  // 下则落花浮荡：桃花瓣顺溪漂出港洞，流到蘅芜苑门前入池
  const F=HX.flow,seg=[];let tot=0;for(let i=0;i<F.length-1;i++){const l=Math.hypot(F[i+1][0]-F[i][0],F[i+1][1]-F[i][1]);seg.push([tot,l]);tot+=l;}
  const at2=(d)=>{d=((d%tot)+tot)%tot;let i=0;while(i<seg.length-1&&d>seg[i][0]+seg[i][1])i++;const t=(d-seg[i][0])/seg[i][1],a=F[i],b=F[i+1],dx=(b[0]-a[0])/seg[i][1],dz=(b[1]-a[1])/seg[i][1];return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,dx,dz];};

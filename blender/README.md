@@ -64,3 +64,12 @@ node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 ```
+
+## 蘅芜苑的藤萝异草（scripts/web/hw_plants.py）
+
+网页里蘅芜苑的藤蔓、异草和花溆洞口的垂藤都是 Blender 用脚本建的（叶片是带弧度的三维面片、茎是细管、红果和小金花是小球，颜色写在顶点色里）：
+
+```bash
+node blender/scripts/web/hw_vines.mjs        # 从院落模型算挂点、贴石垂藤的路径、玲珑石摆放 → models/b/hw_vines.json
+python3 blender/scripts/web/hw_plants.py     # 建模 → models/b/hw_vines.wasm（院中藤蔓，按位置烘好）、models/p/hw_plants.glb（单株异草、垂藤）
+```
