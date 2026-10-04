@@ -223,7 +223,7 @@ def rosebush(G, rnd, cx, cy, z0, r, h, colors):
         top = Vector((cx + math.cos(a) * rr, cy + math.sin(a) * rr, z0 + h * rnd.uniform(0.55, 0.85)))
         stem(G, '茎', (cx + rnd.uniform(-0.04, 0.04), cy + rnd.uniform(-0.04, 0.04), z0), top, 0.0065)
         tips.append(top)
-    nleaf = int(950 * r * h / 0.25)
+    nleaf = int(680 * r * h / 0.25)
     for i in range(nleaf):
         u, v = rnd.uniform(0, 6.28), rnd.uniform(0.05, 1.0)
         ph = math.acos(1 - v)          # 偏向上半
@@ -383,7 +383,7 @@ def build_huajing():
         x += rnd.uniform(0.32, 0.45)
     for x in (-1.6, -0.8, 0.0, 0.8, 1.6):
         rosebush(G, rnd, x + rnd.uniform(-.1, .1), -0.02, 0.05, 0.26, 0.45, rnd.choice((('月季粉', '月季红'), ('月季白', '月季粉'), ('月季红', '月季黄'))))
-    pts = [(rnd.uniform(-L / 2 + 0.12, L / 2 - 0.12), rnd.uniform(-W / 2 + 0.1, 0.0), 0.05) for i in range(110)]
+    pts = [(rnd.uniform(-L / 2 + 0.12, L / 2 - 0.12), rnd.uniform(-W / 2 + 0.1, 0.0), 0.05) for i in range(80)]
     groundcover(G, rnd, pts, ('石竹', '石竹', '小白花', '月季黄'), 1.0)
     G.build('yh_huajing')
     save_export('yh_huajing')
