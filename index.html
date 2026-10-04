@@ -1194,13 +1194,18 @@ function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,
   for(let k=0;k<5;k++){const t=R(0.45,1.0);const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.12,.45),s=R(1,1.6);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
   if(sx>1.05)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});};
  const CX=GLB?-82:-80,CZ=GLB?29:30,HW=GLB?13.6:15,HD=GLB?14.6:12;
- let n=0,tries=0;while(n<600&&tries<22000){tries++;const x=R(-112,-50),z=R(2,58);const inside=Math.abs(x-CX)<HW-0.6&&Math.abs(z-CZ)<HD-0.6;
+ /* 院内、院外各有定额：院内单独取样，不再被院外大片空地摊薄；院内的竹子让开泉沟（院落模型里 泉水_水面 的中线，院落坐标） */
+ const RILL=GLB?[[3,-11.8],[3.4,-10.5],[3.3,-9.2],[2,-8.7],[-1.1,-8.2],[-4,-7.6],[-5.3,-7],[-6.6,-6.1],[-7.2,-5],[-7.5,-2.3],[-7.4,2],[-7.3,3.2],[-6.9,4.6],[-5.8,5.5],[-4.3,6],[-1.9,6.4],[-1.8,7.7],[-2.8,8.5],[-4.3,8.5],[-5.5,8.8],[-6.7,9.8],[-8.8,11.7],[-11,13.2],[-11.9,14.3],[-12.8,15.8]]:[];
+ const nearRill=(x,z,r)=>{x+=82;z-=27;for(let i=1;i<RILL.length;i++){const [ax,az]=RILL[i-1],[bx,bz]=RILL[i],ux=bx-ax,uz=bz-az,t=clamp(((x-ax)*ux+(z-az)*uz)/(ux*ux+uz*uz),0,1);if(Math.hypot(x-ax-ux*t,z-az-uz*t)<r)return true;}return false;};
+ const NI=440,NO=460;let ni=0,no=0,tries=0;while((ni<NI||no<NO)&&tries<40000){tries++;const wantIn=ni<NI&&(no>=NO||tries%2===0);
+  const x=wantIn?R(CX-HW+0.6,CX+HW-0.6):R(-112,-50),z=wantIn?R(CZ-HD+0.6,CZ+HD-0.6):R(2,58);const inside=Math.abs(x-CX)<HW-0.6&&Math.abs(z-CZ)<HD-0.6;if(inside?ni>=NI:no>=NO)continue;
+  if(inside&&nearRill(x,z,0.6))continue;if(GLB&&((x+84)**2+(z-18.4)**2<6||(x+80.3)**2+(z-20.4)**2<5))continue;  // 后院梨树、芭蕉的冠下留空
   if(!inside){const dx=Math.max(Math.abs(x-CX)-HW,0),dz=Math.max(Math.abs(z-CZ)-HD,0);if(rnd()>1-sstep(3,16,Math.hypot(dx,dz)))continue;}
   if(GLB){if(inside){if(x>-91&&x<-73&&z>20.5&&z<34)continue;if(x>-77.5&&x<-69&&z>28.3&&z<43.5)continue;if(x>-79&&x<-72&&z>14.5&&z<19.5)continue;if(x>-86.5&&x<-73&&z>31.5&&z<43.5&&Math.abs((x+74.5)-(z-43)*0.8)<2.2)continue;if(x>-92&&x<-81&&z>35.5&&z<40)continue;}}
   else{if(inside&&x>-89.5&&x<-76.5&&z<30.5)continue;if(inside&&z>27.5&&z<34&&x>-85)continue;}
   if(Math.abs(Math.abs(x-CX)-HW)<0.9&&Math.abs(z-CZ)<HD+1)continue;if(Math.abs(Math.abs(z-CZ)-HD)<0.9&&Math.abs(x-CX)<HW+1)continue;
   if((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3)continue;
-  if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);n++;}}
+  if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);if(inside)ni++;else no++;}}
 function buildQiushuang(){if(!GLB)return;const q=Z.qiushuang,y=q.y;
  for(const [lx,lz] of[[8,10],[11,2.5],[-6,-15.8],[6,-15.8]]){const x=-86+lx,z=19+lz;TREES.broad.push({x,y:y+0.05,z,s:R(0.75,0.9),ry:rnd()*6.283,tint:pick(GREENS),plum:false,v:1});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}
  BANANAS.push([-86+3.2,19+6.0,2.3,y],[-86+4.4,19+7.2,1.9,y],[-86+3.6,19+8.3,1.6,y],[-86+12.5,19+9.5,2.1,y],[-86+13.2,19+11,1.7,y]);}
