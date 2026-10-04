@@ -427,7 +427,11 @@ const PHOTO=(()=>{const L=new THREE.TextureLoader();const ld=(f,srgb,rp)=>{const
  const bm=ld('bark_c.jpg',1,1),bn=ld('bark_n.jpg',0,1);
  return {broad:leaf('broad',[0.1422,0.1705,0.0505]),bush:leaf('bush',[0.1567,0.1638,0.0198]),willow:leaf('willow',[0.1157,0.114,0.0577]),willowtop:leaf('willowtop',[0.0877,0.0861,0.0435]),bark:{map:bm,nrm:bn},
   huai:leaf('huai',[0.1421,0.169,0.0536],'png'),wutong:leaf('wutong',[0.1567,0.1636,0.0199],'png'),liu:leaf('liu',[0.1156,0.113,0.0585],'png'),song:leaf('song',[0.0983,0.1936,0.0856],'png'),tao:leaf('tao',[0.8562,0.8495,0.8484],'png'),leafy:leaf('leafy',[0.2247,0.3823,0.1466],'png'),gui:leaf('gui',[0.367,0.5195,0.3338],'png'),bai:leaf('bai',[0.1509,0.2566,0.1333],'png')};})();
-const LEAF_BAMBOO=leafCard(256,192,(g,W,H)=>{const cx=W*0.5,cy=16;g.strokeStyle='#8e9a6c';g.lineWidth=3;g.beginPath();g.moveTo(cx,cy);g.quadraticCurveTo(cx+6,H*0.4,cx-4,H*0.72);g.stroke();[[-0.95,98],[-0.55,112],[-0.2,104],[0.25,108],[0.6,114],[0.95,96],[-1.3,80],[1.25,84],[0.05,90]].forEach(([a,len],i)=>{g.save();g.translate(cx+(i%3-1)*4,cy+14+(i%4)*22);g.rotate(a*0.9);const gr=g.createLinearGradient(-8,0,8,0);gr.addColorStop(0,'#c9d6b2');gr.addColorStop(.5,'#f2f6e6');gr.addColorStop(1,'#bccba0');g.fillStyle=gr;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(9,len*0.35,1,len);g.quadraticCurveTo(-8,len*0.35,0,0);g.fill();g.restore();});});
+/* 竹叶：几根细枝从挂点垂下，枝梢一簇簇细长小叶（叶长约一成卡片高，约 10–14 cm），扇形下垂 */
+const LEAF_BAMBOO=leafCard(512,384,(g,W,H)=>{const rr=mulberry32(4711),cx=W*0.5,cy=10;const leaf=(x,y,a,len,wd)=>{g.save();g.translate(x,y);g.rotate(a);const gr=g.createLinearGradient(-wd,0,wd,0);gr.addColorStop(0,'#c3d1a8');gr.addColorStop(.5,'#f0f5e2');gr.addColorStop(1,'#b6c69a');g.fillStyle=gr;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(wd,len*0.3,0.6,len);g.quadraticCurveTo(-wd,len*0.3,0,0);g.fill();g.restore();};
+ g.lineCap='round';for(let b=0;b<7;b++){const side=(b/6-0.5)*2,ang=side*1.05+(rr()-0.5)*0.25,L=120+rr()*170;let x=cx+(rr()-0.5)*14,y=cy+rr()*30,a=Math.PI/2-ang;g.strokeStyle='#8f9c6e';g.lineWidth=2.4;g.beginPath();g.moveTo(x,y);
+  const pts=[];for(let k=0;k<8;k++){a+=(Math.PI/2-a)*0.16;x+=Math.cos(a)*L/8;y+=Math.sin(a)*L/8;g.lineTo(x,y);pts.push([x,y,a]);}g.stroke();
+  for(let k=2;k<8;k+=1+(rr()<0.4?1:0)){const [px,py,pa]=pts[k];const n=3+Math.floor(rr()*3);for(let m=0;m<n;m++){const fa=pa-Math.PI/2+(m-(n-1)/2)*0.38+(rr()-0.5)*0.2;leaf(px,py,fa*0.75,34+rr()*26,4.5+rr()*2);}}}});
 const STALK=tex(cnv(32,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,'#b9c49d');gr.addColorStop(.45,'#f4f7e6');gr.addColorStop(1,'#a7b38b');g.fillStyle=gr;g.fillRect(0,0,w,h);for(let y=0;y<h;y+=18){g.fillStyle='rgba(60,70,40,.55)';g.fillRect(0,y,w,2);g.fillStyle='rgba(255,255,240,.6)';g.fillRect(0,y+2,w,2);}}),true);
 const BANANA=leafCard(128,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,'#9dc07a');gr.addColorStop(.5,'#e9f2d7');gr.addColorStop(1,'#9dc07a');g.fillStyle=gr;g.beginPath();g.moveTo(w/2,4);g.bezierCurveTo(w+10,h*0.15,w+6,h*0.8,w/2,h-4);g.bezierCurveTo(-6,h*0.8,-10,h*0.15,w/2,4);g.fill();g.strokeStyle='rgba(140,170,110,.6)';g.lineWidth=1;for(let y=20;y<h-10;y+=9){g.beginPath();g.moveTo(w/2,y);g.lineTo(6,y-18);g.moveTo(w/2,y);g.lineTo(w-6,y-18);g.stroke();}g.strokeStyle='#f6f8ea';g.lineWidth=5;g.beginPath();g.moveTo(w/2,4);g.lineTo(w/2,h-4);g.stroke();});
 const LOTUS=(()=>{const W=512;const vein=(u,v)=>{const r=Math.hypot(u,v),a=Math.atan2(v,u);const k=21;const f=((a/(2*Math.PI)*k+0.12*Math.sin(r*6)+100)%1);const d=Math.min(f,1-f);let m=1-sstep(0,0.03+0.02*r,d*(0.5+r));if(r>0.55){const f2=((a/(2*Math.PI)*k*2+0.5+0.2*Math.sin(r*9)+100)%1);const d2=Math.min(f2,1-f2);m=Math.max(m,(1-sstep(0,0.025,d2*(0.4+r)))*sstep(0.55,0.75,r)*0.7);}return m*sstep(0.06,0.14,r);};
@@ -541,7 +545,7 @@ const BM={},BM_EM=[];
 const BMR={ // name -> [color, roughness, tri, extra]
  'TRIPO占位':['#888888',1,null,{hide:true}], // 室内脚本里的占位块：网页隐藏，换成 Tripo 生成的道具（PROPS）
  'YZ_苍苔泥地':['#5c6e3a',.95,{a:'g_a.jpg',s:2.0,k:0.7}],'YZ_梨叶':['#5a8a3e',.7,null,{side:2}],'YZ_梨树皮':['#6a5a48',.9,{a:'bark_c.jpg',n:'bark_n.jpg',s:1.0,k:0.6,nk:0.6}],'YZ_梨花':['#f8f3ee',.6,null,{side:2}],
- 'YZ_泉水':['#46625a',.04,null,{alpha:0.66,metal:0.12}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#c4beb2',.95,{a:'pebble_r.jpg',n:'pebble_n.jpg',s:1.2,mode:'replace',nk:0.8},{macro:1}],
+ 'YZ_泉水':['#46625a',.04,null,{alpha:0.66,metal:0.12,hide:1}],'XS_檐口深木':['#3a2a1e',.6],'YZ_湘帘':['#8a6a3c',.7,{a:'wood_d.jpg',s:0.8,k:0.5}],'YZ_湘竹篾':['#8f7a52',.8,null,{side:2}],'YZ_石子甬路':['#c4beb2',.95,{a:'pebble_r.jpg',n:'pebble_n.jpg',s:1.2,mode:'replace',nk:0.8},{macro:1}],
  'YZ_虎皮石':['#b39a7e',.92,{a:'r_a.jpg',n:'r_n.jpg',s:1.4,mode:'replace',nk:1.0},{macro:1}],'YZ_芭蕉茎':['#7a9a48',.8],'YZ_芭蕉叶':['#4f8033',.65,null,{side:2}],'YZ_芭蕉枯叶':['#9a8a4a',.9,null,{side:2}],'SAMPLE_旧绿漆木':['#3b5d4c',.55,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.35,nk:0.3}],'YZ_描金':['#e0b855',.4,null,{metal:0.35}],'匾额_院门':['#4b2e1f',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],
  'MAT_青灰石_微风化_养护旧化_steps':['#a9aba4',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],'MAT_青灰石_微风化_养护旧化_coping':['#a6a8a1',.9,{a:'pave_r.jpg',n:'pave_n.jpg',s:1.6,mode:'replace',nk:0.7},{macro:1}],
  'MAT_青灰石_微风化_养护旧化_wall':['#9fa19a',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],'MAT_青灰石_微风化_养护旧化_footing':['#93958f',.92,{a:'stone_r.jpg',n:'stone_n.jpg',s:1.8,mode:'replace',nk:0.8},{macro:1,streak:1}],
@@ -598,7 +602,7 @@ function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];let
  const [col,rough,tri,ex]=r,e=ex||{};const m=std(col,rough,{metalness:e.metal||0,side:THREE.DoubleSide,transparent:!!e.alpha,opacity:e.alpha||1});
  if(e.em){m.emissive=new THREE.Color('#ffb060');m.emissiveIntensity=0;BM_EM.push(m);}
  const o={key:'bm_'+k};if(tri)o.tri=tri;
- if(k==='YZ_泉水')o.fOut='{float t_=gTime;vec2 q_=vWPos.xz;float r1=sin(q_.x*11.0+q_.y*8.0-t_*2.6),r2=sin(q_.x*-7.0+q_.y*13.0-t_*2.0),r3=sin((q_.x+q_.y)*21.0-t_*3.4);float rp=(r1*r2*0.6+r3*0.4)*0.5+0.5;float sp=smoothstep(0.78,1.0,rp);vec3 vd_=normalize(cameraPosition-vWPos);float fr_=pow(1.0-clamp(vd_.y,0.0,1.0),2.2);outgoingLight=mix(outgoingLight,vec3(0.86,0.95,0.92),clamp(sp*0.35+fr_*0.2,0.0,0.45));diffuseColor.a=clamp(mix(diffuseColor.a,0.9,sp*0.3+fr_*0.3),0.0,1.0);}';if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
+if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
  const W=BMW[k]||'';let wg='';
  if(W.includes('m'))wg+='{vec3 wn_=normalize(cross(dFdx(vWPos),dFdy(vWPos)));float up=smoothstep(0.3,0.8,abs(wn_.y));float mn=texture2D(gNoise,vWPos.xz*0.31+vWPos.y*0.13).g*0.6+texture2D(gNoise,vWPos.xz*0.05).b*0.4;float mk=up*smoothstep(0.5,0.72,mn);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.15,0.18,0.085)*(0.7+0.6*mn),mk*0.75);float dk=texture2D(gNoise,vWPos.xz*0.9+vWPos.y*0.4).r;diffuseColor.rgb*=0.86+0.2*dk;}';
  if(W.includes('f'))wg+='{float fn=texture2D(gNoise,vWPos.xz*0.09+vWPos.y*0.21).r;float fl=dot(diffuseColor.rgb,vec3(0.3,0.59,0.11));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(fl)*0.88,smoothstep(0.42,0.85,fn)*0.42);float dk=texture2D(gNoise,vWPos.xz*0.7+vWPos.y*1.3).a;diffuseColor.rgb*=0.88+0.18*dk;}';
@@ -611,7 +615,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'yihong',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0},{id:'hengwu',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0},{id:'daoxiang',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},
   {id:'daguan',p:[0,Z.daguan.y,Z.daguan.z],ry:0},{id:'longcui',p:[Z.longcui.x,Z.longcui.y,Z.longcui.z],ry:-Math.PI/2},{id:'ouxiang',p:[40+MV.ouxiang[0],0,2+MV.ouxiang[1]],ry:Math.PI/2},
   {id:'qinfang',p:[QINFANG?QINFANG.x:0,0,QINFANG?QINFANG.z:50],ry:QINFANG?QINFANG.ry:0},
-  {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,grow:{re:/^梨树_/,at:[-1.95,0.6,-8.6],k:1.6}},  // 后院“大株梨花”：模型里的梨树以树根为心放大到约 5.7 m
+  {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,grow:[{re:/^梨树_/,at:[-1.95,0.6,-8.6],k:2.6},{re:/^芭蕉_/,at:[1.4,0,-6.9],k:1.5}]},  // 后院“大株梨花兼着芭蕉”：以树根为心放大，梨树约 9 m 高过正房屋脊，芭蕉约 4.5 m
 
   {id:'cuizhang',p:[0,height(0,96)-0.05,96],ry:0},
   // 新景点（Blender：blender/scripts/sites/build_sites.py）。正面均朝局部 +z，这里转成面向水：芦雪广面西、凹晶馆面南临池、凸碧山庄在山顶朝南俯看凹晶馆。
@@ -624,7 +628,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'mudanting',file:'qinfang',keep:/亭柱|额枋|彩画|匾_匾底|亭顶瓦|望板|垂脊/,p:[Z.mudan.x,Z.mudan.y+0.14,Z.mudan.z],ry:0}];
  const one=async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
-  if(d.grow){const {re,at,k}=d.grow,c=new V3(...at);root.traverse(m=>{if(m.isMesh&&re.test(m.name)){m.position.sub(c).multiplyScalar(k).add(c);m.scale.multiplyScalar(k);}});}
+  for(const {re,at,k} of d.grow||[]){const c=new V3(...at);root.traverse(m=>{if(m.isMesh&&re.test(m.name)){m.position.sub(c).multiplyScalar(k).add(c);m.scale.multiplyScalar(k);}});}
   root.traverse(m=>{if(!m.isMesh)return;const nm=m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
@@ -875,6 +879,7 @@ function buildBeds(){if(!GLB)return;const TL=new THREE.TextureLoader();const rr=
   im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);}}
 /* ---- Blender 精品树 (models/t/<species>_<seed>.wasm = glb): bark tube mesh + photo leaf cards ---- */
 const TM={};let BANMESH=[];const TREEMOD={broad:['huai_1','wutong_1'],blossom:['tao_1','li_1'],pine:['song_1','song_2'],willow:['liu_1','liu_2'],gui:['gui_1','gui_2'],bai:['bai_1','bai_2']};
+const ZHU=[];
 async function loadTrees(){if(!GLB||Q===0)return;const L=new GLTFLoader();const names=[...new Set(Object.values(TREEMOD).flat()),'banana_1','banana_2'];
  await Promise.all(names.map(async n=>{try{const g=await L.loadAsync('models/t/'+n+'.wasm');let bg=null,lg=null;g.scene.updateMatrixWorld(true);
   g.scene.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);if(/_leaf/.test(o.name))lg=geo;else bg=geo;});
@@ -882,6 +887,13 @@ async function loadTrees(){if(!GLB||Q===0)return;const L=new GLTFLoader();const 
    for(let i=0;i<n;i++){let a=0.72+0.28*sstep(0,h*0.35,p.getY(i));if(geo===lg){const dx=p.getX(i)-cc.x,dy=(p.getY(i)-cc.y)*1.3,dz=p.getZ(i)-cc.z;const e=Math.min(1,Math.hypot(dx,dy,dz)/rr*1.25);a=0.55+0.45*Math.pow(e,1.3);}col[i*3]=col[i*3+1]=col[i*3+2]=a;}geo.setAttribute('color',new THREE.BufferAttribute(col,3));if(!geo.attributes.normal)geo.computeVertexNormals();if(geo===lg){const nn=geo.attributes.normal;const _r=new V3(),_n=new V3();for(let i=0;i<n;i++){_r.set(p.getX(i)-cc.x,(p.getY(i)-cc.y)*0.8+h*0.12,p.getZ(i)-cc.z).normalize();_n.set(nn.getX(i),nn.getY(i),nn.getZ(i));if(_n.dot(_r)<0)_n.negate();_n.lerp(_r,0.7).normalize();nn.setXYZ(i,_n.x,_n.y,_n.z);}}}
   if(lg&&!lg.attributes.hang){lg.setAttribute('hang',new THREE.BufferAttribute(new Float32Array(lg.attributes.position.count),1));}
   TM[n]={bg,lg};}catch(e){console.warn('tree',n,e);}}));
+ /* 竹：Blender 建的三株（blender/scripts/flora/build_bamboo.py），叶簇贴 tex/zhu_spray.png；模型高 1，按竹高缩放 */
+ try{const L2=new GLTFLoader();L2.setMeshoptDecoder(MeshoptDecoder);const up=new V3(0,1,0);
+  for(let i=1;i<=3;i++){const g=await L2.loadAsync('models/t/zhu_'+i+'.wasm');g.scene.updateMatrixWorld(true);let culm=null,leaf=null;
+   g.scene.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);if(/leaf/.test(o.material.name))leaf=geo;else culm=geo;});
+   const nn=leaf.attributes.normal,_n=new V3();for(let k=0;k<nn.count;k++){_n.set(nn.getX(k),nn.getY(k),nn.getZ(k));if(_n.y<0)_n.negate();_n.lerp(up,0.65).normalize();nn.setXYZ(k,_n.x,_n.y,_n.z);}  // 叶簇片法线偏向上，背面不发黑
+   ZHU.push({culm,leaf});}
+  const t=await new THREE.TextureLoader().loadAsync('tex/zhu_spray.png');t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;ZHU.tex=t;}catch(e){console.warn('zhu',e);ZHU.length=0;}
  try{IMP=await (await fetch('tex/imp.json')).json();}catch(e){console.warn('imp.json',e);}}
 let IMP=null;const IMPT={};
 function buildOuterForest(){if(!IMP)return;const rr=mulberry32(4242);const keys=['song1','huai1','wutong1','song2','huai2'];const lists={};for(const k of keys)lists[k]=[];
@@ -1262,15 +1274,15 @@ function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,
  if(!GLB)hall(T(-83,y,23.5,0),{w:10.5,d:6,h:3.6,bays:3,base:0.5,pad:0.9,roof:'gable',roofH:2.1,over:1.0,plaque:'有凤来仪',pscale:0.72,lanterns:true});
  buildPath(GLB?{pts:[[-64,30],[-63.5,37],[-66,44],[-70.5,47.5],[-74.5,46.5],[-74.5,44.5]].map(([x,z])=>[x+MV.xiaoxiang[0],z+MV.xiaoxiang[1]]),w:1.4}:{pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
  const [XD,XZ]=MV.xiaoxiang;if(!GLB){addTree('blossom',-91+XD,37+XZ,0.8,PEAR[0],y);BANANAS.push([-70+XD,38+XZ,1.8,y],[-69+XD,39+XZ,1.5,y]);}  // 有院落模型时梨花、芭蕉在模型的后院里
- const bamb=(x,z,inside)=>{const gy=height(x,z);const h=inside?R(5,8):R(6,10),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.07,.07),R(0,6.28),R(-.07,.07))),sx=R(0.8,1.3);
+ const bamb=(x,z,inside)=>{const gy=height(x,z);const h=inside?R(8,13):R(9,14),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.07,.07),R(0,6.28),R(-.07,.07))),sx=R(0.95,1.5);
   // 院内的竹子颜色深些，竹下幽暗
-  STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:inside?pick(['#62803c','#557233','#6d8a45','#4a652c']):pick(['#a6bb72','#93ab63','#b3c47e','#86a058'])});const axis=new V3(0,1,0).applyQuaternion(lean);
-  for(let k=0;k<5;k++){const t=R(0.45,1.0);const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.12,.45),s=R(1,1.6);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:inside?pick(['#44602a','#3b5524','#4d6a31','#334c1f']):pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
-  if(sx>1.05)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});};
+  STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:inside?pick(['#62803c','#557233','#6d8a45','#4a652c']):pick(['#a6bb72','#93ab63','#b3c47e','#86a058']),lc:pick(['#d9e2c9','#cbd6b8','#e2e6cc','#bfcbab'])});const axis=new V3(0,1,0).applyQuaternion(lean);
+  for(let k=0;k<8;k++){const t=Math.pow(rnd(),0.7)*0.62+0.38;const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.25,.7)*(0.5+t*0.6),s=R(0.6,1.0)*(0.7+t*0.45);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:inside?pick(['#6a8a44','#5d7d3b','#78964f','#557535']):pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
+  if(sx>1.22)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});};
  const CX=GLB?-82:-80,CZ=GLB?29:30,HW=GLB?13.6:15,HD=GLB?14.6:12;
  /* 院内、院外各有定额：院内单独取样，不再被院外大片空地摊薄。
     院内哪里能种竹由掩码定：院落与正房模型的占地（游廊、甬路、泉沟、梨树、芭蕉…），见 blender/scripts/web/xx_bamboo_mask.mjs */
- const XXMASK=GLB?Uint8Array.from(atob('////////////////////////////////////////////////AwD4g/9//gcA/z////wPAP9////5HwD+////8T8A/P///+N/APj////H/wDw////j/8B+P//AwD/A/j//wcA/gfw////AfwP8P///wP4H+D///8H8D/g////D+B/gP///x/A/wD///8/gP8B/v//fwD/A/7///8A/gf8////AfwP+P///wP4H/j///8/8D/w////f+B/4P/////A/8D/////gf8B/////wH/A/7///8D/gf+////D/wP/P///3/4H/j/////8T/w/////+9/gP///////wD///////8B/v//////A/jjP/D//wfA/w6A//8PAP4fAPz/HwDAPwDw/z8AAP4AgP9/AODvAQD//w/4zwcA/v8/+I8PAPz/f/jhPwD8///8//8A/P///f/nA/7///3/wX/8/z/8DwD/+////B8A/P////8/AMD///9ffwAA/P//P3wAAOD/v/8AAADw/z/+AwAA4P8//P//////f/j//////3+w//////9/AP7/////fwD4//////8A'),c=>c.charCodeAt(0)):null;
+ const XXMASK=GLB?Uint8Array.from(atob('////////////////////////////////////////////////A3D///9//gfw//////wP8P/////5H+D/////8T/A/////+N/gP/////H/wD+////j/8B/P//HwD/A/j//w8A/gfw////AfwP8P///wP4H+D///8H8D/g////D+B/gP///x/A/wD///8/gP8B/v//fwD/A/7///8A/gf8////AfwP+P///wP4H/j///8/8D/w////f+B/4P/////A/8D/////gf8B/////wH/A/7///8D/gf+////D/wP/P///3/4H/j/////8T/w/////+9/gP///////wD///////8B/v//////A/jjP/D//wfA/w6A//8PAP4fAPz/HwDAPwDw/z8AAP4AgP9/AODvAQD//w/4zwcA/v8/+I8PAPz/f/jhPwD8///8//8A/P///f/nA/7///3/wX/8/z/8DwD/+////B8A/P////8/AMD///9ffwAA/P//P3wAAOD/v/8AAADw/z/+AwAA4P8//P//////f/j//////3+w//////9/AP7/////fwD4//////8A'),c=>c.charCodeAt(0)):null;
  const masked=(x,z)=>{const i=Math.round((x+82+14)/0.5),j=Math.round((z-27+13)/0.5);if(i<0||i>=57||j<0||j>=61)return true;const k=j*57+i;return (XXMASK[k>>3]>>(k&7)&1)===1;};
  /* 竹子一丛一丛地长：先撒丛心（院外的丛心离院墙越远越稀），每竿落在某个丛心附近（正态散开，丛有大有小），一成零散 */
  const outFall=(x,z)=>{const dx=Math.max(Math.abs(x-CX)-HW,0),dz=Math.max(Math.abs(z-CZ)-HD,0);return 1-sstep(3,16,Math.hypot(dx,dz));};
@@ -1278,14 +1290,46 @@ function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,
  const CIN=clumps(64,CX-HW+0.6,CX+HW-0.6,CZ-HD+0.6,CZ+HD-0.6,(x,z)=>!GLB||!masked(x,z)),COUT=clumps(80,-112,-50,2,58,(x,z)=>!(Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)&&rnd()<outFall(x,z));
  const gauss=()=>Math.sqrt(-2*Math.log(1-rnd()))*Math.cos(6.2832*rnd());
  const near=C=>{const c=C[Math.floor(rnd()*C.length)];if(rnd()<0.1)return [R(c[3],c[4]),R(c[5],c[6])];return [c[0]+gauss()*c[2],c[1]+gauss()*c[2]];};
- const NI=GLB?520:440,NO=460;let ni=0,no=0,tries=0;while((ni<NI||no<NO)&&tries<40000){tries++;const wantIn=ni<NI&&(no>=NO||tries%2===0);
+ const NI=GLB?760:440,NO=460;let ni=0,no=0,tries=0;while((ni<NI||no<NO)&&tries<40000){tries++;const wantIn=ni<NI&&(no>=NO||tries%2===0);
   const [x,z]=near(wantIn?CIN:COUT);const inside=Math.abs(x-CX)<HW-0.6&&Math.abs(z-CZ)<HD-0.6;if(inside?ni>=NI:no>=NO)continue;
   if(!inside){const dx=Math.max(Math.abs(x-CX)-HW,0),dz=Math.max(Math.abs(z-CZ)-HD,0);if(rnd()>1-sstep(3,16,Math.hypot(dx,dz)))continue;}
   if(GLB){if(inside&&masked(x,z))continue;}
   else{if(inside&&x>-89.5&&x<-76.5&&z<30.5)continue;if(inside&&z>27.5&&z<34&&x>-85)continue;}
   if(Math.abs(Math.abs(x-CX)-HW)<0.9&&Math.abs(z-CZ)<HD+1)continue;if(Math.abs(Math.abs(z-CZ)-HD)<0.9&&Math.abs(x-CX)<HW+1)continue;
   if(!GLB&&((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3))continue;
-  if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);if(inside)ni++;else no++;}}
+  if(nearPath(x+XD,z+XZ,1.7)||height(x+XD,z+XZ)<0.5)continue;if(!inside&&Math.abs(x-CX)<HW+1&&Math.abs(z-CZ)<HD+1)continue;if(!inside&&inZone(x+XD,z+XZ,-1))continue;bamb(x+XD,z+XZ,inside);if(inside)ni++;else no++;}
+ if(GLB)buildRill();}
+/* 潇湘馆泉沟：沿模型 泉水_水面 的中线另铺一条带流向坐标的水带（模型那条无 UV 看不出流向，已隐去）。
+   墙下入水处先跌一小段，弯处有几道浅滩起白花；水纹顺流而下。坐标：院落局部（模型原点），y 为模型水面 −0.06 */
+const RILL_PTS=[3,-11.8,3.11,-11.4,3.34,-10.81,3.44,-10.49,3.5,-10.15,3.51,-9.83,3.45,-9.52,3.28,-9.24,3,-9,2.57,-8.81,1.99,-8.65,1.29,-8.52,0.52,-8.4,-0.3,-8.29,-1.14,-8.18,-1.96,-8.06,-2.73,-7.93,-3.42,-7.78,-4,-7.6,-4.49,-7.41,-4.93,-7.23,-5.33,-7.05,-5.7,-6.86,-6.02,-6.65,-6.32,-6.42,-6.58,-6.14,-6.81,-5.82,-7.02,-5.44,-7.2,-5,-7.35,-4.46,-7.45,-3.82,-7.51,-3.1,-7.54,-2.32,-7.55,-1.53,-7.54,-0.72,-7.51,0.06,-7.47,0.79,-7.43,1.44,-7.4,2,-7.37,2.47,-7.34,2.88,-7.31,3.25,-7.27,3.57,-7.14,4.11,-6.93,4.57,-6.6,5,-6.37,5.2,-6.09,5.39,-5.78,5.55,-5.44,5.69,-5.08,5.82,-4.71,5.93,-4.35,6.04,-4,6.13,-3.68,6.22,-3.14,6.36,-2.61,6.42,-2.12,6.42,-1.73,6.43,-1.4,6.6,-1.47,7.07,-1.69,7.49,-2.01,7.92,-2.4,8.27,-2.82,8.49,-3.34,8.55,-3.94,8.54,-4.25,8.54,-4.57,8.56,-4.89,8.59,-5.2,8.67,-5.5,8.8,-5.8,8.98,-6.1,9.21,-6.41,9.47,-6.72,9.76,-7.02,10.07,-7.33,10.38,-7.63,10.69,-7.93,10.99,-8.22,11.26,-8.5,11.5,-8.77,11.71,-9.04,11.89,-9.31,12.05,-9.57,12.21,-10.07,12.5,-10.55,12.82,-11,13.2,-11.22,13.44,-11.43,13.7,-11.65,14,-11.86,14.3,-12.06,14.61,-12.24,14.9,-12.41,15.18,-12.7,15.64,-12.8,15.8];
+function buildRill(){const y0=Z.xiaoxiang.y+0.1-0.055,OX=-82+MV.xiaoxiang[0],OZ=27+MV.xiaoxiang[1],W=0.19;
+ const P=[];for(let i=0;i<RILL_PTS.length;i+=2)P.push([RILL_PTS[i],0,RILL_PTS[i+1]]);
+ // 墙下一隙：水从墙根石缝里落下约 0.4 m
+ const [fx,,fz]=P[0],[gx,,gz]=P[1],dl=Math.hypot(gx-fx,gz-fz),ux=(fx-gx)/dl,uz=(fz-gz)/dl;
+ P.unshift([fx+ux*0.12,0.18,fz+uz*0.12],[fx+ux*0.3,0.42,fz+uz*0.3]);
+ let sAcc=-0.62;const pos=[],aF=[],idx=[],SS=[];
+ for(let i=0;i<P.length;i++){const [x,yy,z]=P[i],a=P[Math.max(0,i-1)],b=P[Math.min(P.length-1,i+1)];let dx=b[0]-a[0],dz=b[2]-a[2];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;
+  if(i>0)sAcc+=Math.hypot(x-P[i-1][0],yy-P[i-1][1],z-P[i-1][2]);SS.push(sAcc);
+  for(const c of[-1,1]){pos.push(OX+x+dz*W*c,y0+yy,OZ+z-dx*W*c);aF.push(sAcc,c);}
+  if(i>0){const k=(i-1)*2;idx.push(k,k+1,k+2,k+1,k+3,k+2);}}
+ // 浅滩：入水跌处、几处急弯、出水口
+ const rif=[0.05];for(let i=2;i<P.length-2;i++){const a=P[i-2],b=P[i],c=P[i+2];const t1=Math.atan2(b[2]-a[2],b[0]-a[0]),t2=Math.atan2(c[2]-b[2],c[0]-b[0]);let d=Math.abs(t2-t1);if(d>Math.PI)d=2*Math.PI-d;if(d>0.35&&SS[i]-rif[rif.length-1]>2.5)rif.push(SS[i]);}rif.push(SS[SS.length-1]-0.6);while(rif.length<8)rif.push(-99);
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aF',new THREE.Float32BufferAttribute(aF,2));g.setIndex(idx);
+ const m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:{gTime:G.time,gNoise:G.noise,gSunCol:G.sunCol,gNight:G.night,rif:{value:rif.slice(0,8)}},
+  vertexShader:'attribute vec2 aF;varying vec2 vF;varying vec3 vW;void main(){vF=aF;vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
+  fragmentShader:`uniform float gTime,gNight;uniform sampler2D gNoise;uniform vec3 gSunCol;uniform float rif[8];varying vec2 vF;varying vec3 vW;
+   void main(){float s=vF.x,c=vF.y,t=gTime;float fall=step(s,0.0);float sp=mix(0.55,2.2,fall);
+    float n1=texture2D(gNoise,vec2(s*0.32-t*sp*0.42,c*0.11+0.31)).r,n2=texture2D(gNoise,vec2(s*0.85-t*sp*1.05,c*0.27+0.6)).g,n3=texture2D(gNoise,vec2(s*2.1-t*sp*2.3,c*0.5)).b;
+    float streak=smoothstep(0.52,0.8,n1*0.55+n2*0.45)*(0.6+0.4*n3);
+    float rf=0.0;for(int i=0;i<8;i++){float d=(s-rif[i])/0.32;rf=max(rf,exp(-d*d));}
+    float foam=clamp(rf*smoothstep(0.3,0.7,n2*0.7+n3*0.5)+fall*smoothstep(0.35,0.7,n3+0.2),0.0,1.0);
+    float edge=smoothstep(0.65,1.0,abs(c))*smoothstep(0.45,0.75,n1)*0.35;
+    float L=clamp(length(gSunCol)*0.55,0.0,1.1)+0.25;vec3 V=normalize(cameraPosition-vW);float fr=pow(1.0-clamp(V.y,0.0,1.0),3.0);
+    vec3 deep=vec3(0.11,0.17,0.16),sky=vec3(0.66,0.75,0.77);
+    vec3 col=mix(deep,sky,0.3+0.5*fr)*L+vec3(0.9,0.95,0.94)*L*(streak*0.24+edge*0.5+foam*0.9);
+    float a=(0.8+0.2*foam)*smoothstep(1.0,0.8,abs(c));
+    gl_FragColor=vec4(col,a);}`});
+ const mesh=new THREE.Mesh(g,m);mesh.renderOrder=2;mesh.frustumCulled=false;scene.add(mesh);}
 function buildQiushuang(){if(!GLB)return;const q=Z.qiushuang,y=q.y;
  for(const [lx,lz] of[[8,10],[11,2.5],[-6,-15.8],[6,-15.8]]){const x=-86+lx,z=19+lz;TREES.broad.push({x,y:y+0.05,z,s:R(0.75,0.9),ry:rnd()*6.283,tint:pick(GREENS),plum:false,v:1});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}
  BANANAS.push([-86+3.2,19+6.0,2.3,y],[-86+4.4,19+7.2,1.9,y],[-86+3.6,19+8.3,1.6,y],[-86+12.5,19+9.5,2.1,y],[-86+13.2,19+11,1.7,y]);}
@@ -1329,10 +1373,10 @@ function buildShore(){
  const ok=(x,z)=>!nearPath(x,z,3.2)&&!inZone(x,z,0.5)&&!nearZig(x,z,4)&&!BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+2.5);
  for(let i=0;i<SHORE.length;i++){const [sx,sz,nx,nz]=SHORE[i];if(rnd()<0.45)continue;const x=sx+nx*(0.9+R(-0.3,0.3)),z=sz+nz*(0.9+R(-0.3,0.3));if(!ok(x,z))continue;
   const s=R(0.6,1.4);rock(x,Math.max(height(x,z),-0.3)+s*0.2,z,s*R(0.9,1.4),s*R(0.5,0.9),s*R(0.8,1.2));if(rnd()<0.3)rock(x+R(-0.8,0.8),s*0.5,z+R(-0.8,0.8),s*0.6,s*0.7,s*0.6);}}
-function bambooAt(x,z){const gy=height(x,z);const h=R(5,9),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.07,.07),R(0,6.28),R(-.07,.07))),sx=R(0.8,1.3);
- STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:pick(['#a6bb72','#93ab63','#b3c47e','#86a058'])});const axis=new V3(0,1,0).applyQuaternion(lean);
- for(let k=0;k<5;k++){const t=R(0.45,1.0);const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.12,.45),s=R(1,1.6);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
- if(sx>1.05)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});}
+function bambooAt(x,z){const gy=height(x,z);const h=R(7,12),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.07,.07),R(0,6.28),R(-.07,.07))),sx=R(0.95,1.5);
+ STALKS.push({x,y:gy-0.05,z,q:lean,s:new V3(sx,h,sx),c:pick(['#a6bb72','#93ab63','#b3c47e','#86a058']),lc:pick(['#d9e2c9','#cbd6b8','#e2e6cc','#bfcbab'])});const axis=new V3(0,1,0).applyQuaternion(lean);
+ for(let k=0;k<8;k++){const t=Math.pow(rnd(),0.7)*0.62+0.38;const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.25,.7)*(0.5+t*0.6),s=R(0.6,1.0)*(0.7+t*0.45);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
+ if(sx>1.22)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});}
 function buildVegetation(){
  const clear=(x,z,r)=>!nearPath(x,z,r);
  for(let i=0,k=0;i<SHORE.length;i+=5){const [sx,sz,nx,nz]=SHORE[i];const x=sx+nx*R(4,6),z=sz+nz*R(4,6);const h=height(x,z);if(h<0.45||h>2.2||inZone(x,z,1)||!clear(x,z,3.2)||!inGarden(x,z,4)||!treeOK(x,z,3.6))continue;k++;if(k%3===2)addTree('blossom',x,z,R(.85,1.05),pick(PINK));else addTree('willow',x,z,R(.9,1.2),pick(['#8fae52','#9db85c','#a3bd62']));}
@@ -1445,10 +1489,17 @@ function buildInstances(){
  // bamboo
  const bs=new THREE.CylinderGeometry(0.03,0.042,1,6,1);bs.translate(0,0.5,0);const setQ=(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),it.q,it.s);
  const sw=SWAY_WORLD('0.35').replace('hBase','0.6');
+ if(ZHU.length===3){  // Blender 竹：每竿随机用三株之一，整株按竹高等比缩放；竿用竿色，叶簇按叶色
+  const setZ=(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),it.q,new V3(it.s.y,it.s.y,it.s.y));
+  const cm=patch(std('#ffffff',.55),{key:'zc',vWorld:sw}),cd=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),{key:'zcd',vWorld:sw});
+  const lm=a2c(patch(new THREE.MeshStandardMaterial({map:ZHU.tex,alphaTest:0.35,side:THREE.DoubleSide,roughness:.7}),{alphaFix:1,key:'zl',vWorld:sw,fOut:LEAF_OUT,snowLo:'0.4',snowHi:'0.9'}));
+  const ldm=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:ZHU.tex,alphaTest:0.35}),{alphaFix:1,key:'zld',vWorld:sw});
+  for(let v=0;v<3;v++){const L=STALKS.filter((it,i)=>i%3===v);const a=makeInst(ZHU[v].culm,cm,L,setZ);a.customDepthMaterial=cd;const b=makeInst(ZHU[v].leaf,lm,L.map(it=>({...it,c:it.lc||'#ffffff'})),setZ);b.customDepthMaterial=ldm;}
+ }else{
  const st=makeInst(bs,patch(std('#ffffff',.5,{map:STALK}),{key:'bst',vWorld:sw}),STALKS,setQ);st.customDepthMaterial=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),{key:'bstd',vWorld:sw});
  const parts=[];for(let i=0;i<3;i++){const p=new THREE.PlaneGeometry(1.35,1.0);p.translate(0,-0.28,0);p.rotateY(i*Math.PI/3);parts.push(p);}
  const lf=makeInst(mergeGeos(parts),a2c(patch(new THREE.MeshStandardMaterial({map:LEAF_BAMBOO,alphaTest:0.42,side:THREE.DoubleSide,roughness:.75}),{alphaFix:1,key:'bl',vWorld:sw,fOut:LEAF_OUT,snowLo:'0.4',snowHi:'0.9'})),BLEAF,setQ);
- lf.customDepthMaterial=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:LEAF_BAMBOO,alphaTest:0.42}),{alphaFix:1,key:'bld',vWorld:sw});
+ lf.customDepthMaterial=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:LEAF_BAMBOO,alphaTest:0.42}),{alphaFix:1,key:'bld',vWorld:sw});}
  {const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(0.8,0);sh.quadraticCurveTo(0.55,-0.06,0.42,-0.16);sh.quadraticCurveTo(0.2,-0.2,0.12,-0.42);sh.lineTo(0,-0.46);sh.closePath();
   const qg=new THREE.ExtrudeGeometry(sh,{depth:0.1,bevelEnabled:false,curveSegments:6});qg.translate(0,0,-0.05);
   for(const [M,x,y,z,ry] of QUE)add('que',qg.clone(),at(M,x,y,z,ry));}
@@ -1779,10 +1830,10 @@ let rtScene=null,composer=null,fogPass=null,bloomPass=null,fxaaPass=null,casPass
 const CASShader={uniforms:{tDiffuse:{value:null},texel:{value:new THREE.Vector2()},sharp:{value:0.5}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
  fragmentShader:`uniform sampler2D tDiffuse;uniform vec2 texel;uniform float sharp;varying vec2 vUv;void main(){vec3 a=texture2D(tDiffuse,vUv+vec2(0.0,-texel.y)).rgb,b=texture2D(tDiffuse,vUv+vec2(-texel.x,0.0)).rgb,c=texture2D(tDiffuse,vUv).rgb,d=texture2D(tDiffuse,vUv+vec2(texel.x,0.0)).rgb,e=texture2D(tDiffuse,vUv+vec2(0.0,texel.y)).rgb;
  vec3 mn=min(min(min(a,b),min(d,e)),c),mx=max(max(max(a,b),max(d,e)),c);vec3 amp=sqrt(clamp(min(mn,2.0-mx)/max(mx,vec3(1e-4)),0.0,1.0));vec3 w=amp*(-1.0/mix(8.0,5.0,sharp));gl_FragColor=vec4(clamp((c+(a+b+d+e)*w)/(1.0+4.0*w),0.0,1.0),1.0);}`};
-const FogShader={uniforms:{grade:{value:new THREE.Color(1,1,1)},tScene:{value:null},tDepth:{value:null},tSky:{value:null},projInv:{value:new THREE.Matrix4()},camWorld:{value:new THREE.Matrix4()},camPos:{value:new V3()},sunDir:G.sunDir,sunCol:{value:new THREE.Color()},
+const FogShader={uniforms:{grade:{value:new THREE.Color(1,1,1)},xxB:{value:new THREE.Vector4(Z.xiaoxiang.x,Z.xiaoxiang.z,Z.xiaoxiang.hw+9,Z.xiaoxiang.hd+9)},xxY:{value:Z.xiaoxiang.y},xxM:{value:0.075},tScene:{value:null},tDepth:{value:null},tSky:{value:null},projInv:{value:new THREE.Matrix4()},camWorld:{value:new THREE.Matrix4()},camPos:{value:new V3()},sunDir:G.sunDir,sunCol:{value:new THREE.Color()},
   density:{value:1.8},mist:{value:0},snow:{value:0},snowFog:{value:new THREE.Color(.6,.63,.68)},warm:{value:0.02},sat:{value:0.9},contrast:{value:1.12},vig:{value:0.36},time:G.time,texel:{value:new THREE.Vector2(1/1000,1/600)},aoK:{value:1.0},dream:{value:1.0},sunUV:{value:new THREE.Vector2(0.5,0.5)},sunVis:{value:0},sunset:{value:0}},
  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
- fragmentShader:`uniform vec3 grade;uniform sampler2D tScene,tDepth,gNoise;uniform samplerCube tSky;uniform mat4 projInv,camWorld;uniform vec3 camPos,sunDir,sunCol,snowFog;uniform float density,mist,snow,warm,sat,contrast,vig,time,aoK,dream,sunVis,sunset;uniform vec2 texel,sunUV;varying vec2 vUv;
+ fragmentShader:`uniform vec3 grade;uniform vec4 xxB;uniform float xxY,xxM;uniform sampler2D tScene,tDepth,gNoise;uniform samplerCube tSky;uniform mat4 projInv,camWorld;uniform vec3 camPos,sunDir,sunCol,snowFog;uniform float density,mist,snow,warm,sat,contrast,vig,time,aoK,dream,sunVis,sunset;uniform vec2 texel,sunUV;varying vec2 vUv;
  vec3 vpos(vec2 uv){float z=texture2D(tDepth,uv).x;vec4 ndc=vec4(uv*2.0-1.0,z*2.0-1.0,1.0);vec4 vp=projInv*ndc;return vp.xyz/vp.w;}
  float layerDepth(float sigma,float H,float camH,float vy,float d){float k=vy*d/H;float fk=abs(k)<1e-3?d:H*(1.0-exp(-k))/vy;return exp(-camH/H)*sigma*fk;}
  float csPhase(float mu,float g){float g2=g*g;return 3.0/(8.0*3.14159)*((1.0-g2)*(1.0+mu*mu))/((2.0+g2)*pow(1.0+g2-2.0*g*mu,1.5));}
@@ -1792,6 +1843,11 @@ const FogShader={uniforms:{grade:{value:new THREE.Color(1,1,1)},tScene:{value:nu
     for(int i=0;i<14;i++){float fi=float(i);float a=rot+fi*2.399963;float r=rad*sqrt((fi+0.5)/14.0);vec2 o=vec2(cos(a),sin(a)*texel.y/texel.x)*r;vec3 sp=vpos(vUv+o);float dz=(-sp.z);float diff=cz-dz;float range=0.25+cz*0.06;occ+=smoothstep(0.02,0.35,diff/range)*(1.0-smoothstep(range,range*3.0,diff));}
     float ao=1.0-occ/14.0*0.8*aoK;ao=clamp(ao,0.0,1.0);ao=mix(1.0,ao*ao,1.0-smoothstep(120.0,300.0,cz));c.rgb*=mix(0.35,1.0,ao);}vec3 d3=wp-camPos;float dist=length(d3);vec3 dir=d3/max(dist,1e-4);float camH=max(camPos.y,0.0);
    float od=layerDepth(1.6e-4*density,110.0,camH,dir.y,dist)+layerDepth(3.2e-5*density,1400.0,camH,dir.y,dist)+layerDepth(mist*2.2e-3,4.0,max(camH-0.2,0.0),dir.y,dist)+layerDepth(dream*4.0e-4,5.0,max(camH-0.4,0.0),dir.y,dist)+snow*dist*0.0035;
+   /* 潇湘馆一带的薄雾：院内及墙外 9 m、贴地 7 m 以内，近地浓、往上散，随风慢慢挪 */
+   if(xxM>0.001){vec3 bmin=vec3(xxB.x-xxB.z,xxY-1.0,xxB.y-xxB.w),bmax=vec3(xxB.x+xxB.z,xxY+7.0,xxB.y+xxB.w);vec3 inv=1.0/(dir+vec3(1e-5));vec3 t0=(bmin-camPos)*inv,t1=(bmax-camPos)*inv;vec3 tn=min(t0,t1),tf=max(t0,t1);
+    float ta=max(max(tn.x,tn.y),max(tn.z,0.0)),tb=min(min(tf.x,tf.y),min(tf.z,dist));
+    if(tb>ta){float stp=(tb-ta)/10.0,acc=0.0;for(int i=0;i<10;i++){vec3 q=camPos+dir*(ta+stp*(float(i)+0.5));vec2 e=max(abs(q.xz-xxB.xy)-(xxB.zw-vec2(9.0)),0.0);float edge=1.0-smoothstep(0.0,9.0,length(e));float hh=max(q.y-xxY,0.0);
+      float n=texture2D(gNoise,q.xz*0.045+vec2(time*0.012,time*0.007)).g*0.65+texture2D(gNoise,q.xz*0.13-vec2(time*0.02,0.0)).b*0.45;acc+=edge*exp(-hh/2.2)*smoothstep(7.0,3.5,hh)*smoothstep(0.3,0.85,n);}od+=acc*stp*xxM;}}
    float Tr=exp(-od);vec3 fogc=textureCube(tSky,normalize(vec3(dir.x,max(dir.y,0.04),dir.z))).rgb;float mu=dot(dir,sunDir);fogc+=sunCol*(0.7*csPhase(mu,0.62)+0.3/(4.0*3.14159))*0.9*max(sunDir.y+0.05,0.0);
    fogc=mix(fogc,snowFog,snow*0.75);fogc=mix(fogc,fogc*vec3(1.07,0.99,0.97)+vec3(0.035,0.02,0.025)*max(sunDir.y,0.0),dream);c.rgb=c.rgb*Tr+fogc*(1.0-Tr);}
   else if(sunset>0.001){vec4 ndc=vec4(vUv*2.0-1.0,1.0,1.0);vec4 vp=projInv*ndc;vp/=vp.w;vec3 dir=normalize((camWorld*vec4(vp.xyz,0.0)).xyz);float az=max(dot(normalize(dir.xz+1e-4),normalize(sunDir.xz+1e-4)),-1.0)*0.5+0.5;float hz=1.0-smoothstep(0.0,0.4,dir.y);float band=smoothstep(-0.02,0.06,dir.y);vec3 warmc=vec3(1.0,0.48,0.16),pink=vec3(0.95,0.48,0.62),violet=vec3(0.42,0.32,0.72);vec3 g=mix(violet,mix(pink,warmc,pow(az,2.5)),hz);float cl=0.6+0.4*texture2D(gNoise,vec2(az*3.0,dir.y*6.0)).a;c.rgb+=g*sunset*(0.22+0.95*pow(az,3.0))*hz*band*1.25*cl;}

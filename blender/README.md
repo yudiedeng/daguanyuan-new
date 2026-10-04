@@ -34,6 +34,16 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
 
+## 竹（blender/scripts/flora/build_bamboo.py）
+
+潇湘馆一带和园中竹丛用的三株竹（models/t/zhu_1–3.wasm）和叶簇贴图（tex/zhu_spray.png）：先在 Blender 里建两枝真实的竹叶簇、用 Cycles 俯拍成透明贴图，再建竹竿（节环、上细下粗）、互生下垂的枝，枝上挂十字交叉的叶簇片。网页按每竿高度等比缩放，低画质下退回程序生成的竹。
+
+```bash
+python3 blender/scripts/flora/build_bamboo.py --out /tmp/zhu
+for n in 1 2 3; do node blender/scripts/web/pack_prop.mjs /tmp/zhu/zhu_$n.glb models/t/zhu_$n.wasm 99999 256; done
+cp /tmp/zhu/zhu_spray.png tex/zhu_spray.png
+```
+
 ## 室内（blender/scripts/interiors/）
 
 四处室内：怡红院、潇湘馆、蘅芜苑、稻香村。陈设按原著与 `references/cs971 …/` 里的室内格局图布置，各脚本开头注明依据的回目与图。
