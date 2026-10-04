@@ -1326,15 +1326,17 @@ function crownGeo(kind,seed){const rr=mulberry32(seed);const P=[],N=[],U=[],C=[]
    for(let k=0;k<3;k++){const ang=k*Math.PI/3+rr()*0.5;const a1=new V3(Math.cos(ang),0,Math.sin(ang));const a2=new V3(rr()*0.4-0.2,1,rr()*0.4-0.2).normalize();const tilt=new THREE.Quaternion().setFromAxisAngle(new V3(rr()-0.5,0,rr()-0.5).normalize(),rr()*1.2);a1.applyQuaternion(tilt);a2.applyQuaternion(tilt);quad(c,a1,a2,sz,crownC,crownR,L.c,L.r);}}}};
  if(kind==='broad'||kind==='blossom'){const h=kind==='broad'?4.2:2.9,cr=kind==='broad'?2.6:2.0;const cc=new V3(0,h+cr*0.55,0);const lobes=[{c:cc.clone(),r:cr}];const nl=3+Math.floor(rr()*2);for(let i=0;i<nl;i++){const a=i/nl*6.28+rr();lobes.push({c:new V3(Math.cos(a)*cr*0.75,h+cr*(0.2+rr()*0.7),Math.sin(a)*cr*0.75),r:cr*(0.6+rr()*0.2)});}
   clumps(lobes,cc,cr*1.6,kind==='broad'?1.5:1.15,kind==='broad'?4.2:5.5);}
+ else if(kind==='bush'){const h=0.55,cr=1.05;const cc=new V3(0,h+cr*0.5,0);const lobes=[{c:cc.clone(),r:cr,fy:0.75}];const nl=3+Math.floor(rr()*2);for(let i=0;i<nl;i++){const a=i/nl*6.28+rr();lobes.push({c:new V3(Math.cos(a)*cr*0.7,h+cr*(0.15+rr()*0.35),Math.sin(a)*cr*0.7),r:cr*(0.55+rr()*0.2),fy:0.75});}
+  clumps(lobes,cc,cr*1.5,0.95,6.5);}// 灌木：低矮团状（原先缺这一支，远看只剩枝干）
  else if(kind==='pine'){const h=6.5;for(let t=0;t<4;t++){const y=h*0.45+t*1.3,a=rr()*6.28,off=t===3?0:1.2+rr()*0.8;const c=new V3(Math.cos(a)*off,y,Math.sin(a)*off);clumps([{c,r:2.2-t*0.35,fy:0.35}],new V3(0,h,0),3.5,1.4,4.5);}}
  else if(kind==='willow'){const h=4.8,cr=2.2;const cc=new V3(0,h+1.2,0);clumps([{c:cc,r:cr,fy:0.7}],cc,cr*1.5,1.3,3.2);nTop=I.length;
   const nS=60;for(let i=0;i<nS;i++){const a=rr()*6.28,r=0.6+rr()*2.8;const top=new V3(Math.cos(a)*r,h+1.6-r*0.3+rr()*0.6,Math.sin(a)*r);const len=2.4+rr()*2.8*(0.5+r/3.4);const out=new V3(Math.cos(a),0,Math.sin(a));const side=new V3(-Math.sin(a),0,Math.cos(a));
    const base=P.length/3;const segs=4;for(let s=0;s<=segs;s++){const f=s/segs;const c=top.clone().addScaledVector(out,f*0.5).add(new V3(0,-f*len,0));for(const q of[-1,1]){const v=c.clone().addScaledVector(side,q*0.2);P.push(v.x,v.y,v.z);const n=out.clone().multiplyScalar(0.7).add(new V3(0,0.3,0)).normalize();N.push(n.x,n.y,n.z);const ao=mix(0.6,1,1-f*0.5);C.push(ao,ao,ao);U.push(q<0?0:1,1-f);H.push(f);}}
    for(let s=0;s<segs;s++){const a0=base+s*2;I.push(a0,a0+1,a0+3,a0,a0+3,a0+2);}}}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('hang',new THREE.Float32BufferAttribute(H,1));g.setIndex(I);if(nTop>=0){g.addGroup(0,nTop,0);g.addGroup(nTop,I.length-nTop,1);}g.computeBoundingSphere();return g;}
-function trunkGeo(kind,seed){const rr=mulberry32(seed+5);const parts=[];const h=kind==='pine'?6.8:kind==='willow'?5.2:kind==='blossom'?3.0:4.4;const r0=kind==='pine'?0.3:kind==='blossom'?0.18:0.28;
+function trunkGeo(kind,seed){const rr=mulberry32(seed+5);const parts=[];const h=kind==='pine'?6.8:kind==='willow'?5.2:kind==='blossom'?3.0:kind==='bush'?0.7:4.4;const r0=kind==='pine'?0.3:kind==='blossom'?0.18:kind==='bush'?0.08:0.28;
  const main=new THREE.CylinderGeometry(r0*0.55,r0,h,8,4);main.translate(0,h/2,0);const p=main.attributes.position;for(let i=0;i<p.count;i++){const y=p.getY(i);p.setX(i,p.getX(i)+Math.sin(y*0.9+seed)*0.12*(y/h));p.setZ(i,p.getZ(i)+Math.cos(y*0.7+seed)*0.1*(y/h));}main.computeVertexNormals();parts.push(main);
- const nb=kind==='pine'?5:kind==='blossom'?5:4;for(let i=0;i<nb;i++){const a=i/nb*6.28+rr();const len=(kind==='pine'?1.8:1.6)+rr();const b=new THREE.CylinderGeometry(r0*0.18,r0*0.32,len,6);b.translate(0,len/2,0);const q=new THREE.Quaternion().setFromUnitVectors(UP,new V3(Math.cos(a),kind==='pine'?0.25:0.9,Math.sin(a)).normalize());b.applyQuaternion(q);b.translate(0,h*(0.55+rr()*0.35),0);parts.push(b);}
+ const nb=kind==='pine'?5:kind==='blossom'?5:4;for(let i=0;i<nb;i++){const a=i/nb*6.28+rr();const len=kind==='bush'?0.45+rr()*0.35:(kind==='pine'?1.8:1.6)+rr();const b=new THREE.CylinderGeometry(r0*0.18,r0*0.32,len,6);b.translate(0,len/2,0);const q=new THREE.Quaternion().setFromUnitVectors(UP,new V3(Math.cos(a),kind==='pine'?0.25:0.9,Math.sin(a)).normalize());b.applyQuaternion(q);b.translate(0,h*(0.55+rr()*0.35),0);parts.push(b);}
  for(const g of parts){uvScale(g,1,g.parameters?g.parameters.height:1);}
  return mergeGeos(parts.map(g=>{setAO(g,(x,y)=>0.6+0.4*sstep(0,2,y));return g;}));}
 const WILLOW_HANG=`{float hg=hang;float ph2=wpos_.x*0.21+wpos_.z*0.17;float gs=gustAt(wpos_.xz);float kk=pow(hg,1.5);wpos_.x+=(sin(gTime*1.2+ph2)*0.35+gs*gWind*0.9)*kk;wpos_.z+=(cos(gTime*0.9+ph2*1.3)*0.25+gs*gWind*0.35)*kk;}`;
@@ -1470,7 +1472,7 @@ function buildTerrain(){
 }
 function buildHeightTex(){const nx=HG.nx,nzz=HG.nz;const data=new Uint16Array(nx*nzz*4);
  for(let j=0;j<nzz;j++)for(let i=0;i<nx;i++){const x=HG.x0+i,z=HG.z0+j,h=HG.data[j*nx+i];let d=1;
-  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
+  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(Math.abs(x-8)<6&&z>60&&z<90&&nearStream(x,z,1.5))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
   if(d>0)d*=(0.55+0.45*nz(NOISE.d,x*2,z*2))*sstep(0.28,0.45,h);if(d>0&&h>3)d*=0.7;
   let can=0;{const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l){const dd=Math.hypot(p[0]-x,p[1]-z);can+=Math.max(0,1-dd/5.5);}}can=Math.min(1,can*0.8);}
   if(inZone(x,z,0.5))can=0;d*=1-0.85*can;
@@ -1595,6 +1597,63 @@ function buildLanterns(){const prof=[];for(let i=0;i<=12;i++){const t=i/12;const
 let plTimer=0;function updatePointLights(){const c=camera.position;const s=LANT.map(p=>[p.distanceToSquared(c),p]).sort((a,b)=>a[0]-b[0]);PL.forEach((l,i)=>{if(s[i]){l.position.copy(s[i][1]);l.position.y-=0.1;}});}
 
 /* particles */
+/* =====================================================================
+   出翠嶂石洞一带（第十七回）：“佳木茏葱，奇花闪灼，一带清流，从花木深处曲折泻于石隙之下”
+   “俯而视之，则清溪泻雪，石磴穿云”——石磴两旁花木、山石，池边垂柳；清溪从翠嶂石缝流出、跌下石坡入池；池谷晨雾
+   ===================================================================== */
+const FX=[];
+// 清溪：翠嶂后口东侧石缝出水，在平地上曲折几弯，顺坡跌下，入沁芳池（终点在水里）
+const CASCADE=[[6,87.2],[8.6,84],[6.4,80.6],[8.2,77.2],[9.8,73],[8.4,69.4],[10.4,66],[11,62]];
+const STREAM_PTS=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal').getSpacedPoints(120);
+function nearStream(x,z,r){for(const p of STREAM_PTS)if((p.x-x)**2+(p.z-z)**2<r*r)return true;return false;}// 溪边不长草
+function buildQinfangScene(){const SH=['#6a8a42','#5b7d3a','#7a9a4c','#4f7034'],FL=[...PINK,...APRICOT,'#f3f0e6'];
+ const bush=(x,z,s,tint)=>{if(nearPath(x,z,1.9)||!treeOK(x,z,1.1)||height(x,z)<0.35)return false;if(nearStream(x,z,2.5))return false;TREES.bush.push({x,y:height(x,z),z,s:s*0.72,ry:rnd()*6.283,tint,fl:FL.includes(tint),v:Math.floor(rnd()*2)});treeAdd(x,z);return true;};
+ // 石磴两旁：灌木、花丛、山石，一路从出洞口铺到池边
+ const ax=new THREE.CatmullRomCurve3([[-10.2,87],[-10,82],[-7,75],[-3,67],[0,60]].map(p=>new V3(p[0],0,p[1])),false,'centripetal');
+ const sp=ax.getSpacedPoints(24);
+ for(let i=0;i<sp.length;i++){const a=sp[Math.max(0,i-1)],b=sp[Math.min(sp.length-1,i+1)];let tx=b.x-a.x,tz=b.z-a.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;
+  for(const sd of[-1,1])for(const off of[2.4,3.6,5.2]){const x=sp[i].x-tz*off*sd+R(-0.5,0.5),z=sp[i].z+tx*off*sd+R(-0.5,0.5);bush(x,z,R(0.7,1.15),rnd()<0.42?pick(FL):pick(SH));}
+  if(i%3===1)for(const sd of[-1,1]){const off=R(2.2,3.4),x=sp[i].x-tz*off*sd,z=sp[i].z+tx*off*sd;if(!nearPath(x,z,1.9)){const sx=R(0.8,1.8),sy=R(0.8,1.9);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(0.8,1.6));}}}
+ // 出洞口“佳木茏葱，奇花闪灼”：平地两侧花木；西侧一丛竹
+ for(let i=0;i<46;i++){const x=R(-24,22),z=R(78,88);if(Math.abs(x+10)<3.2)continue;bush(x,z,R(0.75,1.2),rnd()<0.5?pick(FL):pick(SH));}
+ for(let i=0;i<70;i++){const a=rnd()*6.28,d=Math.sqrt(rnd())*3.2,x=-20+Math.cos(a)*d,z=83+Math.sin(a)*d;if(!nearPath(x,z,1.8))bambooAt(x,z);}
+ // 桃杏夹在视线两侧（视线上的会被 addTree 自动跳过）
+ for(let n=0,t=0;n<14&&t<500;t++){const x=R(-30,28),z=R(60,88);if(height(x,z)<0.4||nearPath(x,z,3)||!treeOK(x,z,3.2))continue;addTree('blossom',x,z,R(0.75,1.0),pick(rnd()<0.6?PINK:APRICOT));n++;}
+ // 池边垂柳
+ if(QINFANG)for(let n=0,t=0;n<10&&t<600;t++){const s2=SHORE[Math.floor(rnd()*SHORE.length)];if(Math.hypot(s2[0]-QINFANG.x,s2[1]-QINFANG.z)>34)continue;const x=s2[0]+s2[2]*R(1.2,2.4),z=s2[1]+s2[3]*R(1.2,2.4);if(height(x,z)<0.35||nearPath(x,z,2.2)||!treeOK(x,z,4))continue;addTree('willow',x,z,R(0.85,1.1),pick(['#8fae4e','#9ab85a','#86a648']));n++;}
+ // 清溪两岸夹石（“泻于石隙之下”），坡上石块更大
+ const cc=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal'),cp=cc.getSpacedPoints(46);
+ for(let i=1;i<cp.length-1;i++){if(isWet(cp[i].x,cp[i].z))break;const a=cp[i-1],b=cp[i+1];let tx=b.x-a.x,tz=b.z-a.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const st=Math.abs(height(b.x,b.z)-height(a.x,a.z))/Math.hypot(b.x-a.x,b.z-a.z);
+  for(const sd of[-1,1]){if(rnd()<0.3)continue;const sx=R(0.35,0.7)*(1+st*0.5),sy=R(0.3,0.6)*(1+st*0.5),off=0.95+st*0.4+sx*0.9,x=cp[i].x-tz*off*sd,z=cp[i].z+tx*off*sd;rock(x,height(x,z)+sy*0.2,z,sx,sy,R(0.35,0.7)*(1+st*0.5));}
+  if(rnd()<0.5)bush(cp[i].x-tz*R(2.2,3.4)*(rnd()<0.5?-1:1),cp[i].z+tx*R(2.2,3.4),R(0.6,1.0),rnd()<0.5?pick(FL):pick(SH));}
+}
+function buildQinfangFX(){
+ // ---- 清溪泻雪：沿地面一条水带，坡缓处清碧、坡陡处翻白；白沫纹理顺流卷动
+ const ft=cnv(64,256,(g)=>{g.clearRect(0,0,64,256);for(let i=0;i<70;i++){const x=Math.random()*64,y=Math.random()*256,l=18+Math.random()*60,w=1.5+Math.random()*4;const gr=g.createLinearGradient(0,y,0,y+l);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(0.5,'rgba(255,255,255,'+(0.35+Math.random()*0.5)+')');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(x,y,w,l);g.fillRect(x-64,y,w,l);g.fillRect(x,y-256,w,l);}});
+ const tex=new THREE.CanvasTexture(ft);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.colorSpace=THREE.SRGBColorSpace;
+ const cc=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal'),L=cc.getLength(),n=Math.ceil(L/0.3),sp=cc.getSpacedPoints(n);
+ const pos=[],uv=[],col=[],idx=[],pos2=[];let acc=0,m=0,end=null;
+ for(let i=0;i<=n;i++){const p=sp[i],a=sp[Math.max(0,i-1)],b=sp[Math.min(n,i+1)];let tx=b.x-a.x,tz=b.z-a.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;if(i>0)acc+=p.distanceTo(sp[i-1]);
+  const hA=height(a.x,a.z),hB=height(b.x,b.z),st=clamp(Math.abs(hB-hA)/(a.distanceTo(b)||1),0,1.5),w=0.6+st*0.4,wet=isWet(p.x,p.z);
+  for(const sd of[-1,1]){const x=p.x-tz*w*sd,z=p.z+tx*w*sd;pos.push(x,Math.max(height(x,z),height(p.x,p.z))+0.12,z);uv.push(sd<0?0:1,acc/2.2);const f=clamp(st*2.2,0.15,1);col.push(0.62+0.38*f,0.8+0.2*f,0.82+0.18*f);}
+  m++;if(wet){end=p;break;}}
+ for(let i=0;i<m-1;i++){const a=i*2;idx.push(a,a+2,a+1,a+1,a+2,a+3);}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+ const base=new THREE.Mesh(g,std('#6fa9b0',0.08,{vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.86,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));base.renderOrder=2;base.name='清溪';scene.add(base);
+ const foam=new THREE.Mesh(g,std('#ffffff',0.5,{map:tex,vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.95,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3}));foam.renderOrder=3;scene.add(foam);
+ // 入池处一圈白沫
+ const sm=[];if(end){const st=cnv(128,128,(g2)=>{const gr=g2.createRadialGradient(64,64,4,64,64,62);gr.addColorStop(0,'rgba(255,255,255,0.9)');gr.addColorStop(0.5,'rgba(255,255,255,0.35)');gr.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=gr;g2.fillRect(0,0,128,128);});const stx=new THREE.CanvasTexture(st);
+  for(let k=0;k<3;k++){const mm=new THREE.Mesh(new THREE.CircleGeometry(1,24).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:stx,transparent:true,depthWrite:false,opacity:0.5}));mm.position.set(end.x+(k-1)*0.4,0.04+k*0.005,end.z+0.3*k);mm.renderOrder=3;scene.add(mm);sm.push(mm);}}
+ // ---- 池谷晨雾：低处的软雾团，清晨最浓、白天淡淡一层，人走近了就散开
+ const mt=cnv(256,256,(g2)=>{for(let i=0;i<26;i++){const x=40+Math.random()*176,y=70+Math.random()*116,r=30+Math.random()*60;const gr=g2.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(255,255,255,0.22)');gr.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=gr;g2.fillRect(0,0,256,256);}});
+ const mtx=new THREE.CanvasTexture(mt);mtx.colorSpace=THREE.SRGBColorSpace;const mist=[];const rr=mulberry32(4242);
+ const cx=QINFANG?QINFANG.x:0,cz=QINFANG?QINFANG.z:50;
+ for(let k=0;k<22;k++){const x=cx+(rr()-0.5)*64,z=cz+4+rr()*30,s=9+rr()*10;const y=Math.max(0,height(x,z))+0.8+rr()*2.2;const sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:mtx,transparent:true,depthWrite:false,opacity:0,fog:false}));sp2.scale.set(s*1.6,s*0.55,1);sp2.position.set(x,y,z);sp2.userData={x,z,y,ph:rr()*6.28,sp:0.15+rr()*0.25};sp2.renderOrder=4;scene.add(sp2);mist.push(sp2);}
+ FX.push((dt,et)=>{tex.offset.y-=dt*1.6;for(const k in sm){const mm=sm[k];const t=(et*0.8+k*0.33)%1;mm.scale.setScalar(0.6+t*1.4);mm.material.opacity=0.55*(1-t);}
+  const morn=sstep(4.5,6.0,hour)*(1-sstep(8.5,11,hour)),eve=sstep(17.5,19,hour)*(1-sstep(21,23,hour));const dens=(0.2+0.62*morn+0.3*eve)*(1-snowAmt*0.5);const lum=0.35+0.65*(1-night);
+  for(const sp2 of mist){const u=sp2.userData;sp2.position.x=u.x+Math.sin(et*0.05*u.sp*6+u.ph)*3;sp2.position.z=u.z+Math.cos(et*0.04*u.sp*6+u.ph)*1.5;const d=sp2.position.distanceTo(camera.position);
+   sp2.material.opacity=dens*sstep(5,14,d)*(0.75+0.25*Math.sin(et*0.2+u.ph));sp2.material.color.setScalar(lum);}});
+}
 let petals=null,fireflies=null,snowP=null,motes=null;const BIRDS=[];
 function buildParticles(){
  {const cx=QINFANG?QINFANG.x:0,cz=QINFANG?QINFANG.z:50,n=500,pos=new Float32Array(n*3),vel=[];for(let i=0;i<n;i++){pos[i*3]=cx+R(-30,30);pos[i*3+1]=Math.random()*12;pos[i*3+2]=cz+R(-26,26);vel.push(0.3+Math.random()*0.5);}
@@ -1876,7 +1935,7 @@ const AUTUMN=['#c2461f','#d8762a','#e3b03c','#a0361a','#bb8a2c','#86913a','#cf5a
 function crownLook(kind,t,ss){const h=hash3(t.x,t.z,7);
  if(kind==='pine'||kind==='gui'||kind==='bai')return [1,ss===3?'#50684a':t.tint];
  if(kind==='willow')return [[1,1,0.95,0][ss],['#b3cf62','#86a84c','#cdb85a','#000'][ss]];
- if(kind==='bush')return [[1,1,1,0][ss],['#9ec25a','#6f9444','#b86a2c','#000'][ss]];
+ if(kind==='bush')return [[1,1,1,0][ss],t.fl&&ss<2?t.tint:['#9ec25a','#6f9444','#b86a2c','#000'][ss]];// fl：开花灌木，春夏显花色
  if(kind==='broad')return [[1,1,1,0][ss],ss===0?new THREE.Color(t.tint).lerp(new THREE.Color('#b9d97a'),0.45).getStyle():ss===1?new THREE.Color(t.tint).lerp(new THREE.Color('#8fb04e'),0.25).getStyle():ss===2?AUTUMN[Math.floor(h*AUTUMN.length)]:'#000'];
  if(t.plum)return [1,ss===3?t.tint:ss===2?'#b9772f':ss===1?'#5f8a3e':'#86a855'];
  return [[1,1,0.95,0][ss],ss===0?t.tint:ss===1?'#62903f':'#c07e34'];}
@@ -1956,6 +2015,7 @@ function frame(){
  if(night>0.05){const a=fireflies.geometry.attributes.position,b=fireflies.userData.base;for(let i=0;i<b.length;i++)a.setXYZ(i,b[i][0]+Math.sin(et*0.6+i)*1.2,b[i][1]+Math.sin(et*0.9+i*2.1)*0.5,b[i][2]+Math.cos(et*0.5+i*1.3)*1.2);a.needsUpdate=true;}
  if(snowP.visible){snowP.material.opacity=0.9*snowAmt;const a=snowP.geometry.attributes.position,cx=camera.position.x,cz=camera.position.z;for(let i=0;i<a.count;i++){let y=a.getY(i)-1.5*dt,x=a.getX(i)+(Math.sin(et*0.5+i)*0.4+A.gust*0.8)*dt,z=a.getZ(i);if(y<0||Math.abs(x-cx)>90||Math.abs(z-cz)>90){y=camera.position.y+R(-10,45);x=cx+R(-90,90);z=cz+R(-90,90);}a.setXYZ(i,x,y,z);}a.needsUpdate=true;}
  const dayv=1-night;for(const b of BIRDS){const u=b.userData;u.ph+=dt*u.sp;b.visible=dayv>0.3&&snowAmt<0.5;b.position.set(u.cx+Math.cos(u.ph)*u.rad,u.h+Math.sin(u.ph*2.3)*2,u.cz+Math.sin(u.ph)*u.rad);b.rotation.y=-u.ph+(u.sp>0?0:Math.PI)+Math.PI;const f=Math.sin(et*9+u.ph*10)*0.7;u.l.rotation.z=f;u.r.rotation.z=-f;}
+ for(const f of FX)f(dt,et);
  if(FLAG)FLAG.rotation.y=Math.PI/2+Math.sin(et*1.3)*(0.1+A.gust*0.25);
  for(const l of BANLEAVES)l.rotation.x=l.userData.bx+Math.sin(et*1.2+l.userData.ph)*(0.03+A.gust*0.08);
  // camera
@@ -2012,9 +2072,9 @@ async function build(){
  await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();buildDaoxiang();buildLongcui();buildOuxiang();
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
- await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
+ await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}try{buildCrops();}catch(e){console.warn('crops',e);}try{buildBeds();}catch(e){console.warn('beds',e);}
- await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();
+ await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
