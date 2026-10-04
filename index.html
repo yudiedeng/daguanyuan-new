@@ -893,7 +893,7 @@ async function hengwuVines(q){const J=await (await fetch('models/b/hw_vines.json
  const [{bakedM},g]=await Promise.all([plants(),new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/b/hw_vines.wasm')]);
  g.scene.traverse(o=>{if(o.isMesh){o.material=bakedM;o.castShadow=Q>0;o.receiveShadow=true;}});g.scene.position.set(q.x,q.y,q.z);scene.add(g.scene);
  // 插天的大玲珑山石：巨石正面补几块带孔的太湖石，迎门一立
- new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hushi.glb').then(g=>{let src=null;g.scene.traverse(o=>{if(o.isMesh&&!src)src=o;});if(!src)return;
+ if(J.H.length)new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hushi.glb').then(g=>{let src=null;g.scene.traverse(o=>{if(o.isMesh&&!src)src=o;});if(!src)return;
   const mat=src.material.clone();mat.color=new THREE.Color('#b8b8ae');mat.roughness=0.95;const im=new THREE.InstancedMesh(src.geometry,mat,J.H.length);
   J.H.forEach(([x,y,z,ry,h,k],i)=>{_m4.compose(new V3(q.x+x,q.y+y,q.z+z),new THREE.Quaternion().setFromAxisAngle(UP,ry),new V3(h*k,h,h*k));im.setMatrixAt(i,_m4);
    colAdd({x:q.x+x,z:q.z+z,c:1,s:0,hx:h*k*0.26,hz:h*k*0.28,top:q.y+y+h,bot:q.y-1,walk:false});});

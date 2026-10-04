@@ -172,7 +172,7 @@ def pick(w):
 # ------------------------------------------------------------------ 1. 院中藤蔓（烘在原位）
 V = Geo(); WR = (0.42, 0.14, 0.24, 0.20)
 for d in J['D']:   # 垂山巅、穿石隙（短的去掉一部分，控制面数）
-    if rnd.random() > (0.9 if len(d) >= 3 * 8 + 2 else 0.6): continue
+    if rnd.random() > (0.82 if len(d) >= 3 * 8 + 2 else 0.5): continue
     dx, dz = d[0], d[1]; pts = [Vector((d[i], d[i + 1], d[i + 2])) for i in range(2, len(d), 3)]; o = Vector((dx, 0.0, dz))
     pts = [p + o * 0.03 for p in pts]; vine(V, pts, o, pick(WR))
     if len(pts) > 6 and rnd.random() < 0.15:

@@ -18,7 +18,7 @@ const tris=(re)=>{const T=[];for(const n of doc.getRoot().listNodes()){const mes
 let seed=99;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
 const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 // 玲珑石摆放：[x, 底 y, z, 转角, 高, 宽/高比]（模型高 1、宽约 0.56×0.62）
-const H=[[0.4,-0.2,9.0,0.4,7.2,0.9],[-3.4,-0.2,9.6,2.1,4.2,0.9],[3.6,-0.2,9.4,4.0,4.8,0.85],[-5.6,-0.2,8.6,1.0,3.0,1.0],[5.8,-0.2,8.4,5.2,3.4,0.95],[1.8,2.4,7.4,3.1,3.0,0.9]];  // 近门的小石不放：Tripo 石头近看面数不够
+const H=[];  // 试过在巨石正面补 Tripo 太湖石（models/p/hushi.glb），放大到 3~7 m 后面数不够、棱面明显，近门处很假，先不放
 const rock=tris(/群石/);
 {const hd=await io.read(new URL('../../../models/p/hushi.glb',import.meta.url).pathname);const hm=hd.getRoot().listMeshes()[0].listPrimitives()[0];const a=hm.getAttribute('POSITION'),ix=hm.getIndices(),v=[0,0,0],V=[];for(let i=0;i<a.getCount();i++){a.getElement(i,v);V.push([...v]);}
  for(const [hx,hy,hz,ry,h,k] of H){const c=Math.cos(ry),s2=Math.sin(ry),P=V.map(([x,y,z])=>{x*=h*k;y*=h;z*=h*k;return [hx+x*c+z*s2,hy+y,hz-x*s2+z*c];});
