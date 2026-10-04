@@ -1136,7 +1136,9 @@ function buildRockery(){const cz=GLB,burn=()=>{rnd();rnd();rnd();};
  [[-12,95],[8,97],[16,94]].forEach(([x,z],i)=>{const y=height(x,z)+R(3,5);if(!cz){addTree('pine',x,z,0.6,'#3f5a3c',y);return;}
   const ok=!inView(x,z,0)&&!BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5)&&!(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9);
   const [px,pz,pt]=CZ_PINES[i];TREES.pine.push({x:px,y:height(0,96)-0.05+pt,z:pz,s:0.6,ry:ok?rnd()*6.283:i*2.1,tint:'#3f5a3c',plum:false,v:ok?Math.floor(rnd()*2):i%2});treeAdd(px,pz);});
- for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,2)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}}
+ for(const m of MOUNDS){const n=8+Math.floor(rnd()*8);for(let i=0;i<n;i++){const a=rnd()*6.28,r=R(1,m[3]*0.55),x=m[0]+Math.cos(a)*r,z=m[1]+Math.sin(a)*r;if(nearPath(x,z,2)||inZone(x,z,1)||height(x,z)<0.5)continue;const sx=R(1.2,3.2),sy=R(1.0,3.0);rock(x,height(x,z)+sy*0.3,z,sx,sy,R(1,2.4),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
+ // 按原著补的几座山坡陡，满坡撒山石，免得一整面光坡（x, z, 半径 rx, rz, 块数；同 make_layout.py 的 EXTRA_HILLS）
+ for(const [cx,cz,rx,rz,k] of[[-41,85,20,10,26],[36,87,18,10,22],[38,157,16,21,46],[-121,-21,10,11,22]])for(let i=0;i<k;i++){const a=rnd()*6.28,d=R(0.25,0.95),x=cx+Math.cos(a)*rx*d,z=cz+Math.sin(a)*rz*d;if(nearPath(x,z,2)||inZone(x,z,1)||!inGarden(x,z,2)||height(x,z)<1.2)continue;const sx=R(1.4,3.8),sy=R(1.2,3.4);rock(x,height(x,z)+sy*0.25,z,sx,sy,R(1.2,2.8),pick(['#8e8f86','#9a9a90','#7f8078','#a09e94']));}}
 function buildDaguan(){const y=Z.daguan.y,M=T(0,y,-90,0);if(!GLB){
  box('marble',M,48,4.5,24,0,1.5-2.25,0,{ao:(yy)=>0.7+0.3*sstep(-0.5,1.5,yy)});for(let i=0;i<5;i++)box('marble',M,12,1.5*(5-i)/5,0.6,0,1.5*(5-i)/10,12+0.3+i*0.6);
  box('marble',M,1.6,0.9,3.2,-6.8,0.45,13.2);box('marble',M,1.6,0.9,3.2,6.8,0.45,13.2);
@@ -1404,7 +1406,7 @@ function buildTerrain(){
  const p=g.attributes.position;HG.data=new Float32Array(p.count);
  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);const h=height(x,z);p.setY(i,h);const ix=Math.round(x-HG.x0),iz=Math.round(z-HG.z0);HG.data[iz*HG.nx+ix]=h;}
  g.computeVertexNormals();const nrm=g.attributes.normal;const cols=new Float32Array(p.count*3);
- for(let i=0;i<p.count;i++){const h=p.getY(i);const wet=sstep(0.62,0.12,h);const slope=1-nrm.getY(i);cols[i*3]=wet;cols[i*3+1]=clamp(slope*3,0,1);cols[i*3+2]=sstep(2,9,h);}
+ for(let i=0;i<p.count;i++){const h=p.getY(i);const wet=sstep(0.62,0.12,h);const slope=1-nrm.getY(i);cols[i*3]=wet;cols[i*3+1]=clamp((slope-0.12)*2.2,0,1);/* 坡陡才露石：45° 坡仍以草为主，近 60° 才成石壁（“翠嶂”“青山”） */cols[i*3+2]=sstep(2,9,h);}
  g.setAttribute('color',new THREE.BufferAttribute(cols,3));
  const TU=window.GTU={tGA:{value:null},tGN:{value:null},tSA:{value:null},tRA:{value:null},tRN:{value:null},tReady:{value:0}};
  {const L=new THREE.TextureLoader();let n=0;const need={tGA:['tex/g_a.jpg',1],tGN:['tex/g_n.jpg',0],tSA:['tex/s_a.jpg',1],tRA:['tex/r_a.jpg',1],tRN:['tex/r_n.jpg',0]};
