@@ -1123,7 +1123,7 @@ function inSite(x,z,extra){for(const f of SITE_FP)if(Math.abs(x-f[0])<f[2]&&Math
 function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)){TREES[sp].pop();treeAdd(x,z);return;}/* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
 const RC=['#c9c6bc','#d6d3ca','#bdbbb2','#c4c6b6','#aeb59e','#cfcbc0'];
 function rock(x,y,z,sx,sy,sz,c){ROCKS.push({v:Math.floor(rnd()*5),x,y,z,sx,sy,sz,ry:rnd()*6.28,c:c||pick(RC)});if(inSite(x,z)){ROCKS.pop();return;}if(sx>0.5)colAdd({x,z,c:1,s:0,hx:sx*0.8,hz:sz*0.8,top:y+sy*0.9,bot:y-sy});}
-const PINK=['#f0a0b4','#e88aa2','#f5bccb','#f7c6d2'],APRICOT=['#f6dcd6','#f7e8e4','#f0cccc','#fbeee8'],PLUM=['#b3303b','#c7424c','#a02835','#d0505a'],HAITANG=['#e79aab','#f2b8c2','#dd8599'],PEAR=['#fbfaf4','#f3f5ea','#f7f7f0'];
+const PINK=['#f0a0b4','#e88aa2','#f5bccb','#f7c6d2'],APRICOT=['#f29aaa','#ec8497','#f5b3bf','#e0687f']/* 杏花：含苞时红、初开粉，成片远看「如喷火蒸霞」，不能太白 */,PLUM=['#b3303b','#c7424c','#a02835','#d0505a'],HAITANG=['#e79aab','#f2b8c2','#dd8599'],PEAR=['#fbfaf4','#f3f5ea','#f7f7f0'];
 const GREENS=['#6a8a42','#5b7d3a','#7a9a4c','#648540','#86a150'];
 
 /* =====================================================================
@@ -1232,6 +1232,11 @@ function buildDaoxiang(){const y=Z.daoxiang.y;if(!GLB){court({x:-92,z:-62,hw:27,
  let n=0,tries=0;while(n<230&&tries<16000){tries++;const q0=Z.daoxiang,x=q0.x+R(-56,32),z=q0.z+R(-56,32);if(!inGarden(x,z,3))continue;const inside=Math.abs(x-q0.x)<26&&Math.abs(z-q0.z)<22;if(inside){if(GLB||z>-58||(x>-116&&x<-82&&z<-72&&z>-84))continue;}else if(inZone(x,z,1))continue;
   if(height(x,z)<0.5||nearPath(x,z,2.5)||!treeOK(x,z,2.2))continue;addTree('blossom',x,z,R(0.7,1.0),pick(APRICOT));n++;}
  if(GLB){const q=Z.daoxiang;const per=[];for(let x=-q.hw-2.5;x<=q.hw+2.5;x+=2.8){per.push([q.x+x,q.z-q.hd-2.5],[q.x+x,q.z+q.hd+2.5]);}for(let z=-q.hd;z<=q.hd;z+=2.8){per.push([q.x-q.hw-2.5,q.z+z],[q.x+q.hw+2.5,q.z+z]);}for(const [x0,z0] of per){const x=x0+R(-.6,.6),z=z0+R(-.6,.6);if(height(x,z)<0.5||nearPath(x,z,2.2)||!treeOK(x,z,2))continue;addTree('broad',x,z,R(0.5,0.68),pick(GREENS));}}
+ if(GLB){/* 院里院外再点几株杏：酒幌边（「红杏梢头挂酒旗」）、院中、院角与墙外。位置按稻香村模型空地手摆，
+   用独立的随机数，不动全园布树的随机序列；都在稻香村范围内，别处随机种树本就避开这里，故不登记树距 */
+  const rr=mulberry32(1717),y=Z.daoxiang.y;
+  for(const [x,z,s] of[[-103,-57,0.9],[-97,-57.4,0.8],[-112.6,-56.5,0.75],[-120.5,-57.5,0.85],[-114,-64.5,0.72],[-104.5,-66.5,0.7],[-122.5,-75.5,0.8],[-130.5,-64,0.95],[-130.5,-73.5,0.9],[-85,-79,0.85],[-80,-78.2,0.9]]){
+   TREES.blossom.push({x,y:y+0.05,z,s,ry:rr()*6.283,tint:APRICOT[Math.floor(rr()*APRICOT.length)],plum:false,v:Math.floor(rr()*2)});colAdd({x,z,c:1,s:0,hx:0.3*s,hz:0.3*s,top:y+4,bot:y-1});}}
  if(!GLB)for(const sd of[-1,1])for(let z=-41.5;z>-54;z-=1.25)addTree('bush',-92+sd*2.3,z,R(0.5,0.6),pick(['#6f8f47','#5f803d','#7a9a4c']),y);}
 function buildLongcui(){const y=Z.longcui.y;if(!GLB){court({x:125,z:5,hw:13,hd:11,h:3.2,key:'ochre',gates:[{side:'w',pos:5,plaque:'栊翠庵'}]});pave(125,5,13,11,y);
  hall(T(128,y,-1.5,0),{w:12,d:6.5,h:3.8,bays:3,roofH:2.3,wallKey:'ochre',lanterns:true});
