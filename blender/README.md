@@ -64,3 +64,16 @@ node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 ```
+
+## 树（blender/scripts/trees/）
+
+`build_trees.py`：程序化生成稻香村青篱边的桑、榆、木槿、柘（第十七回「桑、榆、槿、柘，各色树稚新条，随其曲折，编就两溜青篱」），与 `models/t` 里原有精品树同一格式。
+
+```bash
+python3 blender/scripts/trees/build_trees.py [sang yu mujin zhe] [--preview]
+```
+
+- 叶片卡：在 Blender 里按各树种叶形摆一段带叶小枝（桑叶卵形心形基、粗齿；榆是一簇簇榆钱；槿叶三浅裂；柘全缘、枝上有刺），Cycles 俯视渲染 → `tex/leaf_<sp>_c.png` / `_a.png`。
+- 树模型：递归分枝的树皮管 + 叶卡四边形 → `models/t/<sp>_1.wasm`（`<sp>_bark`、`<sp>_leaf` 两个节点）。
+- 远景替身：侧视自发光渲染 → `tex/imp_<sp>1.png`，尺寸写进 `tex/imp.json`。
+- 网页里是两类树：`sangyu`（v0 桑、v1 榆）和 `jinzhe`（v0 槿、v1 柘），栽在 `buildDaoxiang()` 里。

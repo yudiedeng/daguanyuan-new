@@ -425,7 +425,8 @@ const PHOTO=(()=>{const L=new THREE.TextureLoader();const ld=(f,srgb,rp)=>{const
  const leaf=(n,ref,ext)=>({map:ld('leaf_'+n+'_c.'+(ext||'jpg'),1),alpha:ld('leaf_'+n+'_a.'+(ext||'jpg'),0),ref:'vec3('+ref.join(',')+')'});
  const bm=ld('bark_c.jpg',1,1),bn=ld('bark_n.jpg',0,1);
  return {broad:leaf('broad',[0.1422,0.1705,0.0505]),bush:leaf('bush',[0.1567,0.1638,0.0198]),willow:leaf('willow',[0.1157,0.114,0.0577]),willowtop:leaf('willowtop',[0.0877,0.0861,0.0435]),bark:{map:bm,nrm:bn},
-  huai:leaf('huai',[0.1421,0.169,0.0536],'png'),wutong:leaf('wutong',[0.1567,0.1636,0.0199],'png'),liu:leaf('liu',[0.1156,0.113,0.0585],'png'),song:leaf('song',[0.0983,0.1936,0.0856],'png'),tao:leaf('tao',[0.8562,0.8495,0.8484],'png'),leafy:leaf('leafy',[0.2247,0.3823,0.1466],'png'),gui:leaf('gui',[0.367,0.5195,0.3338],'png'),bai:leaf('bai',[0.1509,0.2566,0.1333],'png')};})();
+  huai:leaf('huai',[0.1421,0.169,0.0536],'png'),wutong:leaf('wutong',[0.1567,0.1636,0.0199],'png'),liu:leaf('liu',[0.1156,0.113,0.0585],'png'),song:leaf('song',[0.0983,0.1936,0.0856],'png'),tao:leaf('tao',[0.8562,0.8495,0.8484],'png'),leafy:leaf('leafy',[0.2247,0.3823,0.1466],'png'),gui:leaf('gui',[0.367,0.5195,0.3338],'png'),bai:leaf('bai',[0.1509,0.2566,0.1333],'png'),
+  sang:leaf('sang',[0.1677,0.3658,0.0962],'png'),yu:leaf('yu',[0.3937,0.5077,0.1662],'png'),mujin:leaf('mujin',[0.1571,0.2712,0.1164],'png'),zhe:leaf('zhe',[0.1523,0.2239,0.106],'png')};})();
 const LEAF_BAMBOO=leafCard(256,192,(g,W,H)=>{const cx=W*0.5,cy=16;g.strokeStyle='#8e9a6c';g.lineWidth=3;g.beginPath();g.moveTo(cx,cy);g.quadraticCurveTo(cx+6,H*0.4,cx-4,H*0.72);g.stroke();[[-0.95,98],[-0.55,112],[-0.2,104],[0.25,108],[0.6,114],[0.95,96],[-1.3,80],[1.25,84],[0.05,90]].forEach(([a,len],i)=>{g.save();g.translate(cx+(i%3-1)*4,cy+14+(i%4)*22);g.rotate(a*0.9);const gr=g.createLinearGradient(-8,0,8,0);gr.addColorStop(0,'#c9d6b2');gr.addColorStop(.5,'#f2f6e6');gr.addColorStop(1,'#bccba0');g.fillStyle=gr;g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(9,len*0.35,1,len);g.quadraticCurveTo(-8,len*0.35,0,0);g.fill();g.restore();});});
 const STALK=tex(cnv(32,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,'#b9c49d');gr.addColorStop(.45,'#f4f7e6');gr.addColorStop(1,'#a7b38b');g.fillStyle=gr;g.fillRect(0,0,w,h);for(let y=0;y<h;y+=18){g.fillStyle='rgba(60,70,40,.55)';g.fillRect(0,y,w,2);g.fillStyle='rgba(255,255,240,.6)';g.fillRect(0,y+2,w,2);}}),true);
 const BANANA=leafCard(128,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,'#9dc07a');gr.addColorStop(.5,'#e9f2d7');gr.addColorStop(1,'#9dc07a');g.fillStyle=gr;g.beginPath();g.moveTo(w/2,4);g.bezierCurveTo(w+10,h*0.15,w+6,h*0.8,w/2,h-4);g.bezierCurveTo(-6,h*0.8,-10,h*0.15,w/2,4);g.fill();g.strokeStyle='rgba(140,170,110,.6)';g.lineWidth=1;for(let y=20;y<h-10;y+=9){g.beginPath();g.moveTo(w/2,y);g.lineTo(6,y-18);g.moveTo(w/2,y);g.lineTo(w-6,y-18);g.stroke();}g.strokeStyle='#f6f8ea';g.lineWidth=5;g.beginPath();g.moveTo(w/2,4);g.lineTo(w/2,h-4);g.stroke();});
@@ -851,7 +852,8 @@ function buildBeds(){if(!GLB)return;const TL=new THREE.TextureLoader();const rr=
   const im=new THREE.InstancedMesh(g,m,list.length);const cc=new THREE.Color();list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.92+0.16*((i*7)%5)/5),it[4]));im.setMatrixAt(i,_m4);const b=0.82+rr()*0.24;cc.setRGB(b*(1+rr()*0.08),b,b*(1+rr()*0.06));im.setColorAt(i,cc);});im.instanceColor.needsUpdate=true;
   im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);}}
 /* ---- Blender 精品树 (models/t/<species>_<seed>.wasm = glb): bark tube mesh + photo leaf cards ---- */
-const TM={};let BANMESH=[];const TREEMOD={broad:['huai_1','wutong_1'],blossom:['tao_1','li_1'],pine:['song_1','song_2'],willow:['liu_1','liu_2'],gui:['gui_1','gui_2'],bai:['bai_1','bai_2']};
+const TM={};let BANMESH=[];const TREEMOD={broad:['huai_1','wutong_1'],blossom:['tao_1','li_1'],pine:['song_1','song_2'],willow:['liu_1','liu_2'],gui:['gui_1','gui_2'],bai:['bai_1','bai_2'],sangyu:['sang_1','yu_1'],jinzhe:['mujin_1','zhe_1']};// sangyu/jinzhe：稻香村青篱边的桑、榆、槿、柘（blender/scripts/trees/build_trees.py）
+const KBASE={sangyu:'broad',jinzhe:'bush'};// 没有精品模型/替身时，按哪一类程序树画
 async function loadTrees(){if(!GLB||Q===0)return;const L=new GLTFLoader();const names=[...new Set(Object.values(TREEMOD).flat()),'banana_1','banana_2'];
  await Promise.all(names.map(async n=>{try{const g=await L.loadAsync('models/t/'+n+'.wasm');let bg=null,lg=null;g.scene.updateMatrixWorld(true);
   g.scene.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);if(/_leaf/.test(o.name))lg=geo;else bg=geo;});
@@ -869,7 +871,7 @@ function impTex(key){if(IMPT[key])return IMPT[key];const t=new THREE.TextureLoad
 function impGeo(key){const I=IMP[key];const w=I.x1-I.x0,h=I.h,y0=I.zmin;const parts=[];for(let k=0;k<2;k++){const g=new THREE.PlaneGeometry(w,h);g.translate((I.x0+I.x1)/2,y0+h/2,0);if(k)g.rotateY(Math.PI/2);const nn=g.attributes.normal;for(let i=0;i<nn.count;i++)nn.setXYZ(i,0,1,0);parts.push(g);}return mergeGeos(parts);}
 function impMat(key){const map=impTex(key);const m=a2c(patch(new THREE.MeshStandardMaterial({map,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.9,vertexColors:true}),{alphaFix:1,key:'imp',snowLo:'0.4',snowHi:'0.9'}));
  const d=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map,alphaTest:0.5}),{alphaFix:1,key:'impd'});return [m,d];}
-function impLook(kind,t,ss){const h=hash3(t.x,t.z,7);
+function impLook(kind,t,ss){const h=hash3(t.x,t.z,7);if(KBASE[kind])kind='broad';
  if(kind==='pine'||kind==='gui'||kind==='bai')return [1,ss===3?'#dfe4e8':'#ffffff'];
  if(kind==='willow')return [[1,1,0.95,0][ss],['#e2f0cc','#dfe6d0','#e2c67a','#000'][ss]];
  if(kind==='broad')return [[1,1,1,0][ss],['#f0ffe0','#e8ece0',['#e0a060','#e8b070','#d89050','#f0c080'][Math.floor(h*4)],'#000'][ss]];
@@ -1109,7 +1111,7 @@ function zigzag(){const P=ZIG.map(p=>new THREE.Vector2(p[0],p[1]));const hw=1.15
 /* =====================================================================
    VEGETATION DATA
    ===================================================================== */
-const TREES={broad:[],blossom:[],pine:[],willow:[],bush:[],gui:[],bai:[]};
+const TREES={broad:[],blossom:[],pine:[],willow:[],bush:[],gui:[],bai:[],sangyu:[],jinzhe:[]};
 const STALKS=[],BLEAF=[],LOTUSL=[],LOTUSF=[],BANANAS=[],ROCKS=[];
 const treeHash=new Map();
 function treeOK(x,z,r){const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<r*r)return false;}return true;}
@@ -1236,7 +1238,12 @@ function buildDaoxiang(){const y=Z.daoxiang.y;if(!GLB){court({x:-92,z:-62,hw:27,
    用独立的随机数，不动全园布树的随机序列；都在稻香村范围内，别处随机种树本就避开这里，故不登记树距 */
   const rr=mulberry32(1717),y=Z.daoxiang.y;
   for(const [x,z,s] of[[-103,-57,0.9],[-97,-57.4,0.8],[-112.6,-56.5,0.75],[-120.5,-57.5,0.85],[-114,-64.5,0.72],[-104.5,-66.5,0.7],[-122.5,-75.5,0.8],[-130.5,-64,0.95],[-130.5,-73.5,0.9],[-85,-79,0.85],[-80,-78.2,0.9]]){
-   TREES.blossom.push({x,y:y+0.05,z,s,ry:rr()*6.283,tint:APRICOT[Math.floor(rr()*APRICOT.length)],plum:false,v:Math.floor(rr()*2)});colAdd({x,z,c:1,s:0,hx:0.3*s,hz:0.3*s,top:y+4,bot:y-1});}}
+   TREES.blossom.push({x,y:y+0.05,z,s,ry:rr()*6.283,tint:APRICOT[Math.floor(rr()*APRICOT.length)],plum:false,v:Math.floor(rr()*2)});colAdd({x,z,c:1,s:0,hx:0.3*s,hz:0.3*s,top:y+4,bot:y-1});}
+  /* 「外面却是桑、榆、槿、柘，各色树稚新条，随其曲折，编就两溜青篱」：南路西侧篱外、东路南侧篱外的空地上，
+     一溜栽桑榆小树（sangyu：v0 桑 v1 榆）和木槿、柘丛（jinzhe：v0 槿 v1 柘），都是新栽的小苗，比园中大树矮 */
+  const HEDGE=[['sangyu',0,-112.2,-38.2,0.62],['jinzhe',0,-112.3,-40.6,0.78],['jinzhe',1,-112.2,-42.9,0.62],['sangyu',1,-112.3,-45.3,0.55],['jinzhe',0,-112.2,-47.6,0.82],['jinzhe',1,-112.3,-49.6,0.6],
+   ['jinzhe',1,-88.2,-69.9,0.62],['sangyu',0,-86.2,-68.3,0.6],['jinzhe',0,-83.1,-69.9,0.8],['sangyu',1,-80.4,-69.8,0.58]];
+  for(const [k,v,x,z,s] of HEDGE){TREES[k].push({x,y:y+0.05,z,s:s*(0.92+rr()*0.16),ry:rr()*6.283,tint:'#6a8a42',plum:false,v});colAdd({x,z,c:1,s:0,hx:0.25,hz:0.25,top:y+3,bot:y-1});}}
  if(!GLB)for(const sd of[-1,1])for(let z=-41.5;z>-54;z-=1.25)addTree('bush',-92+sd*2.3,z,R(0.5,0.6),pick(['#6f8f47','#5f803d','#7a9a4c']),y);}
 function buildLongcui(){const y=Z.longcui.y;if(!GLB){court({x:125,z:5,hw:13,hd:11,h:3.2,key:'ochre',gates:[{side:'w',pos:5,plaque:'栊翠庵'}]});pave(125,5,13,11,y);
  hall(T(128,y,-1.5,0),{w:12,d:6.5,h:3.8,bays:3,roofH:2.3,wallKey:'ochre',lanterns:true});
@@ -1349,13 +1356,13 @@ function makeInst(geo,mat,list,fn,shadow,layer){const m=new THREE.InstancedMesh(
  m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;m.castShadow=shadow!==false;m.receiveShadow=true;m.frustumCulled=false;if(layer)m.layers.set(layer);scene.add(m);return m;}
 function buildInstances(){
  const BARKP=patch(std('#c6c7c4',.93,{map:PHOTO.bark.map,normalMap:PHOTO.bark.nrm,normalScale:new THREE.Vector2(1.4,1.4)}),{key:'bap',snowLo:'0.4',snowHi:'0.85'});
- const LEAFTEX={broad:LEAF_BROAD,blossom:LEAF_BLOSSOM,pine:LEAF_PINE,willow:LEAF_WILLOW,bush:LEAF_BROAD,gui:LEAF_BROAD,bai:LEAF_PINE};
- for(const kind of['broad','blossom','pine','willow','bush','gui','bai']){const PH=PHOTO[kind]||null;const [lm0,ld]=leafMat(LEAFTEX[kind],kind,PH);const lm=kind==='willow'?[leafMat(null,'willowtop',PHOTO.willowtop)[0],lm0]:lm0;const ALT=kind==='blossom'?leafMat(null,'blossomleaf',PHOTO.bush):null;for(let v=0;v<2;v++){const list=TREES[kind].filter(t=>t.v===v);if(!list.length)continue;
+ const LEAFTEX={broad:LEAF_BROAD,blossom:LEAF_BLOSSOM,pine:LEAF_PINE,willow:LEAF_WILLOW,bush:LEAF_BROAD,gui:LEAF_BROAD,bai:LEAF_PINE,sangyu:LEAF_BROAD,jinzhe:LEAF_BROAD};
+ for(const kind of['broad','blossom','pine','willow','bush','gui','bai','sangyu','jinzhe']){const gk=KBASE[kind]||kind;const PH=PHOTO[gk]||null;const [lm0,ld]=leafMat(LEAFTEX[kind],kind,PH);const lm=kind==='willow'?[leafMat(null,'willowtop',PHOTO.willowtop)[0],lm0]:lm0;const ALT=kind==='blossom'?leafMat(null,'blossomleaf',PHOTO.bush):null;for(let v=0;v<2;v++){const list=TREES[kind].filter(t=>t.v===v);if(!list.length)continue;
   const setM=(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,it.s*(0.9+((it.x*7.3)%0.2)),it.s));
-  const E=EZ[kind+v];const TGi={kind,list,near:[],far:[],sig:''};
+  const E=EZ[gk+v];const TGi={kind,list,near:[],far:[],sig:''};
   const impKey=IMP&&TREEMOD[kind]&&IMP[TREEMOD[kind][v].replace('_','')]?TREEMOD[kind][v].replace('_',''):null;
   if(impKey){const [im,idm]=impMat(impKey);const ci=makeInst(impGeo(impKey),im,list.map(t=>({...t,c:t.tint})),setM);ci.customDepthMaterial=idm;TGi.far=[{m:ci,crown:1,imp:1}];if(kind==='blossom'&&IMP[impKey+'_leafy']){TGi.swap=[{m:ci,base:[im,idm],alt:impMat(impKey+'_leafy')}];}}
-  else{const cc=makeInst(crownGeo(kind,v*101+kind.length*13),lm,list.map(t=>({...t,c:t.tint})),setM);cc.customDepthMaterial=ld;const ct=makeInst(trunkGeo(kind,v*17),kind==='pine'?MAT.bark:BARKP,list.map(t=>({...t,c:'#ffffff'})),setM);TGi.far=[{m:cc,crown:1},{m:ct,crown:0}];if(ALT)TGi.swap=[{m:cc,base:[lm,ld],alt:ALT}];}
+  else{const cc=makeInst(crownGeo(gk,v*101+kind.length*13),lm,list.map(t=>({...t,c:t.tint})),setM);cc.customDepthMaterial=ld;const ct=makeInst(trunkGeo(gk,v*17),kind==='pine'?MAT.bark:BARKP,list.map(t=>({...t,c:'#ffffff'})),setM);TGi.far=[{m:cc,crown:1},{m:ct,crown:0}];if(ALT)TGi.swap=[{m:cc,base:[lm,ld],alt:ALT}];}
   const TMn=TREEMOD[kind]&&TM[TREEMOD[kind][v]];
   if(TMn&&TMn.bg){const sp=TREEMOD[kind][v].split('_')[0];const bark=patch(std('#c6c7c4',.92,{map:PHOTO.bark.map,normalMap:PHOTO.bark.nrm,normalScale:new THREE.Vector2(1.2,1.2),vertexColors:true}),{key:'tmb',snowLo:'0.4',snowHi:'0.85'});TGi.near.push({m:makeInst(TMn.bg,bark,list.map(t=>({...t,c:'#ffffff'})),setM),crown:0});
    if(TMn.lg){const PHs=PHOTO[sp==='li'?'tao':sp]||PHOTO.huai;const rawLeaf=(PH,k)=>[a2c(patch(new THREE.MeshStandardMaterial({map:PH.map,alphaMap:PH.alpha,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.78,vertexColors:true}),{alphaFix:1,nearFade:1,key:'tmraw'+k,vHead:'attribute float hang;\n',vWorld:CROWN_SWAY,fOut:LEAF_OUT,snowLo:'0.4',snowHi:'0.9'})),patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:PH.map,alphaMap:PH.alpha,alphaTest:0.5}),{alphaFix:1,key:'tmrawd'+k,vHead:'attribute float hang;\n',vWorld:CROWN_SWAY})];const [lmT,ldT]=rawLeaf(PHs,sp);const cm=makeInst(TMn.lg,lmT,list.map(t=>({...t,c:t.tint})),setM);cm.customDepthMaterial=ldT;TGi.near.push({m:cm,crown:1,imp:1});
@@ -1879,7 +1886,7 @@ function layoutLOD(force){const cp=camera.position,R=[0,55,75][Q]||0;if(force)up
    e.m.count=arr.length;e.m.instanceMatrix.needsUpdate=true;if(e.m.instanceColor)e.m.instanceColor.needsUpdate=true;}}}
 let LOTUS_MESH=null,LOTUSF_MESH=null,LOTUS_STALK=null;
 const AUTUMN=['#c2461f','#d8762a','#e3b03c','#a0361a','#bb8a2c','#86913a','#cf5a26'];
-function crownLook(kind,t,ss){const h=hash3(t.x,t.z,7);
+function crownLook(kind,t,ss){const h=hash3(t.x,t.z,7);if(KBASE[kind])kind='broad';
  if(kind==='pine'||kind==='gui'||kind==='bai')return [1,ss===3?'#50684a':t.tint];
  if(kind==='willow')return [[1,1,0.95,0][ss],['#b3cf62','#86a84c','#cdb85a','#000'][ss]];
  if(kind==='bush')return [[1,1,1,0][ss],['#9ec25a','#6f9444','#b86a2c','#000'][ss]];
