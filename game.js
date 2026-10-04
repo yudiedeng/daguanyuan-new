@@ -186,8 +186,11 @@ const css = `
 #g-compass{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:6px 14px;border-radius:20px;font-size:13px;letter-spacing:.06em;z-index:5;pointer-events:none}
 #g-compass svg{width:18px;height:18px;transition:transform .1s linear}
 #g-compass b{font-family:var(--f-disp);font-weight:400;font-size:18px}
-#g-prompt{all:unset;position:fixed;left:50%;bottom:calc(128px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:10px 18px;border-radius:3px;font-size:15px;letter-spacing:.06em;cursor:pointer;z-index:7;display:flex;align-items:center;gap:10px}
-#g-prompt kbd{font:inherit;font-size:13px;padding:1px 8px;border:1px solid var(--ink-2);border-radius:3px}
+#g-prompt{all:unset;position:fixed;left:50%;top:60%;transform:translate(-50%,-50%);padding:12px 28px 12px 14px;border-radius:999px;font-size:clamp(21px,2.9vw,31px);font-weight:600;letter-spacing:.1em;cursor:pointer;z-index:40;display:flex;align-items:center;gap:16px;background:rgba(18,16,14,.8);color:#fff4dc;border:1.5px solid rgba(255,214,140,.8);box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 0 6px rgba(255,214,140,.16);backdrop-filter:blur(4px);animation:gprompt 1.7s ease-in-out infinite;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+#g-prompt[hidden]{display:none}
+#g-prompt kbd{font:inherit;font-weight:800;min-width:1.75em;height:1.75em;display:inline-flex;align-items:center;justify-content:center;padding:0 .35em;border:none;border-radius:9px;background:#ffd98a;color:#2a1c0a;box-shadow:0 3px 0 #b88a3a;text-shadow:none}
+#g-prompt span{display:inline-flex;align-items:center;height:1.75em;padding:0 .7em;border-radius:9px;background:#ffd98a;color:#2a1c0a;font-weight:800;box-shadow:0 3px 0 #b88a3a;text-shadow:none;font-size:.8em;letter-spacing:.04em}
+@keyframes gprompt{0%,100%{box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 0 6px rgba(255,214,140,.16)}50%{box-shadow:0 8px 30px rgba(0,0,0,.5),0 0 0 14px rgba(255,214,140,.05)}}
 #g-modal{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(10,12,16,.45);overflow:auto}
 .g-scroll{max-height:calc(100vh - 48px);overflow:auto}
 .g-scroll{max-width:560px;text-align:center;padding:34px 34px 26px}
@@ -846,7 +849,7 @@ function slipAnim(done) {
 
 /* 带路的人：从上一步站的地方出发，沿走得通的路在前面走；玩家落得太远就站住等 */
 let guide = null;
-function findPath(ax, az, bx, bz) {
+function findPath(ax, az, bx, bz, maxNodes = 400000) {
   const cell = 0.6, X0 = -156, Z0 = -186, NX = Math.ceil(312 / cell), NZ = Math.ceil(322 / cell), memo = new Map();
   const toI = (x, z) => [Math.round((x - X0) / cell), Math.round((z - Z0) / cell)];
   const hOf = (i, j) => { const k = i * NZ + j; let v = memo.get(k); if (v !== undefined) return v; const x = X0 + i * cell, z = Z0 + j * cell; let g = okAt(x, z);
@@ -858,7 +861,7 @@ function findPath(ax, az, bx, bz) {
   const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let c = 0; for (;;) { let l = 2 * c + 1, r = l + 1, m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top; };
   const G = new Map(), from = new Map(), key = (i, j) => i * NZ + j, h = (i, j) => Math.hypot(i - t[0], j - t[1]);
   const sk = key(s[0], s[1]); G.set(sk, 0); push(h(s[0], s[1]), sk); let found = false, n = 0;
-  while (heap.length && n++ < 400000) { const [, k] = pop(); const i = (k / NZ) | 0, j = k % NZ; if (i === t[0] && j === t[1]) { found = true; break; } const cur = hOf(i, j), g0 = G.get(k);
+  while (heap.length && n++ < maxNodes) { const [, k] = pop(); const i = (k / NZ) | 0, j = k % NZ; if (i === t[0] && j === t[1]) { found = true; break; } const cur = hOf(i, j), g0 = G.get(k);
     for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { if (!a && !b) continue; const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue; const nh = hOf(ni, nj); if (nh == null || Math.abs(nh - cur) > 0.4) continue;
       if (a && b && (hOf(i + a, j) == null || hOf(i, j + b) == null)) continue; const nk = key(ni, nj), ng = g0 + Math.hypot(a, b); if (ng < (G.get(nk) ?? 1e9)) { G.set(nk, ng); from.set(nk, k); push(ng + h(ni, nj), nk); } } }
   if (!found) return null;
@@ -1039,7 +1042,7 @@ function buildDoors() {
   DOORS = [{ x: 0, z: 120, n: '大观园 · 正门', ne: 'Grand View Garden · Main Gate' }];
   for (const [id, lx, lz, n, ne] of GATES) { const b = D.BLD.find(b => b.id === id); if (!b) continue; const v = b.root.localToWorld(new V3(lx, 0, lz)); DOORS.push({ x: v.x, z: v.z, n, ne }); }
   for (const it of D.INTER) it.rooms.forEach((r, i) => {   // 室内房间：门在南面（局部 +z）边中点；r[6]==='e' 表示门在东面
-    const east = r[6] === 'e'; const v = it.root.localToWorld(new V3(east ? r[2] : (r[0] + r[2]) / 2, r[4], east ? (r[1] + r[3]) / 2 : r[3]));
+    const east = r[6] === 'e', ex = Array.isArray(r[6]); const v = it.root.localToWorld(ex ? new V3(r[6][0], r[4], r[6][1]) : new V3(east ? r[2] : (r[0] + r[2]) / 2, r[4], east ? (r[1] + r[3]) / 2 : r[3]));
     DOORS.push({ x: v.x, z: v.z, room: { it, r }, n: (it.names && it.names[i]) || it.name, ne: (it.namesEn && it.namesEn[i]) || it.en || it.name }); });
 }
 const insideRoom = (rm, p) => { const v = rm.it.root.worldToLocal(p.clone()), r = rm.r; return v.x > r[0] && v.x < r[2] && v.z > r[1] && v.z < r[3] && v.y > r[4] - 0.6 && v.y < r[5] + 0.6; };
@@ -1065,12 +1068,51 @@ function goThroughDoor() {
   setTimeout(() => { pauseGame(false); doorBusy = false; }, 640);
 }
 
+/* ---------------------------------------------------------------------
+   花瓣引路：从脚下往目标沿着走得通的路飘一串花瓣；目标近了就散去
+   --------------------------------------------------------------------- */
+const PET_N = 64;
+const petals = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.13, 0.09), new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide, transparent: true, opacity: 0.95, depthWrite: false }), PET_N);
+petals.frustumCulled = false; petals.visible = false; petals.renderOrder = 6; scene.add(petals);
+{ const tint = ['#f9b3c6', '#fcd2dc', '#f283a3', '#fde6ec', '#f6c0a2']; for (let i = 0; i < PET_N; i++) petals.setColorAt(i, new THREE.Color(tint[i % tint.length])); }
+const petalSeed = Array.from({ length: PET_N }, (_, i) => ({ lat: (Math.random() - 0.5) * 1.3, ph: Math.random() * 6.283, h: 0.2 + Math.random() * 0.9, sp: 0.8 + Math.random() * 0.5, o: i / PET_N }));
+const _pd = new THREE.Object3D(); let PP = null, ppT = -1e9;
+function buildPP(gx, gz, p, now) {
+  let path = findPath(p.x, p.z, gx, gz, 80000); if (!path || path.length < 2) path = [[p.x, p.z], [gx, gz]];
+  const cum = [0]; for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+  PP = { gx, gz, path, cum, len: cum[cum.length - 1] }; ppT = now;
+}
+function ppNearest(p) {   // 玩家在路线上的最近位置（弧长）与偏离距离
+  let best = 1e9, bs = 0; const P = PP.path;
+  for (let i = 1; i < P.length; i++) { const ax = P[i - 1][0], az = P[i - 1][1], bx = P[i][0], bz = P[i][1], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1;
+    const t = Math.max(0, Math.min(1, ((p.x - ax) * dx + (p.z - az) * dz) / L2)), x = ax + dx * t, z = az + dz * t, d = Math.hypot(p.x - x, p.z - z); if (d < best) { best = d; bs = PP.cum[i - 1] + Math.sqrt(L2) * t; } }
+  return [bs, best];
+}
+function ppAt(s) {
+  const P = PP.path, C = PP.cum; s = Math.max(0, Math.min(PP.len, s)); let i = 1; while (i < P.length - 1 && C[i] < s) i++;
+  const L = (C[i] - C[i - 1]) || 1, t = (s - C[i - 1]) / L; return [P[i - 1][0] + (P[i][0] - P[i - 1][0]) * t, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * t, (P[i][0] - P[i - 1][0]) / L, (P[i][1] - P[i - 1][1]) / L];
+}
+function updatePetals(goal, p, now) {
+  if (!goal || !walk.on) { petals.visible = false; return; }
+  const gx = goal.pos.x, gz = goal.pos.z; if (Math.hypot(gx - p.x, gz - p.z) < 4) { petals.visible = false; return; }
+  if (now - ppT > 1500 && (!PP || Math.hypot(PP.gx - gx, PP.gz - gz) > 2 || ppNearest(p)[1] > 3.5)) buildPP(gx, gz, p, now);
+  if (!PP) { petals.visible = false; return; }
+  const [s0] = ppNearest(p), WIN = Math.min(18, PP.len - s0 - 1.5); if (WIN < 2) { petals.visible = false; return; }
+  petals.visible = true;
+  for (let i = 0; i < PET_N; i++) { const q = petalSeed[i], t = (q.o + now * 0.00016 * q.sp) % 1, s = s0 + 1.4 + t * WIN, [x0, z0, dx, dz] = ppAt(s);
+    const spread = q.lat * (0.3 + 0.7 * t), x = x0 - dz * spread + Math.sin(now * 0.002 + q.ph) * 0.18, z = z0 + dx * spread + Math.cos(now * 0.0017 + q.ph) * 0.18;
+    const y = groundAt(x, z, p.y + 1.2)[0] + (0.15 + q.h * 0.55) * walk.s + Math.sin(now * 0.0032 + q.ph) * 0.1;
+    const k = Math.min(1, t * 8) * (1 - Math.max(0, (t - 0.82) / 0.18));   // 近处淡入、远处散去
+    _pd.position.set(x, y, z); _pd.rotation.set(0.8 + Math.sin(now * 0.004 + q.ph) * 0.9, now * 0.0025 * q.sp + q.ph, now * 0.0018 + q.ph); _pd.scale.setScalar(Math.max(0.001, k) * 1.1); _pd.updateMatrix(); petals.setMatrixAt(i, _pd.matrix); }
+  petals.instanceMatrix.needsUpdate = true; if (petals.instanceColor) petals.instanceColor.needsUpdate = true;
+}
+
 const _v = new V3(); let last = performance.now();
 function tick(now) {
   requestAnimationFrame(tick); const dt = Math.min(0.05, (now - last) / 1000); last = now; beaconMat.uniforms.t.value = now / 1000;
   const playing = (S.char || S.giftMode || S.story) && walk.on; if (S.story) { followBanEr(dt); followGuide(dt); }
   questEl.hidden = !(playing || (S.giftMode && walk.on));
-  if (!playing) { compassEl.hidden = true; doorUpdate(); beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
+  if (!playing) { compassEl.hidden = true; petals.visible = false; doorUpdate(); beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
   for (const t of S.targets) if (t.bob) t.obj.position.y = t.obj.userData.baseY + Math.sin(now / 500) * 0.06, t.obj.rotation.y += dt * 0.6;
   const goal = currentGoal(); const p = walk.pos;
   if (goal) {
@@ -1083,6 +1125,7 @@ function tick(now) {
     const Q = S.char ? CHARS[S.char].quests[S.q] : null; const where = goal.where ? goal.where() : pname(S.giftMode ? placeById(S.gift.p) : placeById(S.stage === 'pick' ? Q.pick.place : Q.give.place));
     compassEl.hidden = d < 5; compassEl.querySelector('svg').style.transform = `rotate(${-rel}rad)`; compassEl.querySelector('b').textContent = where; compassEl.querySelector('span').textContent = Math.round(d / 0.75) + L(' 步', ' steps');
   } else { compassEl.hidden = true; beacon.visible = groundRing.visible = false; }
+  updatePetals(goal, p, now);
   // 最近的可交互目标
   let near = null; for (const t of S.targets) { if (t.stage !== S.stage) continue; const d = Math.hypot(t.pos.x - p.x, t.pos.z - p.z); if (d < t.r && Math.abs(t.pos.y - p.y) < 2.5) { near = t; break; } }
   S.near = modalEl.hidden ? near : null;

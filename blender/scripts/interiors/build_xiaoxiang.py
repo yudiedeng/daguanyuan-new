@@ -98,7 +98,11 @@ K.lantern(0, 0.4, ZC, drop=0.55)
 
 # ---- 东间：卧室（碧纱橱相隔） ----
 with K.at(1.45, 0.39, Z0, -90):
-    K.lattice_partition(BAMBOO, 4.28, 3.3, paper='碧纱', door=(0.8, 2.0))    # 局部 x→世界 −y：门在 y −1.6…−0.4
+    # 碧纱橱 6 扇槅扇，每扇宽 0.7133：第 5、6 扇（局部 x 0.713…2.14 → 世界 y −1.75…−0.32）开作门洞，两扇门敞开向东间折（原先 door 区间没对上槅扇网格，整面碧纱橱是实心的）
+    K.lattice_partition(BAMBOO, 4.28, 3.3, paper='碧纱', door=(0.70, 2.15))
+    for hx in (0.7133, 2.14):
+        with K.at(hx, 0.04, 0, 90):
+            K.door_leaf(BAMBOO, 0.70, 3.3, paper='碧纱', t=0.06)
     with K.at(0, 0, 3.3):
         K.lattice_partition(BAMBOO, 4.28, ZC - Z0 - 3.3 - 0.12, paper='碧纱')
 with K.at(2.88, 1.25, Z0, -90):
