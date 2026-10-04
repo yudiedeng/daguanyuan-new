@@ -1194,14 +1194,14 @@ function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,
   for(let k=0;k<5;k++){const t=R(0.45,1.0);const b=new V3(x,gy,z).addScaledVector(axis,t*h);const a=rnd()*6.28,off=R(.12,.45),s=R(1,1.6);BLEAF.push({x:b.x+Math.cos(a)*off,y:b.y,z:b.z+Math.sin(a)*off,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.45,.45),a,R(-.35,.35))),s:new V3(s,s,s),c:pick(['#6f8f47','#5f803d','#7e9c52','#587a38'])});}
   if(sx>1.05)colAdd({x,z,c:1,s:0,hx:0.06,hz:0.06,top:gy+h,bot:gy-1});};
  const CX=GLB?-82:-80,CZ=GLB?29:30,HW=GLB?13.6:15,HD=GLB?14.6:12;
- /* 院内、院外各有定额：院内单独取样，不再被院外大片空地摊薄；院内的竹子让开泉沟（院落模型里 泉水_水面 的中线，院落坐标） */
- const RILL=GLB?[[3,-11.8],[3.4,-10.5],[3.3,-9.2],[2,-8.7],[-1.1,-8.2],[-4,-7.6],[-5.3,-7],[-6.6,-6.1],[-7.2,-5],[-7.5,-2.3],[-7.4,2],[-7.3,3.2],[-6.9,4.6],[-5.8,5.5],[-4.3,6],[-1.9,6.4],[-1.8,7.7],[-2.8,8.5],[-4.3,8.5],[-5.5,8.8],[-6.7,9.8],[-8.8,11.7],[-11,13.2],[-11.9,14.3],[-12.8,15.8]]:[];
- const nearRill=(x,z,r)=>{x+=82;z-=27;for(let i=1;i<RILL.length;i++){const [ax,az]=RILL[i-1],[bx,bz]=RILL[i],ux=bx-ax,uz=bz-az,t=clamp(((x-ax)*ux+(z-az)*uz)/(ux*ux+uz*uz),0,1);if(Math.hypot(x-ax-ux*t,z-az-uz*t)<r)return true;}return false;};
- const NI=440,NO=460;let ni=0,no=0,tries=0;while((ni<NI||no<NO)&&tries<40000){tries++;const wantIn=ni<NI&&(no>=NO||tries%2===0);
+ /* 院内、院外各有定额：院内单独取样，不再被院外大片空地摊薄。
+    院内哪里能种竹由掩码定：院落与正房模型的占地（游廊、甬路、泉沟、梨树、芭蕉…），见 blender/scripts/web/xx_bamboo_mask.mjs */
+ const XXMASK=GLB?Uint8Array.from(atob('////////////////////////////////////////////////AwDwgP9//gcA8AP///wPAPwf///5HwD4////8T8A8P///+N/AOD////H/wDw////j/8B+P//AwD/A3ie/wcA/gfw////AfwP8P///wP4H+D///8H8D/g////D+B/gP///x/A/wD///8/gP8B/v//fwD/A/7///8A/gf8////AfwP+P///wP4H/j///8/8D/w////f+B/4P/////A/8D/////gf8B/////wH/A/7///8D/gf+////D/wP/P///3/4H/j/////8T/w/////+9/gP///////wD///////8B/v//////A/jjP/D//wfA/w6A//8PAP4fAPz/HwDAPwDw/z8AAP4AgP9/AODvAQD//w/4zwcA/v8/+I8PAPz/f/jhPwD8///8//8A/P///f/nA/7///3/wX/8/z/8DwD/+////B8A/P////8/AMD///9ffwAA/P//P3wAAOD/v/8AAADw/z/+AwAA4P8//P//////f/j//////3+w//////9/AP7/////fwD4//////8A'),c=>c.charCodeAt(0)):null;
+ const masked=(x,z)=>{const i=Math.round((x+82+14)/0.5),j=Math.round((z-27+13)/0.5);if(i<0||i>=57||j<0||j>=61)return true;const k=j*57+i;return (XXMASK[k>>3]>>(k&7)&1)===1;};
+ const NI=GLB?520:440,NO=460;let ni=0,no=0,tries=0;while((ni<NI||no<NO)&&tries<40000){tries++;const wantIn=ni<NI&&(no>=NO||tries%2===0);
   const x=wantIn?R(CX-HW+0.6,CX+HW-0.6):R(-112,-50),z=wantIn?R(CZ-HD+0.6,CZ+HD-0.6):R(2,58);const inside=Math.abs(x-CX)<HW-0.6&&Math.abs(z-CZ)<HD-0.6;if(inside?ni>=NI:no>=NO)continue;
-  if(inside&&nearRill(x,z,0.6))continue;if(GLB&&((x+84)**2+(z-18.4)**2<6||(x+80.3)**2+(z-20.4)**2<5))continue;  // 后院梨树、芭蕉的冠下留空
   if(!inside){const dx=Math.max(Math.abs(x-CX)-HW,0),dz=Math.max(Math.abs(z-CZ)-HD,0);if(rnd()>1-sstep(3,16,Math.hypot(dx,dz)))continue;}
-  if(GLB){if(inside){if(x>-91&&x<-73&&z>20.5&&z<34)continue;if(x>-77.5&&x<-69&&z>28.3&&z<43.5)continue;if(x>-79&&x<-72&&z>14.5&&z<19.5)continue;if(x>-86.5&&x<-73&&z>31.5&&z<43.5&&Math.abs((x+74.5)-(z-43)*0.8)<2.2)continue;if(x>-92&&x<-81&&z>35.5&&z<40)continue;}}
+  if(GLB){if(inside&&masked(x,z))continue;}
   else{if(inside&&x>-89.5&&x<-76.5&&z<30.5)continue;if(inside&&z>27.5&&z<34&&x>-85)continue;}
   if(Math.abs(Math.abs(x-CX)-HW)<0.9&&Math.abs(z-CZ)<HD+1)continue;if(Math.abs(Math.abs(z-CZ)-HD)<0.9&&Math.abs(x-CX)<HW+1)continue;
   if((x+91)**2+(z-37)**2<5||(x+70)**2+(z-38.5)**2<3)continue;
