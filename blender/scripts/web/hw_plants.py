@@ -108,9 +108,9 @@ def resample(pts, ds):
 BERRY = [srgb(h) for h in ('#b8321f', '#9e2a1c', '#c9452a', '#ad3a22', '#c23a24')]
 GOLD = [srgb(h) for h in ('#d9b048', '#e6c460', '#c89a34')]
 LEAF = {  # 叶基色、叶尖色（sRGB）
-    'cui': [('#24401c', '#3c6430'), ('#1f3a19', '#35592a'), ('#2a4a20', '#46703a')],
+    'cui': [('#1d3517', '#30532a'), ('#1a3015', '#2b4a24'), ('#223e1b', '#3a5e30')],
     'jin': [('#3a5426', '#5a7a34'), ('#34502a', '#52743a')],
-    'shan': [('#1f3818', '#33572a'), ('#26421c', '#3e6632')],
+    'shan': [('#1a3015', '#2a4a24'), ('#20381a', '#33572c')],
     'xi': [('#1c3416', '#2f5226'), ('#223e1a', '#3a6030')],
 }
 STEM = {'cui': srgb('#3e3a24'), 'jin': srgb('#9c7a2c'), 'shan': srgb('#3a3622'), 'xi': srgb('#2f3a20')}
@@ -148,7 +148,7 @@ def vine(g, pts, out, kind, spread=1.0, twig=True):
     if twig:
         s = R(0.1, 0.35)
         while s < total * 0.85:
-            if rnd.random() < 0.55:
+            if rnd.random() < 0.35:
                 i = min(int(s / 0.03), n - 1); p = P[i]; o = O[i]; t = (P[min(i + 1, n - 1)] - P[max(i - 1, 0)]).normalized()
                 sd = t.cross(o); sd = sd.normalized() if sd.length > 1e-4 else Vector((1, 0, 0)); sd *= (1 if rnd.random() < 0.5 else -1)
                 tl = R(0.12, 0.28); q = [p, p + (sd * 0.6 + o * 0.3 + t * 0.5).normalized() * tl * 0.5, p + (sd * 0.5 + o * 0.25 + t * 0.9).normalized() * tl]
@@ -172,7 +172,7 @@ def pick(w):
 # ------------------------------------------------------------------ 1. 院中藤蔓（烘在原位）
 V = Geo(); WR = (0.42, 0.14, 0.24, 0.20)
 for d in J['D']:   # 垂山巅、穿石隙（短的去掉一部分，控制面数）
-    if rnd.random() > (0.7 if len(d) >= 3 * 8 + 2 else 0.38): continue
+    if rnd.random() > (0.9 if len(d) >= 3 * 8 + 2 else 0.6): continue
     dx, dz = d[0], d[1]; pts = [Vector((d[i], d[i + 1], d[i + 2])) for i in range(2, len(d), 3)]; o = Vector((dx, 0.0, dz))
     pts = [p + o * 0.03 for p in pts]; vine(V, pts, o, pick(WR))
     if len(pts) > 6 and rnd.random() < 0.15:

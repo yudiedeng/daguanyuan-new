@@ -1,5 +1,6 @@
 // Blender 导出的植物 GLB（hw_plants.py）-> 网页用：保留顶点色，焊接、量化、meshopt 压缩；每个物体一个节点（名字不变）。
 // 用法：node pack_plants.mjs in.glb out.(wasm|glb)
+// 注意：量化会把缩放、位移挪到节点上，网页只取几何体时要先乘上节点矩阵（见 index.html plants()）
 import {NodeIO} from '@gltf-transform/core';import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {dedup,weld,prune,quantize,meshopt} from '@gltf-transform/functions';
 import {MeshoptDecoder,MeshoptEncoder} from 'meshoptimizer';import fs from 'fs';
