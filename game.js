@@ -855,6 +855,8 @@ function findPath(ax, az, bx, bz, maxNodes = 400000) {
   const hOf = (i, j) => { const k = i * NZ + j; let v = memo.get(k); if (v !== undefined) return v; const x = X0 + i * cell, z = Z0 + j * cell; let g = okAt(x, z);
     if (g != null) for (const [dx, dz] of [[0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]]) if (okAt(x + dx, z + dz) == null) { g = null; break; }
     memo.set(k, g); return g; };
+  /* 草坪（不在石子路、桥、台阶、室内）走起来贵 6 倍，路线就会沿着路走 */
+  const lawnM = new Map(), lawn = (i, j) => { const k = i * NZ + j; let v = lawnM.get(k); if (v === undefined) { const x = X0 + i * cell, z = Z0 + j * cell, gr = groundAt(x, z, 99); v = gr[1] && !(window.__dgy.nearPath && window.__dgy.nearPath(x, z, 1.7)); lawnM.set(k, v); } return v; };
   const snap = (x, z) => { const [i0, j0] = toI(x, z); for (let r = 0; r < 8; r++) for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) { if (Math.max(Math.abs(a), Math.abs(b)) !== r) continue; if (hOf(i0 + a, j0 + b) != null) return [i0 + a, j0 + b]; } return null; };
   const s = snap(ax, az), t = snap(bx, bz); if (!s || !t) return null;
   const heap = [], push = (f, k) => { heap.push([f, k]); let c = heap.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
@@ -863,10 +865,11 @@ function findPath(ax, az, bx, bz, maxNodes = 400000) {
   const sk = key(s[0], s[1]); G.set(sk, 0); push(h(s[0], s[1]), sk); let found = false, n = 0;
   while (heap.length && n++ < maxNodes) { const [, k] = pop(); const i = (k / NZ) | 0, j = k % NZ; if (i === t[0] && j === t[1]) { found = true; break; } const cur = hOf(i, j), g0 = G.get(k);
     for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { if (!a && !b) continue; const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue; const nh = hOf(ni, nj); if (nh == null || Math.abs(nh - cur) > 0.4) continue;
-      if (a && b && (hOf(i + a, j) == null || hOf(i, j + b) == null)) continue; const nk = key(ni, nj), ng = g0 + Math.hypot(a, b); if (ng < (G.get(nk) ?? 1e9)) { G.set(nk, ng); from.set(nk, k); push(ng + h(ni, nj), nk); } } }
+      if (a && b && (hOf(i + a, j) == null || hOf(i, j + b) == null)) continue; const nk = key(ni, nj), ng = g0 + Math.hypot(a, b) * (lawn(ni, nj) ? 6 : 1); if (ng < (G.get(nk) ?? 1e9)) { G.set(nk, ng); from.set(nk, k); push(ng + h(ni, nj), nk); } } }
   if (!found) return null;
   const pts = []; for (let k = key(t[0], t[1]); k !== undefined; k = from.get(k)) { pts.push([X0 + ((k / NZ) | 0) * cell, Z0 + (k % NZ) * cell]); if (k === sk) break; } pts.reverse(); pts.push([bx, bz]);
-  const los = (p, q) => { const L = Math.hypot(q[0] - p[0], q[1] - p[1]), m = Math.max(2, Math.ceil(L / 0.4)); let y = null; for (let u = 0; u <= m; u++) { const x = p[0] + (q[0] - p[0]) * u / m, z = p[1] + (q[1] - p[1]) * u / m, g = okAt(x, z); if (g == null || (y != null && Math.abs(g - y) > 0.4)) return false; y = g; } return true; };
+  const los = (p, q) => { const L = Math.hypot(q[0] - p[0], q[1] - p[1]), m = Math.max(2, Math.ceil(L / 0.4)); let y = null; for (let u = 0; u <= m; u++) { const x = p[0] + (q[0] - p[0]) * u / m, z = p[1] + (q[1] - p[1]) * u / m, g = okAt(x, z); if (g == null || (y != null && Math.abs(g - y) > 0.4)) return false; y = g;
+    if (u && u < m && Math.min(Math.hypot(x - p[0], z - p[1]), Math.hypot(x - q[0], z - q[1])) > 2.5 && lawn(...toI(x, z))) return false; } return true; };
   const out = [pts[0]]; let i = 0; while (i < pts.length - 1) { let j = pts.length - 1; while (j > i + 1 && !los(pts[i], pts[j])) j--; out.push(pts[j]); i = j; } return out;
 }
 function startGuide(fig, ax, az, bx, bz, faceTo) {
@@ -1072,9 +1075,27 @@ function goThroughDoor() {
    花瓣引路：从脚下往目标沿着走得通的路飘一串花瓣；目标近了就散去
    --------------------------------------------------------------------- */
 const PET_N = 64;
-const petals = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.13, 0.09), new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide, transparent: true, opacity: 0.95, depthWrite: false }), PET_N);
+/* 桃花瓣：窄柄、圆肩、顶端一个小缺口，微微内卷；贴一张由柄部淡黄白渐到瓣缘粉红、带细脉的贴图 */
+function petalGeo() {
+  const W = 0.055, H = 0.085, sh = new THREE.Shape();
+  sh.moveTo(0, 0); sh.bezierCurveTo(W * 0.35, H * 0.08, W, H * 0.45, W * 0.92, H * 0.78);
+  sh.bezierCurveTo(W * 0.85, H * 0.97, W * 0.35, H * 1.02, 0, H * 0.9);   // 顶端缺口
+  sh.bezierCurveTo(-W * 0.35, H * 1.02, -W * 0.85, H * 0.97, -W * 0.92, H * 0.78);
+  sh.bezierCurveTo(-W, H * 0.45, -W * 0.35, H * 0.08, 0, 0);
+  const geo = new THREE.ShapeGeometry(sh, 10), P = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < P.count; i++) { const x = P.getX(i), y = P.getY(i); P.setZ(i, (x / W) ** 2 * 0.018 - (y / H) * 0.012); uv.setXY(i, x / (2 * W) + 0.5, y / H); }
+  geo.translate(0, -H * 0.45, 0); geo.computeVertexNormals(); return geo;
+}
+function petalTex() {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64; const x = c.getContext('2d');
+  const gr = x.createRadialGradient(32, 64, 2, 32, 40, 62); gr.addColorStop(0, '#fff6dc'); gr.addColorStop(0.35, '#fff0f3'); gr.addColorStop(1, '#f7a9be');
+  x.fillStyle = gr; x.fillRect(0, 0, 64, 64); x.strokeStyle = 'rgba(220,120,150,.28)'; x.lineWidth = 0.8;
+  for (let i = -3; i <= 3; i++) { x.beginPath(); x.moveTo(32, 64); x.quadraticCurveTo(32 + i * 5, 34, 32 + i * 8.5, 4); x.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const petals = new THREE.InstancedMesh(petalGeo(), new THREE.MeshBasicMaterial({ map: petalTex(), color: '#ffffff', side: THREE.DoubleSide, transparent: true, opacity: 0.96, depthWrite: false }), PET_N);
 petals.frustumCulled = false; petals.visible = false; petals.renderOrder = 6; scene.add(petals);
-{ const tint = ['#f9b3c6', '#fcd2dc', '#f283a3', '#fde6ec', '#f6c0a2']; for (let i = 0; i < PET_N; i++) petals.setColorAt(i, new THREE.Color(tint[i % tint.length])); }
+{ const tint = ['#ffffff', '#ffe8ee', '#ffd6e0', '#fff4f6', '#ffdfe6']; for (let i = 0; i < PET_N; i++) petals.setColorAt(i, new THREE.Color(tint[i % tint.length])); }
 const petalSeed = Array.from({ length: PET_N }, (_, i) => ({ lat: (Math.random() - 0.5) * 1.3, ph: Math.random() * 6.283, h: 0.2 + Math.random() * 0.9, sp: 0.8 + Math.random() * 0.5, o: i / PET_N }));
 const _pd = new THREE.Object3D(); let PP = null, ppT = -1e9;
 function buildPP(gx, gz, p, now) {
@@ -1103,7 +1124,7 @@ function updatePetals(goal, p, now) {
     const spread = q.lat * (0.3 + 0.7 * t), x = x0 - dz * spread + Math.sin(now * 0.002 + q.ph) * 0.18, z = z0 + dx * spread + Math.cos(now * 0.0017 + q.ph) * 0.18;
     const y = groundAt(x, z, p.y + 1.2)[0] + (0.15 + q.h * 0.55) * walk.s + Math.sin(now * 0.0032 + q.ph) * 0.1;
     const k = Math.min(1, t * 8) * (1 - Math.max(0, (t - 0.82) / 0.18));   // 近处淡入、远处散去
-    _pd.position.set(x, y, z); _pd.rotation.set(0.8 + Math.sin(now * 0.004 + q.ph) * 0.9, now * 0.0025 * q.sp + q.ph, now * 0.0018 + q.ph); _pd.scale.setScalar(Math.max(0.001, k) * 1.1); _pd.updateMatrix(); petals.setMatrixAt(i, _pd.matrix); }
+    _pd.position.set(x, y, z); _pd.rotation.set(0.8 + Math.sin(now * 0.004 + q.ph) * 0.9, now * 0.0025 * q.sp + q.ph, now * 0.0018 + q.ph); _pd.scale.setScalar(Math.max(0.001, k) * (0.9 + q.h * 0.35)); _pd.updateMatrix(); petals.setMatrixAt(i, _pd.matrix); }
   petals.instanceMatrix.needsUpdate = true; if (petals.instanceColor) petals.instanceColor.needsUpdate = true;
 }
 
