@@ -1513,9 +1513,12 @@ function buildTerrain(){
   const mgeo=new THREE.BufferGeometry();mgeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));mgeo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));mgeo.setIndex(idx);mgeo.computeVertexNormals();
   scene.add(new THREE.Mesh(mgeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide})));}
 }
+/* 翠嶂石洞的中心线（世界坐标，见 blender/scripts/sites/cuizhang_cave.py）：洞里不长草 */
+const CAVE=[[-0.9,105],[-0.9,103.2],[-1.06,102.1],[-1.35,101],[-1.91,100],[-2.45,99],[-2.71,97.9],[-2.63,96.85],[-2.22,95.83],[-1.65,94.89],[-1.05,94],[-0.67,93],[-0.5,92],[-0.5,90.5],[-0.5,87.5]];
+function inCave(x,z,r){if(Math.abs(x)>8||z<86||z>106)return false;for(let i=1;i<CAVE.length;i++){const [ax,az]=CAVE[i-1],[bx,bz]=CAVE[i],dx=bx-ax,dz=bz-az,t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz)));if(Math.hypot(x-ax-dx*t,z-az-dz*t)<r)return true;}return false;}
 function buildHeightTex(){const nx=HG.nx,nzz=HG.nz;const data=new Uint16Array(nx*nzz*4);
  for(let j=0;j<nzz;j++)for(let i=0;i<nx;i++){const x=HG.x0+i,z=HG.z0+j,h=HG.data[j*nx+i];let d=1;
-  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(Math.abs(x-8)<6&&z>60&&z<90&&nearStream(x,z,1.5))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
+  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(inCave(x,z,1.6))d=0;else if(Math.abs(x-8)<6&&z>60&&z<90&&nearStream(x,z,1.5))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
   if(d>0)d*=(0.55+0.45*nz(NOISE.d,x*2,z*2))*sstep(0.28,0.45,h);if(d>0&&h>3)d*=0.7;
   let can=0;{const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l){const dd=Math.hypot(p[0]-x,p[1]-z);can+=Math.max(0,1-dd/5.5);}}can=Math.min(1,can*0.8);}
   if(inZone(x,z,0.5))can=0;d*=1-0.85*can;
