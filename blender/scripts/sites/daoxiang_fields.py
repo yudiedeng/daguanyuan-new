@@ -26,7 +26,7 @@ PLOTS = [
     dict(name='东',   x=(16.5, 26.0), y=(-3.8, 9.4),   al='x', crop=['youcai']),
 ]
 PITCH = 1.1          # 垄距（窄垄，少露泥）
-INS = 0.9            # 种菜的畦面比原菜畦四边各收进 0.9 m，外圈是一道土埂
+INS = 0.65           # 种菜的畦面比原菜畦四边各收进 0.65 m，外圈是一道土埂
 RIDGE_H = 0.2        # 垄高（垄面比沟底高）
 BASE = 0.05          # 沟底高出原地面
 CELL = 0.12          # 网格边长
@@ -46,9 +46,9 @@ def plot_frame(P, ins=0.0):
 
 def ridges(P):
     u0, u1, v0, v1, _ = plot_frame(P, INS)
-    n = int((v1 - v0 - 0.6) // PITCH)
-    off = (v1 - v0 - (n - 1) * PITCH) / 2      # 居中
-    return [v0 + off + k * PITCH for k in range(n)]
+    span = v1 - v0 - 0.5                       # 头尾两垄离畦边各 0.25 m，垄距微调到正好铺满，不留空条
+    n = round(span / PITCH) + 1
+    return [v0 + 0.25 + k * span / (n - 1) for k in range(n)]
 
 
 def sstep(a, b, x):
@@ -230,7 +230,39 @@ def cong(seed):
     return m
 
 
-CROPS = {'youcai': (youcai, 3), 'qingcai': (qingcai, 3), 'cong': (cong, 2)}
+def doujia(seed):
+    """豆角架：一段 1.2 m 长的竹竿人字架（沿 X），扁豆藤顺竿爬满，开紫花、垂豆荚。"""
+    r = random.Random(seed); m = Mesh()
+    POLE = lin((0.62, 0.55, 0.38)); LEAF = lin((0.20, 0.40, 0.14)); FL = lin((0.62, 0.36, 0.72)); POD = lin((0.38, 0.55, 0.22))
+    H = 1.85
+    for x in (0.0, 0.6):
+        for sd in (-1, 1):   # 人字：两竿交叉在顶下
+            a = Vector((x + r.uniform(-0.04, 0.04), sd * 0.32, 0)); b = Vector((x + r.uniform(-0.05, 0.05), -sd * 0.06, H + r.uniform(-0.08, 0.08)))
+            m.tube([a, a.lerp(b, 0.5), b], 0.014, 0.01, 5, jit(POLE, r, 0.05))
+            # 藤：沿竿螺旋上爬，挂叶、花、荚
+            d = (b - a).normalized(); side = d.cross(Vector((1, 0, 0))).normalized()
+            for i in range(26):
+                t = 0.06 + 0.9 * i / 26; p = a.lerp(b, t)
+                ang = i * 1.9 + r.uniform(-0.3, 0.3)
+                off = Matrix.Rotation(ang, 3, d) @ side
+                base = p + off * 0.03
+                ld = (off * 0.8 + Vector((r.uniform(-0.3, 0.3), 0, r.uniform(-0.2, 0.5)))).normalized()
+                lside = ld.cross(Vector((0, 0, 1))).normalized() if abs(ld.z) < 0.95 else Vector((1, 0, 0))
+                for lf in range(3 if r.random() < 0.7 else 1):   # 三出复叶
+                    q = Matrix.Rotation((lf - 1) * 0.7, 3, ld.cross(lside).normalized()) @ ld
+                    L = r.uniform(0.09, 0.13)
+                    m.leaf(base, q, q.cross(Vector((0, 0, 1))).normalized() if abs(q.z) < 0.95 else lside, L, L * 0.42,
+                           lambda tt: math.sin(math.pi * min(tt, 0.98)) ** 0.8 * (1.1 - 0.4 * tt), jit(LEAF, r, 0.12), fold=0.15, curl=0.5, rows=4)
+                if r.random() < 0.18:
+                    for k in range(4): m.star(base + off * 0.06 + Vector((0, 0, 0.02 * k)), off, 0.012, jit(FL, r, 0.08), 3)
+                if r.random() < 0.22:   # 豆荚：扁长、下垂
+                    top = base + off * 0.05
+                    m.tube([top, top + Vector((0.01, 0, -0.08)), top + Vector((0.02, 0, -0.15))], 0.008, 0.004, 4, jit(POD, r, 0.08))
+    m.tube([Vector((-0.1, 0, H - 0.18)), Vector((1.3, 0, H - 0.18))], 0.012, 0.012, 5, jit(POLE, r, 0.05))   # 顶上横竿
+    return m
+
+
+CROPS = {'youcai': (youcai, 3), 'qingcai': (qingcai, 3), 'cong': (cong, 2), 'doujia': (doujia, 2)}
 SPACE = {'youcai': (0.26, 2), 'qingcai': (0.24, 2), 'cong': (0.13, 2)}   # 株距, 每垄几行
 
 
@@ -238,6 +270,14 @@ def place(P, pi):
     """沿垄排株；偶有缺苗。返回 [kind, variant, x, y, z, rot, scale]（Blender 坐标）。"""
     u0, u1, v0, v1, to_xy = plot_frame(P, INS); r = random.Random(500 + pi); out = []
     for k, c in enumerate(ridges(P)):
+        if k == 0:   # 靠篱笆/路的头一垄搭豆角架：一节 1.2 m，首尾相接
+            u = u0 + 0.5
+            while u < u1 - 1.6:
+                v = c + wob(k, u + 0.6, pi); x, y = to_xy(u, v)
+                out.append(['doujia', r.randrange(2), round(x, 3), round(y, 3), round((height(P, pi, u, v) or 0.0) - 0.02, 3),
+                            0.0 if P['al'] == 'x' else 1.571, 1.0])
+                u += 1.2
+            continue
         kind = P['crop'][k % len(P['crop'])]
         sp, lines = SPACE[kind]
         endu = 0.35 + 0.35 * (0.5 + 0.5 * math.sin(k * 2.1 + pi)); endv = 0.35 + 0.35 * (0.5 + 0.5 * math.sin(k * 1.3 + pi * 2))

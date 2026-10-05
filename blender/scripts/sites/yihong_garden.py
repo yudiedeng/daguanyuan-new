@@ -15,11 +15,18 @@ import yihong_atlas as AT
 OUT = sys.argv[-1] if len(sys.argv) > 1 and not sys.argv[-1].endswith('.py') else '/tmp/yh_garden'
 os.makedirs(OUT, exist_ok=True)
 ATLAS = AT.build(os.path.join(OUT, 'yh_atlas.png'))
+import bajiao_textures as BT
+BJ_TEX = {}
+for _k, _n in (('fresh', '芭蕉叶'), ('old', '芭蕉老叶'), ('dry', '芭蕉枯叶')):
+    BJ_TEX[_n] = os.path.join(OUT, f'bajiao_{_k}.png')
+    BT.leaf(_k, {'fresh': 1, 'old': 2, 'dry': 3}[_k]).save(BJ_TEX[_n])
+BJ_TEX['芭蕉茎'] = os.path.join(OUT, 'bajiao_stem.jpg')
+BT.stem().save(BJ_TEX['芭蕉茎'], quality=90)
 HERE = os.path.dirname(os.path.abspath(__file__))
 BLEND_DIR = os.path.normpath(os.path.join(HERE, '..', '..'))
 
 PAL = {
-    '芭蕉叶': (0.3, 0.5, 0.2), '芭蕉茎': (0.4, 0.5, 0.25),
+    '芭蕉叶': (0.3, 0.5, 0.2), '芭蕉老叶': (0.4, 0.45, 0.2), '芭蕉枯叶': (0.4, 0.3, 0.15), '芭蕉茎': (0.4, 0.5, 0.25), '叶柄': (0.42, 0.52, 0.22),
     '树皮': (0.3, 0.22, 0.17),
     '叶深': (0.13, 0.26, 0.08), '叶': (0.2, 0.36, 0.11), '叶浅': (0.32, 0.47, 0.16), '茎': (0.2, 0.25, 0.1),
     '月季粉': (0.93, 0.45, 0.55), '月季红': (0.68, 0.06, 0.13), '月季黄': (0.98, 0.84, 0.5), '月季白': (0.96, 0.93, 0.88),
@@ -35,24 +42,16 @@ def mat(name):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     b = m.node_tree.nodes['Principled BSDF']
-    if name in ('芭蕉叶', '芭蕉茎'):
+    if name in BJ_TEX:                      # 芭蕉：bajiao_textures.py 画的鲜叶、老叶、枯叶、假茎
         nt = m.node_tree
         tx = nt.nodes.new('ShaderNodeTexImage')
-        if name == '芭蕉叶':                  # 颜色图 + 单独的透明图合成一张 RGBA（glTF 只认一张）
-            from PIL import Image
-            c = Image.open(os.path.join(BLEND_DIR, '..', 'tex', 'leaf_banana_c.png')).convert('RGB')
-            a = Image.open(os.path.join(BLEND_DIR, '..', 'tex', 'leaf_banana_a.png')).convert('L').resize(c.size)
-            c.putalpha(a)
-            pth = os.path.join(OUT, 'banana_leaf_rgba.png')
-            c.save(pth)
-            tx.image = bpy.data.images.load(pth)
-            nt.links.new(tx.outputs['Alpha'], b.inputs['Alpha'])
-            m.use_backface_culling = False
-        else:
-            tx.image = bpy.data.images.load(os.path.join(BLEND_DIR, '..', 'tex', 'banana_stem_c.png'))
+        tx.image = bpy.data.images.load(BJ_TEX[name])
         tx.image.pack()
         nt.links.new(tx.outputs['Color'], b.inputs['Base Color'])
-        b.inputs['Roughness'].default_value = 0.5 if name == '芭蕉叶' else 0.8
+        if name != '芭蕉茎':
+            nt.links.new(tx.outputs['Alpha'], b.inputs['Alpha'])
+            m.use_backface_culling = False
+        b.inputs['Roughness'].default_value = 0.45 if name == '芭蕉叶' else 0.75
         return m
     if name == '树皮':
         nt = m.node_tree
@@ -512,86 +511,115 @@ def build_shrub():
 
 
 # ---------------- 芭蕉 ----------------
-def banana_leaf(G, rnd, base, azim, L, W, rise, droop):
-    """一片芭蕉叶：叶柄斜出，叶片先扬后垂，横向成 V 形对折、边缘略卷，沿长 9 段、横 5 列。"""
+def banana_leaf(G, rnd, base, azim, L, W, rise, droop, mat='芭蕉叶', twist=None):
+    """一片芭蕉叶：叶柄斜出、有沟，接粗中脉；叶片两半从中脉向下垂（倒 V），先扬后垂，
+    叶缘起伏（被风撕开的一条条各自高低），沿叶身略扭。沿长 16 段、横 9 列，贴 bajiao_*.png（v 叶基→叶尖）。"""
     dirh = Vector((math.cos(azim), math.sin(azim), 0))
     side = Vector((-math.sin(azim), math.cos(azim), 0))
-    pet = rnd.uniform(0.25, 0.4)                       # 叶柄
-    p0 = base
-    p1 = base + dirh * pet * 0.6 + Vector((0, 0, pet * rise))
-    side_ = side * 0.03
-    G.add('茎', [p0 - side_, p0 + side_, p1 + side_ * 0.6, p1 - side_ * 0.6], [(0, 1, 2, 3)])
-    twist = rnd.uniform(-0.25, 0.25)
+    pet = L * rnd.uniform(0.22, 0.32)                    # 叶柄
+    a0 = math.atan(rise)
+    # 叶柄：沿起始仰角伸出，半圆沟形
+    p0 = Vector(base)
+    p1 = p0 + (dirh * math.cos(a0 * 1.05) + Vector((0, 0, math.sin(a0 * 1.05)))) * pet
     vs, us = [], []
-    NL, NW = 9, 5
+    for i, (p, rr) in enumerate(((p0, 0.035), (p1, 0.018))):
+        for k in range(5):
+            ang = math.pi * k / 4
+            vs.append(p + side * math.cos(ang) * rr - Vector((0, 0, 1)) * math.sin(ang) * rr * 0.8)
+            us.append((k / 4, i))
+    G.add('叶柄', vs, [(k, k + 1, 6 + k, 5 + k) for k in range(4)], us)
+    tw = rnd.uniform(-0.35, 0.35) if twist is None else twist
+    NL, NW = 16, 9
+    ph = [rnd.uniform(0, 6.28) for _ in range(4)]
+    cur = Vector(p1)
+    vs, us = [], []
     for i in range(NL + 1):
         t = i / NL
-        # 中脉曲线：仰角从 rise 逐渐转为下垂
-        ang = math.atan(rise) * (1 - t) - droop * t * t
-        x = 0.0
-        pos = p1
-        # 数值积分中脉
-        cur = Vector(p1)
-        steps = 6
-        for k in range(steps):
-            tt = t * k / steps
-            a = math.atan(rise) * (1 - tt) - droop * tt * tt
-            cur = cur + (dirh * math.cos(a) + Vector((0, 0, math.sin(a)))) * (L * t / steps)
-        a = math.atan(rise) * (1 - t) - droop * t * t
-        tang = dirh * math.cos(a) + Vector((0, 0, math.sin(a)))
+        a = a0 * (1 - t) - droop * t ** 1.6
+        tang = (dirh * math.cos(a) + Vector((0, 0, math.sin(a)))).normalized()
+        if i > 0:
+            cur = cur + tang * (L / NL)
         nrm = tang.cross(side).normalized()
         if nrm.z < 0:
             nrm = -nrm
-        tw = twist * t
-        sd = side * math.cos(tw) + nrm * math.sin(tw)
+        ang = tw * t
+        sd = side * math.cos(ang) + nrm * math.sin(ang)
+        nn = tang.cross(sd).normalized()
+        if nn.z < 0:
+            nn = -nn
+        wid = W * (math.sin(math.pi * min(1.0, 0.04 + t * 0.97)) ** 0.42)
         for j in range(NW):
-            u = (j / (NW - 1)) * 2 - 1
-            fold = abs(u) * W * 0.1 * (1 - 0.5 * t)     # V 形对折
-            curl = (u * u) * W * 0.06 * t                # 边缘下卷
-            vs.append(cur + sd * (u * W / 2) + nrm * (fold - curl))
+            u = j / (NW - 1) * 2 - 1
+            hang = -abs(u) ** 1.4 * wid * 0.28                    # 两半向下垂
+            ripple = (abs(u) ** 2) * wid * 0.09 * (math.sin(t * 23 + ph[0] + (3 if u > 0 else 0)) + 0.6 * math.sin(t * 51 + ph[1]))
+            vs.append(cur + sd * (u * wid / 2) + nn * (hang + ripple))
             us.append((j / (NW - 1), t))
     fs = [(i * NW + j, i * NW + j + 1, (i + 1) * NW + j + 1, (i + 1) * NW + j) for i in range(NL) for j in range(NW - 1)]
-    G.add('芭蕉叶', vs, fs, us)
+    G.add(mat, vs, fs, us)
 
 
 def build_bajiao():
-    """“一边种几本芭蕉”：五本成丛，高低错落；每本假茎顶端七八片大叶，外层叶下垂，中心一卷新叶。"""
+    """“一边种几本芭蕉”：五本成丛，高低错落。每本假茎粗壮、叶鞘层层包裹，下部有干枯的鞘；
+    顶上六七片大叶：新叶斜举、老叶平展下垂、最老的一两片发黄，茎上垂挂一两片枯叶；中心一卷新叶。"""
     new_scene()
     rnd = random.Random(1705)
     G = Geo()
-    for (cx, cy, h) in ((0, 0, 2.0), (0.65, 0.4, 1.65), (-0.6, 0.35, 1.4), (0.3, -0.65, 1.1), (-0.45, -0.55, 0.75)):
-        r0 = 0.055 + h * 0.018
-        top = Vector((cx + rnd.uniform(-.08, .08), cy + rnd.uniform(-.08, .08), h))
-        v = tube(G, (cx, cy, 0), top, r0, r0 * 0.7, 10) if False else None
-        # 假茎：贴芭蕉茎纹理
+    for (cx, cy, h) in ((0, 0, 2.1), (0.7, 0.45, 1.7), (-0.65, 0.35, 1.45), (0.3, -0.7, 1.15), (-0.5, -0.55, 0.8)):
+        r0 = 0.07 + h * 0.03
+        top = Vector((cx + rnd.uniform(-.1, .1), cy + rnd.uniform(-.1, .1), h))
         a, b = Vector((cx, cy, 0)), top
         R = frame(b - a)
-        n = 10
+        n = 14
         vs, us = [], []
-        for z, rr in ((0, r0 * 1.15), (0.5, r0 * 0.92), (1.0, r0 * 0.72)):
+        rows = 6
+        for zi in range(rows + 1):
+            z = zi / rows
+            rr = r0 * (1.25 - 0.45 * z) * (1 + 0.06 * math.sin(z * 9 + cx * 5))
             p = a + (b - a) * z
             for k in range(n + 1):
                 ang = 2 * math.pi * k / n
-                vs.append(p + R @ Vector((math.cos(ang) * rr, math.sin(ang) * rr, 0)))
-                us.append((k / n, z * h / 0.9))
-        fs = [(r * (n + 1) + k, r * (n + 1) + k + 1, (r + 1) * (n + 1) + k + 1, (r + 1) * (n + 1) + k) for r in range(2) for k in range(n)]
+                bump = 1 + 0.05 * math.sin(ang * 3 + z * 4)              # 叶鞘层层的起伏
+                vs.append(p + R @ Vector((math.cos(ang) * rr * bump, math.sin(ang) * rr * bump, 0)))
+                us.append((k / n * 2, z * h / 1.0))
+        fs = [(r * (n + 1) + k, r * (n + 1) + k + 1, (r + 1) * (n + 1) + k + 1, (r + 1) * (n + 1) + k) for r in range(rows) for k in range(n)]
         G.add('芭蕉茎', vs, fs, us)
-        nl = rnd.randint(8, 10)
+        # 茎基干枯的叶鞘：贴着茎剥开垂下的几条
+        for k in range(rnd.randint(2, 4)):
+            ang = rnd.uniform(0, 6.28)
+            z1 = rnd.uniform(0.25, 0.55) * h
+            o = Vector((math.cos(ang), math.sin(ang), 0))
+            sd = Vector((-math.sin(ang), math.cos(ang), 0))
+            w = r0 * rnd.uniform(0.9, 1.4)
+            q0, q1 = Vector((cx, cy, 0.02)) + o * r0 * 1.3, Vector((cx, cy, z1)) + o * r0 * 1.15
+            qm = (q0 + q1) / 2 + o * 0.04
+            vs = [q0 - sd * w / 2, q0 + sd * w / 2, qm + sd * w / 2, qm - sd * w / 2, q1 + sd * w * 0.3, q1 - sd * w * 0.3]
+            G.add('芭蕉枯叶', vs, [(0, 1, 2, 3), (3, 2, 4, 5)], [(0.2, 0.05), (0.8, 0.05), (0.85, 0.4), (0.15, 0.4), (0.7, 0.75), (0.3, 0.75)])
+        nl = rnd.randint(6, 8)
+        az0 = rnd.uniform(0, 6.28)
         for i in range(nl):
-            az = 2 * math.pi * i / nl + rnd.uniform(-0.3, 0.3)
-            outer = i < nl - 2
-            L = (1.2 + h * 0.45) * rnd.uniform(0.85, 1.05) * (1.0 if outer else 0.75)
-            banana_leaf(G, rnd, top - Vector((0, 0, rnd.uniform(0.0, 0.45) if outer else 0.0)), az, L, L * rnd.uniform(0.36, 0.42),
-                        rnd.uniform(0.9, 1.6) if outer else rnd.uniform(2.2, 3.5), rnd.uniform(0.9, 1.6) if outer else 0.4)
+            age = i / max(1, nl - 1)                       # 0 最老 → 1 最新
+            az = az0 + i * 2.4 + rnd.uniform(-0.25, 0.25)  # 叶序螺旋
+            L = (1.1 + h * 0.6) * rnd.uniform(0.9, 1.08) * (0.8 + 0.2 * (1 - abs(age - 0.5) * 2))
+            rise = 0.35 + 2.4 * age ** 2 + rnd.uniform(-0.15, 0.15)
+            droop = 2.3 - 1.6 * age + rnd.uniform(-0.2, 0.2)
+            mat = '芭蕉老叶' if age < 0.2 else '芭蕉叶'
+            base = top - Vector((0, 0, (1 - age) * 0.25))
+            banana_leaf(G, rnd, base, az, L, L * rnd.uniform(0.28, 0.32), rise, droop, mat)
+        # 垂挂的枯叶：叶柄折断，整片贴着茎垂下
+        for k in range(rnd.randint(1, 2)):
+            az = rnd.uniform(0, 6.28)
+            L = (0.7 + h * 0.4)
+            banana_leaf(G, rnd, top - Vector((0, 0, 0.3)), az, L, L * 0.22, -2.2, 0.6, '芭蕉枯叶', twist=rnd.uniform(-1.2, 1.2))
         # 心叶：卷成筒直立
         R = frame(Vector((rnd.uniform(-.1, .1), rnd.uniform(-.1, .1), 1)))
         vs, us = [], []
         for z in (0, 1):
-            for k in range(7):
-                ang = 2 * math.pi * k / 6 * 0.85
-                vs.append(top + R @ Vector((math.cos(ang) * 0.035, math.sin(ang) * 0.035, z * h * 0.22)))
-                us.append((k / 6, 0.3 + z * 0.4))
-        G.add('芭蕉叶', vs, [(k, k + 1, 8 + k, 7 + k) for k in range(6)], us)
+            for k in range(9):
+                ang = 2 * math.pi * k / 8 * 0.9
+                rr = 0.04 * (1 - 0.5 * z)
+                vs.append(top + R @ Vector((math.cos(ang) * rr, math.sin(ang) * rr, z * h * 0.3)))
+                us.append((0.3 + 0.4 * k / 8, 0.1 + z * 0.5))
+        G.add('芭蕉叶', vs, [(k, k + 1, 10 + k, 9 + k) for k in range(8)], us)
     G.build('yh_bajiao')
     save_export('yh_bajiao')
 

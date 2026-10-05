@@ -228,11 +228,6 @@
   "faces": 60000,
   "neg": "ground plane, base slab, text, people, low quality, blurry"
  },
- "pf_ding": {
-  "prompt": "an ornate Chinese white marble openwork crest carving, two coiling dragons facing a flaming pearl in the center among swirling clouds, pierced lace-like stone carving, flat thin slab shape wider than tall, crisp deep relief, white jade stone, isolated object",
-  "faces": 40000,
-  "neg": "color photo background, ground plane, base slab, text, people, low quality, blurry, melted"
- },
  "pf_hua": {
   "prompt": "a long thin horizontal rectangular white marble screen panel, about four times wider than tall, pierced openwork lattice of interlocking chi-dragons and ruyi clouds, carved border frame, crisp deep carving, white jade stone, flat slab, front view, isolated object",
   "faces": 50000,
@@ -287,5 +282,15 @@
   "prompt": "a round woven bamboo basket full of fresh green vegetables next to a round flat bamboo winnowing tray leaning against it, rustic Chinese farm, realistic",
   "neg": "low quality, ground plane, base, text, cartoon, stylized",
   "faces": 5000
+ },
+ "pf_jilong": {
+  "prompt": "free-standing white marble ridge crest sculpture for the top of a Chinese stone archway: two long slender Chinese dragons with sinuous bodies walking toward each other along a narrow carved ridge beam, a tall flaming pearl standing upright on a cloud between their heads, curling clouds under their claws, open silhouette with sky visible between the dragons, no background panel, low and very wide, about four times wider than tall, crisp deep carving, white jade stone",
+  "faces": 50000,
+  "neg": "background panel, flat slab, frame, square plaque, wall, ground plane, text, people, low quality, blurry"
+ },
+ "pf_juancao": {
+  "prompt": "low wide white marble ridge cresting for a Chinese stone archway: a row of large curling ruyi cloud scrolls and lotus scrolls standing on a narrow carved ridge beam, open silhouette with gaps between the scrolls, no background panel, about four times wider than tall, crisp deep carving, white jade stone, symmetrical, front view",
+  "faces": 30000,
+  "neg": "background panel, flat slab, frame, square plaque, wall, ground plane, text, people, low quality, blurry"
  }
 }

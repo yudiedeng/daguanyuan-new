@@ -31,7 +31,7 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 ```
 
 - `scripts/cuizhang/build_cuizhang.py`：从零生成翠嶂，同时写 `models/b/col.json` 的 `cuizhang` 碰撞框与 `cuizhang_trees`。
-- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
+- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao（`bajiao_textures.py` 画鲜叶、老叶、枯叶、假茎贴图：侧脉、沿脉撕裂、焦边；叶两半下垂、叶缘起伏，茎上挂枯叶、茎基枯鞘）、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
   ```bash
   python3 blender/scripts/sites/yihong_garden.py /tmp/yh          # YH_ONLY=haitang,bitao 只重建其中几种
   node blender/scripts/web/pack_prop.mjs /tmp/yh/yh_haitang.glb models/p/yh_haitang.glb 85000 1024   # 其余 200000 1024（不减面）
@@ -48,7 +48,7 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层逐层收分、金宝顶（顶脊约 33 m），全组最高；缀锦阁、含芳阁加成三层；
 复道接大观楼首层两山；前面两层白石台基、汉白玉甬路与栏杆、两方水池；屋面全改灰瓦。玉石牌坊、石狮、石灯座是 Tripo 件
 （`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
-牌坊 `models/p/paifang.glb` 由 `paifang_build.py` 搭白石骨架、挂 Tripo 精雕件（盘龙柱 pf_zhu、镂空螭纹花板 pf_hua、双龙戏珠板 pf_ding）：
+牌坊 `models/p/paifang.glb` 由 `paifang_build.py` 搭白石骨架、挂 Tripo 精雕件（盘龙柱 pf_zhu、镂空螭纹花板 pf_hua、明间脊上二龙戏珠 pf_jilong、次间脊上卷草 pf_juancao；脊饰自带的底座在脚本里切掉）：
 `python3 blender/scripts/sites/paifang_build.py <tripo 原始 glb 目录> /tmp/paifang.glb && node blender/scripts/web/pack_prop.mjs /tmp/paifang.glb models/p/paifang.glb 150000 1024`
 
 ```bash
