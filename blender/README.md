@@ -31,8 +31,41 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 ```
 
 - `scripts/cuizhang/build_cuizhang.py`：从零生成翠嶂，同时写 `models/b/col.json` 的 `cuizhang` 碰撞框与 `cuizhang_trees`。
+- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao、月季花坛 yh_rosebed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
+  ```bash
+  python3 blender/scripts/sites/yihong_garden.py /tmp/yh          # YH_ONLY=haitang,bitao 只重建其中几种
+  node blender/scripts/web/pack_prop.mjs /tmp/yh/yh_haitang.glb models/p/yh_haitang.glb 85000 1024   # 其余 200000 1024（不减面）
+  node blender/scripts/web/alpha_mask.mjs models/p/yh_*.glb       # 花叶、芭蕉叶改 alphaMode MASK
+  ```
+  网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
+- 怡红院其余道具（仙鹤、鸟笼、竹篱花障月洞门、牡丹）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
+
+## 大观楼改样（blender/scripts/sites/）
+
+正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层、整座放大（顶脊约 35 m），全组最高；
+复道接大观楼首层两山；前面两层白石台基、汉白玉甬路与栏杆、两方水池；屋面全改灰瓦。玉石牌坊、石狮、石灯座是 Tripo 件
+（`models/p/paifang.glb`、`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+
+```bash
+python3 blender/scripts/sites/daguan_rebuild.py                      # 只能跑一次（在 daguan_doors.py 之后）
+flock /tmp/coljson.lock python3 blender/scripts/sites/daguan_cols.py  # 外壳碰撞，可重复跑
+flock /tmp/coljson.lock python3 blender/scripts/sites/daguan_in_shift.py   # 殿内陈设随正殿前移，只能跑一次
+python3 blender/scripts/web/export_glb.py blender/daguan.blend /tmp/daguan.glb
+node blender/scripts/web/pack_glb.mjs /tmp/daguan.glb models/b/daguan.wasm models/b/daguan.wasm
+```
+
+- `build_daguan.py`（室内）仍按旧坐标生成；重跑它之后要再跑一次 `daguan_in_shift.py`（先删 col.json 里的 `daguan_in_shift` 标记）。
+## 竹（blender/scripts/flora/build_bamboo.py）
+
+潇湘馆一带和园中竹丛用的三株竹（models/t/zhu_1–3.wasm）和叶簇贴图（tex/zhu_spray.png）：先在 Blender 里建两枝真实的竹叶簇、用 Cycles 俯拍成透明贴图，再建竹竿（节环、上细下粗）、互生下垂的枝，枝上挂十字交叉的叶簇片。网页按每竿高度等比缩放，低画质下退回程序生成的竹。
+
+```bash
+python3 blender/scripts/flora/build_bamboo.py --out /tmp/zhu
+for n in 1 2 3; do node blender/scripts/web/pack_prop.mjs /tmp/zhu/zhu_$n.glb models/t/zhu_$n.wasm 99999 256; done
+cp /tmp/zhu/zhu_spray.png tex/zhu_spray.png
+```
 
 ## 室内（blender/scripts/interiors/）
 
@@ -65,6 +98,17 @@ node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 # 稻香村菜畦：剪掉旧的光滑垄条和凸起边框（连同其下地面），由 daoxiang_tian 接替，见下文「菜畦」
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[16.26,-4.04,-0.5,26.24,9.64,0.6,"田土|夯土地"],[12.26,-22.54,-0.5,26.24,-4.96,0.6,"田土|夯土地"],[-1.44,-22.54,-0.5,11.74,-4.96,0.6,"田土|夯土地"],[-26.24,-22.54,-0.5,-7.96,-8.76,0.6,"田土|夯土地"]]'
+# 潇湘馆室内：方块家具换成 Tripo 道具（index.html PROPS.xiaoxiang_in），剪掉原来的：书案、圈椅、书架、琴桌、明间条案、花几西、花几东、棋桌、官帽椅西、官帽椅东、瓷墩西、瓷墩东、床、榻、梳妆台、绣墩
+node tools/glb_cut.mjs models/b/xiaoxiang_in.wasm models/b/xiaoxiang_in.wasm '[[-3.56,-0.45,0.48,-2.94,1.29,1.3,"花梨"],[-2.95,0.08,0.48,-2.15,0.76,1.6,"湘妃竹|青布"],[-3.67,2.07,0.48,-1.5,2.53,3.42,"湘妃竹|书函|书页"],[-3.22,-1.62,0.48,-1.88,-1.12,1.0,"黑漆|描金|白布|瓷白"],[-1.13,1.95,0.48,1.13,2.5,1.35,"花梨"],[-1.39,1.98,0.48,-0.98,2.42,1.9,"湘妃竹|青花|叶绿"],[0.98,1.98,0.48,1.39,2.42,1.9,"湘妃竹|青花|叶绿"],[-0.45,0.6,0.48,0.45,1.5,1.33,"花梨"],[-1.1,0.72,0.48,-0.47,1.38,1.6,"湘妃竹|青布"],[0.47,0.72,0.48,1.1,1.38,1.6,"湘妃竹|青布"],[-1.16,-0.82,0.48,-0.74,-0.38,0.95,"瓷白|青花"],[0.74,-0.82,0.48,1.16,-0.38,0.95,"瓷白|青花"],[2.05,0.12,0.48,3.68,2.4,2.95,"花梨|青纱|素绸|青布|锦缎|描金|紫檀"],[1.92,-1.72,0.48,3.62,-0.95,1.5,"湘妃竹|青布|锦缎"],[3.05,-0.8,0.48,3.68,0.1,1.8,"花梨|紫檀|镜面|粉彩"],[2.55,-0.55,0.48,2.95,-0.15,0.95,"锦缎|描金"]]'
+```
+
+## 蘅芜苑的藤萝异草（scripts/web/hw_plants.py）
+
+网页里蘅芜苑的藤蔓、异草和花溆洞口的垂藤都是 Blender 用脚本建的（叶片是带弧度的三维面片、茎是细管、红果和小金花是小球，颜色写在顶点色里）：
+
+```bash
+node blender/scripts/web/hw_vines.mjs        # 从院落模型算挂点、贴石垂藤的路径、玲珑石摆放 → models/b/hw_vines.json
+python3 blender/scripts/web/hw_plants.py     # 建模 → models/b/hw_vines.wasm（院中藤蔓，按位置烘好）、models/p/hw_plants.glb（单株异草、垂藤）
 ```
 
 ## 树（blender/scripts/trees/）

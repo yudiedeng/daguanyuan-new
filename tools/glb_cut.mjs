@@ -22,9 +22,9 @@ for(const node of R.listNodes()){const mesh=node.getMesh();if(!mesh)continue;con
    const m=[(a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3,(a[2]+b[2]+c[2])/3];
    if(bs.some(B=>m[0]>=B.lo[0]&&m[0]<=B.hi[0]&&m[1]>=B.lo[1]&&m[1]<=B.hi[1]&&m[2]>=B.lo[2]&&m[2]<=B.hi[2])){cut++;continue;}
    keep.push(idx.getScalar(t),idx.getScalar(t+1),idx.getScalar(t+2));}
-  if(!keep.length){p.dispose();continue;}// 整个材质都剪光了：直接去掉这个图元（空缓冲会让 meshopt 编码报错）
+  if(!keep.length){p.dispose();continue;}   // 整块材质都剪光了：去掉这个图元（空图元会让 meshopt 编码出错）
   if(keep.length!==n){const A=idx.getArray().constructor;idx.setArray(new A(keep));compactPrimitive(p);}}
- if(!mesh.listPrimitives().length){mesh.dispose();node.dispose();}}
+ if(!mesh.listPrimitives().length){node.setMesh(null);mesh.dispose();}}
 await doc.transform(meshopt({encoder:MeshoptEncoder,level:'medium'}));
 fs.writeFileSync(dst,await io.writeBinary(doc));
 console.log('cut',cut,'of',total,'tris;',fs.statSync(src).size,'->',fs.statSync(dst).size,'bytes');

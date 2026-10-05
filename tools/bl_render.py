@@ -28,7 +28,7 @@ roof = re.compile(r'屋面|卷棚|椽|正脊|垂脊|罗锅|博缝|望板|天花|
 if hide_roof:
     for o in bpy.data.objects:
         if o.type == 'MESH' and roof.search(o.name): o.hide_render = True; o.hide_viewport = True
-sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = 24; sc.cycles.use_denoising = False; sc.render.resolution_x, sc.render.resolution_y = 900, 560
+sc.render.engine = 'CYCLES'; sc.cycles.device = 'CPU'; sc.cycles.samples = int(os.environ.get("SPP","24")); sc.cycles.use_denoising = False; sc.render.resolution_x, sc.render.resolution_y = 900, 560
 sc.cycles.max_bounces = 3
 sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN')); sun.data.energy = 4.0; sun.rotation_euler = (math.radians(50), 0, math.radians(35)); sc.collection.objects.link(sun)
 sc.world = sc.world or bpy.data.worlds.new('w'); sc.world.use_nodes = True; bg = sc.world.node_tree.nodes['Background']; bg.inputs['Color'].default_value = (0.7, 0.75, 0.82, 1); bg.inputs['Strength'].default_value = 1.2

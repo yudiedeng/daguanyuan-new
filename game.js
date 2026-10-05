@@ -801,7 +801,21 @@ const CH17 = {
               { text: { title: '天然图画', titleEn: 'A Natural Picture', ch: '第十七回', chEn: 'Chapter 17',
                 p: ['宝玉道：“……古人云‘天然图画’四字，正畏非其地而强为其地，非其山而强为其山，即百般精巧而终不相宜……”未及说完，贾政气的喝命：“叉出去！”刚出去，又喝命：“回来！”'],
                 pEn: ['Baoyu said: “… the ancients spoke of ‘a natural picture’, precisely because they feared forcing a place where there is no place for it, forcing a hill where there is no hill for it; however clever the work, it will never be right …” Before he could finish, Jia Zheng shouted: “Throw him out!” He was barely out when Jia Zheng shouted again: “Bring him back!”'] } }] },
-    { tip: '一所清凉瓦舍，一色水磨砖墙。进门迎面一块大玲珑山石，一株花木也无，只有许多异草。', tipEn: 'A cool tiled house with walls of ground brick. Inside the gate, a great perforated rock; not one flowering tree, only strange herbs.',
+    { tip: '出了稻香村，过了荼蘼架、牡丹亭、芍药圃、蔷薇院，忽闻水声潺湲。循着水声去，溪水从一个石洞里泻出来。', tipEn: 'Leaving the village, past the rose trellis, the peony pavilion, the herbaceous peonies and the rose court, you hear water babbling. Follow the sound: the stream pours out of a rocky grotto.',
+      label: '打卡 · 港洞', labelEn: 'Check in · The Grotto', place: 'huaxu',
+      npcs: spot(() => [-76.6, -104.2], '港洞', 'The grotto'),
+      pages: [{ say: [['', '', '忽闻水声潺湲，泻出石洞，上则萝薄垂引，下则落花浮荡。', 'Then came the sound of water babbling out of a rocky grotto, creepers trailing above it and fallen petals drifting below.'],
+                      ['', '', '众人都道：“好景，好景！”贾政道：“诸公题以何名？”', 'Everyone said: “A fine view, a fine view!” Jia Zheng said: “Gentlemen, what shall we call it?”'],
+                      ['', '', '众人道：“再不必拟了，恰恰乎是‘武陵源’三个字。”贾政笑道：“又落实了，而且陈旧。”众人笑道：“不然就用‘秦人旧舍’四字也罢了。”', 'They said: “No need to think — it is exactly ‘Peach Blossom Spring’.” Jia Zheng laughed: “Too literal again, and stale.” They laughed: “Then ‘Old Home of the Qin Refugees’ will do.”']], btn: ['题个名', 'Name it'] },
+              name(['这一处题什么？', 'What will you call it?'], ['蓼汀花溆', 'Smartweed Bank and Flowery Harbour'], [['武陵源', 'Peach Blossom Spring'], ['秦人旧舍', 'Old Home of the Qin Refugees']],
+                ['“秦人旧舍”说避乱之意，如何使得？莫若“蓼汀花溆”四字。', '“Old Home of the Qin Refugees” speaks of fleeing from turmoil — how could that do? Better “Smartweed Bank and Flowery Harbour”.'],
+                ['“武陵源”“秦人旧舍”是清客们拟的。宝玉说这越发过露了，题的是“蓼汀花溆”。', '“Peach Blossom Spring” and “Old Home of the Qin Refugees” were the guests’. Baoyu said they were blunter still, and chose “Smartweed Bank and Flowery Harbour”.']),
+              { say: [['', '', '贾政听了，更批胡说。要进港洞时，又想起有船无船——采莲船尚未造成，只得从山上盘道攀藤抚树过去。只见水上落花愈多，其水愈加清溜，盘旋曲折。沿堤柳垂金线，桃吐丹霞。', 'Jia Zheng only called it more nonsense. About to enter the grotto, they remembered there was no boat — the lotus boats were not yet built — so they climbed over by the hill path, pulling on creepers and trees. On the water the petals grew thicker and the stream ran clearer, winding and turning. Along the bank the willows hung golden threads and the peaches breathed rosy mist.'],
+                      ['', '', '忽见柳阴中又露出一个折带朱栏板桥来，度过桥去，诸路可通。', 'Then in the willow shade appeared a zigzag plank bridge with vermilion rails; across it, every path lay open.']], btn: ['继续', 'Continue'] },
+              { text: { title: '蓼汀花溆', titleEn: 'Smartweed Bank and Flowery Harbour', ch: '第十七回', chEn: 'Chapter 17',
+                p: ['宝玉道：“这越发过露了。‘秦人旧舍’说避乱之意，如何使得？莫若‘蓼汀花溆’四字。”贾政听了，更批胡说。', '第十八回元妃省亲，坐船从这里进港洞，见石港上“蓼汀花溆”四字，笑道：“‘花溆’二字便妥，何必‘蓼汀’？”'],
+                pEn: ['Baoyu said: “That is blunter still. ‘Old Home of the Qin Refugees’ speaks of fleeing turmoil — how could that do? Better ‘Smartweed Bank and Flowery Harbour’.” Jia Zheng only called it more nonsense.', 'In Chapter 18 the Imperial Consort’s boat entered the grotto here. Seeing “Smartweed Bank and Flowery Harbour” carved on the stone harbour, she laughed: “‘Flowery Harbour’ is enough — why ‘Smartweed Bank’?”'] } }] },
+    { tip: '过了折带朱栏板桥，便见一所清凉瓦舍，一色水磨砖墙。进门迎面一块大玲珑山石，一株花木也无，只有许多异草。', tipEn: 'Across the zigzag bridge stands a cool tiled house with walls of ground brick. Inside the gate, a great perforated rock; not one flowering tree, only strange herbs.',
       label: '打卡 · 异草院', labelEn: 'Check in · Herb Court', place: 'hengwu',
       npcs: [{ ghost: 1, anchor: 'hengwu' }],
       pages: [{ say: [['', '', '那异草或有牵藤的，或有引蔓的，或垂山巅，或穿石隙，或垂檐绕柱，或萦砌盘阶；味香气馥，非凡花之可比。此轩中煮茶操琴，亦不必再焚名香矣。', 'Of the strange herbs some trail tendrils, some climb vines, hanging from the rock’s crown, threading its crevices, hanging from the eaves, curling over the steps — their scent rich and sweet, beyond any common flower. To brew tea and play the qin here, one would need no incense.']], btn: ['题个名', 'Name it'] },
@@ -1026,7 +1040,7 @@ function storyIntro(key) {
   const wake = () => { if (introEl.hidden || introEl.classList.contains('out')) return; removeEventListener('keydown', onKey, true);
     if (walk.on) exitWalk(); walk.third = false; enterWalk(LIU.spawn); pauseGame(true);
     if (key === 'liu') { if (!banEr) { banEr = makeFigure('#7a8a5a', false); banEr.scale.setScalar(0.62 * walk.s); }
-      banEr.position.set(1.0, groundAt(1.0, 132.4, 2)[0], 132.4); banEr.rotation.y = Math.PI; scene.add(banEr); }
+      banEr.position.set(1.0, standY(1.0, 132.4), 132.4); banEr.rotation.y = Math.PI; scene.add(banEr); }
     storyWorld();
     const cv = D.renderer.domElement; cv.style.transition = 'none'; cv.style.filter = 'blur(12px) brightness(.55)';
     lidsEl.hidden = false; lidsEl.innerHTML = '<i></i><i></i>';
@@ -1164,7 +1178,7 @@ const GATES = [   // [建筑根节点 id, 局部 x, 局部 z, 中文名, 英文�
   ['aojing', 0, 1.3, '凹晶馆', 'Concave Crystal Lodge'],
   ['aojing', 0, -3.4, '凹晶馆 · 后门', 'Concave Crystal Lodge · back door'],
   ['luxue', 0, 4.4, '芦雪广', 'Reed Snow Cottage'],
-  ['daguan', 0, -13.6, '大观楼 · 顾恩思义殿', 'Grand View Tower · Main Hall'],
+  ['daguan', 0, 2.4, '大观楼 · 顾恩思义殿', 'Grand View Tower · Main Hall'],
   ['daguan', 33, -14.2, '缀锦阁', 'Variegated Brocade Pavilion'],
   ['daguan', -33, -14.2, '含芳阁', 'Fragrance-Holding Pavilion'],
   ['qiushuang', 0, 12.6, '秋爽斋 · 院门', 'Autumn Freshness Studio · gate']];

@@ -3,7 +3,7 @@ import json, os, numpy as np
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 a = np.asarray(Image.open(os.path.join(ROOT, 'tex', 'layout.png'))).astype(float)
-W = a[..., 0] / 255; H = a[..., 1] / 255 * 12
+W = a[..., 0] / 255; H = a[..., 1] / 255 * 24
 S = json.load(open(os.path.join(HERE, 'sites.json')))
 P = json.load(open(os.path.join(HERE, 'paths.json')))
 def cr(pts, step=0.8):
