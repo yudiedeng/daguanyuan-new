@@ -581,7 +581,7 @@ const BMR={ // name -> [color, roughness, tri, extra]
  '汉白玉':['#efece4',.55,{a:'marble_r.jpg',n:'marble_n.jpg',s:2.4,mode:'replace',nk:0.6},{macro:1}],'汉白玉_水渍':['#d9d6cd',.6,{a:'marble_r.jpg',n:'marble_n.jpg',s:2.4,mode:'replace',nk:0.6},{macro:1,streak:1}],
  '虎皮石':['#b39a7e',.92,{a:'r_a.jpg',n:'r_n.jpg',s:1.4,mode:'replace',nk:1.0},{macro:1}],
  '金砖地':['#76736c',.34,{a:'pave_r.jpg',n:'pave_n.jpg',s:2.2,mode:'replace',nk:0.35}],'方砖地':['#b7afa2',.85,{a:'pave_r.jpg',n:'pave_n.jpg',s:2.6,mode:'replace',nk:0.8},{macro:1}],
- '朱漆':['#7a2a21',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.4,nk:0.3}],'绿漆':['#3b6a57',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.4,nk:0.3}],'lacquer_red':['#7a2a21',.5],
+ '朱漆':['#7a2a21',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.4,nk:0.3}],'槅扇':['#4f2117',.42,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.45,nk:0.3}],'YH_灰瓦':['#606367',.78,{a:'roof_d.jpg',s:3.2,k:0.7},{snow:1,macro:1}],'绿漆':['#3b6a57',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.4,nk:0.3}],'lacquer_red':['#7a2a21',.5],
  '栗色柱':['#5a3524',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.4,nk:0.3}],'栗壳漆_柱':['#5a3524',.5,{a:'wood_d.jpg',n:'wood_n.jpg',s:1.1,k:0.4,nk:0.3}],'栗壳漆':['#5c3826',.5,{a:'wood_d.jpg',s:1.1,k:0.4}],'栗壳漆_棂':['#63402c',.55],
  '黑漆':['#1d1a18',.4],'嵌蚌':['#d6d8de',.3,null,{metal:0.2}],
  '描金':['#e0b855',.4,null,{metal:0.35}],'铜':['#6b6a52',.45,null,{metal:0.7}],'daguan_青铜':['#5a6a5a',.5,null,{metal:0.7}],
@@ -605,6 +605,8 @@ const BMR={ // name -> [color, roughness, tri, extra]
 };
 const BMW={'YZ_虎皮石':'mg','YZ_石子甬路':'g','SAMPLE_旧绿漆木':'f','XS_灰瓦色差_0':'m','XS_灰瓦色差_1':'m','XS_灰瓦色差_2':'m','XS_灰瓦色差_3':'m','XS_灰瓦色差_4':'m','XS_灰瓦色差_5':'m','XS_灰瓦色差_6':'m','MAT_廊面青砖_养护旧化_paving':'mg','MAT_台帮青砖块_养护旧化_wall':'g','MAT_青灰石_微风化_养护旧化_wall':'g','XS_旧白灰墙':'g','SAMPLE2_深绿漆':'f','MAT_暗褐旧木_顺纹':'f','XS_门窗深褐木':'f','XS_顶棚暖木':'f','灰瓦':'m','亭顶瓦':'m','花堵瓦':'m','黄琉璃瓦':'m','黄琉璃瓦.001_底瓦':'m','绿琉璃瓦':'m','绿琉璃瓦.001_底瓦':'m','茅草':'m','茅草旧':'m','茅草新':'m','方砖地':'mg','青砖':'g','水磨砖':'g','白灰墙':'g','赭墙':'g','黄泥墙':'g','虎皮石':'mg','青石':'g','汉白玉':'g','朱漆':'f','绿漆':'f','旧木':'f','本色木':'f','栗色柱':'f','栗壳漆':'f','栗壳漆_柱':'f','彩画青':'f','枋青':'f','daguan_彩画青':'f','daguan_彩画绿':'f','枋绿':'f','包袱':'f','油壁':'fg','竹篱':'f','竹竿':'f','山石':'m','太湖石':'m','湖石':'m'};
 function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];
+ if(/^彩画_/.test(k)){/* 梁枋彩画（怡红院包袱）：tex/caihua_*.jpg 按 UV 贴 */const t=new THREE.TextureLoader().load('tex/caihua_'+k.slice(3)+'.jpg');t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;
+  const m=patch(std('#ffffff',.6,{map:t}),{key:'bm_'+k});m.name=k;BM[k]=m;return m;}
  if(/^雕花_/.test(k)){/* 透雕板（怡红院室内）：tex/diao_*.png 平铺，透明处镂空 */const t=new THREE.TextureLoader().load('tex/diao_'+k.slice(3)+'.png');t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=ANISO;
   const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.45,metalness:0.15}),{alphaFix:1,key:'bm_'+k}));m.name=k;BM[k]=m;return m;}
  let r=BMR[k];
@@ -621,8 +623,8 @@ if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi=
  patch(m,o);m.name=k;if(e.hide)m.visible=false;BM[k]=m;return m;}
 /* 单座建筑的材质改色（克隆共用材质，不影响别处）。怡红院室内：“五彩销金嵌玉”——槅断木色偏紫红、描金更亮 */
 const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',metal:0.65,rough:0.3}},
- // 怡红院是全园最富丽的一处（富贵公子的住处）：朱漆更艳、描金更亮、青绿彩画更浓
- yihong:{'朱漆':{c:'#9c2418',rough:0.32},'描金':{c:'#f3c650',metal:0.75,rough:0.26},'绿漆':{c:'#16705a',rough:0.38},'彩画青':{c:'#1a4aa0',rough:0.45},'包袱':{c:'#f2e6c6'}}},BOVC={};
+ // 怡红院按 blender/yihong.blend 的色调：深朱柱、栗色槅扇、墨绿藏青彩画、旧金、暖色窗纸。克隆材质要带上 patch 的着色（木纹、旧化）
+ yihong:{'朱漆':{c:'#6c2219',rough:0.42},'槅扇':{c:'#4a1a13',rough:0.42},'描金':{c:'#d2a64c',metal:0.6,rough:0.32},'绿漆':{c:'#1d4a3e',rough:0.45},'彩画青':{c:'#1d3354',rough:0.5},'窗纸':{c:'#cdbd98'}}},BOVC={};
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
@@ -645,7 +647,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
  const one=async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   for(const {re,at,k} of d.grow||[]){const c=new V3(...at);root.traverse(m=>{if(m.isMesh&&re.test(m.name)){m.position.sub(c).multiplyScalar(k).add(c);m.scale.multiplyScalar(k);}});}
-  root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
+  root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();c.onBeforeCompile=m.material.onBeforeCompile;c.customProgramCacheKey=m.material.customProgramCacheKey;if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面|雕花)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
   root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);addProps(L,d.id,root);

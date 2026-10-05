@@ -364,8 +364,86 @@ def caozi(seed=8):
     return Image.fromarray(out, 'RGBA')
 
 
+# ---------------- 怡红院外檐：倒挂楣子、包袱彩画 ----------------
+def meizi(seed=9):
+    """倒挂楣子：上下边框，中间步步锦棂条（横竖短棂错落），1024×256，横向可平铺（一格 1.4 m × 0.35 m）。"""
+    Wd, Hd = 1024 * K, 256 * K
+    m = Image.new('L', (Wd, Hd), 0); d = ImageDraw.Draw(m)
+    t = 14 * K
+    d.rectangle((0, 0, Wd, t * 1.6), fill=255); d.rectangle((0, Hd - t * 1.3, Wd, Hd), fill=255)
+    # 步步锦：每 128 像素一组，外框 + 内套横竖短棂
+    for gx in range(0, 1024, 128):
+        x0, x1 = gx * K, (gx + 128) * K
+        d.rectangle((x0, 0, x0 + t * 0.7, Hd), fill=255)
+        y0, y1 = int(t * 1.6), int(Hd - t * 1.3)
+        cx = (x0 + x1) // 2
+        for (a, b, c, e) in ((x0 + 20 * K, y0 + 26 * K, x1 - 20 * K, y0 + 26 * K), (x0 + 20 * K, y1 - 26 * K, x1 - 20 * K, y1 - 26 * K),
+                             (x0 + 20 * K, y0 + 26 * K, x0 + 20 * K, y1 - 26 * K), (x1 - 20 * K, y0 + 26 * K, x1 - 20 * K, y1 - 26 * K),
+                             (x0 + 44 * K, (y0 + y1) // 2, x1 - 44 * K, (y0 + y1) // 2), (cx, y0, cx, y0 + 26 * K), (cx, y1 - 26 * K, cx, y1),
+                             (x0, (y0 + y1) // 2, x0 + 20 * K, (y0 + y1) // 2), (x1 - 20 * K, (y0 + y1) // 2, x1, (y0 + y1) // 2),
+                             (x0 + 44 * K, y0 + 26 * K, x0 + 44 * K, y1 - 26 * K), (x1 - 44 * K, y0 + 26 * K, x1 - 44 * K, y1 - 26 * K)):
+            d.line((a, b, c, e), fill=255, width=int(t * 0.55))
+    m = m.resize((1024, 256), Image.LANCZOS)
+    a = np.asarray(m).astype(np.float32) / 255
+    blur = np.asarray(m.filter(ImageFilter.GaussianBlur(2))).astype(np.float32) / 255
+    gy, gx = np.gradient(blur)
+    light = np.clip(0.5 - (gx + gy) * 5, 0, 1)
+    green = np.array((0.1, 0.33, 0.24))
+    col = green[None, None, :] * (0.75 + 0.5 * light[..., None])
+    edge = np.clip(a - np.asarray(m.filter(ImageFilter.MinFilter(3))).astype(np.float32) / 255, 0, 1)[..., None]
+    col = col * (1 - edge * 0.8) + GOLD * edge * 0.8                      # 棂条边沿一线描金
+    rgb = np.clip(col, 0, 1)
+    bl = np.asarray(Image.fromarray((rgb * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(4))).astype(np.float32) / 255
+    rgb = np.where(a[..., None] > 0.5, rgb, bl)
+    return Image.fromarray(np.dstack([(rgb * 255).astype(np.uint8), (a * 255).astype(np.uint8)]), 'RGBA')
+
+
+def baofu(seed=10):
+    """苏式彩画的“包袱”：半椭圆开光，外圈青、绿、白三道退晕“烟云”，里面白地上画折枝花鸟、远山。
+    1024×512，不透明；贴图满铺包袱的外接框（上沿是梁的上皮，包袱口朝下）。"""
+    Wd, Hd = 1024, 512
+    yy, xx = np.mgrid[0:Hd, 0:Wd].astype(np.float32)
+    u, v = (xx - Wd / 2) / (Wd / 2), yy / Hd                      # v 0 上沿 → 1 下沿（包袱底）
+    r = np.sqrt(u ** 2 + v ** 2)                                  # 以上沿中点为心的半椭圆
+    col = np.zeros((Hd, Wd, 3), np.float32)
+    cream = np.array((0.93, 0.9, 0.8))
+    col[:] = cream
+    # 烟云退晕：从外到内 深青、中青、浅青、白、深绿、浅绿
+    bands = [(1.0, (0.09, 0.17, 0.42)), (0.94, (0.2, 0.36, 0.66)), (0.89, (0.52, 0.66, 0.86)), (0.85, (0.95, 0.95, 0.92)),
+             (0.82, (0.08, 0.33, 0.22)), (0.77, (0.3, 0.56, 0.38)), (0.73, (0.92, 0.9, 0.82))]
+    wav = 0.025 * np.sin(np.arctan2(v, u) * 22)                   # 烟云曲线
+    for rr, c in bands:
+        col[r < rr + wav] = c
+    # 开光里：远山一抹、折枝花、一只鸟
+    r2 = np.random.RandomState(seed)
+    inside = r < 0.71
+    hill = 0.42 + 0.06 * np.sin(u * 7 + 1) + 0.03 * np.sin(u * 17)
+    m_h = inside & (v > hill) & (v < hill + 0.06 + 0.04 * np.sin(u * 5))
+    col[m_h] = col[m_h] * 0.5 + np.array((0.45, 0.58, 0.62)) * 0.5
+    im = Image.fromarray((np.clip(col, 0, 1) * 255).astype(np.uint8))
+    d = ImageDraw.Draw(im)
+    def br(pts, w, c):
+        d.line([(x, y) for x, y in pts], fill=c, width=w, joint='curve')
+    br([(300, 330), (360, 260), (440, 220), (520, 200), (600, 205)], 7, (70, 50, 40))
+    br([(440, 220), (470, 170), (500, 150)], 5, (70, 50, 40))
+    for (x, y, c) in ((500, 150, (200, 40, 50)), (600, 200, (210, 60, 70)), (360, 262, (205, 45, 55)), (545, 196, (230, 120, 130)), (470, 175, (225, 100, 110))):
+        for k in range(5):
+            a = k * 1.2566
+            d.ellipse((x + 11 * math.cos(a) - 9, y + 11 * math.sin(a) - 9, x + 11 * math.cos(a) + 9, y + 11 * math.sin(a) + 9), fill=c)
+        d.ellipse((x - 4, y - 4, x + 4, y + 4), fill=(240, 200, 80))
+    for (x, y, a) in ((400, 245, -0.4), (330, 300, 0.8), (580, 215, 0.3), (520, 180, -1.0), (455, 200, 2.0)):
+        pts = [(x + 26 * math.cos(a) * t - 8 * math.sin(a) * math.sin(math.pi * t), y + 26 * math.sin(a) * t + 8 * math.cos(a) * math.sin(math.pi * t)) for t in np.linspace(0, 1, 8)]
+        pts += [(x + 26 * math.cos(a) * t + 8 * math.sin(a) * math.sin(math.pi * t), y + 26 * math.sin(a) * t - 8 * math.cos(a) * math.sin(math.pi * t)) for t in np.linspace(1, 0, 8)]
+        d.polygon(pts, fill=(60, 120, 70))
+    # 鸟：落在枝头
+    d.ellipse((610, 175, 650, 200), fill=(60, 70, 110)); d.ellipse((640, 170, 660, 188), fill=(50, 55, 90))
+    d.polygon([(610, 186), (585, 178), (588, 192)], fill=(50, 55, 90)); d.polygon([(660, 178), (672, 181), (660, 184)], fill=(220, 170, 60))
+    d.ellipse((618, 182, 640, 196), fill=(200, 200, 210))
+    return im.filter(ImageFilter.GaussianBlur(0.6))
+
+
 PATTERNS = {'yunfu': yunfu, 'chanzhi': chanzhi, 'songmei': songzhumei, 'huiwen': huiwen, 'bingmei': bingmei,
-            'guimen': guimen, 'huaya': huaya, 'huayar': lambda: huaya(7, True), 'caozi': caozi}
+            'guimen': guimen, 'huaya': huaya, 'huayar': lambda: huaya(7, True), 'caozi': caozi, 'meizi': meizi}
 
 if __name__ == '__main__':
     out = sys.argv[-1] if len(sys.argv) > 1 else 'tex'
@@ -373,3 +451,6 @@ if __name__ == '__main__':
         p = os.path.join(out, f'diao_{k}.png')
         f().save(p, optimize=True)
         print(p, os.path.getsize(p) // 1024, 'KB')
+    p = os.path.join(out, 'caihua_baofu.jpg')                   # 不透明，存 jpg
+    baofu().convert('RGB').save(p, quality=90)
+    print(p, os.path.getsize(p) // 1024, 'KB')

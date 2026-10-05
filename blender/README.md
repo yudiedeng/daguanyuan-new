@@ -39,6 +39,14 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
   ```
   网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
 - `pack_prop.mjs`：带透明的贴图不缩放、存无损 webp（exact），否则透明处颜色被抹黑、远处叶丛发黑发红。
+- 怡红院外檐精修 `scripts/sites/yihong_refine.py`（就地改 yihong.blend：槅扇单独 M_槅扇、屋面 M_YH_灰瓦、包袱贴苏式彩画 M_彩画_baofu、柱头雀替 M_雕花_huaya/huayar、倒挂楣子 M_雕花_meizi）。
+  然后整座重导（原来线上那版是简化过的：屋面平直、没有瓦垄瓦当；现在用 .blend 原样导出，约 8 MB），再按上面的清单重开门洞、剪窗心：
+  ```bash
+  python3 blender/scripts/sites/yihong_refine.py
+  python3 blender/scripts/web/export_glb.py blender/yihong.blend /tmp/yihong.glb
+  node blender/scripts/web/pack_glb.mjs /tmp/yihong.glb models/b/yihong.wasm models/b/yihong.wasm
+  ```
+- `tools/glb_patch.mjs`：只把 .blend 里改过的对象补进线上模型（不整座重导时用）。
 - 怡红院其余道具（仙鹤、鸟笼、牡丹、描金宫灯、青花龙纹鱼缸）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
@@ -99,7 +107,7 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,
 本次实际执行的剪切（从各自原始模型出发；可重复执行）：
 
 ```bash
-node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0.93,1.62,5.0,3.2,"朱漆|窗纸|描金"],[-7.82,7.9,0.85,-5.18,8.1,5.21,"朱漆"],[-4.82,7.9,0.85,-1.98,8.1,5.21,"朱漆"],[-1.62,7.9,0.85,1.62,8.1,5.21,"朱漆"],[1.98,7.9,0.85,4.82,8.1,5.21,"朱漆"],[5.18,7.9,0.85,7.82,8.1,5.21,"朱漆"]]'
+node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0.93,1.62,5.0,3.2,"朱漆|槅扇|窗纸|描金"],[-7.82,7.9,0.85,-5.18,8.1,5.21,"朱漆|槅扇"],[-4.82,7.9,0.85,-1.98,8.1,5.21,"朱漆|槅扇"],[-1.62,7.9,0.85,1.62,8.1,5.21,"朱漆|槅扇"],[1.98,7.9,0.85,4.82,8.1,5.21,"朱漆|槅扇"],[5.18,7.9,0.85,7.82,8.1,5.21,"朱漆|槅扇"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'

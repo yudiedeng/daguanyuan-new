@@ -1,5 +1,5 @@
 // 原始 GLB -> models/b/<id>.wasm（与现有网页模型同一结构）：
-//   一材质一节点（节点名沿用参考模型里同材质节点的名字）、去 UV（雕花_* 透雕板除外）、焊接、量化、meshopt 压缩。
+//   一材质一节点（节点名沿用参考模型里同材质节点的名字）、去 UV（雕花_* 透雕板、彩画_* 除外）、焊接、量化、meshopt 压缩。
 // 用法：node pack_glb.mjs in.glb out.wasm [ref.wasm]
 //   ref.wasm：当前线上模型，用来继承节点命名；主匾（*匾_匾底，非对联）若参考模型用 M_匾心 则沿用。
 import {NodeIO} from '@gltf-transform/core';import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
@@ -15,7 +15,7 @@ let bianxin=null;
 const groups=new Map(); // material name -> {mat, prims:[], names:[]}
 for(const node of R.listNodes()){const mesh=node.getMesh();if(!mesh)continue;const W=node.getWorldMatrix();
  for(const p of mesh.listPrimitives()){
-  const keepUV=/雕花/.test(p.getMaterial()?.getName()||'');  // 透雕板要贴图，留 UV
+  const keepUV=/雕花|彩画_/.test(p.getMaterial()?.getName()||'');  // 透雕板、彩画要贴图，留 UV
   for(const s of p.listSemantics())if(s!=='POSITION'&&s!=='NORMAL'&&!(keepUV&&s==='TEXCOORD_0'))p.setAttribute(s,null);
   let mat=p.getMaterial();
   if(refHasBianxin&&/匾_匾底$/.test(node.getName())&&!/联/.test(node.getName())){bianxin??=mat.clone().setName('M_匾心');mat=bianxin;p.setMaterial(mat);}
