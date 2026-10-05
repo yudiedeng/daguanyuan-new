@@ -37,13 +37,41 @@ for sx in (-1, 1):
     with K.at(sx * 0.81, 4.75, Z0 + 0.05, 105 if sx > 0 else 75):    # 中扇：从 ±0.81 处的门轴向里开 75°
         K.door_leaf('绿漆', 0.8, 2.75, t=0.05)
 
+# ---- 前檐槛窗、横披：外壳只有外面一层窗纸，从屋里看是一片白板。里面补一层方格棂（细木条贴在纸里侧） ----
+SASH = [(-7.892, -7.333), (-7.217, -6.658), (-6.543, -5.983), (-5.867, -5.308), (-4.893, -4.258), (-4.143, -3.508), (-3.392, -2.758), (-2.642, -2.007)]
+TRAN = [(-7.93, -7.07), (-7.03, -6.17), (-6.131, -5.27), (-4.93, -3.97), (-3.929, -2.97), (-2.93, -1.97)]
+PY = 4.545        # 窗纸在 y≈4.53，棂条贴在里侧
+
+
+def grille(x0, x1, z0, z1, cell=0.1, bar=0.012, edge=0.03):
+    K.box(WOOD, x0, PY, z0, x1, PY + 0.03, z0 + edge)          # 仔边
+    K.box(WOOD, x0, PY, z1 - edge, x1, PY + 0.03, z1)
+    K.box(WOOD, x0, PY, z0, x0 + edge, PY + 0.03, z1)
+    K.box(WOOD, x1 - edge, PY, z0, x1, PY + 0.03, z1)
+    nx = max(2, round((x1 - x0) / cell)); nz = max(2, round((z1 - z0) / cell))
+    for i in range(1, nx):
+        x = x0 + (x1 - x0) * i / nx
+        K.box(WOOD, x - bar / 2, PY, z0, x + bar / 2, PY + 0.018, z1)
+    for k in range(1, nz):
+        z = z0 + (z1 - z0) * k / nz
+        K.box(WOOD, x0, PY, z - bar / 2, x1, PY + 0.018, z + bar / 2)
+
+
+for sx in (-1, 1):
+    for a, b in SASH:
+        grille(min(sx * a, sx * b), max(sx * a, sx * b), 2.014, 3.077)
+    for a, b in TRAN:
+        grille(min(sx * a, sx * b), max(sx * a, sx * b), 3.252, 3.55, cell=0.098)
+for a, b in [(-1.63, -0.57), (-0.53, 0.53), (0.57, 1.63)]:      # 门上横披
+    grille(a, b, 3.252, 3.55, cell=0.098)
+
 # ---- 家具：Tripo 精细模型，摆在网页 index.html 的 PROPS.hengwu_in（tools/props.json 的 hw_*）。这里只留碰撞 ----
 # 明间：条案一张、官帽椅两把（“一色玩器全无”）
 K.col(-1.1, 9.7, Z0, 1.1, 10.2, Z0 + 0.86)
 for sx in (-1, 1): K.col(sx * 0.7 - 0.3, 8.8, Z0, sx * 0.7 + 0.3, 9.4, Z0 + 1.0)
 # ---- 东间：卧室兼书案。碧纱（素纸）槅扇相隔 ----
 with K.at(1.8, (Y0 + Y1) / 2, Z0, -90):
-    K.lattice_partition(WOOD, Y1 - Y0, ZC - Z0 - 0.12, paper='窗纸', door=(1.0, 2.2))   # 门在 y 5.1…6.3
+    K.lattice_partition(WOOD, Y1 - Y0, ZC - Z0 - 0.12, paper='窗纸', door=(1.0, 2.2), step=0.085, bar=0.011)   # 门在 y 5.1…6.3；细棂密格
 K.col(6.2, 7.35, Z0, 7.7, 9.45, Z0 + 2.3)            # 床（青纱帐幔）
 with K.at(5.95, 8.4, Z0, -90):
     K.box(WOOD, -0.8, -0.18, 0, 0.8, 0.18, 0.13, col=True)        # 脚踏
@@ -54,7 +82,68 @@ K.candle_stand(2.4, 9.8, Z0)
 # ---- 西间：空空一张素榻 ----
 K.col(-6.5, 9.4, Z0, -4.5, 10.2, Z0 + 0.6)
 with K.at(-1.8, (Y0 + Y1) / 2, Z0, 90):
-    K.luodizhao(WOOD, Y1 - Y0, ZC - Z0 - 0.02, shape='arch', t=0.06, carve=False)
+    for sx in (-1, 1):       # 落地罩两腿下的木墩（须弥墩），不让格棂直接戳地
+        K.box(WOOD, sx * (Y1 - Y0) / 2 - (0.62 if sx > 0 else 0), -0.05, 0, sx * (Y1 - Y0) / 2 + (0 if sx > 0 else 0.62), 0.05, 0.32)
+        K.box(WOOD, sx * (Y1 - Y0) / 2 - (0.64 if sx > 0 else 0), -0.055, 0.32, sx * (Y1 - Y0) / 2 + (0 if sx > 0 else 0.64), 0.055, 0.36)
+    K.luodizhao(WOOD, Y1 - Y0, ZC - Z0 - 0.02, shape='arch', t=0.06, carve=False, step=0.09, bw=0.012, kazi=False, ring=0.06)   # 素作：细方格棂，不嵌卡子花、不描金
+
+# ---- 外廊细部（外壳 hengwu.blend 只有光柱子、方墩柱础）：倒挂楣子 + 花牙子、鼓镜柱础 ----
+# 檐柱：前后檐 y=3.1 / 11.9，x ±9.5 ±8.1 ±5.1 ±1.8；两山 x=±9.5，y 3.1 4.5 7.5 10.5 11.9。额枋底 z=3.69，柱径 0.3
+CR = 0.15
+ZT = 3.69
+MZ = 0.4          # 楣子高
+
+
+def meizi(L):
+    """倒挂楣子（灯笼框）：局部 x ∈ [-L/2, L/2]，挂在额枋下 z ∈ [ZT-MZ, ZT]，面在 y=0。两端各一只透雕花牙子。"""
+    zb, f, t, d, b = ZT - MZ, 0.045, 0.05, 0.1, 0.028
+    x0, x1 = -L / 2, L / 2
+    K.box('绿漆', x0, -t / 2, ZT - f, x1, t / 2, ZT)
+    K.box('绿漆', x0, -t / 2, zb, x1, t / 2, zb + f)
+    for xa, xb in ((x0, x0 + f), (x1 - f, x1)):
+        K.box('绿漆', xa, -t / 2, zb, xb, t / 2, ZT)
+    ix0, ix1, iz0, iz1 = x0 + d, x1 - d, zb + d, ZT - d          # 里圈“灯笼框”
+    for xa, xb in ((ix0, ix0 + b), (ix1 - b, ix1)):
+        K.box('绿漆', xa, -0.018, iz0, xb, 0.018, iz1)
+    for za, zb_ in ((iz0, iz0 + b), (iz1 - b, iz1)):
+        K.box('绿漆', ix0, -0.018, za, ix1, 0.018, zb_)
+    n = max(2, round((ix1 - ix0) / 0.42))                         # 外框—里圈之间的短“卡子”
+    for i in range(n + 1):
+        x = ix0 + (ix1 - ix0) * (i + 0.5) / (n + 1)
+        K.box('绿漆', x - b / 2, -0.018, zb + f, x + b / 2, 0.018, iz0)
+        K.box('绿漆', x - b / 2, -0.018, iz1, x + b / 2, 0.018, ZT - f)
+    for xa in (x0 + f, ix1):
+        K.box('绿漆', xa, -0.018, (iz0 + iz1) / 2 - b / 2, xa + d - f, 0.018, (iz0 + iz1) / 2 + b / 2)
+    m = max(2, round((ix1 - ix0) / 0.16))                         # 里圈竖棂
+    for i in range(1, m):
+        x = ix0 + (ix1 - ix0) * i / m
+        K.box('绿漆', x - 0.009, -0.012, iz0, x + 0.009, 0.012, iz1)
+    for sx in (-1, 1):                                            # 花牙子：三角透雕，中间一个圆孔
+        e, a = sx * L / 2, 0.34
+        out = [(e, zb)] + [(e - sx * a * math.cos(math.pi / 2 * k / 8), zb - a * math.sin(math.pi / 2 * k / 8)) for k in range(9)]
+        cx, cz = e - sx * a * 0.3, zb - a * 0.3
+        hole = [(cx + 0.055 * math.cos(2 * math.pi * k / 12), cz + 0.055 * math.sin(2 * math.pi * k / 12)) for k in range(12)]
+        K.poly_panel('枋绿', out, [hole], 0.035)
+
+
+XS = (-9.5, -8.1, -5.1, -1.8, 1.8, 5.1, 8.1, 9.5)
+YS = (3.1, 4.5, 7.5, 10.5, 11.9)
+for yr in (3.1, 11.9):
+    for a, b in zip(XS, XS[1:]):
+        if yr < 5 and a == -1.8:
+            continue                       # 前檐明间：外壳已有雀替，留空做门口
+        with K.at((a + b) / 2, yr, 0, 0):
+            meizi(b - a - 2 * CR)
+for xr in (-9.5, 9.5):
+    for a, b in zip(YS, YS[1:]):
+        with K.at(xr, (a + b) / 2, 0, 90):
+            meizi(b - a - 2 * CR)
+# 鼓镜柱础：外壳只有两层方墩（0.75…0.93），柱脚再加一圈微鼓的“鼓镜”
+for x in XS:
+    for y in YS:
+        if abs(x) < 9 and 4 < y < 11:
+            continue
+        K.lathe('青石', x, y, 0.87, [(0.205, 0.0), (0.222, 0.035), (0.215, 0.07), (0.17, 0.095), (0.158, 0.1)], seg=20)
 
 # ---- 外壳碰撞 ----
 W = [

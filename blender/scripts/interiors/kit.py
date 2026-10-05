@@ -717,7 +717,7 @@ class Kit:
         if col:
             self.col(-w / 2, -0.12, 0, w / 2, 0.12, z0 + h)
 
-    def door_leaf(self, m, w, h, paper='窗纸', t=0.06, gz=0.0):
+    def door_leaf(self, m, w, h, paper='窗纸', t=0.06, gz=0.0, cell=0.12, bar=0.016):
         """隔扇门一扇：门轴在局部 x=0，向 +x 伸出；格心（方格棂）+ 绦环板 + 裙板。"""
         f = 0.06
         self.box(m, 0, -t / 2, gz, f, t / 2, gz + h)
@@ -726,19 +726,20 @@ class Kit:
             self.box(m, 0, -t / 2, gz + z, w, t / 2, gz + z + f)
         self.box(m, f, -t / 4, gz + f, w - f, t / 4, gz + h * 0.18)            # 裙板
         self.box(m, f, -t / 4, gz + h * 0.18 + f, w - f, t / 4, gz + h * 0.3)   # 绦环板
+        self.box(m, f, -t / 4, gz + h * 0.3 + f, w - f, t / 4, gz + h * 0.36)   # 格心下的绦环板（原来空着一道缝，能看穿）
         # 格心：方格棂 + 窗纸
         z0, z1 = gz + h * 0.36 + f, gz + h - f
         self.box(paper, f, -0.004, z0, w - f, 0.004, z1)
-        nx = max(2, int((w - 2 * f) / 0.12))
-        nz = max(3, int((z1 - z0) / 0.12))
+        nx = max(2, int((w - 2 * f) / cell))
+        nz = max(3, int((z1 - z0) / cell))
         for i in range(1, nx):
             x = f + (w - 2 * f) * i / nx
-            self.box(m, x - 0.008, -0.02, z0, x + 0.008, 0.02, z1)
+            self.box(m, x - bar / 2, -0.02, z0, x + bar / 2, 0.02, z1)
         for k in range(1, nz):
             z = z0 + (z1 - z0) * k / nz
-            self.box(m, f, -0.02, z - 0.008, w - f, 0.02, z + 0.008)
+            self.box(m, f, -0.02, z - bar / 2, w - f, 0.02, z + bar / 2)
 
-    def lattice_partition(self, m, w, h, y=0.0, t=0.06, paper='碧纱', door=None, step=0.12):
+    def lattice_partition(self, m, w, h, y=0.0, t=0.06, paper='碧纱', door=None, step=0.12, bar=0.016):
         """碧纱橱：整面槅扇（格心糊纱），door=(x0,x1) 处留门。正面朝 -Y，局部 x 从 -w/2 到 w/2。"""
         x = -w / 2
         n = max(2, round(w / 0.75))
@@ -748,7 +749,7 @@ class Kit:
             if door and a >= door[0] - 1e-3 and b <= door[1] + 1e-3:
                 continue
             with self.at(a, y, 0):
-                self.door_leaf(m, pw, h, paper=paper, t=t)
+                self.door_leaf(m, pw, h, paper=paper, t=t, cell=step, bar=bar)
         self.box(m, -w / 2, y - t / 2 - 0.01, h, w / 2, y + t / 2 + 0.01, h + 0.12)  # 上槛
         if door:
             self.col(-w / 2, y - 0.1, 0, door[0], y + 0.1, h)
@@ -756,7 +757,7 @@ class Kit:
         else:
             self.col(-w / 2, y - 0.1, 0, w / 2, y + 0.1, h)
 
-    def luodizhao(self, m, w, h, shape='round', t=0.08, gauze=None, carve=True, fill=None):
+    def luodizhao(self, m, w, h, shape='round', t=0.08, gauze=None, carve=True, fill=None, step=0.13, bw=0.022, kazi=True, ring=0.08):
         """落地罩 / 圆光罩：XZ 面上的透雕框，中开圆、八方或葵花门。局部 x ∈ [-w/2,w/2]，z ∈ [0,h]，面在 y=0。"""
         n = 40
         cx, cz = 0.0, h * 0.5
@@ -774,7 +775,7 @@ class Kit:
                 a = math.pi * i / n
                 hole.append((hw * math.cos(a), h * 0.62 + (h * 0.24) * math.sin(a)))
             hole.append((-hw, h * 0.62))
-        self.fret_panel(m, w, h, hole, t, gold=carve, fill=fill)
+        self.fret_panel(m, w, h, hole, t, step=step, ring=ring, gold=carve, fill=fill, bw=bw, kazi=kazi)
         # 碰撞：两侧实体
         xs = sorted(p[0] for p in hole)
         self.col(-w / 2, -t, 0, xs[0], t, h)
@@ -792,7 +793,7 @@ class Kit:
                 self.box('描金', -w / 2 + frame, y - 0.002, frame, w / 2 - frame, y + 0.002, frame + 0.012)
         self.box(fill, -w / 2 + frame, -0.006, frame, w / 2 - frame, 0.006, h - frame)
 
-    def fret_panel(self, m, w, h, hole, t, step=0.13, frame=0.07, ring=0.08, gold=True, fill=None):
+    def fret_panel(self, m, w, h, hole, t, step=0.13, frame=0.07, ring=0.08, gold=True, fill=None, bw=0.022, kazi=True):
         """雕空玲珑的罩面：外框 + 门洞周圈实心边 + 其余空透的方格/拐子棂。门洞须为凸形。"""
         n = len(hole)
         cx = sum(p[0] for p in hole) / n
@@ -850,7 +851,6 @@ class Kit:
                         self.box(fill, a, -0.006, z, b, 0.006, z1)
                 z = z1
             return
-        bw = 0.022
         z = step
         k = 0
         while z < h - frame:
@@ -866,7 +866,7 @@ class Kit:
                     self.box(m, x - bw / 2, -t * 0.3, a, x + bw / 2, t * 0.3, b)
             x += step
         # 每隔一格嵌一个小方“卡子花”
-        z = step * 1.5
+        z = step * 1.5 if kazi else h
         i = 0
         while z < h - frame:
             x = -w / 2 + frame + step
