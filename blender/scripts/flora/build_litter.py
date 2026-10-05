@@ -134,3 +134,65 @@ sc.render.filepath = os.path.join(OUT, 'zhu_litter.jpg')
 bpy.ops.render.render(write_still=True)
 print('litter', sc.render.filepath)
 # cp /tmp/zhu/zhu_litter.jpg tex/zhu_litter.jpg
+
+
+# ================= 二、立体落叶片（网页里随竹丛铺开，盖在上面的贴图地面之上） =================
+# 一片 2 m × 2 m：约 500 片卷曲的竹叶（每片 4 个三角，纵向 V 形卷、整片弯）、两段露出土面的竹鞭（有节、一端钻回土里）、几十粒小石子。
+# 颜色取自一张 8 列调色板（每列从叶柄到叶尖由浅到深），所以只用一个材质、一张小图。导出 models/t/zhu_litter.glb。
+import numpy as np
+bpy.ops.wm.read_factory_settings(use_empty=True)
+sc = bpy.context.scene
+PAL = [(0.55, 0.45, 0.24), (0.47, 0.36, 0.19), (0.36, 0.26, 0.14), (0.24, 0.16, 0.09), (0.6, 0.53, 0.3), (0.42, 0.44, 0.2), (0.38, 0.27, 0.15), (0.3, 0.3, 0.28)]
+img = bpy.data.images.new('pal', 8, 16)
+px = np.zeros((16, 8, 4)); px[..., 3] = 1
+for i, c in enumerate(PAL):
+    for j in range(16):
+        px[j, i, :3] = np.array(c) * (1.0 - 0.25 * j / 15)
+img.pixels = px.ravel().tolist()
+pal_path = os.path.join(OUT, 'zhu_litter_pal.png'); img.filepath_raw = pal_path; img.file_format = 'PNG'; img.save()
+m = bpy.data.materials.new('zhu_litter'); m.use_nodes = True
+im = m.node_tree.nodes.new('ShaderNodeTexImage'); im.image = img; im.interpolation = 'Closest'
+m.node_tree.links.new(im.outputs['Color'], m.node_tree.nodes['Principled BSDF'].inputs['Base Color'])
+bm = bmesh.new(); uv = bm.loops.layers.uv.new('UVMap')
+r2 = random.Random(77)
+def face(vs, uvs):
+    f = bm.faces.new([bm.verts.new(v) for v in vs])
+    for loop, t in zip(f.loops, uvs):
+        loop[uv].uv = t
+wts = [5, 5, 4, 3, 2, 1.2, 3, 0]
+for k in range(520):
+    x, y = r2.uniform(-1, 1), r2.uniform(-1, 1)
+    L, W = r2.uniform(0.08, 0.17), r2.uniform(0.016, 0.028)
+    a = r2.uniform(0, 2 * math.pi); d = Vector((math.cos(a), math.sin(a), 0)); s = Vector((-math.sin(a), math.cos(a), 0))
+    ci = r2.choices(range(8), weights=wts)[0]; u = (ci + 0.5) / 8
+    curl, bend, z0 = r2.uniform(0.3, 1.0), r2.uniform(-0.1, 0.3), 0.004 + k * 0.00004
+    base = Vector((x, y, z0)) - d * (L / 2)
+    P = lambda f, side: base + d * (L * f) + s * (side * W * 0.5 * (0.0 if f in (0.0, 1.0) else 1.0)) + Vector((0, 0, curl * W * 0.5 * abs(side) + bend * L * math.sin(math.pi * f) * 0.25))
+    for side in (-1, 1):
+        face([P(0, 0), P(0.4, side), P(0.4, 0)], [(u, 0.02), (u, 0.4), (u, 0.4)])
+        face([P(0.4, 0), P(0.4, side), P(1.0, 0)], [(u, 0.4), (u, 0.4), (u, 0.98)])
+# 竹鞭
+for k in range(2):
+    x, y, a = r2.uniform(-0.6, 0.6), r2.uniform(-0.6, 0.6), r2.uniform(0, 2 * math.pi)
+    d = Vector((math.cos(a), math.sin(a), 0)); Lr = r2.uniform(0.8, 1.3)
+    pts = [Vector((x, y, 0)) + d * (Lr * (t - 0.5)) + Vector((0, 0, 0.035 * math.sin(math.pi * t) - 0.01)) for t in [i / 10 for i in range(11)]]
+    rings = []
+    for i, p in enumerate(pts):
+        rr = 0.012 * (1.25 if i % 2 == 0 else 1.0)
+        rings.append([p + (Vector((0, 0, 1)) * math.cos(2 * math.pi * j / 6) + d.cross(Vector((0, 0, 1))) * math.sin(2 * math.pi * j / 6)) * rr for j in range(6)])
+    for i in range(10):
+        for j in range(6):
+            face([rings[i][j], rings[i][(j + 1) % 6], rings[i + 1][(j + 1) % 6], rings[i + 1][j]], [((6.5) / 8, 0.3 + 0.4 * (i % 2))] * 4)
+# 小石子
+for k in range(40):
+    x, y, r = r2.uniform(-1, 1), r2.uniform(-1, 1), r2.uniform(0.006, 0.018)
+    g = bmesh.ops.create_icosphere(bm, subdivisions=1, radius=r)
+    bmesh.ops.scale(bm, vec=(1, r2.uniform(0.6, 1), 0.5), verts=g['verts']); bmesh.ops.translate(bm, verts=g['verts'], vec=(x, y, r * 0.15))
+    for f in {f for v in g['verts'] for f in v.link_faces}:
+        for loop in f.loops:
+            loop[uv].uv = (7.5 / 8, r2.uniform(0.1, 0.9))
+me = bpy.data.meshes.new('zhu_litter'); bm.to_mesh(me); bm.free(); me.materials.append(m)
+o = bpy.data.objects.new('zhu_litter', me); sc.collection.objects.link(o)
+print('litter patch tris', sum(len(p.vertices) - 2 for p in me.polygons))
+bpy.ops.export_scene.gltf(filepath=os.path.join(OUT, 'zhu_litter.glb'), export_format='GLB', export_yup=True, export_texcoords=True, export_materials='EXPORT')
+# node blender/scripts/web/pack_prop.mjs /tmp/zhu/zhu_litter.glb models/t/zhu_litter.wasm 99999 16   （注意 pack_prop 会把高度归一成 1，网页按 2 m 宽还原）
