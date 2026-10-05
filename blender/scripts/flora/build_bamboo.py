@@ -4,8 +4,8 @@
 一、叶簇贴图：先在 Blender 里真把两枝竹叶簇建出来（一根下垂的小枝，两侧互生、梢头成扇，每簇约 35 片细长披针形叶，
     叶长 12–19 cm、宽 2.2–3.2 cm，深浅黄绿不一），用 Cycles 正交俯拍成透明底贴图（左右两半各一簇）。
 二、竹株（约 10 m 高，网页按需要的高度缩放）：
-    竹竿：上细下粗、顶上略弯，节间下短上长，每节一道竹节环；
-    枝：只生在上半段的节上，左右交替，先斜上再下垂；
+    竹竿：上细下粗、顶上略弯，节间下短上长，每节一道竹节环；贴竹竿贴图（节环、节下白粉、竖纹），v 按节计；
+    枝：生在约三成高以上的节上，左右交替，先斜上再下垂；
     叶：每根枝上挂三四簇“叶簇片”（两片十字交叉的四边形，贴上面的叶簇贴图），竿梢再一簇。
 材质：zhu_culm（竿、枝）、zhu_leaf（叶簇片，网页里贴 tex/zhu_spray.png、alphaTest）。坐标：Blender Z 向上。
 """
@@ -132,6 +132,52 @@ def spray_texture(path):
     print('spray', path)
 
 
+# ---------------- 竹竿贴图 ----------------
+def culm_texture(path):
+    """一节竹竿的贴图（v=0 是竹节，往上到下一节）：节处一道深色节环、节下一圈白粉、竖向细纤维纹、零星斑，越往上略黄。"""
+    import numpy as np
+    W, Hh = 128, 512
+    r = np.random.default_rng(7)
+    u = np.linspace(0, 1, W, endpoint=False)[None, :]
+    v = np.linspace(0, 1, Hh)[:, None]
+    base = np.array([0.30, 0.43, 0.17])
+    fib = (np.sin(u * 2 * np.pi * 9 + r.uniform(0, 6)) * 0.5 + np.sin(u * 2 * np.pi * 23 + 1.3) * 0.3)
+    fib = fib + r.normal(0, 0.35, (1, W))
+    col = base[None, None, :] * (1 + 0.06 * fib[..., None])
+    col = col * (1 + 0.1 * v[..., None]) + np.array([0.03, 0.02, -0.01]) * v[..., None]    # 越往上略黄
+    blot = r.random((Hh // 64 + 1, W)).repeat(64, 0)[:Hh]                                   # 竖向的浅斑
+    blot = np.convolve(blot.mean(0), np.ones(5) / 5, 'same')[None, :] * 0.5 + blot * 0.5
+    col *= (1 - 0.07 * np.clip((blot - 0.6) * 3, 0, 1))[..., None]
+    wax = np.exp(-((v - 0.07) / 0.05) ** 2)                                                # 节下白粉
+    col = col * (1 - 0.45 * wax[..., None]) + np.array([0.62, 0.66, 0.58]) * 0.45 * wax[..., None]
+    ring = np.exp(-((v - 0.012) / 0.008) ** 2) + np.exp(-((v - 0.995) / 0.006) ** 2)       # 节环
+    col = col * (1 - 0.6 * np.clip(ring, 0, 1)[..., None]) + np.array([0.15, 0.17, 0.08]) * 0.6 * np.clip(ring, 0, 1)[..., None]
+    img = bpy.data.images.new('culm', W, Hh)
+    px = np.concatenate([np.clip(col, 0, 1), np.ones((Hh, W, 1))], axis=2)
+    img.pixels = px.ravel().tolist()
+    img.filepath_raw = path; img.file_format = 'PNG'; img.save()
+    print('culm', path)
+
+
+def culm_tube(bm, uv, axis, nodes, rad, sides=6):
+    """竹竿：每节一段，UV 的 v 按节计（第 i 节 i…i+1），u 绕一圈。"""
+    rings = []
+    for i in range(len(nodes) - 1):
+        z0, z1 = nodes[i], nodes[i + 1]
+        for zz, k in ((z0, 1.0), (z0 + 0.02, 1.1), ((z0 + z1) / 2, 0.98)):
+            rings.append((axis(zz), rad(zz) * k, i + (zz - z0) / (z1 - z0)))
+    rings.append((axis(nodes[-1]), 0.004, len(nodes) - 1))
+    vs = []
+    for p, r, v in rings:
+        ring = [bm.verts.new(p + Vector((math.cos(2 * math.pi * k / sides), math.sin(2 * math.pi * k / sides), 0)) * r) for k in range(sides)]
+        vs.append((ring, v))
+    for (ra, va), (rb, vb) in zip(vs, vs[1:]):
+        for k in range(sides):
+            f = bm.faces.new((ra[k], ra[(k + 1) % sides], rb[(k + 1) % sides], rb[k]))
+            for loop, (uu, vv) in zip(f.loops, ((k, va), (k + 1, va), (k + 1, vb), (k, vb))):
+                loop[uv].uv = (uu / sides, vv)
+
+
 # ---------------- 二、竹株 ----------------
 def spray_card(bm, uv, base, d, droop, size, half):
     """叶簇片：两片十字交叉的四边形，从 base 沿 d 伸出、向下垂 droop；UV 取贴图左/右半。"""
@@ -154,6 +200,7 @@ def spray_card(bm, uv, base, d, droop, size, half):
 def bamboo(seed, H):
     rnd = random.Random(seed)
     culm = bmesh.new()
+    cuv = culm.loops.layers.uv.new('UVMap')
     lv = bmesh.new()
     uv = lv.loops.layers.uv.new('UVMap')
     nodes = [0.0]
@@ -167,26 +214,26 @@ def bamboo(seed, H):
         return Vector((0, 0, z)) + lean * (0.35 * (z / H) ** 2.2 * H / 10)
     def rad(z):
         return 0.026 * (1 - 0.7 * z / H) + 0.005
-    pts, radii = [], []
-    for z0 in nodes[:-1]:
-        for zz, rr in ((z0, 1.0), (z0 + 0.02, 1.1)):
-            pts.append(axis(zz)); radii.append(rad(zz) * rr)
-    pts.append(axis(H)); radii.append(0.004)
-    tube(culm, pts, radii, 5)
+    culm_tube(culm, cuv, axis, nodes, rad)
     side = rnd.uniform(0, 2 * math.pi)
     for z0 in nodes[1:-1]:
         f = z0 / H
-        if f < 0.4:
+        if f < 0.28:
             continue
         side += math.pi + rnd.uniform(-0.5, 0.5)
-        for b in range(2 if f < 0.92 else 1):
+        for b in range(2 if f < 0.95 else 1):
             az = side + rnd.uniform(-0.45, 0.45) + b * rnd.uniform(0.5, 0.9)
             out = Vector((math.cos(az), math.sin(az), 0))
-            Lb = (0.35 + 1.0 * math.sin(math.pi * min(1.0, (f - 0.4) / 0.6 * 0.85 + 0.15))) * rnd.uniform(0.75, 1.15) * H / 10
+            Lb = (0.35 + 1.0 * math.sin(math.pi * min(1.0, (f - 0.28) / 0.72 * 0.85 + 0.15))) * rnd.uniform(0.75, 1.15) * H / 10
             up = rnd.uniform(0.55, 0.95)
             bp = [axis(z0) + out * (Lb * t) + Vector((0, 0, Lb * (up * t - 0.55 * t * t))) for t in (0, 1 / 3, 2 / 3, 1)]
+            n0 = len(culm.faces)
             tube(culm, bp, [0.006, 0.0045, 0.003, 0.002], 3)
-            for k, t in enumerate((0.35, 0.65, 1.0) if Lb > 0.6 else (0.55, 1.0)):
+            culm.faces.ensure_lookup_table()
+            for fi in range(n0, len(culm.faces)):
+                for loop in culm.faces[fi].loops:
+                    loop[cuv].uv = (0.5, 0.5)            # 枝：取贴图节间中部的绿
+            for k, t in enumerate((0.25, 0.5, 0.75, 1.0) if Lb > 0.6 else (0.5, 1.0)):
                 p = bp[0] + (bp[-1] - bp[0]) * t
                 a2 = az + rnd.uniform(-0.9, 0.9)
                 d = Vector((math.cos(a2), math.sin(a2), 0))
@@ -198,9 +245,9 @@ def bamboo(seed, H):
     return culm, lv
 
 
-def leaf_mat(png):
-    """叶簇片材质：贴上叶簇贴图（不贴的话导出后 UV 会被打包时当成无用属性删掉）。"""
-    m = bpy.data.materials.new('zhu_leaf')
+def leaf_mat(png, name='zhu_leaf'):
+    """贴图材质（不贴的话导出后 UV 会被打包时当成无用属性删掉）。"""
+    m = bpy.data.materials.new(name)
     m.use_nodes = True
     nt = m.node_tree
     bs = nt.nodes['Principled BSDF']
@@ -221,10 +268,11 @@ def obj(name, bm, m):
 
 
 spray_texture(os.path.join(OUT, 'zhu_spray.png'))
+culm_texture(os.path.join(OUT, 'zhu_culm.png'))
 for n, (seed, H) in enumerate(((11, 10.0), (23, 10.6), (37, 9.4)), 1):
     clear()
     c, l = bamboo(seed, H)
-    obj('zhu_culm', c, mat('zhu_culm', (0.3, 0.42, 0.16)))
+    obj('zhu_culm', c, leaf_mat(os.path.join(OUT, 'zhu_culm.png'), 'zhu_culm'))
     obj('zhu_leaf', l, leaf_mat(os.path.join(OUT, 'zhu_spray.png')))
     tris = sum(len(p.vertices) - 2 for o in bpy.data.objects for p in o.data.polygons)
     path = os.path.join(OUT, 'zhu_%d.glb' % n)
@@ -233,4 +281,4 @@ for n, (seed, H) in enumerate(((11, 10.0), (23, 10.6), (37, 9.4)), 1):
 
 # 打包到网页（保留 UV、不减面；pack_prop 会把高度归一成 1 m，网页里按竹高缩放）：
 #   node blender/scripts/web/pack_prop.mjs /tmp/zhu/zhu_1.glb models/t/zhu_1.wasm 99999   （2、3 同）
-#   cp /tmp/zhu/zhu_spray.png tex/zhu_spray.png
+#   cp /tmp/zhu/zhu_spray.png /tmp/zhu/zhu_culm.png tex/

@@ -31,22 +31,25 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 ```
 
 - `scripts/cuizhang/build_cuizhang.py`：从零生成翠嶂，同时写 `models/b/col.json` 的 `cuizhang` 碰撞框与 `cuizhang_trees`。
-- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao、月季花坛 yh_rosebed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
+- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
   ```bash
   python3 blender/scripts/sites/yihong_garden.py /tmp/yh          # YH_ONLY=haitang,bitao 只重建其中几种
   node blender/scripts/web/pack_prop.mjs /tmp/yh/yh_haitang.glb models/p/yh_haitang.glb 85000 1024   # 其余 200000 1024（不减面）
   node blender/scripts/web/alpha_mask.mjs models/p/yh_*.glb       # 花叶、芭蕉叶改 alphaMode MASK
   ```
   网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
-- 怡红院其余道具（仙鹤、鸟笼、竹篱花障月洞门、牡丹）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
+- `pack_prop.mjs`：带透明的贴图不缩放、存无损 webp（exact），否则透明处颜色被抹黑、远处叶丛发黑发红。
+- 怡红院其余道具（仙鹤、鸟笼、竹篱花障月洞门、牡丹、描金宫灯、青花龙纹鱼缸）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
 
 ## 大观楼改样（blender/scripts/sites/）
 
-正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层、整座放大（顶脊约 35 m），全组最高；
+正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层逐层收分、金宝顶（顶脊约 33 m），全组最高；缀锦阁、含芳阁加成三层；
 复道接大观楼首层两山；前面两层白石台基、汉白玉甬路与栏杆、两方水池；屋面全改灰瓦。玉石牌坊、石狮、石灯座是 Tripo 件
-（`models/p/paifang.glb`、`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+（`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+牌坊 `models/p/paifang.glb` 由 `paifang_build.py` 搭白石骨架、挂 Tripo 精雕件（盘龙柱 pf_zhu、镂空螭纹花板 pf_hua、双龙戏珠板 pf_ding）：
+`python3 blender/scripts/sites/paifang_build.py <tripo 原始 glb 目录> /tmp/paifang.glb && node blender/scripts/web/pack_prop.mjs /tmp/paifang.glb models/p/paifang.glb 150000 1024`
 
 ```bash
 python3 blender/scripts/sites/daguan_rebuild.py                      # 只能跑一次（在 daguan_doors.py 之后）
@@ -83,7 +86,7 @@ python3 blender/scripts/interiors/build_yihong.py      # 生成陈设 → 存 .b
 node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,y1,z1,"材质正则"],…]'
 ```
 
-- 怡红院透雕：`diao_textures.py` 画 `tex/diao_*.png`（流云百蝠嵌玉、缠枝花卉五彩、岁寒三友、回纹、冰梅，512² 可平铺、透明即镂空）。`kit.py` 里 `carved_panel()` 和 `luodizhao(..., fill='雕花_*')` 用这些材质，`雕花_*` 网格按面朝向自动展 UV（0.5 m 一格），`pack_glb.mjs` 只为 `雕花_*` 保留 UV，网页 `bmat` 按材质名贴图、alphaTest 裁空。
+- 怡红院透雕：`diao_textures.py` 画 `tex/diao_*.png`（流云百蝠嵌玉、缠枝花卉五彩、岁寒三友、回纹、冰梅，512² 可平铺、透明即镂空；另有多宝格柜门 guimen、角花 huaya/huayar、满墙槽子板 caozi）。`duobaoge(carve=True)` 贴金边、角花、团寿柜门；`niche_wall()` 立满墙槽子板并在槽里摆琴、剑、悬瓶、桌屏等。`kit.py` 里 `carved_panel()` 和 `luodizhao(..., fill='雕花_*')` 用这些材质，`雕花_*` 网格按面朝向自动展 UV（0.5 m 一格），`pack_glb.mjs` 只为 `雕花_*` 保留 UV，网页 `bmat` 按材质名贴图、alphaTest 裁空。
   ```bash
   python3 blender/scripts/interiors/diao_textures.py tex
   python3 blender/scripts/interiors/build_yihong.py

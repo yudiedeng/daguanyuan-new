@@ -24,7 +24,7 @@ PAL = {
     '叶深': (0.13, 0.26, 0.08), '叶': (0.2, 0.36, 0.11), '叶浅': (0.32, 0.47, 0.16), '茎': (0.2, 0.25, 0.1),
     '月季粉': (0.93, 0.45, 0.55), '月季红': (0.68, 0.06, 0.13), '月季黄': (0.98, 0.84, 0.5), '月季白': (0.96, 0.93, 0.88),
     '石竹': (0.86, 0.22, 0.45), '小白花': (0.95, 0.95, 0.9), '萱草': (0.95, 0.5, 0.1), '花心': (0.95, 0.75, 0.2),
-    '土': (0.2, 0.14, 0.09), '卵石': (0.26, 0.25, 0.23), '卵石深': (0.18, 0.175, 0.165), '苔': (0.17, 0.27, 0.1),
+    '土': (0.2, 0.14, 0.09), '青花瓷': (0.82, 0.84, 0.86), '青花蓝': (0.1, 0.2, 0.5), '湖石': (0.5, 0.5, 0.47), '卵石': (0.26, 0.25, 0.23), '卵石深': (0.18, 0.175, 0.165), '苔': (0.12, 0.2, 0.07),
 }
 
 
@@ -503,13 +503,7 @@ def build_shrub():
     rnd = random.Random(1704)
     G = Geo()
     for (cx, cy, r, h) in ((0, 0, 0.55, 0.85), (0.45, 0.25, 0.4, 0.6), (-0.4, 0.2, 0.38, 0.55)):
-        for i in range(int(1500 * r * h)):
-            u, w = rnd.uniform(0, 6.28), rnd.uniform(0.0, 1.0)
-            ph = math.acos(1 - w)
-            p = Vector((cx + r * math.sin(ph) * math.cos(u) * rnd.uniform(0.75, 1.0), cy + r * math.sin(ph) * math.sin(u) * rnd.uniform(0.75, 1.0), h * 0.12 + h * 0.88 * math.cos(ph) * rnd.uniform(0.85, 1.0)))
-            out = Vector((p.x - cx, p.y - cy, (p.z - h * 0.3) * 0.8)).normalized()
-            d = (out + Vector((rnd.uniform(-.7, .7), rnd.uniform(-.7, .7), rnd.uniform(-.2, .6)))).normalized()
-            leaf(G, 'leaf', p, d, rnd.uniform(0.05, 0.075), rnd.uniform(0.035, 0.05), rnd)
+        shrub_mass(G, rnd, cx, cy, 0.0, r, h, 3600)
         for i in range(5):
             a = rnd.uniform(0, 6.28)
             stem(G, '茎', (cx, cy, 0), (cx + math.cos(a) * r * 0.5, cy + math.sin(a) * r * 0.5, h * 0.6), 0.012)
@@ -634,6 +628,91 @@ def build_bitao():
     save_export('yh_bitao')
 
 
-WHICH = os.environ.get('YH_ONLY', 'rosebed,huajing,rosebush,haitang,shrub,bajiao,bitao').split(',')
+def shrub_mass(G, rnd, cx, cy, z0, r, h, n_per=1500):
+    """常绿灌木团（黄杨、冬青一类）。"""
+    for i in range(int(n_per * r * h)):
+        u, w = rnd.uniform(0, 6.28), rnd.uniform(0.0, 1.0)
+        ph = math.acos(1 - w)
+        p = Vector((cx + r * math.sin(ph) * math.cos(u) * rnd.uniform(0.75, 1.0), cy + r * math.sin(ph) * math.sin(u) * rnd.uniform(0.75, 1.0), z0 + h * 0.12 + h * 0.88 * math.cos(ph) * rnd.uniform(0.85, 1.0)))
+        out = Vector((p.x - cx, p.y - cy, (p.z - z0 - h * 0.3) * 0.8)).normalized()
+        d = (out + Vector((rnd.uniform(-.7, .7), rnd.uniform(-.7, .7), rnd.uniform(-.2, .6)))).normalized()
+        leaf(G, 'leaf', p, d, rnd.uniform(0.07, 0.1), rnd.uniform(0.05, 0.07), rnd)
+
+
+def build_bigbed():
+    """院中大花床（参考图：院里满是花木，不露铺地）：不规则卵石镶边、培土，满铺细草与地被小花，
+    后排灌木、中间月季、点一块湖石。约 5.6 × 3.4 m，正面朝 -Y。"""
+    new_scene()
+    rnd = random.Random(1707)
+    G = Geo()
+    RX, RY = 2.8, 1.7
+    def rad(a):
+        return 1 + 0.08 * math.sin(3 * a + 0.7) + 0.05 * math.sin(5 * a + 2.1)
+    n = 150
+    for k in range(n):
+        a = 2 * math.pi * (k + rnd.uniform(-.2, .2)) / n
+        f = rad(a)
+        pebble(G, rnd, Vector((RX * f * math.cos(a), RY * f * math.sin(a), 0.02)), rnd.uniform(0.065, 0.09), rnd.choice(('卵石', '卵石', '卵石深')))
+    mound(G, '苔', 0, 0, RX - 0.08, RY - 0.08, 0.22, 0.0, n=32, rings=5)          # 苔面，不露土
+    # 满铺细草
+    x = -RX
+    while x < RX:
+        y = -RY
+        while y < RY:
+            px, py = x + rnd.uniform(-.08, .08), y + rnd.uniform(-.08, .08)
+            a = math.atan2(py / RY, px / RX)
+            e = math.hypot(px / RX, py / RY)
+            if e < rad(a) * 0.93:
+                z = 0.22 * math.cos(min(e, 1) * math.pi / 2) - 0.01
+                grass_tuft(G, rnd, px, py, z, rnd.uniform(0.18, 0.3))
+            y += 0.16
+        x += 0.16
+    # 后排灌木、中排月季、前缘地被花
+    for (x, y, r, h) in ((-0.4, 0.75, 0.6, 1.05), (0.9, 0.85, 0.55, 0.9), (2.0, 0.5, 0.45, 0.75), (-2.3, -0.2, 0.4, 0.7)):
+        shrub_mass(G, rnd, x, y, 0.12, r, h, 3600)
+    for (x, y, r, h, cols) in ((-0.6, -0.35, 0.34, 0.65, ('月季红', '月季粉')), (0.55, -0.25, 0.32, 0.6, ('月季粉', '月季白')),
+                               (1.65, -0.45, 0.3, 0.55, ('月季红', '月季黄')), (-1.55, -0.7, 0.28, 0.5, ('月季粉', '月季红'))):
+        rosebush(G, rnd, x, y, 0.12, r, h, cols)
+    pts = []
+    for k in range(120):
+        a = rnd.uniform(0, 6.28)
+        f = rnd.uniform(0.55, 0.92) * rad(a)
+        pts.append((RX * f * math.cos(a), RY * f * math.sin(a), 0.12))
+    groundcover(G, rnd, pts, ('石竹', '小白花', '小白花', '石竹', '月季黄'), 1.0)
+    G.build('yh_bigbed')
+    save_export('yh_bigbed')
+
+
+def build_pot():
+    """青花盆栽：台基、廊前一溜摆开。盆是青花缠枝，上种一丛月季。"""
+    new_scene()
+    rnd = random.Random(1708)
+    G = Geo()
+    prof = [(0.0, 0.0), (0.16, 0.0), (0.2, 0.05), (0.24, 0.3), (0.26, 0.34), (0.22, 0.34)]
+    seg = 24
+    vs, fs = [], []
+    for i, (r, z) in enumerate(prof):
+        for k in range(seg):
+            a = 2 * math.pi * k / seg
+            vs.append(Vector((r * math.cos(a), r * math.sin(a), z)))
+    for i in range(len(prof) - 1):
+        for k in range(seg):
+            a, b = i * seg + k, i * seg + (k + 1) % seg
+            fs.append((a, b, b + seg, a + seg))
+    G.add('青花瓷', vs, fs)
+    # 青花带：腰上一圈蓝
+    vs2 = []
+    for (r, z) in ((0.225, 0.12), (0.238, 0.22)):
+        for k in range(seg):
+            a = 2 * math.pi * k / seg
+            vs2.append(Vector((r * 1.004 * math.cos(a), r * 1.004 * math.sin(a), z)))
+    G.add('青花蓝', vs2, [(k, (k + 1) % seg, seg + (k + 1) % seg, seg + k) for k in range(seg)])
+    mound(G, '土', 0, 0, 0.22, 0.22, 0.03, 0.31, n=16, rings=2)
+    rosebush(G, rnd, 0, 0, 0.32, 0.26, 0.5, ('月季红', '月季粉', '月季粉'))
+    G.build('yh_pot')
+    save_export('yh_pot')
+
+
+WHICH = os.environ.get('YH_ONLY', 'rosebed,huajing,rosebush,haitang,shrub,bajiao,bitao,bigbed,pot').split(',')
 for nm in WHICH:
     globals()['build_' + nm]()
