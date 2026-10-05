@@ -630,6 +630,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,grow:[{re:/^梨树_/,at:[-1.95,0.6,-8.6],k:2.6},{re:/^芭蕉_/,at:[1.4,0,-6.9],k:1.5}]},  // 后院“大株梨花兼着芭蕉”：以树根为心放大，梨树约 9 m 高过正房屋脊，芭蕉约 4.5 m
 
   {id:'cuizhang',p:[0,height(0,96)-0.05,96],ry:0},
+  {id:'huaxu',p:[HX.c[0],0,HX.c[1]],ry:0},   // 蓼汀花溆的港洞（原点在洞心水面）
   // 新景点（Blender：blender/scripts/sites/build_sites.py）。正面均朝局部 +z，这里转成面向水：芦雪广面西、凹晶馆面南临池、凸碧山庄在山顶朝南俯看凹晶馆。
   {id:'luxue',p:[-131.5,1.15,0],ry:-Math.PI/2},
   // 秋爽斋（晓翠堂 + 探春三间）、荇叶渚码头、两只棠木舫：blender/scripts/sites/build_sites.py
@@ -1020,32 +1021,16 @@ function buildHuaxu(){if(!GLB)return;const rr=mulberry32(1818),[cx,cz]=HX.c;
    box('rail',M,0.1,0.1,len+0.1,0,top+0.9,0);box('rail',M,0.06,0.06,len,0,top+0.42,0,{noCol:1});const k=Math.max(1,Math.round(len/1.1));for(let j=0;j<=k;j++)box('rail',M,0.12,0.92,0.12,0,top+0.46,-len/2+j*len/k);}
   BRIDGES.push({x:(P[0].x+P[n-1].x)/2,z:(P[0].y+P[n-1].y)/2,L:P[0].distanceTo(P[n-1]),ry:0,type:'zig'});}
  // 港洞两侧石墩不许穿行；石洞、桥头一带不让园中随机种的树长进来
- for(const sx of[-1,1])colAdd({x:cx+sx*5.6,z:cz,c:1,s:0,hx:2.6,hz:4.2,top:4.6,bot:-2,walk:false});
+ for(const sx of[-1,1])colAdd({x:cx+sx*6.3,z:cz,c:1,s:0,hx:2.8,hz:4.2,top:5.5,bot:-2,walk:false});
  for(let x=cx-9;x<=cx+9;x+=2)for(let z=cz-6;z<=cz+6;z+=2)treeAdd(x,z);
  // 沿堤柳垂金线，桃吐丹霞：溪两岸垂柳夹桃花（桃不进蘅芜苑院里）
  const BANK=[[-71.5,-86,'w'],[-72,-92.5,'t'],[-53.5,-88,'w'],[-53,-94.5,'t'],[-72.5,-108,'w'],[-55,-108.5,'w'],[-54,-114,'t'],[-58,-121.5,'w'],[-64,-121.8,'t'],[-82.5,-109.5,'w'],[-88,-110,'t'],[-71,-121.6,'w'],[-82,-121.8,'t'],[-93,-110.5,'w']];
  for(const [x,z,k] of BANK){const x2=x+(rr()-0.5)*1.2,z2=z+(rr()-0.5)*1.0;if(height(x2,z2)<0.45)continue;if(k==='w')addTree('willow',x2,z2,0.95+rr()*0.25,pick(['#a3bd62','#b0c46a','#9db85c']));else addTree('blossom',x2,z2,0.8+rr()*0.2,pick(PINK));}}
-async function buildHuaxuCave(){if(!GLB)return;const [cx,cz]=HX.c,rr=mulberry32(2626),R2=(a,b)=>a+rr()*(b-a);
- const g=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hushi.glb');let src=null;g.scene.traverse(o=>{if(o.isMesh&&!src)src=o;});if(!src)return;
- const S=[];  // [x,y,z, ry, rz, sx,sy,sz]  rz=π/2 时石头横卧（模型的高顺 x 方向，sx 成了厚度）
- const gy=(x,z)=>Math.min(height(x,z),0.6),up=(x,y,z,h,k)=>S.push([x,y,z,R2(0,6.28),R2(-0.1,0.1),h*k,h,h*k]);
- for(const sx of[-1,1])for(let z=-3.6;z<=3.7;z+=1.25){up(cx+sx*R2(4.7,5.3),-1.3,cz+z+R2(-0.3,0.3),R2(3.9,4.5),R2(0.75,0.95));                       // 洞壁，立在水边，洞宽约 7 米
-  const x2=cx+sx*R2(6.4,8.2),z2=cz+z+R2(-0.4,0.4);up(x2,gy(x2,z2)-0.4,z2,R2(2.8,4.4),R2(0.8,1.0));}                                                       // 岸上石墩
- const lie=(xc,y,z,L,th,dp,tilt)=>S.push([xc+L/2*Math.cos(tilt),y+L/2*Math.sin(tilt),z,R2(-0.15,0.15),Math.PI/2+tilt,th/0.56,L,dp/0.62]);
- for(let z=-3.5;z<=3.6;z+=1.2){lie(cx-R2(1.6,2.6),R2(3.7,4.1),cz+z,R2(5.2,6.2),R2(1.3,1.9),R2(1.5,2.1),R2(0.06,0.18));lie(cx+R2(1.6,2.6),R2(3.7,4.1),cz+z+R2(-0.4,0.4),R2(5.2,6.2),R2(1.3,1.9),R2(1.5,2.1),R2(-0.18,-0.06));}  // 洞顶横石：两边各挑一块，在洞顶中间交搭，略微拱起
- for(const sz of[-1,1])for(let k=0;k<4;k++)S.push([cx+R2(-3,3),R2(3.4,3.7),cz+sz*R2(3.6,4.4),R2(0,6.28),Math.PI+R2(-0.2,0.2),R2(0.6,0.9),R2(0.7,1.3),R2(0.6,0.9)]);  // 洞口檐下倒挂的小石
- for(let k=0;k<12;k++){const x=cx+R2(-7,7),z=cz+R2(-3.6,3.6);up(x,Math.abs(x-cx)<4.6?R2(4.4,4.8):R2(2.9,3.6),z,R2(1.4,3.0),R2(0.8,1.0));}           // 峰顶立石
- for(const sz of[-1,1])for(const sx of[-1,1]){const x=cx+sx*R2(4.3,5.0),z=cz+sz*R2(4.4,5.2);up(x,-1.2,z,R2(1.8,2.6),1);}                                // 洞口两侧水中小石
- const mat=src.material.clone();mat.color=new THREE.Color('#a3a39a');mat.roughness=0.95;  // 模型贴图偏白，压成青灰
- const im=new THREE.InstancedMesh(src.geometry,mat,S.length);const q=new THREE.Quaternion(),e=new THREE.Euler();
- S.forEach((t,i)=>{e.set(0,t[3],t[4],'YXZ');q.setFromEuler(e);_m4.compose(new V3(t[0],t[1],t[2]),q,new V3(t[5],t[6],t[7]));im.setMatrixAt(i,_m4);});
- im.castShadow=true;im.receiveShadow=true;scene.add(im);
- // 萝薄垂引：两个洞口、石墩外侧、峰顶垂下藤萝
- const {strand,strandM}=await plants(),Lv=[[],[],[],[]];const put=(x,y,z,dx,dz,len,wd)=>{const u=rr(),v=u<0.35?0:u<0.5?1:u<0.8?2:3;Lv[v].push([x,y,z,Math.atan2(dx,dz)+R2(-0.3,0.3),wd*R2(0.8,1.25),len]);};
- for(const sz of[-1,1])for(let x=-5.6;x<=5.6;x+=0.22+rr()*0.2)put(cx+x,R2(4.3,4.8),cz+sz*R2(4.3,4.9),0,sz,Math.abs(x)<3.4?R2(0.8,1.8):R2(2.0,4.8),1.2);
- for(const sx of[-1,1])for(let z=-4;z<=4;z+=0.35+rr()*0.3)put(cx+sx*R2(8.6,9.4),R2(3.0,4.2),cz+z,sx,0,R2(1.6,3.6),1.15);
- for(let k=0;k<40;k++){const a=rr()*6.28;put(cx+Math.cos(a)*R2(2,7),R2(5.2,6.8),cz+Math.sin(a)*R2(1.5,4),Math.cos(a),Math.sin(a),R2(1.2,2.8),1);}
- Lv.forEach((list,v)=>{if(!list.length)return;const vm=new THREE.InstancedMesh(strand[v],strandM,list.length);list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[5]/2,it[4]));vm.setMatrixAt(i,_m4);});vm.castShadow=Q>0;vm.receiveShadow=true;vm.frustumCulled=false;scene.add(vm);});
+async function buildHuaxuCave(){if(!GLB)return;const [cx,cz]=HX.c;
+ // 港洞本身是 Blender 整块雕出的山石（models/b/huaxu.wasm，blender/scripts/sites/huaxu_cave.py），随楼阁模型一起载入（BLD 列表）。
+ // 萝薄垂引：沿港洞石面爬下、到洞顶下离开石面直垂的藤萝，Blender 烘好（models/b/hx_vines.wasm，blender/scripts/web/hw_plants.py）
+ const [{bakedM},g]=await Promise.all([plants(),new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/b/hx_vines.wasm')]);
+ g.scene.traverse(o=>{if(o.isMesh){o.material=bakedM;o.castShadow=Q>0;o.receiveShadow=true;}});g.scene.position.set(cx,0,cz);scene.add(g.scene);
  // 下则落花浮荡：桃花瓣顺溪漂出港洞，流到蘅芜苑门前入池
  const F=HX.flow,seg=[];let tot=0;for(let i=0;i<F.length-1;i++){const l=Math.hypot(F[i+1][0]-F[i][0],F[i+1][1]-F[i][1]);seg.push([tot,l]);tot+=l;}
  const at2=(d)=>{d=((d%tot)+tot)%tot;let i=0;while(i<seg.length-1&&d>seg[i][0]+seg[i][1])i++;const t=(d-seg[i][0])/seg[i][1],a=F[i],b=F[i+1],dx=(b[0]-a[0])/seg[i][1],dz=(b[1]-a[1])/seg[i][1];return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,dx,dz];};

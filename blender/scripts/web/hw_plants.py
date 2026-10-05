@@ -236,6 +236,19 @@ while x <= 14.5:    # 南墙内外两面（院门左右）
     x += R(0.45, 0.95)
 print('vines tris', V.tris(), 'verts', len(V.V), STAT)
 
+# ------------------------------------------------------------------ 1b. 花溆港洞的藤萝（路径由 blender/scripts/sites/huaxu_cave.py 沿石面算出；港洞局部坐标）
+HX = Geo(); HXP = os.path.join(ROOT, 'models', 'b', 'hx_vines.json')
+if os.path.exists(HXP):
+    for d in json.load(open(HXP))['D']:
+        dx, dz = d[0], d[1]; pts = [Vector((d[i], d[i + 1], d[i + 2])) for i in range(2, len(d), 3)]
+        keep, tot, stall = [pts[0]], 0.0, 0     # 截短：总长不过 5 m；连续三步不往下走（在石面上打转）就停
+        for a, b in zip(pts, pts[1:]):
+            tot += (b - a).length; stall = stall + 1 if a.y - b.y < 0.03 else 0
+            if tot > 5 or stall >= 3: break
+            keep.append(b)
+        if len(keep) >= 3: vine(HX, keep, Vector((dx, 0, dz)), pick((0.4, 0.15, 0.3, 0.15)))
+    print('huaxu vines tris', HX.tris())
+
 # ------------------------------------------------------------------ 2. 单株异草、垂藤
 def herb_duheng():     # 杜蘅：一丛圆叶贴地斜展
     g = Geo()
@@ -333,8 +346,11 @@ def export(objs, dst):
                               export_materials='EXPORT', export_yup=True, export_vertex_color='ACTIVE', export_normals=True, export_texcoords=True)
 ov = build('hw_vines', V)
 export([ov], os.path.join(TMP, 'hw_vines.glb'))
+if HX.F:
+    ohx = build('hx_vines', HX); export([ohx], os.path.join(TMP, 'hx_vines.glb'))
 objs = [build('herb_%d' % i, h) for i, h in enumerate(HERBS)] + [build('strand_%d' % i, s) for i, s in enumerate(STRANDS)]
 export(objs, os.path.join(TMP, 'hw_plants.glb'))
 pk = os.path.join(HERE, 'pack_plants.mjs')
 subprocess.run(['node', pk, os.path.join(TMP, 'hw_vines.glb'), os.path.join(ROOT, 'models', 'b', 'hw_vines.wasm')], check=True, cwd=HERE)
+if HX.F: subprocess.run(['node', pk, os.path.join(TMP, 'hx_vines.glb'), os.path.join(ROOT, 'models', 'b', 'hx_vines.wasm')], check=True, cwd=HERE)
 subprocess.run(['node', pk, os.path.join(TMP, 'hw_plants.glb'), os.path.join(ROOT, 'models', 'p', 'hw_plants.glb')], check=True, cwd=HERE)
