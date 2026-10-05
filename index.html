@@ -960,7 +960,7 @@ async function buildCrops(){if(!GLB)return;const y0=Z.daoxiang.y,ox=Z.daoxiang.x
  let items=[];try{items=(await (await fetch('tex/crops_daoxiang.json')).json()).items;}catch(e){console.warn('crops.json',e);return;}
  const at=it=>new V3(ox+it[2],y0+it[4],oz-it[3]);
  const inst=(g,m,list,sx)=>{const im=new THREE.InstancedMesh(g,m,list.length);list.forEach((it,i)=>{const s=it[6]*(sx||1);_m4.compose(at(it),new THREE.Quaternion().setFromAxisAngle(UP,it[5]),new V3(s,s,s));im.setMatrixAt(i,_m4);});
-  im.castShadow=false;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);return im;};
+  im.castShadow=false;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);return im;};  // 作物都在稻香村一片地里：开视锥剔除，看不到那片田就整块不画
  if(Q>0){try{const g=await new GLTFLoader().loadAsync('models/p/crops.glb');const geos={};g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh){const q=o.geometry.clone();q.applyMatrix4(o.matrixWorld);geos[o.name]=q;}});
    const m=patch(new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.78,metalness:0}),{key:'crop3d',vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'});
    const by={};for(const it of items)(by[it[0]+'_'+it[1]]??=[]).push(it);
@@ -1052,7 +1052,7 @@ function buildHengwuYard(){if(!GLB)return;const q=Z.hengwu,rr=mulberry32(1717);c
   for(let k=0;k<(Q===0?Math.min(n,1):Q===1?Math.min(n,2):n);k++){const px=x+(rr()-0.5)*0.5,pz=z+(rr()-0.5)*0.5;if(!free(px,pz))continue;const u=rr(),v=u<0.4?0:u<0.72?1:u<0.84?2:3;items[v].push([q.x+px,q.y+0.01,q.z+pz,rr()*6.283,(0.8+rr()*0.6)*(dd<=2?1:1.15)]);}}
  plants().then(({herb,herbM})=>{const cc=new THREE.Color();items.forEach((list,v)=>{if(!list.length||!herb[v])return;const im=new THREE.InstancedMesh(herb[v],herbM,list.length);
   list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.85+rr()*0.3),it[4]));im.setMatrixAt(i,_m4);const b=0.85+rr()*0.25;cc.setRGB(b*(0.94+rr()*0.06),b,b*(0.94+rr()*0.08));im.setColorAt(i,cc);});
-  im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});}).catch(e=>console.warn('hw herbs',e));
+  im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);});}).catch(e=>console.warn('hw herbs',e));
  window.__hwherb=items.map(l=>l.length);
  hengwuVines(q).catch(e=>console.warn('hengwu vines',e));}
 /* 藤萝：“或垂山巅，或穿石隙，甚至垂檐绕柱，萦砌盘阶，或如翠带飘摇，或如金绳蟠屈，或实若丹砂，或花如金桂”。
@@ -1068,7 +1068,7 @@ async function hengwuVines(q){const J=await (await fetch('models/b/hw_vines.json
   for(const [x,y,z] of J.R){if(rr()<0.35)continue;const u=rr(),v=u<0.3?0:u<0.6?2:u<0.82?1:3;L[v].push([x,y-0.04,z,new THREE.Quaternion().setFromAxisAngle(UP,rr()*6.283),0.55+rr()*0.5]);}
   for(const [x,y,z,dx,dz] of J.S){if(rr()<0.4)continue;const qq=new THREE.Quaternion().setFromAxisAngle(new V3(dz,0,-dx),0.9+rr()*0.5).multiply(new THREE.Quaternion().setFromAxisAngle(UP,rr()*6.283));L[rr()<0.7?2:0].push([x-dx*0.05,y,z-dz*0.05,qq,0.5+rr()*0.4]);}
   L.forEach((list,v)=>{if(!list.length)return;const im=new THREE.InstancedMesh(herb[v],herbM,list.length);list.forEach((t,i)=>{_m4.compose(new V3(q.x+t[0],q.y+t[1],q.z+t[2]),t[3],new V3(t[4],t[4],t[4]));im.setMatrixAt(i,_m4);const b=0.85+rr()*0.25;cc.setRGB(b,b,b*0.95);im.setColorAt(i,cc);});
-   im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});}
+   im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);});}
  // 插天的大玲珑山石：巨石正面补几块带孔的太湖石，迎门一立
  if(J.H.length)new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hushi.glb').then(g=>{let src=null;g.scene.traverse(o=>{if(o.isMesh&&!src)src=o;});if(!src)return;
   const mat=src.material.clone();mat.color=new THREE.Color('#b8b8ae');mat.roughness=0.95;const im=new THREE.InstancedMesh(src.geometry,mat,J.H.length);
