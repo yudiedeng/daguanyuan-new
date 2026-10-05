@@ -156,5 +156,41 @@
   "prompt": "a Chinese tree peony shrub in full bloom, several large deep red and pink double peony flowers, broad green leaves, garden plant, realistic",
   "faces": 12000,
   "neg": "pot, vase, planter, ground plane, base, text, low quality"
+ },
+ "hw_shuan": {
+  "prompt": "plain antique Chinese Ming dynasty writing desk of dark rosewood, rectangular top, four straight round legs with simple stretchers, no carving, austere minimalist",
+  "faces": 6000
+ },
+ "hw_tuding": {
+  "prompt": "small antique Chinese earthenware vase with creamy ivory Ding ware glaze, simple round belly and narrow neck, holding several sprigs of yellow chrysanthemum flowers with green leaves",
+  "faces": 8000
+ },
+ "hw_shuhan": {
+  "prompt": "two stacked Chinese thread-bound books each wrapped in a dark blue cloth book case (shu han) with bone clasps, lying flat",
+  "faces": 3000
+ },
+ "hw_chalian": {
+  "prompt": "small antique Chinese plain wooden tea caddy box with lid, next to two small white porcelain tea cups on saucers",
+  "faces": 5000
+ },
+ "hw_chuang": {
+  "prompt": "plain antique Chinese canopy bed with a simple dark wooden frame and four posts, hung with pale celadon blue-green translucent gauze curtains tied back, plain white quilt and pillow, no carving, austere",
+  "faces": 12000
+ },
+ "hw_quanyi": {
+  "prompt": "plain antique Chinese horseshoe-back armchair of dark huanghuali rosewood, smooth curved crest rail, plain splat, no cushion, no carving",
+  "faces": 6000
+ },
+ "hw_guanmao": {
+  "prompt": "plain antique Chinese official's hat armchair (guanmaoyi) of dark rosewood, straight legs, plain back splat, austere Ming style",
+  "faces": 6000
+ },
+ "hw_qiaotou": {
+  "prompt": "long narrow plain antique Chinese altar table with everted ends (qiaotou an) of dark rosewood, simple straight legs, nothing on top",
+  "faces": 6000
+ },
+ "hw_ta": {
+  "prompt": "plain antique Chinese wooden daybed couch (luohan bed) of dark rosewood with low plain back and side rails and a plain off-white cushion, austere",
+  "faces": 8000
  }
 }

@@ -86,10 +86,11 @@ def grad(P, e=0.03):
 fc = verts[faces].mean(axis=1); fn = np.cross(verts[faces[:, 1]] - verts[faces[:, 0]], verts[faces[:, 2]] - verts[faces[:, 0]])
 fa = np.linalg.norm(fn, axis=1); fn = fn / np.maximum(fa[:, None], 1e-9)
 cand = np.where((fn[:, 1] > 0.3) & (fc[:, 1] > 2.4))[0]; rng.shuffle(cand)
-anchors = []
-for i in cand:
-    p = fc[i]
-    if all(np.linalg.norm(p - a) > 0.38 for a in anchors): anchors.append(p)
+anchors = []; cells = set()
+for i in cand:   # 0.38 m 一格，每格最多一个挂点
+    p = fc[i]; k = tuple(np.floor(p / 0.38).astype(int))
+    if k in cells: continue
+    cells.add(k); anchors.append(p)
     if len(anchors) >= 260: break
 # 洞口檐下再加一排：沿两个洞口的拱顶外沿
 for sz in (-1, 1):
