@@ -21,13 +21,14 @@ WOOD = '花梨'
 
 K.box('金砖地', -X1, Y0, Z0, X1, Y1, Z0 + 0.01)   # 室内墁金砖：深灰、油亮（网页材质 金砖地，不带户外方砖的青苔风化）
 # “雪洞一般”：四壁、顶棚一色白
-K.box('白灰墙', -X1, Y0, ZC, X1, Y1, ZC + 0.04)
+# 顶上：素作井口天花——花梨木支条方格，白板，不描金不彩画（原来是一整块平板）
+K.ceiling(-X1 + 0.05, Y0 + 0.05, X1 - 0.05, Y1 - 0.05, ZC, cell=0.62, frame=WOOD, panel='雪洞白', dot=None)
 for sx in (-1, 1):
-    K.wall_finish((sx * (X1 - 0.05), Y0), (sx * (X1 - 0.05), Y1), Z0, ZC, (-sx, 0), dado=0.12, wood=WOOD)   # 往里让 5 cm，盖住外壳槛墙压顶石探进来的边
-K.wall_finish((-X1, Y1 - 0.05), (X1, Y1 - 0.05), Z0, ZC, (0, -1), dado=0.12, wood=WOOD)
+    K.wall_finish((sx * (X1 - 0.05), Y0), (sx * (X1 - 0.05), Y1), Z0, ZC, (-sx, 0), dado=0.12, wood=WOOD, plaster='雪洞白')   # 往里让 5 cm，盖住外壳槛墙压顶石探进来的边
+K.wall_finish((-X1, Y1 - 0.05), (X1, Y1 - 0.05), Z0, ZC, (0, -1), dado=0.12, wood=WOOD, plaster='雪洞白')
 # 前檐窗下的槛墙内侧也贴白灰、木踢脚（原来露着外壳的青砖，和另三面墙不一样）
 for sx in (-1, 1):
-    K.wall_finish((sx * X1, Y0 + 0.05), (sx * 1.66, Y0 + 0.05), Z0, 1.71, (0, 1), dado=0.12, wood=WOOD)
+    K.wall_finish((sx * X1, Y0 + 0.05), (sx * 1.66, Y0 + 0.05), Z0, 1.71, (0, 1), dado=0.12, wood=WOOD, plaster='雪洞白')
 
 # ---- 入口：明间隔扇四扇——两边两扇关着，中间两扇向里半开（原来做成全开推到两边，从外面看像没有门） ----
 for sx in (-1, 1):
