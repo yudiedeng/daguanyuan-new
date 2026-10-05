@@ -75,8 +75,8 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
 #toast b{display:block;font-family:var(--f-disp);font-weight:400;font-size:22px;letter-spacing:.12em}
 #toast span{font-size:12.5px;color:var(--ink-2);letter-spacing:.06em}
 #walkhud{position:fixed;inset:0;pointer-events:none}
-#walkhud .resume{position:absolute;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);padding:6px 14px;font-size:13px;color:#f5eedc;background:rgba(20,18,15,.55);border-radius:2px;letter-spacing:.06em}
 .ui-hide #walkhud{display:none}
+.walking canvas{cursor:grab}.looking canvas{cursor:grabbing}
 #walkhud .dot{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px;border-radius:50%;background:rgba(255,250,235,.85);box-shadow:0 0 3px rgba(0,0,0,.6)}
 #walkhud .help{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:6px 14px;font-size:12.5px;color:#f5eedc;background:rgba(20,18,15,.55);border-radius:2px;letter-spacing:.06em;white-space:nowrap}
 #stick{position:fixed;left:24px;bottom:calc(110px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;border:1px solid rgba(255,250,235,.6);background:rgba(20,18,15,.25);touch-action:none}
@@ -146,7 +146,7 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
   <p class="credit">渲染手法参考 <a href="https://github.com/dgreenheck/tidewater" target="_blank" rel="noopener">Tidewater</a>（MIT）：高度雾、ACES 调色、叶簇树冠、草地分层淡出、步行碰撞。园中声音全部由程序实时合成。布局依原著描写示意，并非实测复原。</p>
 </section>
 <p class="hint ui">拖动旋转 · 滚轮缩放 · <kbd style="font:inherit">F</kbd> 步行 · <kbd style="font:inherit">H</kbd> 设置</p>
-<div id="walkhud" hidden><div class="dot"></div><div class="resume" id="walkresume" hidden>点击画面继续 · Esc 退出步行</div><div class="help" id="walkhelp">WASD 行走 · Shift 快走 · 鼠标转头 · Esc 退出</div></div>
+<div id="walkhud" hidden><div class="dot"></div><div class="help" id="walkhelp">WASD 行走 · Shift 快走 · 拖动鼠标转头 · Esc 退出</div></div>
 <div id="stick" hidden><i></i></div>
 <div id="toast" class="panel" style="opacity:0"><b>琉璃世界</b><span>白雪红梅 · 第四十九回</span></div>
 <div id="loading">正在营造大观园<small id="load-step">备料</small></div>
@@ -2361,12 +2361,12 @@ function pushOut(p,feet){const r=0.3*walk.s;const k0=Math.floor(p.x/CELL),k1=Mat
   const dx=p.x-c.x,dz=p.z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;const cx=clamp(lx,-c.hx,c.hx),cz=clamp(lz,-c.hz,c.hz);let ox=lx-cx,oz=lz-cz;const d=Math.hypot(ox,oz);
   if(d<r){let nx,nz,pen;if(d>1e-4){nx=ox/d;nz=oz/d;pen=r-d;}else{const ex=c.hx-Math.abs(lx),ez=c.hz-Math.abs(lz);if(ex<ez){nx=Math.sign(lx)||1;nz=0;pen=ex+r;}else{nx=0;nz=Math.sign(lz)||1;pen=ez+r;}}
    const wx=nx*c.c+nz*c.s,wz=-nx*c.s+nz*c.c;p.x+=wx*pen;p.z+=wz*pen;}}}}
-function setWalkHelp(){document.getElementById('walkhelp').textContent=tr(isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · EK 存图 · Esc 退出':'WASD 前行 · 鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · EK 存图 · Esc 退出'));document.querySelector('#walkhud .dot').hidden=walk.third;}
+function setWalkHelp(){document.getElementById('walkhelp').textContent=tr(isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 拖动鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · EK 存图 · Esc 退出':'WASD 前行 · 拖动鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · EK 存图 · Esc 退出'));document.querySelector('#walkhud .dot').hidden=walk.third;}
 function enterWalk(spawn){if(walk.on)return;walk.on=true;document.body.classList.add('walking');card.hidden=true;stopTour();fly=null;controls.enabled=false;let x,z,yaw;
  if(spawn){[x,z,yaw]=spawn;}else{const t=controls.target;x=t.x;z=t.z;const d=new V3().subVectors(controls.target,camera.position);yaw=Math.atan2(-d.x,-d.z);if(hq(x,z)<0.3){x=0;z=108;yaw=Math.PI;}}
  walk.yaw=yaw;walk.charYaw=yaw;walk.pitch=walk.third?-0.28:-0.05;walk.feet=groundAt(x,z,99)[0];walk.pos.set(x,walk.feet,z);walk.vel.set(0,0,0);walk.vy=0;camera.near=0.1;camera.updateProjectionMatrix();
  document.getElementById('walkhud').hidden=false;document.getElementById('btn-walk').setAttribute('aria-pressed','true');setWalkHelp();
- if(isTouch)document.getElementById('stick').hidden=false;else renderer.domElement.requestPointerLock?.();
+ if(isTouch)document.getElementById('stick').hidden=false;
  GRASS.R=Math.max(GRASS.R,[22,30,40][Q]);updateWalk(0.016);}
 /* K 存图：只截 3D 画面（界面、准星都在画布外，不会进图）。必须在 composer.render 之后同一帧里读，
    否则 WebGL 画布已被清空（没开 preserveDrawingBuffer） */
@@ -2375,19 +2375,14 @@ function saveSnap(){try{const b64=atob(renderer.domElement.toDataURL('image/png'
  const url=URL.createObjectURL(new Blob([buf],{type:'image/png'})),d=new Date(),z=n=>String(n).padStart(2,'0');setTimeout(()=>URL.revokeObjectURL(url),10000);
  const a=document.createElement('a');a.href=url;a.download=`daguanyuan-${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}.png`;document.body.appendChild(a);a.click();a.remove();
  const t=document.getElementById('toast');t.innerHTML=`<b>${tr('已存图')}</b><span>${tr('在浏览器的下载里')}</span>`;t.style.opacity=1;clearTimeout(snapT);snapT=setTimeout(()=>t.style.opacity=0,1800);}catch(e){}}
-function exitWalk(){if(!walk.on)return;walk.on=false;walkResume.hidden=true;document.body.classList.remove('walking');hero.g.visible=false;document.getElementById('walkhud').hidden=true;document.getElementById('stick').hidden=true;document.getElementById('btn-walk').setAttribute('aria-pressed','false');
- if(document.pointerLockElement)document.exitPointerLock();controls.target.copy(walk.pos).add(new V3(0,1.2,0));const off=new V3().subVectors(camera.position,controls.target);if(off.length()<6)off.setLength(8);camera.position.copy(controls.target).add(off);controls.enabled=true;camera.near=0.3;camera.updateProjectionMatrix();GRASS.R=[0,30,40][Q];}
-/* 鼠标锁丢了（按 Esc、系统截图工具抢走焦点、切窗口）不退出步行，只停下等点击；再按 Esc 才退出。
-   原来一丢锁就退出，第一人称时相机会被拉到身后 8 m，截图工具一开画面就跳了 */
-const walkResume=document.getElementById('walkresume');
-document.addEventListener('pointerlockchange',()=>{walk.keys={};walkResume.hidden=!!document.pointerLockElement||!walk.on||isTouch||!!window.__gamePause;});
+function exitWalk(){if(!walk.on)return;walk.on=false;document.body.classList.remove('walking');hero.g.visible=false;document.getElementById('walkhud').hidden=true;document.getElementById('stick').hidden=true;document.getElementById('btn-walk').setAttribute('aria-pressed','false');
+ controls.target.copy(walk.pos).add(new V3(0,1.2,0));const off=new V3().subVectors(camera.position,controls.target);if(off.length()<6)off.setLength(8);camera.position.copy(controls.target).add(off);controls.enabled=true;camera.near=0.3;camera.updateProjectionMatrix();GRASS.R=[0,30,40][Q];}
+/* 步行不锁鼠标：光标一直在，按住拖动转头（触屏同理）；松开就能点门、点题签、点选项、截图 */
 addEventListener('blur',()=>{walk.keys={};});
-renderer.domElement.addEventListener('click',()=>{if(walk.on&&!isTouch&&!document.pointerLockElement&&!window.__gamePause){walkResume.hidden=true;renderer.domElement.requestPointerLock?.();}});
-addEventListener('mousemove',(e)=>{if(walk.on&&document.pointerLockElement){walk.yaw-=e.movementX*0.0022;walk.pitch=clamp(walk.pitch-e.movementY*0.0022,walk.third?-1.2:-1.3,walk.third?0.5:1.3);}});
 addEventListener('wheel',(e)=>{if(walk.on&&walk.third){walk.dist=clamp(walk.dist*(e.deltaY>0?1.1:0.9),2,14);}},{passive:true});
 addEventListener('keydown',(e)=>{walk.keys[e.code]=true;if(e.target.tagName==='INPUT')return;
  if(walk.on&&(e.code==='Space'||e.code.startsWith('Arrow')))e.preventDefault();
- if(e.code==='Escape'&&walk.on&&!isTouch&&!document.pointerLockElement&&!window.__gamePause){exitWalk();}
+ if(e.code==='Escape'&&walk.on&&!window.__gamePause){exitWalk();}
  else if(e.code==='KeyK'){snapReq=true;}
  else if(e.code==='KeyF'){walk.on?exitWalk():enterWalk(curSpawn());}else if(e.code==='KeyV'&&walk.on){walk.third=!walk.third;walk.pitch=walk.third?-0.28:-0.05;setWalkHelp();}
  else if(e.code==='Space'&&walk.on&&walk.grounded){walk.vy=4.4;walk.grounded=false;}
@@ -2397,9 +2392,11 @@ addEventListener('keyup',(e)=>{walk.keys[e.code]=false;});
  st.addEventListener('pointerdown',(e)=>{sid=e.pointerId;st.setPointerCapture(e.pointerId);});
  st.addEventListener('pointermove',(e)=>{if(e.pointerId!==sid)return;const r=st.getBoundingClientRect();let x=(e.clientX-r.left-60)/50,y=(e.clientY-r.top-60)/50;const l=Math.hypot(x,y);if(l>1){x/=l;y/=l;}walk.stick.x=x;walk.stick.y=y;knob.style.transform=`translate(${x*40}px,${y*40}px)`;});
  const end=(e)=>{if(e.pointerId!==sid)return;sid=null;walk.stick.x=walk.stick.y=0;knob.style.transform='';};st.addEventListener('pointerup',end);st.addEventListener('pointercancel',end);
- renderer.domElement.addEventListener('pointerdown',(e)=>{if(walk.on&&isTouch){lid=e.pointerId;lx=e.clientX;ly=e.clientY;}});
- renderer.domElement.addEventListener('pointermove',(e)=>{if(walk.on&&isTouch&&e.pointerId===lid){walk.yaw-=(e.clientX-lx)*0.005;walk.pitch=clamp(walk.pitch-(e.clientY-ly)*0.005,-1.2,walk.third?0.5:1.2);lx=e.clientX;ly=e.clientY;}});
- renderer.domElement.addEventListener('pointerup',(e)=>{if(e.pointerId===lid)lid=null;});})();
+ const cv=renderer.domElement;
+ cv.addEventListener('pointerdown',(e)=>{if(!walk.on||window.__gamePause||lid!=null||(e.pointerType==='mouse'&&e.button!==0&&e.button!==2))return;lid=e.pointerId;lx=e.clientX;ly=e.clientY;try{cv.setPointerCapture(e.pointerId);}catch(_){}document.body.classList.add('looking');});
+ cv.addEventListener('pointermove',(e)=>{if(!walk.on||e.pointerId!==lid)return;const k=e.pointerType==='mouse'?0.004:0.005;walk.yaw-=(e.clientX-lx)*k;walk.pitch=clamp(walk.pitch-(e.clientY-ly)*k,walk.third?-1.2:-1.3,walk.third?0.5:1.3);lx=e.clientX;ly=e.clientY;});
+ const lend=(e)=>{if(e.pointerId!==lid)return;lid=null;document.body.classList.remove('looking');};cv.addEventListener('pointerup',lend);cv.addEventListener('pointercancel',lend);
+ cv.addEventListener('contextmenu',(e)=>{if(walk.on)e.preventDefault();});})();
 function surfaceAt(x,z){if(nearPath(x,z,1.6))return 'gravel';if(inZone(x,z,0))return 'stone';return 'grass';}
 function updateWalk(dt){const k=walk.keys;let fx=(k.KeyW||k.ArrowUp?1:0)-(k.KeyS||k.ArrowDown?1:0)-walk.stick.y,sx=(k.KeyD||k.ArrowRight?1:0)-(k.KeyA||k.ArrowLeft?1:0)+walk.stick.x;
  const run=k.ShiftLeft||k.ShiftRight;const sp=(run?7:3.2)*walk.s;const f=new V3(-Math.sin(walk.yaw),0,-Math.cos(walk.yaw)),r=new V3(Math.cos(walk.yaw),0,-Math.sin(walk.yaw));

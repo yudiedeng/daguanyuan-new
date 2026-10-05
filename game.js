@@ -1047,7 +1047,7 @@ function storyIntro(key) {
     introEl.classList.add('out'); setTimeout(() => { introEl.hidden = true; introEl.classList.remove('out'); }, 1700);
     requestAnimationFrame(() => { cv.style.transition = 'filter 3.4s ease-out'; cv.style.filter = ''; });
     setTimeout(() => { lidsEl.hidden = true; cv.style.transition = ''; pauseGame(false); renderStory();
-      flash(isTouch ? L('左下角摇杆走路 · 跟着光柱走', 'Use the stick to walk · follow the beam of light') : L('WASD 走路 · 鼠标转头 · 跟着光柱走', 'WASD to walk · mouse to look · follow the beam of light')); }, 3700);
+      flash(isTouch ? L('左下角摇杆走路 · 跟着光柱走', 'Use the stick to walk · follow the beam of light') : L('WASD 走路 · 拖动鼠标转头 · 跟着光柱走', 'WASD to walk · drag to look · follow the beam of light')); }, 3700);
   };
   introEl.hidden = false; introEl.classList.remove('out'); introEl.onclick = next; addEventListener('keydown', onKey, true); next();
 }
@@ -1130,7 +1130,7 @@ function pauseGame(on) { window.__gamePause = on; if (on) { walk.keys = {}; walk
 let modalDone = null, modalPaint = null;
 /* html 为返回 HTML 的函数，切换语言时可重绘；after 在每次绘制后绑定事件 */
 function openModal(html, onDone, after) {
-  pauseGame(true); walk.keys = {}; if (document.pointerLockElement) document.exitPointerLock();
+  pauseGame(true); walk.keys = {};
   modalPaint = () => { scrollEl.innerHTML = txt(html); const n = $('g-next'); if (n) n.onclick = closeModal; if (after) after(); };
   modalPaint(); modalEl.hidden = false; modalDone = onDone; promptEl.hidden = true;
   const n = $('g-next'); if (n) setTimeout(() => n.focus(), 50);
@@ -1138,14 +1138,7 @@ function openModal(html, onDone, after) {
 function closeModal() {
   modalEl.hidden = true; pauseGame(false); const f = modalDone; modalDone = null;
   if (f) f(); renderQuest();
-  /* 先跑完回调再锁鼠标：回调里常常紧接着弹下一页或回到选人界面，那时不该锁 */
-  if (walk.on && !isTouch && modalEl.hidden && startEl.hidden) D.renderer.domElement.requestPointerLock?.();
 }
-/* 锁定是异步的：请求发出后、生效前若又弹了窗，openModal 那时解不了锁，生效后光标就没了、选项也点不中。
-   所以锁一生效就检查一遍，有弹窗或选人界面开着就立刻放开 */
-document.addEventListener('pointerlockchange', () => {
-  if (document.pointerLockElement && (!modalEl.hidden || !startEl.hidden)) document.exitPointerLock();
-});
 const toastEl = $('toast'); let flashT = 0;
 function flash(msg) { toastEl.innerHTML = `<b>${esc(msg)}</b>`; toastEl.style.opacity = 1; clearTimeout(flashT); flashT = setTimeout(() => toastEl.style.opacity = 0, 2600); }
 let actx = null;
