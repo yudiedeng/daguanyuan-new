@@ -783,7 +783,7 @@ const PROPS={
  // 为 Blender 程序化建模（blender/scripts/sites/yihong_garden.py）；两丛花池旁各立一块太湖石；东南角溪边两只仙鹤；两边游廊下挂“各色笼子，各色仙禽异鸟”；
  // 院门外竹篱花障编就的月洞门（模型里原来贴墙的竹篱藏掉）。仙鹤、鸟笼、月洞门、牡丹为 Tripo 生成（tools/props.json）
  yihong:[{f:'yh_haitang',p:[5.3,0.55,-0.85],h:6.6,ry:0.5},{f:'yh_bajiao',p:[-5.35,0.55,-0.9],h:5.0,ry:2.6},
-   {f:'hushi',p:[-7.75,0.05,-1.05],h:2.1,ry:1.1,r:0.5},{f:'hushi',p:[7.55,0.05,-1.7],h:1.5,ry:3.6,r:0.4},
+   {f:'hushi',p:[-7.75,0.05,-1.05],h:2.1,ry:1.1,r:0.5,tint:'#8d9189'},{f:'hushi',p:[7.55,0.05,-1.7],h:1.5,ry:3.6,r:0.4,tint:'#8d9189'},
    {f:'xianhe',p:[8.6,0.05,13.0],h:1.45,ry:-2.4},{f:'xianhe2',p:[9.9,0.05,12.6],h:1.5,ry:-0.9},
    ...[[-18.4,-3.6],[-18.4,1.4],[-18.4,6.2],[-18.4,15.9],[18.4,-3.6],[18.4,1.4],[18.4,6.2],[18.4,13.5]].map(([x,z],i)=>({f:i%3===1?'niaolong2':'niaolong',p:[x,2.5,z],h:0.55,ry:i*1.3,hang:3.6})),
    // 竹篱花障编就的月洞门：Blender 程序化建模（yihong_garden.py build_huazhang：竹竿分节、斜编菱格、两圈弯竹箍月洞、蔷薇木香爬满）
@@ -838,11 +838,12 @@ function addProps(L,id,root){if(id==='yihong'){root.traverse(m=>{if(m.isMesh&&/�
   // fit：按模型自身 x、高、z 拉到给定尺寸（米）
  if(q.fit){const sz=new THREE.Box3().setFromObject(o).getSize(new V3());o.scale.set(q.fit[0]/sz.x,q.fit[1]/sz.y,q.fit[2]/sz.z);}else o.scale.setScalar(q.h);
  o.position.set(q.p[0],q.p[1]+(q.plate?0.018:0),q.p[2]);o.rotation.y=q.ry||0;
+ if(q.f==='yh_bajiao')o.traverse(m=>{if(m.isMesh&&/芭蕉枯叶/.test(m.name)){m.visible=false;return;}/* 枯叶鞘贴在茎上成了几块棕方片，去掉 */if(!m.isMesh||!/芭蕉茎/.test(m.name))return;m.geometry.computeBoundingBox();const b=m.geometry.boundingBox,top=m.position.y+m.scale.y*b.max.y;m.scale.y=top/(b.max.y-b.min.y);m.position.y=-m.scale.y*b.min.y;});  // 芭蕉模型的假茎底离原点 0.13（放大后悬空 0.6 米），往下拉长到地面
  if(q.ground){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));o.position.y=height(w.x,w.z)-root.position.y-0.03;}
  if(q.panels){root.updateMatrixWorld(true);const [a,b]=q.panels,c=Math.cos(q.ry||0),sn=Math.sin(q.ry||0);for(const sd of[-1,1]){const u=sd*(a+b)/2,w=root.localToWorld(new V3(q.p[0]+u*sn,0,q.p[2]+u*c));const top=root.position.y+o.position.y+q.h;colAdd({x:w.x,z:w.z,c,s:sn,hx:0.15,hz:(b-a)/2,top,bot:top-q.h-1,walk:false});}}  // 门洞两边的花障挡人（模型宽度沿局部 z）
 
  if(q.plate){const r=q.plate,pl=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[r*0.55,0],[r*0.6,0.006],[r*0.72,0.012],[r,0.03],[r*1.02,0.032],[r*0.98,0.028],[r*0.7,0.018],[0,0.018]].map(([a,b])=>new THREE.Vector2(a,b)),40),plateMat());{const P=pl.geometry.attributes.position,U=pl.geometry.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*r*1.02)+0.5,P.getZ(i)/(2*r*1.02)+0.5);}pl.position.set(q.p[0],q.p[1],q.p[2]);pl.castShadow=pl.receiveShadow=true;root.add(pl);}
- o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(q.matte){m.material=m.material.clone();m.material.metalness=0;m.material.metalnessMap=null;m.material.roughness=1;}/* matte：Tripo 材质的金属度（0.6）让布、木头反射天光发亮，归零 */if(/^(花叶|芭蕉叶|芭蕉老叶|芭蕉枯叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(q.matte){m.material=m.material.clone();m.material.metalness=0;m.material.metalnessMap=null;m.material.roughness=1;}if(q.tint){m.material=m.material.clone();m.material.color.set(q.tint);m.material.metalness=0;m.material.metalnessMap=null;m.material.roughness=0.95;}/* tint：太湖石 Tripo 材质金属度高、反天光发白，压成青灰石色 *//* matte：Tripo 材质的金属度（0.6）让布、木头反射天光发亮，归零 */if(/^(花叶|芭蕉叶|芭蕉老叶|芭蕉枯叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
  if(q.hang){const len=q.hang-q.p[1]-q.h,cord=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,len,5),std('#3a2c22',.9));cord.position.set(q.p[0],q.p[1]+q.h+len/2,q.p[2]);root.add(cord);}
  if(q.box){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));colAdd({x:w.x,z:w.z,c:Math.cos(q.ry||0),s:Math.sin(q.ry||0),hx:q.box[0],hz:q.box[1],top:root.position.y+o.position.y+0.6,bot:root.position.y+o.position.y-0.5,walk:false});}
  if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}
@@ -1367,11 +1368,20 @@ function buildPath(P){
   const steep=hs.map((h,i)=>{const a=Math.max(0,i-5),b=Math.min(m-1,i+5);return h>0.3&&Math.abs(hs[b]-hs[a])/((b-a)*ds)>0.2;});
   for(let i=0;i<m;){if(!steep[i]){i++;continue;}let j=i;while(j<m&&steep[j])j++;if((j-i)*ds>=2)stairs(S2.slice(i,j),hs.slice(i,j),P);i=j;}}}
 /* 第十七回“白石为栏，环抱池沿，石桥三港”：沁芳桥两岸池沿一圈白石栏杆（桥头、园路口留开） */
-function pondRail(){if(!QINFANG)return;const qx=QINFANG.x,qz=QINFANG.z;
+function pondRail(){if(!QINFANG)return;const qx=QINFANG.x,qz=QINFANG.z;const railSeg=(p,q)=>(RAILSEG.push([p[0],p[1],q[0],q[1]]),balustrade(T(0,0,0),p[0],p[1],q[0],q[1],Math.min(height(p[0],p[1]),height(q[0],q[1]))));
  for(const dir of[1,-1]){let prev=null;
   for(let x=qx-30;x<=qx+30;x+=1.5){let bz=null;for(let k=1;k<=22;k+=0.5){const z=qz+dir*k;if(!isWet(x,z)){bz=z+dir*0.9;break;}}
    const ok=bz!==null&&Math.abs(x-qx)>4.5&&Math.abs(bz-qz)>3&&!nearPath(x,bz,1.8)&&height(x,bz)<2.2&&height(x,bz)>0.3;
-   if(!ok){prev=null;continue;}if(prev&&Math.hypot(x-prev[0],bz-prev[1])<3.2)balustrade(T(0,0,0),prev[0],prev[1],x,bz,Math.min(height(prev[0],prev[1]),height(x,bz)));prev=[x,bz];}}}
+   if(!ok){prev=null;continue;}
+   if(prev){const d=Math.hypot(x-prev[0],bz-prev[1]);
+    if(d<3.6)railSeg(prev,[x,bz]);
+    else if(d<14){/* 池岸在这里近乎南北走向，按 x 取的两点隔得远：顺着岸线逐段补点（找水与岸的交界，往岸上退 0.9 米） */
+     const P=[prev],zs=prev[1],n=Math.ceil(Math.abs(bz-zs)/1.4),lo=Math.min(prev[0],x)-3,hi=Math.max(prev[0],x)+3;
+     for(let i=1;i<n;i++){const z=zs+(bz-zs)*i/n;let xs=null;
+      if(isWet(hi,z)){for(let xx=hi;xx>=lo;xx-=0.25)if(!isWet(xx,z)){xs=xx-0.9;break;}}else if(isWet(lo,z)){for(let xx=lo;xx<=hi;xx+=0.25)if(!isWet(xx,z)){xs=xx+0.9;break;}}
+      if(xs!==null&&height(xs,z)>0.3&&height(xs,z)<2.2&&!nearPath(xs,z,1.8))P.push([xs,z]);}
+     P.push([x,bz]);for(let i=1;i<P.length;i++)if(Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1])<3.6)railSeg(P[i-1],P[i]);}}
+   prev=[x,bz];}}}
 function bridge(a,b,type){const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,L=Math.hypot(b[0]-a[0],b[1]-a[1])+2,ry=Math.atan2(b[0]-a[0],b[1]-a[1]),M=T(cx,0,cz,ry);BRIDGES.push({x:cx,z:cz,L,ry,type});
  if(type==='arch'){const A=Math.min(2.8,L*0.16),W=3.6,n=18,base=0.75,r=L*0.33;
   for(let i=0;i<n;i++){const s0=i/n,s1=(i+1)/n,z0=-L/2+s0*L,z1=-L/2+s1*L,y0=base+A*Math.sin(Math.PI*s0),y1=base+A*Math.sin(Math.PI*s1),zc=(z0+z1)/2,yc=(y0+y1)/2,dz=z1-z0,dy=y1-y0,sl=Math.hypot(dz,dy)+0.04,rx=-Math.atan2(dy,dz);
@@ -1430,7 +1440,9 @@ const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9]]:[];
 function inSite(x,z,extra){for(const f of SITE_FP)if(Math.abs(x-f[0])<f[2]&&Math.abs(z-f[1])<f[3])return true;return VIEWSEG_NEW.length>0&&inView(x,z,extra||0,VIEWSEG_NEW);}
 function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(nearStream(x,z,3))return;/* 清溪两岸不种树，叠水露出来 */if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)){TREES[sp].pop();treeAdd(x,z);return;}/* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
 const RC=['#c9c6bc','#d6d3ca','#bdbbb2','#c4c6b6','#aeb59e','#cfcbc0'];
-function rock(x,y,z,sx,sy,sz,c){ROCKS.push({v:Math.floor(rnd()*5),x,y,z,sx,sy,sz,ry:rnd()*6.28,c:c||pick(RC)});if(inSite(x,z)){ROCKS.pop();return;}if(sx>0.5)colAdd({x,z,c:1,s:0,hx:sx*0.8,hz:sz*0.8,top:y+sy*0.9,bot:y-sy});}
+const RAILSEG=[];/* 沁芳池岸栏杆各段：压在栏杆上的山石照常抽随机数（布局不变），只是不放 */
+const nearRail=(x,z,r)=>RAILSEG.some(([ax,az,bx,bz])=>{const dx=bx-ax,dz=bz-az,t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz||1)));return Math.hypot(ax+dx*t-x,az+dz*t-z)<r;});
+function rock(x,y,z,sx,sy,sz,c){ROCKS.push({v:Math.floor(rnd()*5),x,y,z,sx,sy,sz,ry:rnd()*6.28,c:c||pick(RC)});if(inSite(x,z)||nearRail(x,z,Math.max(sx,sz)*0.6+0.25)){ROCKS.pop();return;}if(sx>0.5)colAdd({x,z,c:1,s:0,hx:sx*0.8,hz:sz*0.8,top:y+sy*0.9,bot:y-sy});}
 const PINK=['#f0a0b4','#e88aa2','#f5bccb','#f7c6d2'],APRICOT=['#f29aaa','#ec8497','#f5b3bf','#e0687f']/* 杏花：含苞时红、初开粉，成片远看「如喷火蒸霞」，不能太白 */,PLUM=['#b3303b','#c7424c','#a02835','#d0505a'],HAITANG=['#e79aab','#f2b8c2','#dd8599'],PEAR=['#fbfaf4','#f3f5ea','#f7f7f0'];
 const GREENS=['#6a8a42','#5b7d3a','#7a9a4c','#648540','#86a150'];
 
