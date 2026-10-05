@@ -140,11 +140,12 @@ node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[
 # 蘅芜苑按 .blend 原样重导（玲珑山石原来只剩 13% 的面）：
 #   python3 blender/scripts/web/bake_court.py blender/hengwu.blend hw /tmp/hw.glb 10
 #   node blender/scripts/web/pack_glb.mjs /tmp/hw.glb models/b/hengwu.wasm models/b/hengwu.wasm - 0.0004
-# 然后依次执行下面四步
+# 然后依次执行下面五步
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
 node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-7.93,4.72,0.77,7.93,10.3,1.75,"青石|水磨砖"]]'   # 清厦室内露出的外壳槛墙内侧（青砖），室内另贴白灰墙
+node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-0.95,-16,3.3,0.95,-12.5,4.1,"灰瓦"]]'   # 墙帽灰瓦穿过院门楼，在匾上露出一排圆瓦当：剪掉两门垛之间这一截
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 # 稻香村正房明间：门板剪掉后残留在门洞里的横带也剪掉，另由 daoxiang_men 补两扇敞开的板门（scripts/sites/daoxiang_door.py）
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.62,12.05,0.42,-3.38,12.55,2.52,"旧木|本色木|描金"]]'
