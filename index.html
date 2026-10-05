@@ -1494,15 +1494,18 @@ function buildRill(){const y0=Z.xiaoxiang.y+0.1-0.085,OX=-82+MV.xiaoxiang[0],OZ=
     // 水面起伏：顺流（沿 s）滚动的噪声，算出法线
     vec2 p1=vec2(s*0.42-t*sp*0.24,c*0.09+0.2),p2=vec2(s*0.83-t*sp*0.43,c*0.17+0.55);const float e=0.004;
     float h0=hf(p1,p2),hx=hf(p1+vec2(e,0.0),p2+vec2(e*2.0,0.0)),hy=hf(p1+vec2(0.0,e),p2+vec2(0.0,e*2.0));
-    vec3 N=normalize(vec3(-(hx-h0)*1.6,1.0,-(hy-h0)*1.6));
+    vec3 N=normalize(vec3(-(hx-h0)*3.0,1.0,-(hy-h0)*3.0));
     float L=clamp(length(gSunCol)*0.55,0.0,1.1)+0.2;vec3 V=normalize(cameraPosition-vW),R=reflect(-V,N);float fr=0.03+0.97*pow(1.0-max(dot(N,V),0.0),5.0);
     // 低角度看去映的多是两岸竹影，往上才是天光
     vec3 refl=mix(vec3(0.05,0.09,0.06),vec3(0.5,0.6,0.66),smoothstep(0.05,0.7,R.y))*L,body=vec3(0.025,0.06,0.05)*L;
     float spec=pow(max(dot(R,normalize(gSunDir)),0.0),160.0)*2.5;
     float n3=texture2D(gNoise,vec2(s*2.2-t*sp*1.5,c*0.5)).b;
-    float rf=0.0;for(int i=0;i<8;i++){float d=(s-rif[i])/0.35;rf=max(rf,exp(-d*d));}
+    float rf=0.0;for(int i=0;i<8;i++){float d=(s-rif[i])/0.5;rf=max(rf,exp(-d*d));}
+    // 顺流漂下的白条纹与小水泡
+    float st=texture2D(gNoise,vec2(s*0.09-t*sp*0.065,c*0.42+0.13)).r,st2=texture2D(gNoise,vec2(s*0.2-t*sp*0.15,c*0.85+0.71)).a,bb=texture2D(gNoise,vec2(s*1.4-t*sp*1.0,c*0.55+0.3)).b;
+    float drift=smoothstep(0.62,0.7,st)*0.5+smoothstep(0.66,0.73,st2)*0.45+smoothstep(0.78,0.84,bb)*0.6;
     float foam=clamp(rf*smoothstep(0.42,0.7,h0*0.6+n3*0.6)+fall*smoothstep(0.3,0.65,n3+0.15),0.0,1.0);
-    vec3 col=mix(body,refl,clamp(fr*1.4,0.0,0.75))+gSunCol*spec*0.5;col*=mix(1.0,0.6,smoothstep(0.7,1.0,abs(c)));col=mix(col,vec3(0.85,0.9,0.88)*L,foam*0.85);
+    vec3 col=mix(body,refl,clamp(fr*1.4,0.0,0.75))+gSunCol*spec*0.5;col*=mix(1.0,0.6,smoothstep(0.7,1.0,abs(c)));col=mix(col,vec3(0.85,0.9,0.88)*L,clamp(foam*0.95+drift*0.55,0.0,1.0));
     float a=(0.9+0.1*foam)*smoothstep(1.0,0.86,abs(c));
     gl_FragColor=vec4(col,a);}`});
  const mesh=new THREE.Mesh(g,m);mesh.renderOrder=2;mesh.frustumCulled=false;scene.add(mesh);}
@@ -1748,12 +1751,12 @@ function buildTerrain(){
  g.computeVertexNormals();const nrm=g.attributes.normal;const cols=new Float32Array(p.count*3);
  for(let i=0;i<p.count;i++){const h=p.getY(i);const wet=sstep(0.62,0.12,h);const slope=1-nrm.getY(i);cols[i*3]=wet;cols[i*3+1]=clamp((slope-0.12)*2.2,0,1);/* 坡陡才露石：45° 坡仍以草为主，近 60° 才成石壁（“翠嶂”“青山”） */cols[i*3+2]=sstep(2,9,h);}
  g.setAttribute('color',new THREE.BufferAttribute(cols,3));
- const TU=window.GTU={tGA:{value:null},tGN:{value:null},tSA:{value:null},tRA:{value:null},tRN:{value:null},tReady:{value:0}};
- {const L=new THREE.TextureLoader();let n=0;const need={tGA:['tex/g_a.jpg',1],tGN:['tex/g_n.jpg',0],tSA:['tex/s_a.jpg',1],tRA:['tex/r_a.jpg',1],tRN:['tex/r_n.jpg',0]};
-  for(const [k,[u,srgb]] of Object.entries(need))L.load(u,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=ANISO;if(srgb)t.colorSpace=THREE.SRGBColorSpace;TU[k].value=t;if(++n===5)TU.tReady.value=1;},undefined,()=>console.warn('ground tex missing',u));}
+ const TU=window.GTU={tGA:{value:null},tGN:{value:null},tSA:{value:null},tRA:{value:null},tRN:{value:null},tLA:{value:null},tReady:{value:0}};
+ {const L=new THREE.TextureLoader();let n=0;const need={tGA:['tex/g_a.jpg',1],tGN:['tex/g_n.jpg',0],tSA:['tex/s_a.jpg',1],tRA:['tex/r_a.jpg',1],tRN:['tex/r_n.jpg',0],tLA:['tex/zhu_litter.jpg',1]};
+  for(const [k,[u,srgb]] of Object.entries(need))L.load(u,t=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=ANISO;if(srgb)t.colorSpace=THREE.SRGBColorSpace;TU[k].value=t;if(++n===6)TU.tReady.value=1;},undefined,()=>console.warn('ground tex missing',u));}
  const mat0=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.95,vertexColors:true});mat0.onBeforeCompile=(sh)=>{Object.assign(sh.uniforms,TU,{gHmap:G.hmap,gHInfo:G.hinfo});};
  const mat=patch(mat0,{key:'terr2',snowLo:'0.5',snowHi:'0.85',
-  fHead:'uniform sampler2D tGA,tGN,tSA,tRA,tRN,gHmap;uniform vec4 gHInfo;uniform float tReady;\nfloat hbw(float a,float ha,float b,float hb){float d=0.18;float m=max(ha+a,hb+b)-d;float wa=max(ha+a-m,0.0),wb=max(hb+b-m,0.0);return wb/(wa+wb+1e-4);}\n',
+  fHead:'uniform sampler2D tGA,tGN,tSA,tRA,tRN,tLA,gHmap;uniform vec4 gHInfo;uniform float tReady;\nfloat hbw(float a,float ha,float b,float hb){float d=0.18;float m=max(ha+a,hb+b)-d;float wa=max(ha+a-m,0.0),wb=max(hb+b-m,0.0);return wb/(wa+wb+1e-4);}\n',
   fAlbedo:`vec2 tuv1=vWPos.xz/2.7,tuv2=rot2(vWPos.xz,1.1)/7.9+0.37;float tmix=smoothstep(0.3,0.7,texture2D(gNoise,vWPos.xz*0.031).b);float tRk=0.0;vec2 tRuv=vWPos.xz/3.6;
    {vec3 m=meadow(vWPos.xz)*0.95;float n1=texture2D(gNoise,vWPos.xz*0.093).g,n2=texture2D(gNoise,vWPos.xz*0.41).r;
    vec3 soil=vec3(0.19,0.15,0.1)*(0.8+0.4*n2),mud=vec3(0.09,0.09,0.07),rockc=vec3(0.26,0.25,0.22)*(0.8+0.4*n2),moss=vec3(0.1,0.15,0.06);
@@ -1768,7 +1771,7 @@ function buildTerrain(){
     c=mix(grassG,soilC,wS);
     c=mix(c,mix(soilC*0.55,moss*1.3*(0.6+0.8*gH),0.35+0.3*n2),vColor.r*0.6);
     {float can=texture2D(gHmap,(vWPos.xz-gHInfo.xy+0.5)/gHInfo.zw).b;float mossy=smoothstep(0.35,0.75,texture2D(gNoise,vWPos.xz*0.07).r);vec3 under=mix(soilC*vec3(0.62,0.6,0.55),moss*vec3(1.3,1.35,1.1)*(0.7+0.6*gH),mossy);c=mix(c,under*(0.85+0.3*n2),can*0.9);}
-    {float lit=texture2D(gHmap,(vWPos.xz-gHInfo.xy+0.5)/gHInfo.zw).a;float n4=texture2D(gNoise,vWPos.xz*0.37).r,n5=texture2D(gNoise,vWPos.xz*3.7+0.3).g*0.55+texture2D(gNoise,rot2(vWPos.xz,0.9)*0.83).b*0.45;vec3 dirt=vec3(0.15,0.11,0.075)*(0.75+0.5*n4),fall=mix(vec3(0.34,0.27,0.15),vec3(0.22,0.18,0.1),n5);c=mix(c,mix(dirt,fall,smoothstep(0.42,0.72,n5)*0.75),lit*0.95);}  // 竹下泥土与落叶
+    {float lit=texture2D(gHmap,(vWPos.xz-gHInfo.xy+0.5)/gHInfo.zw).a;lit=clamp(lit*1.3+(texture2D(gNoise,vWPos.xz*0.21).r-0.5)*0.7,0.0,1.0);vec3 l1=texture2D(tLA,vWPos.xz/2.0).rgb,l2=texture2D(tLA,rot2(vWPos.xz,1.27)/2.3+0.37).rgb;vec3 lc=mix(l1,l2,smoothstep(0.35,0.65,texture2D(gNoise,vWPos.xz*0.05).g))*(0.72+0.25*n2);c=mix(c,lc,lit);}  // 竹下泥土与落叶（tex/zhu_litter.jpg，Blender 渲）
     c=mix(c,soilC*0.38,smoothstep(0.2,-0.45,vWPos.y));
     vec3 rA=texture2D(tRA,tRuv).rgb;float rH=texture2D(tRN,tRuv).b;tRk=hbw(1.0-vColor.g,gH,smoothstep(0.25,0.7,vColor.g),rH);
     c=mix(c,rA*vec3(0.62,0.6,0.55),tRk);c=mix(c,c*vec3(0.85,0.96,0.85),vColor.b);
