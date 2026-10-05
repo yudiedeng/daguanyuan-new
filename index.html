@@ -2338,9 +2338,9 @@ function scatterFlora(){const rr=mulberry32(7771);const items=[];const pick2=(a)
   const add=(sp,x,z,n,rad)=>{const D=FLORA_DEF[sp];for(let i=0;i<n;i++){const a=r3()*6.283,d=Math.sqrt(r3())*rad;items.push({sp,v:D.vars[Math.floor(r3()*D.vars.length)],x:x+Math.cos(a)*d,y:y+0.01,z:z+Math.sin(a)*d,ry:r3()*6.283,s:(D.s[0]+r3()*(D.s[1]-D.s[0]))*0.85,h:r3()});}};
   const mix=()=>{const u=r3();return u<0.34?'celandine_01':u<0.62?'flower_ursinia':u<0.86?'flower_empodium':'fern_02';};
   const line=(x0,z0,x1,z1,step,p,rad)=>{const L=Math.hypot(x1-x0,z1-z0);for(let t=0;t<L;t+=step*(0.6+r3()*0.8)){if(r3()>p)continue;const f=t/L;add(mix(),x0+(x1-x0)*f,z0+(z1-z0)*f,1+Math.floor(r3()*3),rad);}};
-  // 田埂（畦面外 0.45 m 那道土坎）：菜畦外框各收 0.45 m
-  for(const [a,b,c,d] of[[-131,-113.2,-50,-36.7],[-106.2,-93.5,-53.8,-36.7],[-92.5,-79,-53.8,-36.7],[-88.5,-79,-68.4,-55.2]]){const x0=a+0.45,x1=b-0.45,z0=c+0.45,z1=d-0.45;
-   line(x0,z0,x1,z0,0.9,0.6,0.18);line(x0,z1,x1,z1,0.9,0.6,0.18);line(x0,z0,x0,z1,0.9,0.6,0.18);line(x1,z0,x1,z1,0.9,0.6,0.18);}
+  // 田埂（畦面外 0.45 m 那道土坎）：菜畦外框各收 0.2 m
+  for(const [a,b,c,d] of[[-131,-113.2,-50,-36.7],[-106.2,-93.5,-53.8,-36.7],[-92.5,-79,-53.8,-36.7],[-88.5,-79,-68.4,-55.2]]){const x0=a+0.2,x1=b-0.2,z0=c+0.2,z1=d-0.2;
+   line(x0,z0,x1,z0,0.45,0.9,0.25);line(x0,z1,x1,z1,0.45,0.9,0.25);line(x0,z0,x0,z1,0.45,0.9,0.25);line(x1,z0,x1,z1,0.45,0.9,0.25);}
   // 院墙外墙根（让开两道柴门）
   line(-127.5,-58.7,-111.4,-58.7,1.0,0.75,0.35);line(-106.6,-58.7,-90.8,-58.7,1.0,0.75,0.35);line(-129,-79.8,-129,-60.1,1.0,0.75,0.35);line(-127.5,-81.5,-90.8,-81.5,1.0,0.75,0.35);
   line(-89.6,-80,-89.6,-75.2,1.0,0.75,0.3);line(-89.6,-70.8,-89.6,-60,1.0,0.75,0.3);
