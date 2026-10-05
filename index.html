@@ -1830,6 +1830,10 @@ function leafMat(map,kind,ph){const m=a2c(patch(new THREE.MeshStandardMaterial({
 function makeInst(geo,mat,list,fn,shadow,layer){const m=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));const M4=new THREE.Matrix4(),c=new THREE.Color();
  list.forEach((it,i)=>{fn(M4,it);m.setMatrixAt(i,M4);c.set(it.c||it.tint||'#ffffff');m.setColorAt(i,c);});if(!list.length)m.count=0;
  m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;m.castShadow=shadow!==false;m.receiveShadow=true;m.frustumCulled=false;if(layer)m.layers.set(layer);scene.add(m);return m;}
+/* 分块实例：按 cell 米见方的格子拆成多块，每块算包围球（再放宽 pad 米给风摆），开视锥剔除——
+   看不见的块（画面外、阴影相机外、湖面倒影外）整块不画，画出来的东西与不分块完全一样。返回各块数组。 */
+function makeInstC(geo,mat,list,fn,shadow,cell,pad){const C=new Map();for(const it of list){const k=Math.floor(it.x/cell)+','+Math.floor(it.z/cell);if(!C.has(k))C.set(k,[]);C.get(k).push(it);}
+ const out=[];for(const l of C.values()){const m=makeInst(geo,mat,l,fn,shadow);m.computeBoundingSphere();m.boundingSphere.radius+=pad||0;m.frustumCulled=true;out.push(m);}return out;}
 function buildInstances(){
  const BARKP=patch(std('#c6c7c4',.93,{map:PHOTO.bark.map,normalMap:PHOTO.bark.nrm,normalScale:new THREE.Vector2(1.4,1.4)}),{key:'bap',snowLo:'0.4',snowHi:'0.85'});
  const LEAFTEX={broad:LEAF_BROAD,blossom:LEAF_BLOSSOM,pine:LEAF_PINE,willow:LEAF_WILLOW,bush:LEAF_BROAD,gui:LEAF_BROAD,bai:LEAF_PINE,sangyu:LEAF_BROAD,jinzhe:LEAF_BROAD};
@@ -1864,8 +1868,8 @@ function buildInstances(){
    const P=[];for(let x=x0;x<=x1;x+=1.8)for(let z=z0;z<=z1;z+=1.8){const cx=x+R(-0.4,0.4),cz=z+R(-0.4,0.4);let n=0;const l=SH.get(Math.floor(cx/3)+','+Math.floor(cz/3))||[];for(let q=0;q<l.length;q+=2)if(Math.hypot(l[q]-cx,l[q+1]-cz)<2.2)n++;
     if(Math.abs(cx-XQ.x)>XQ.hw+12||Math.abs(cz-XQ.z)>XQ.hd+12||RILLD(cx,cz)<1.45)continue;  // 立体落叶只铺潇湘馆一带，远处靠贴图
     if(n<2||![[0,0],[0.8,0.8],[-0.8,0.8],[0.8,-0.8],[-0.8,-0.8]].every(([a,b])=>ok(cx+a,cz+b)))continue;P.push({x:cx,y:height(cx,cz)-0.01,z:cz,ry:rnd()*6.283,s:R(0.85,1.1)});}
-   const lm2=new THREE.MeshStandardMaterial({map:ZHU.lit.map,roughness:.85,side:THREE.DoubleSide});const li=makeInst(ZHU.lit.geo,lm2,P,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,1,it.s)),false);}
-  for(let v=0;v<6;v++){const L=STALKS.filter((it,i)=>(i*7+(i>>3))%6===v);const a=makeInst(ZHU[v].culm,cm,L,setZ);a.customDepthMaterial=cd;const b=makeInst(ZHU[v].leaf,lm,L.map(it=>({...it,c:it.lc||'#ffffff'})),setZ);b.customDepthMaterial=ldm;}
+   const lm2=new THREE.MeshStandardMaterial({map:ZHU.lit.map,roughness:.85,side:THREE.DoubleSide});makeInstC(ZHU.lit.geo,lm2,P,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,1,it.s)),false,16,0.5);}
+  for(let v=0;v<6;v++){const L=STALKS.filter((it,i)=>(i*7+(i>>3))%6===v);for(const m of makeInstC(ZHU[v].culm,cm,L,setZ,true,16,1.5))m.customDepthMaterial=cd;for(const m of makeInstC(ZHU[v].leaf,lm,L.map(it=>({...it,c:it.lc||'#ffffff'})),setZ,true,16,1.5))m.customDepthMaterial=ldm;}
  }else{
  const st=makeInst(bs,patch(std('#ffffff',.5,{map:STALK}),{key:'bst',vWorld:sw}),STALKS,setQ);st.customDepthMaterial=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),{key:'bstd',vWorld:sw});
  const parts=[];for(let i=0;i<3;i++){const p=new THREE.PlaneGeometry(1.35,1.0);p.translate(0,-0.28,0);p.rotateY(i*Math.PI/3);parts.push(p);}
