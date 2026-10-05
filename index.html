@@ -2092,9 +2092,12 @@ function pushOut(p,feet){const r=0.3*walk.s;const k0=Math.floor(p.x/CELL),k1=Mat
   if(d<r){let nx,nz,pen;if(d>1e-4){nx=ox/d;nz=oz/d;pen=r-d;}else{const ex=c.hx-Math.abs(lx),ez=c.hz-Math.abs(lz);if(ex<ez){nx=Math.sign(lx)||1;nz=0;pen=ex+r;}else{nx=0;nz=Math.sign(lz)||1;pen=ez+r;}}
    const wx=nx*c.c+nz*c.s,wz=-nx*c.s+nz*c.c;p.x+=wx*pen;p.z+=wz*pen;}}}}
 function setWalkHelp(){document.getElementById('walkhelp').textContent=tr(isTouch?'左下摇杆前行 · 右侧拖动转视角 · 再点“步行”退出':(walk.third?'WASD 前行 · 鼠标转视角 · 滚轮远近 · Shift 快走 · 空格 跳 · V 第一人称 · Esc 退出':'WASD 前行 · 鼠标转头 · Shift 快走 · 空格 跳 · V 第三人称 · Esc 退出'));document.querySelector('#walkhud .dot').hidden=walk.third;}
-function enterWalk(spawn){if(walk.on)return;walk.on=true;document.body.classList.add('walking');card.hidden=true;stopTour();fly=null;controls.enabled=false;let x,z,yaw;
- if(spawn){[x,z,yaw]=spawn;}else{const t=controls.target;x=t.x;z=t.z;const d=new V3().subVectors(controls.target,camera.position);yaw=Math.atan2(-d.x,-d.z);if(hq(x,z)<0.3){x=0;z=108;yaw=Math.PI;}}
- walk.yaw=yaw;walk.charYaw=yaw;walk.pitch=walk.third?-0.28:-0.05;walk.feet=groundAt(x,z,99)[0];walk.pos.set(x,walk.feet,z);walk.vel.set(0,0,0);walk.vy=0;camera.near=0.1;camera.updateProjectionMatrix();
+// 就地落脚：从视角中心向外螺旋找一处不在水里、不在屋里的地面
+function freeSpot(x0,z0){const ok=(x,z)=>{if(hq(x,z)<0.3)return false;const g=groundAt(x,z,hq(x,z))[0];return !blockedAt(x,g+0.9,z);};
+ for(let r=0;r<=40;r+=1.5){const n=r?Math.ceil(r*4):1;for(let i=0;i<n;i++){const a=i/n*Math.PI*2,x=x0+Math.sin(a)*r,z=z0+Math.cos(a)*r;if(ok(x,z))return [x,z];}}return null;}
+function enterWalk(spawn){if(walk.on)return;walk.on=true;document.body.classList.add('walking');card.hidden=true;stopTour();fly=null;controls.enabled=false;let x,z,yaw,feet;
+ if(spawn){[x,z,yaw]=spawn;feet=groundAt(x,z,99)[0];}else{const t=controls.target;const d=new V3().subVectors(controls.target,camera.position);yaw=Math.atan2(-d.x,-d.z);const f=freeSpot(t.x,t.z);if(f){[x,z]=f;feet=groundAt(x,z,hq(x,z))[0];}else{x=0;z=108;yaw=Math.PI;feet=groundAt(x,z,99)[0];}}
+ walk.yaw=yaw;walk.charYaw=yaw;walk.pitch=walk.third?-0.28:-0.05;walk.feet=feet;walk.pos.set(x,walk.feet,z);walk.vel.set(0,0,0);walk.vy=0;camera.near=0.1;camera.updateProjectionMatrix();
  document.getElementById('walkhud').hidden=false;document.getElementById('btn-walk').setAttribute('aria-pressed','true');setWalkHelp();
  if(isTouch)document.getElementById('stick').hidden=false;else renderer.domElement.requestPointerLock?.();
  GRASS.R=Math.max(GRASS.R,[22,30,40][Q]);updateWalk(0.016);}
@@ -2106,7 +2109,7 @@ addEventListener('mousemove',(e)=>{if(walk.on&&document.pointerLockElement){walk
 addEventListener('wheel',(e)=>{if(walk.on&&walk.third){walk.dist=clamp(walk.dist*(e.deltaY>0?1.1:0.9),2,14);}},{passive:true});
 addEventListener('keydown',(e)=>{walk.keys[e.code]=true;if(e.target.tagName==='INPUT')return;
  if(walk.on&&(e.code==='Space'||e.code.startsWith('Arrow')))e.preventDefault();
- if(e.code==='KeyF'){walk.on?exitWalk():enterWalk(curSpawn());}else if(e.code==='KeyV'&&walk.on){walk.third=!walk.third;walk.pitch=walk.third?-0.28:-0.05;setWalkHelp();}
+ if(e.code==='KeyF'){walk.on?exitWalk():enterWalk(null);}else if(e.code==='KeyV'&&walk.on){walk.third=!walk.third;walk.pitch=walk.third?-0.28:-0.05;setWalkHelp();}
  else if(e.code==='Space'&&walk.on&&walk.grounded){walk.vy=4.4;walk.grounded=false;}
  else if(e.code==='KeyM'){toggleSound();}else if(e.code==='KeyT'){toggleFlow();}else if(e.code==='KeyP'){document.body.classList.toggle('ui-hide');}else if(e.code==='KeyH'){toggleSettings();}});
 addEventListener('keyup',(e)=>{walk.keys[e.code]=false;});
@@ -2290,7 +2293,6 @@ function initUI(){PLACES.forEach(p=>{const b=document.createElement('button');b.
 function select(id,doFly,quiet){const p=PLACES.find(q=>q.id===id);current=id;for(const k in btns)btns[k].setAttribute('aria-current',k===id?'true':'false');
  document.getElementById('c-eyebrow').textContent=PN(p,'eyebrow');document.getElementById('c-name').textContent=PN(p,'name');document.getElementById('c-quote').textContent='“'+PN(p,'quote')+'”';document.getElementById('c-text').textContent=PN(p,'text');document.getElementById('c-ch').textContent=tr('见《红楼梦》')+PN(p,'ch');linkEl.hidden=!p.link;card.hidden=false;
  if(doFly)flyTo(p.view);if(!quiet&&tour.on)stopTour();btns[id].scrollIntoView({block:'nearest',inline:'nearest',behavior:reduceMotion?'auto':'smooth'});}
-function curSpawn(){const p=PLACES.find(q=>q.id===current);if(p&&p.spawn)return p.spawn;return null;}
 document.getElementById('card-close').addEventListener('click',()=>{card.hidden=true;});
 const hourEl=document.getElementById('hour');hourEl.addEventListener('input',()=>{hour=parseFloat(hourEl.value);applyTime();});
 const langSeg=document.getElementById('lang-seg');function markLang(){langSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===window.__lang));}
@@ -2303,7 +2305,7 @@ const toast=document.getElementById('toast');let toastT=0;
 const POEM=[['春夜即事','霞绡云幄任铺陈，隔巷蟆更听未真'],['夏夜即事','倦绣佳人幽梦长，金笼鹦鹉唤茶汤'],['秋夜即事','绛芸轩里绝喧哗，桂魄流光浸茜纱'],['冬夜即事','梅魂竹梦已三更，锦罽鹴衾睡未成']];
 document.querySelectorAll('#season-seg button').forEach(b=>b.addEventListener('click',()=>{setSeason(+b.dataset.s);toast.innerHTML='<b>'+(window.__lang==='en'?['Spring','Summer','Autumn','Winter'][season]:'春夏秋冬'[season])+' · '+tr(POEM[season][0])+'</b><span>'+tr(POEM[season][1])+' · '+tr('第二十三回')+'</span>';toast.style.opacity=1;toastT=5;}));
 document.getElementById('btn-sound').addEventListener('click',toggleSound);
-document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
+document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(null);});
 let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
