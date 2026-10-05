@@ -66,5 +66,65 @@
   "prompt": "Chinese white marble garden stone lantern on a tall carved column, square lamp chamber with openings, small pagoda-shaped stone roof with upturned corners and a finial, octagonal lotus base, all white stone",
   "faces": 6000,
   "neg": "color, Japanese, moss, ground plane, text, low quality"
+ },
+ "an_qiaotou": {
+  "prompt": "antique Chinese Ming dynasty everted-end altar table (qiaotou an), long narrow rectangular top with upturned scroll ends, huanghuali rosewood, carved openwork spandrels, slender legs with side stretchers, empty top, isolated furniture",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "quanyi": {
+  "prompt": "antique Chinese horseshoe-back armchair (quanyi) made of mottled Xiangfei spotted bamboo, curved continuous armrest, woven seat, isolated furniture",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "shujia": {
+  "prompt": "tall antique Chinese open bookshelf made of spotted Xiangfei bamboo, seven shelves densely filled with stacks of blue cloth-bound thread-sewn books and scroll boxes, Qing dynasty scholar's study, isolated furniture",
+  "faces": 14000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "qinzhuo": {
+  "prompt": "antique Chinese guqin table, long low black lacquer table with a seven-string guqin zither lying on top, Ming dynasty scholar furniture, isolated",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "huaji": {
+  "prompt": "tall slender antique Chinese spotted bamboo flower stand with a blue and white porcelain pot of orchid plant with long arching leaves on top, isolated",
+  "faces": 8000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "qizhuo": {
+  "prompt": "antique Chinese square game table of huanghuali wood with a weiqi go board on top and two round lidded wooden bowls of black and white stones, isolated furniture",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "guanmaoyi": {
+  "prompt": "antique Chinese official's hat armchair (guanmaoyi) made of mottled Xiangfei spotted bamboo with a dark blue cloth seat cushion, isolated furniture",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "cidun": {
+  "prompt": "Chinese blue and white porcelain garden drum stool with openwork coin pattern and painted lotus scrolls, isolated",
+  "faces": 6000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "jiazichuang": {
+  "prompt": "antique Chinese canopy bed (jiazichuang) of huanghuali wood with carved lattice railings, pale green gauze bed curtains tied back, plain silk quilt and blue cloth pillow, Qing dynasty lady's bedroom, isolated furniture",
+  "faces": 16000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "ta": {
+  "prompt": "antique Chinese daybed couch (ta) made of mottled spotted bamboo with low back and side rails, a blue cloth mattress cushion and a small round bolster, isolated furniture",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "jingtai": {
+  "prompt": "small antique Chinese rosewood dressing table with a folding mirror stand on top and a small famille rose porcelain powder box, Qing dynasty lady's chamber, isolated furniture",
+  "faces": 10000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "xiudun": {
+  "prompt": "antique Chinese embroidered drum stool (xiudun) covered with brocade silk, gilt studs, tassels, isolated",
+  "faces": 6000,
+  "neg": "floor, ground plane, base platform, room, wall, text, people, low quality"
  }
 }
