@@ -46,17 +46,17 @@ for i, (a, b) in enumerate(bays):
         if i in (0, 4):
             K.duobaoge(WOOD, w, 0.36, 3.0, seed=11 + i, back=False)
             K.box(WOOD, -w / 2, -0.05, 3.0, w / 2, 0.05, 3.06)
-            with K.at(0, 0, 3.06):
-                K.lattice_partition(WOOD, w, H - 3.06 - 0.12, paper='碧纱')
+            with K.at(0, 0, 3.06):                                     # 多宝格上：缠枝花卉透雕横披（五彩）
+                K.carved_panel(WOOD, '雕花_chanzhi', w, H - 3.06)
         elif i == 1:
             K.box(WOOD, -w / 2, -0.06, 0, w / 2, 0.06, H, col=True)               # 板壁
             K.box('白灰墙', -w / 2 + 0.08, -0.07, 0.9, w / 2 - 0.08, -0.06, H - 0.1)
             K.box(WOOD, -w / 2 + 0.05, -0.08, 0.86, w / 2 - 0.05, -0.06, 0.92)
             K.scroll(0, -0.07, 3.55, 1.25, 2.55, face=-1, mount='绫裱', paint='美人画')
         elif i == 2:
-            K.luodizhao(WOOD, w, H, shape='round', t=0.1)
+            K.luodizhao(WOOD, w, H, shape='round', t=0.1, fill='雕花_yunfu')       # 圆光罩：流云百蝠
         else:
-            K.luodizhao(WOOD, w, H, shape='oct', t=0.08)
+            K.luodizhao(WOOD, w, H, shape='oct', t=0.08, fill='雕花_songmei')      # 八方罩：岁寒三友
 
 # ---- 西头：卧室。东界镜壁（x=-5.0）：多宝格 + 大穿衣镜门 + 多宝格，上为横披 ----
 XP = -5.0
@@ -68,15 +68,15 @@ for (y0, y1, seed) in ((8.2, 10.0, 21), (11.3, YB, 23)):
             x = -(y1 - y0) / 2 + 0.3 + k * 0.6
             K.box('画绢', x - 0.24, -0.2, 0.1, x + 0.24, -0.19, 0.65)
     with K.at(XP, (y0 + y1) / 2, Z0 + 3.0, 90):
-        K.lattice_partition(WOOD, y1 - y0, H - 3.0 - 0.12, paper='碧纱')
+        K.carved_panel(WOOD, '雕花_bingmei', y1 - y0, H - 3.0)    # 镜壁上部：冰梅透雕
 # 镜门：门轴在南框 y=10.05，关上时镜面朝东；向卧室推开 45°（“西洋机括，可以开合”）
 with K.at(XP, 10.05, Z0, 90 + 45):
     with K.at(0.6, 0, 0):
-        K.mirror(WOOD, w=1.2, h=2.5, frame=0.12, stand=False, col=False, glass='穿衣镜', oval=True)
+        K.mirror('描金', w=1.2, h=2.5, frame=0.12, stand=False, col=False, glass='穿衣镜')   # 方镜、雕框贴金（分镜：玻璃大镜）
 K.col(XP - 0.45, 10.05, Z0, XP, 10.5, Z0 + 2.6)
 K.col(XP - 0.85, 10.45, Z0, XP - 0.4, 10.9, Z0 + 2.6)
 with K.at(XP, 10.65, Z0 + 2.6, 90):
-    K.lattice_partition(WOOD, 1.3, H - 2.6 - 0.12, paper='碧纱')
+    K.carved_panel(WOOD, '雕花_yunfu', 1.3, H - 2.6)              # 镜门上：流云百蝠透雕
 
 # 宝玉的床（填漆床）：靠西山墙，床口朝东
 with K.at(-6.75, 12.7, Z0, 90):
@@ -153,7 +153,7 @@ K.candle_stand(5.4, 9.6, Z0)
 K.lantern(6.3, 11.8, 5.55, drop=0.7)
 # 东间与明间：落地罩（开敞）
 with K.at(5.0, (8.16 + YB) / 2, Z0, 90):
-    K.luodizhao(WOOD, YB - 8.16, H, shape='arch', t=0.07)
+    K.luodizhao(WOOD, YB - 8.16, H, shape='arch', t=0.07, fill='雕花_chanzhi')   # 落地罩：缠枝花卉
 
 # ---- 抱厦：两头各一榻、花几盆景、地毡 ----
 K.carpet('红毡', -1.8, 5.3, 1.8, 7.6, Z0 + 0.012)
@@ -163,6 +163,14 @@ for sx in (-1, 1):
     with K.at(sx * 3.4, 7.45, Z0):
         K.table(WOOD, 0.45, 0.45, 0.95, stretch=True)
         K.penjing(0, 0, 0.95, 0.42)
+
+# ---- 抱厦里一道回纹飞罩，两头落到榻后（层层叠叠，“竟分不出间隔来”） ----
+with K.at(0, 6.45, 3.55):
+    K.carved_panel(WOOD, '雕花_huiwen', 15.6, 4.06 - 3.55, frame=0.05)
+for sx in (-1, 1):
+    with K.at(sx * 4.9, 6.45, Z0):
+        K.carved_panel(WOOD, '雕花_huiwen', 0.5, 3.55 - Z0, frame=0.05)
+    K.col(sx * 4.9 - 0.25, 6.42, Z0, sx * 4.9 + 0.25, 6.48, 3.55)
 
 # ---- 天花、墙面 ----
 K.ceiling(-XG, 8.16, XG, YB, 5.55, cell=0.64)

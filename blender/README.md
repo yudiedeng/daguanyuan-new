@@ -68,6 +68,11 @@ python3 blender/scripts/interiors/build_yihong.py      # 生成陈设 → 存 .b
 node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,y1,z1,"材质正则"],…]'
 ```
 
+- 怡红院透雕：`diao_textures.py` 画 `tex/diao_*.png`（流云百蝠嵌玉、缠枝花卉五彩、岁寒三友、回纹、冰梅，512² 可平铺、透明即镂空）。`kit.py` 里 `carved_panel()` 和 `luodizhao(..., fill='雕花_*')` 用这些材质，`雕花_*` 网格按面朝向自动展 UV（0.5 m 一格），`pack_glb.mjs` 只为 `雕花_*` 保留 UV，网页 `bmat` 按材质名贴图、alphaTest 裁空。
+  ```bash
+  python3 blender/scripts/interiors/diao_textures.py tex
+  python3 blender/scripts/interiors/build_yihong.py
+  ```
 - `kit.py`：构件库（桌案、椅凳、罗汉床、架子床、多宝格、书架、落地罩/圆光罩/八方罩、碧纱橱、屏风、穿衣镜、宫灯、天花、器物）。
 - 碰撞：脚本会从 `col.json[<id>]` 删掉原来的实心房屋块，把墙体、隔断、家具写进 `col.json[<id>_in]`。
 - 网页：`*_in` 模型在园子载完后懒加载；`美人画`、`墨竹图`、`横披`、`对联上/下`、`棋盘`、`碧绿凿花砖` 等材质在网页里贴画布纹理，`穿衣镜` 换成实时反射；进屋时有两盏暖色补光跟着走。
