@@ -45,9 +45,11 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 
 ## 大观楼改样（blender/scripts/sites/）
 
-正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层、整座放大（顶脊约 35 m），全组最高；
+正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层逐层收分、金宝顶（顶脊约 33 m），全组最高；缀锦阁、含芳阁加成三层；
 复道接大观楼首层两山；前面两层白石台基、汉白玉甬路与栏杆、两方水池；屋面全改灰瓦。玉石牌坊、石狮、石灯座是 Tripo 件
-（`models/p/paifang.glb`、`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+（`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+牌坊 `models/p/paifang.glb` 由 `paifang_build.py` 搭白石骨架、挂 Tripo 精雕件（盘龙柱 pf_zhu、镂空螭纹花板 pf_hua、双龙戏珠板 pf_ding）：
+`python3 blender/scripts/sites/paifang_build.py <tripo 原始 glb 目录> /tmp/paifang.glb && node blender/scripts/web/pack_prop.mjs /tmp/paifang.glb models/p/paifang.glb 150000 1024`
 
 ```bash
 python3 blender/scripts/sites/daguan_rebuild.py                      # 只能跑一次（在 daguan_doors.py 之后）
