@@ -192,7 +192,7 @@ const PLACES=[
  {id:'daguan',name:'大观楼',sub:'顾恩思义',eyebrow:'省亲别墅正殿',pos:[0,23,-69],quote:'天上人间诸景备，芳园应锡大观名。',
   text:'正殿匾额“顾恩思义”。玉石牌坊上原题“天仙宝境”，元春改为“省亲别墅”。正楼名“大观楼”，东面飞楼叫“缀锦阁”，西面斜楼叫“含芳阁”。元宵夜元春在这里赐名，命众姊妹题诗。',ch:'第十八回',view:{t:[0,8,-61],c:[26,19,-5]},spawn:[0,-29,Math.PI]},
  {id:'yihong',name:'怡红院',sub:'贾宝玉',eyebrow:'蕉棠两植',pos:[104,12,138],quote:'一边种几本芭蕉，那一边是一树西府海棠。',
-  text:'宝玉取“蕉棠两植”之意题了“红香绿玉”，元春改作“怡红快绿”，这里就叫怡红院。屋里多宝格和穿衣镜重重叠叠，刘姥姥醉后在这里迷了路。屋门开着，可以进去看看。',ch:'第十七回 · 第四十一回',view:{t:[105,2,146],c:[69,28,182]},spawn:GLB?[77,158.5,-Math.PI/2]:[77,148,-Math.PI/2]},
+  text:'宝玉取“蕉棠两植”之意题了“红香绿玉”，元春改作“怡红快绿”，这里就叫怡红院。院外碧桃夹道，穿过竹篱花障的月洞门，粉垣外绿柳周垂；游廊下挂着各色鸟笼，溪边两只仙鹤。屋里多宝格和穿衣镜重重叠叠，刘姥姥醉后在这里迷了路。屋门开着，可以进去看看。',ch:'第十七回 · 第四十一回',view:{t:[105,2,146],c:[69,28,182]},spawn:GLB?[77,158.5,-Math.PI/2]:[77,148,-Math.PI/2]},
  {id:'xiaoxiang',name:'潇湘馆',sub:'林黛玉',eyebrow:'有凤来仪',pos:[-68,12,92],link:true,quote:'里面数楹修舍，有千百竿翠竹遮映。',
   text:'宝玉题“有凤来仪”，后赐名潇湘馆。黛玉说：“我心里想着潇湘馆好，爱那几竿竹子隐着一道曲栏。”院里的游廊、泉沟、鹦鹉架可以进馆细看；湘帘卷起，馆门开着，也可以进屋。',ch:'第十七回 · 第二十三回',view:{t:[-70,3,91],c:[-38,20,124]},spawn:[-50.5,94,Math.PI/2]},
  {id:'huaxu',name:'蓼汀花溆',sub:'港洞 · 折带朱栏板桥',eyebrow:'花溆',pos:[-62.5,4,-101],quote:'忽闻水声潺湲，泻出石洞，上则萝薄垂引，下则落花浮荡。',
@@ -231,7 +231,7 @@ const PLACES_EN={
  daguan:{name:'Grand View Tower',sub:'Mindful of Favour',eyebrow:'Main hall of the visiting villa',quote:'All the wonders of heaven and earth are gathered here; let this fragrant garden be named Grand View.',
   text:'The main hall bears the board “Mindful of Favour, Remembering Duty”. The jade archway first read “Celestial Realm”, which Yuanchun changed to “Villa for the Imperial Visit”. The main tower is the Grand View Tower, with the Brocade Pavilion flying off to the east and the Fragrance Pavilion slanting to the west. On the night of the Lantern Festival Yuanchun named the garden here and had the girls write poems.',ch:'Chapter 18'},
  yihong:{name:'Happy Red Court',sub:'Jia Baoyu',eyebrow:'Plantain and crab-apple',quote:'On one side grew a few plantains; on the other, a Western Palace crab-apple.',
-  text:'From the pairing of plantain and crab-apple Baoyu wrote “Red Fragrance, Green Jade”; Yuanchun changed it to “Happy Red and Delightful Green”, and so it became the Happy Red Court. Inside, curio shelves and a great Western mirror stand layer upon layer — Granny Liu, tipsy, lost her way in here. The doors are open: go in and look around.',ch:'Chapters 17 · 41'},
+  text:'From the pairing of plantain and crab-apple Baoyu wrote “Red Fragrance, Green Jade”; Yuanchun changed it to “Happy Red and Delightful Green”, and so it became the Happy Red Court. Peach blossoms line the path to a moon gate in a flowering bamboo fence; willows droop over the white walls, bird cages hang along the corridors, and two cranes stand by the brook. Inside, curio shelves and a great Western mirror stand layer upon layer — Granny Liu, tipsy, lost her way in here. The doors are open: go in and look around.',ch:'Chapters 17 · 41'},
  xiaoxiang:{name:'Bamboo Lodge',sub:'Lin Daiyu',eyebrow:'The phoenix has come',quote:'Inside were a few neat rooms, screened by thousands of green bamboos.',
   text:'Baoyu inscribed it “The Phoenix Has Come”; later it was named the Bamboo Lodge. Daiyu said: “I like the Bamboo Lodge best — I love the way those bamboos half hide a winding balustrade.” The covered walk, the spring-fed channel and the parrot stand are in the courtyard; the blind is rolled up and the door is open, so you can go inside.',ch:'Chapters 17 · 23'},
  huaxu:{name:'Smartweed Bank and Flowery Harbour',sub:'Grotto · Zigzag bridge with vermilion rails',eyebrow:'Flowery Harbour',quote:'Then came the sound of water babbling out of a rocky grotto, creepers trailing above it and fallen petals drifting below.',
@@ -615,6 +615,8 @@ if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi=
  if(W.includes('g'))wg+='{float gn=texture2D(gNoise,vWPos.xz*0.17+vWPos.y*0.6).a;diffuseColor.rgb*=1.0-0.24*smoothstep(0.5,0.9,gn);}';
  if(wg)o.fAlbedo=(o.fAlbedo||'')+wg;
  patch(m,o);m.name=k;if(e.hide)m.visible=false;BM[k]=m;return m;}
+/* 单座建筑的材质改色（克隆共用材质，不影响别处）。怡红院室内：“五彩销金嵌玉”——槅断木色偏紫红、描金更亮 */
+const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',metal:0.65,rough:0.3}}},BOVC={};
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
@@ -635,7 +637,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
  const one=async d=>{try{const g=await L.loadAsync('models/b/'+(d.file||d.id)+'.wasm');const root=g.scene;
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   for(const {re,at,k} of d.grow||[]){const c=new V3(...at);root.traverse(m=>{if(m.isMesh&&re.test(m.name)){m.position.sub(c).multiplyScalar(k).add(c);m.scale.multiplyScalar(k);}});}
-  root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;
+  root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
   root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);addProps(L,d.id,root);
@@ -702,7 +704,12 @@ let _plateMat=null;function plateMat(){if(_plateMat)return _plateMat;const c=doc
 const PROPS={
  longcui_in:[{f:'foxiang',p:[0,2.62,-8.6],h:1.45},{f:'xianglu',p:[0,2.56,-7.55],h:0.3},{f:'muyu',p:[-1.45,2.08,-6.95],h:0.24},{f:'fenglu',p:[9.7,1.29,-8.12],h:0.5,ry:-Math.PI/2}],  // 佛像、香炉、木鱼、风炉
  ouxiang_in:[{f:'xiepan',p:[0,1.74,-0.97],h:0.1,plate:0.24},{f:'xiepan',p:[3.05,1.74,-0.22],h:0.09,ry:1.2,plate:0.22},{f:'xiepan',p:[-2.02,1.70,2.28],h:0.08,ry:2.5,plate:0.19},{f:'fenglu',p:[-4.3,0.32,5.45],h:0.5,ry:Math.PI/2},{f:'fenglu',p:[4.3,0.32,5.45],h:0.5,ry:-Math.PI/2}],  // 螃蟹、风炉
- daguan_in:[{f:'baozuo',p:[0,2.582,-24.75],h:1.75},{f:'xianglu',p:[0,3.062,-21.75],h:0.6},{f:'hezhu',p:[-3.75,2.122,-22.2],h:1.9},{f:'hezhu',p:[3.75,2.122,-22.2],h:1.9}],  // 宝座、香炉、仙鹤烛台
+ daguan_in:[{f:'baozuo',p:[0,2.582,-8.75],h:1.75},{f:'xianglu',p:[0,3.062,-5.75],h:0.6},{f:'hezhu',p:[-3.75,2.122,-6.2],h:1.9},{f:'hezhu',p:[3.75,2.122,-6.2],h:1.9}],  // 宝座、香炉、仙鹤烛台（正殿改样后前移 16 m）
+ // 大观楼前：玉石牌坊（第十七回“龙蟠螭护，玲珑凿就”）、牌坊两旁石狮、甬路两旁石灯座、正殿阶前铜鼎、池岸湖石；占位与碰撞见 blender/scripts/sites/daguan_rebuild.py
+ daguan:[{f:'paifang',p:[0,0,22],h:12,ry:Math.PI/2},{f:'shishi',p:[-7,0,23.6],h:2.5},{f:'shishi',p:[7,0,23.6],h:2.5},
+   ...[31.5,26.5,17.6].flatMap(z=>[{f:'shideng',p:[-3.35,0,z],h:2.5},{f:'shideng',p:[3.35,0,z],h:2.5}]),
+   {f:'xianglu',p:[-5.2,1.5,7.4],h:1.3},{f:'xianglu',p:[5.2,1.5,7.4],h:1.3},
+   {f:'hushi',p:[-19.2,0,26],h:2.6,ry:0.4},{f:'hushi',p:[19.4,0,30.5],h:2.2,ry:2.1},{f:'hushi',p:[-5.4,0,32.4],h:1.5,ry:1.3},{f:'hushi',p:[5.6,0,24.6],h:1.3,ry:-0.7}],
  luxue_in:[{f:'meiping',p:[1.0,0.362,-2.62],h:1.7},{f:'tielu',p:[2.75,0.35,3.5],h:0.72}],  // 红梅大瓶、烤鹿肉铁炉
  tubi_in:[{f:'yuegong',p:[4.6,1.785,-1.0],h:0.3,ry:-Math.PI/2},{f:'xianglu',p:[4.3,1.785,-1.0],h:0.28,ry:-Math.PI/2}],  // 中秋月供
  aojing_in:[{f:'zhudun',p:[-0.62,0.51,-0.45],h:0.46,ry:0.3},{f:'zhudun',p:[0.62,0.51,-0.45],h:0.46,ry:-0.4}],  // 湘妃竹墩
@@ -722,23 +729,63 @@ const PROPS={
    {f:'jingtai',p:[3.3,0.48,0.35],fit:[0.42,1.5,0.75],ry:Math.PI},
    {f:'xiudun',p:[2.75,0.48,0.35],h:0.44}],
  xiaoxiang_ct:[{f:'hushi',p:[-6.6,0,11.6],h:2.3,ry:0.6,r:0.6},{f:'hushi',p:[-10.9,0.1,9.7],h:1.4,ry:2.2,r:0.4},
-   {f:'yingwu',p:[-4.75,2.0,0.55],h:0.9,ry:0,hang:5.15}],  // 潇湘馆院中太湖石；鹦鹉架——第三十五回黛玉“令将架摘下来，另挂在月洞窗外的钩上”：正房西山墙月洞窗外的廊下，hang 是绳子拴到廊顶的高度
+   {f:'yingwu',p:[-4.75,2.0,0.55],h:0.9,ry:0,hang:5.15}],
+ // 怡红院（第十七回、第二十六回）：“一边种几本芭蕉，那一边乃是一树西府海棠，其势若伞，丝垂翠缕，葩吐丹砂”——西花池芭蕉、东花池海棠
+ // 为 Blender 程序化建模（blender/scripts/sites/yihong_garden.py）；两丛花池旁各立一块太湖石；东南角溪边两只仙鹤；两边游廊下挂“各色笼子，各色仙禽异鸟”；
+ // 院门外竹篱花障编就的月洞门（模型里原来贴墙的竹篱藏掉）。仙鹤、鸟笼、月洞门、牡丹为 Tripo 生成（tools/props.json）
+ yihong:[{f:'yh_haitang',p:[5.3,0.55,-0.85],h:5.6,ry:0.5},{f:'yh_bajiao',p:[-5.35,0.55,-0.9],h:3.9,ry:2.6},
+   {f:'hushi',p:[-7.75,0.05,-1.05],h:2.1,ry:1.1,r:0.5},{f:'hushi',p:[7.55,0.05,-1.7],h:1.5,ry:3.6,r:0.4},
+   {f:'xianhe',p:[9.6,0.05,12.3],h:1.45,ry:-2.1},{f:'xianhe2',p:[8.7,0.05,14.1],h:1.5,ry:-0.7},
+   ...[[-18.4,-3.6],[-18.4,1.4],[-18.4,6.2],[-18.4,15.9],[18.4,-3.6],[18.4,1.4],[18.4,6.2],[18.4,13.5]].map(([x,z],i)=>({f:i%3===1?'niaolong2':'niaolong',p:[x,2.5,z],h:0.55,ry:i*1.3,hang:3.6})),
+   {f:'yuedongmen',p:[-24.6,0,11.25],h:2.9,ry:0,ground:1,panels:[1.25,2.45]},
+   // 院内花木（参考图：满院花木，不是光铺地）：花池脚下月季、牡丹；厢房檐下两条花径；南半院两座卵石镶边的月季花坛；山石边牡丹。
+   // 月季花坛、花径、单丛月季是 Blender 程序化建模（blender/scripts/sites/yihong_garden.py，花瓣叶片贴 yihong_atlas 画的贴图集），牡丹是 Tripo
+   ...[[-6.0,0.06,0.65],[-4.65,0.06,0.7]].map(([x,y,z],i)=>({f:'yh_rosebush',p:[x,y,z],h:0.8+0.1*i,ry:i*2.3})),
+   ...[[4.65,0.06,0.7],[6.0,0.06,0.65],[7.15,0.05,-2.8],[-12.4,0.05,14.3],[12.7,0.05,11.1]].map(([x,y,z],i)=>({f:'huacong_mudan',p:[x,y,z],h:0.8+0.06*(i%3),ry:i*2.1})),
+   {f:'yh_rosebush',p:[-7.0,0.05,-2.5],h:0.95,ry:1.0},
+   {f:'yh_huajing',p:[-7.85,0.04,6.4],h:0.71,ry:Math.PI/2,box:[0.55,2.0]},{f:'yh_huajing',p:[7.85,0.04,6.4],h:0.71,ry:-Math.PI/2,box:[0.55,2.0]},
+   {f:'yh_rosebed',p:[-5.3,0.04,5.4],h:0.94,ry:0,box:[1.7,0.95]},{f:'yh_rosebed',p:[5.3,0.04,5.4],h:0.94,ry:Math.PI,box:[1.7,0.95]},
+   {f:'yh_rosebed',p:[-5.6,0.04,14.7],h:0.94,ry:0.05,box:[1.7,0.95]},{f:'yh_rosebed',p:[4.9,0.04,14.9],h:0.94,ry:-0.08,box:[1.7,0.95]},
+   ...[[-13.6,15.8,1.05],[-9.6,9.9,0.9],[10.2,9.9,0.95],[14.2,15.6,1.1],[-15.4,12.6,0.85],[15.0,12.2,0.9]].map(([x,z,k],i)=>({f:'yh_shrub',p:[x,0.04,z],h:0.9*k,ry:i*1.7})),
+   {f:'yh_huajing',p:[-9.6,0.04,16.45],h:0.71,ry:0,box:[2.0,0.5]},{f:'yh_huajing',p:[10.6,0.04,16.45],h:0.71,ry:0,box:[2.0,0.5]},
+   {f:'xianglu',p:[-2.35,0.05,0.35],h:0.85},{f:'xianglu',p:[2.35,0.05,0.35],h:0.85,ry:Math.PI},  // 台阶前一对铜香炉
+   // 院门外花园（“一径引入，绕着碧桃花”）：碧桃夹道，小径两边各一座月季花坛、一条花径，月洞门脚下月季，院墙根花径，牡丹、湖石点缀
+   ...[[-37.0,5.6,4.6],[-35.5,15.9,5.0],[-27.3,6.0,4.2],[-27.2,16.0,4.4],[-41.5,6.6,4.8],[-41.0,14.6,4.5]].map(([x,z,h],i)=>({f:'yh_bitao',p:[x,0,z],h,ry:i*1.7,ground:1})),
+   {f:'yh_rosebed',p:[-32.0,0,6.3],h:0.94,ry:0.1,ground:1,box:[1.7,0.95]},{f:'yh_rosebed',p:[-31.5,0,16.0],h:0.94,ry:-0.12,ground:1,box:[1.7,0.95]},
+   {f:'yh_huajing',p:[-31.3,0,8.75],h:0.71,ry:0.24,ground:1,box:[2.0,0.5]},{f:'yh_huajing',p:[-31.0,0,13.7],h:0.71,ry:Math.PI+0.2,ground:1,box:[2.0,0.5]},
+   {f:'yh_huajing',p:[-22.2,0,5.4],h:0.71,ry:Math.PI/2,ground:1},{f:'yh_huajing',p:[-22.2,0,16.9],h:0.71,ry:Math.PI/2,ground:1},
+   ...[[-25.3,8.1],[-25.3,14.4],[-23.85,8.4],[-23.85,14.1]].map(([x,z],i)=>({f:'yh_rosebush',p:[x,0,z],h:0.85+0.08*(i%2),ry:i*1.9,ground:1})),
+   {f:'huacong_mudan',p:[-34.7,0,7.9],h:0.85,ry:0.7,ground:1},{f:'huacong_mudan',p:[-36.2,0,12.9],h:0.8,ry:2.2,ground:1},
+   ...[[-29.0,4.0,1.1],[-35.2,18.2,1.0],[-39.6,7.8,1.15],[-25.6,18.6,0.9],[-28.6,18.4,1.05],[-44.0,13.6,1.1],[-23.2,3.9,0.95]].map(([x,z,k],i)=>({f:'yh_shrub',p:[x,0,z],h:0.9*k,ry:i*1.3,ground:1})),
+   {f:'yh_bitao',p:[-45.2,0,11.8],h:4.4,ry:0.3,ground:1},
+   {f:'yh_rosebed',p:[-36.6,0,2.9],h:0.94,ry:0.3,ground:1,box:[1.7,0.95]},{f:'yh_rosebed',p:[-25.8,0,2.0],h:0.94,ry:-0.2,ground:1,box:[1.7,0.95]},{f:'yh_rosebed',p:[-44.0,0,17.6],h:0.94,ry:0.9,ground:1,box:[1.7,0.95]},
+   {f:'yh_huajing',p:[-31.5,0,19.6],h:0.71,ry:-0.08,ground:1,box:[2.0,0.5]},{f:'yh_huajing',p:[-31.0,0,0.6],h:0.71,ry:0.05,ground:1,box:[2.0,0.5]},
+   ...[[-33.2,1.4,1.0],[-22.6,0.8,0.95],[-38.8,19.8,1.1],[-24.2,20.4,0.9],[-46.0,15.4,1.05],[-38.5,-0.4,0.9]].map(([x,z,k],i)=>({f:'yh_shrub',p:[x,0,z],h:0.9*k,ry:i*0.9+0.4,ground:1})),{f:'yh_rosebed',p:[-38.8,0,17.0],h:0.94,ry:0.4,ground:1,box:[1.7,0.95]},
+   {f:'hushi',p:[-38.6,0,12.5],h:1.8,ry:0.4,ground:1,r:0.5}],  // 潇湘馆院中太湖石；鹦鹉架——第三十五回黛玉“令将架摘下来，另挂在月洞窗外的钩上”：正房西山墙月洞窗外的廊下，hang 是绳子拴到廊顶的高度
 };
-function addProps(L,id,root){for(const q of PROPS[id]||[])L.loadAsync('models/p/'+q.f+'.glb').then(g=>{const o=g.scene;
+const PROPC={};  // 同一道具只载一次，其余克隆（共用几何和材质）
+const FAR={yh_rosebed:70,yh_huajing:60,yh_rosebush:55,yh_shrub:70,huacong_mudan:55,niaolong:60,niaolong2:60,yh_bitao:180,yh_haitang:220,yh_bajiao:200};
+function addProps(L,id,root){if(id==='yihong')root.traverse(m=>{if(m.isMesh&&/竹篱/.test(m.name))m.visible=false;});
+ for(const q0 of PROPS[id]||[]){const q=FAR[q0.f]&&!q0.far?{...q0,far:FAR[q0.f]}:q0;(PROPC[q.f]??=L.loadAsync('models/p/'+q.f+'.glb')).then(g=>{const o=g.scene.clone();
   // fit：按模型自身 x、高、z 拉到给定尺寸（米）
  if(q.fit){const sz=new THREE.Box3().setFromObject(o).getSize(new V3());o.scale.set(q.fit[0]/sz.x,q.fit[1]/sz.y,q.fit[2]/sz.z);}else o.scale.setScalar(q.h);
-o.position.set(q.p[0],q.p[1]+(q.plate?0.018:0),q.p[2]);o.rotation.y=q.ry||0;
+ o.position.set(q.p[0],q.p[1]+(q.plate?0.018:0),q.p[2]);o.rotation.y=q.ry||0;
+ if(q.ground){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));o.position.y=height(w.x,w.z)-root.position.y-0.03;}
+ if(q.panels){root.updateMatrixWorld(true);const [a,b]=q.panels,c=Math.cos(q.ry||0),sn=Math.sin(q.ry||0);for(const sd of[-1,1]){const u=sd*(a+b)/2,w=root.localToWorld(new V3(q.p[0]+u*sn,0,q.p[2]+u*c));const top=root.position.y+o.position.y+q.h;colAdd({x:w.x,z:w.z,c,s:sn,hx:0.15,hz:(b-a)/2,top,bot:top-q.h-1,walk:false});}}  // 门洞两边的花障挡人（模型宽度沿局部 z）
+
  if(q.plate){const r=q.plate,pl=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[r*0.55,0],[r*0.6,0.006],[r*0.72,0.012],[r,0.03],[r*1.02,0.032],[r*0.98,0.028],[r*0.7,0.018],[0,0.018]].map(([a,b])=>new THREE.Vector2(a,b)),40),plateMat());{const P=pl.geometry.attributes.position,U=pl.geometry.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*r*1.02)+0.5,P.getZ(i)/(2*r*1.02)+0.5);}pl.position.set(q.p[0],q.p[1],q.p[2]);pl.castShadow=pl.receiveShadow=true;root.add(pl);}
- o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
  if(q.hang){const len=q.hang-q.p[1]-q.h,cord=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,len,5),std('#3a2c22',.9));cord.position.set(q.p[0],q.p[1]+q.h+len/2,q.p[2]);root.add(cord);}
- if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}}).catch(e=>console.warn('prop',q.f,e));}
+ if(q.box){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));colAdd({x:w.x,z:w.z,c:Math.cos(q.ry||0),s:Math.sin(q.ry||0),hx:q.box[0],hz:q.box[1],top:root.position.y+o.position.y+0.6,bot:root.position.y+o.position.y-0.5,walk:false});}
+ if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}
+ if(q.far){const lod=new THREE.LOD();lod.position.copy(o.position);o.position.set(0,0,0);lod.addLevel(o,0);lod.addLevel(new THREE.Object3D(),q.far);root.add(lod);}/* 花木远了不画 */}).catch(e=>console.warn('prop',q.f,e));}}
 // rooms：房间范围（模型局部，网页坐标 x0,z0,x1,z1,地面 y,顶 y）；lights：补光位置
 const INTER_DEF={
  hengwu_in:{name:'蘅芜苑 · 清厦',en:'Alpinia Park Hall',rooms:[[-8,-10.4,8,-4.6,0.75,3.72]],lights:[[0,3.1,-7.5],[5,3.0,-7.5],[-5,3.0,-7.5]]},
  daoxiang_in:{name:'稻香村 · 茅屋',en:'Paddy-Sweet Cottage',rooms:[[-11.4,-18.2,3.4,-12.4,0.5,4.6]],lights:[[-4,3.1,-15.3],[-8.5,3.0,-15.3],[0.5,3.0,-15.3]]},
  xiaoxiang_in:{name:'潇湘馆',en:'Bamboo Lodge',names:['潇湘馆 · 明间书房','潇湘馆 · 东间卧室'],namesEn:['Bamboo Lodge · Study','Bamboo Lodge · East Bedroom'],rooms:[[-3.7,-2.55,1.4,1.78,0.48,5.02],[1.55,-2.55,3.7,1.78,0.48,5.02,[1.45,1.03]]],lights:[[0,4.0,-0.4],[-2.5,3.8,-0.4],[2.5,3.8,-0.4]]},
  qiushuang_in:{name:'秋爽斋',en:'Autumn Freshness Studio',names:['秋爽斋 · 晓翠堂','秋爽斋 · 探春屋'],namesEn:['Hall of Morning Green','Tanchun’s Rooms'],rooms:[[-7.65,-13.09,7.65,-1.8,0.81,5.6],[-13.37,2.5,-10.7,11.5,0.57,4.0,'e']],lights:[[0,4.4,-7.8],[-4.2,4.2,-7.8],[4.2,4.2,-7.8],[0,3.8,-3.6],[-12,3.5,4],[-12,3.5,7],[-12,3.5,10]]},
- daguan_in:{name:'大观楼',en:'Grand View Tower',names:['大观楼 · 顾恩思义殿','缀锦阁','含芳阁'],namesEn:['Hall of Mindful Favour','Variegated Brocade Pavilion','Fragrance-Holding Pavilion'],rooms:[[-14.3,-26.6,14.3,-15.2,2.12,7.24],[28.7,-22.78,37.28,-15.35,0.91,5.6],[-37.28,-22.78,-28.7,-15.35,0.91,5.6]],lights:[[0,6.4,-19],[-6,6.2,-21],[6,6.2,-21],[0,6.2,-24.5],[-11.5,6,-21],[11.5,6,-21],[33,4.8,-19],[-33,4.8,-19]]},
+ daguan_in:{name:'大观楼',en:'Grand View Tower',names:['大观楼 · 顾恩思义殿','缀锦阁','含芳阁'],namesEn:['Hall of Mindful Favour','Variegated Brocade Pavilion','Fragrance-Holding Pavilion'],rooms:[[-14.3,-10.6,14.3,0.8,2.12,7.24],[28.7,-22.78,37.28,-15.35,0.91,5.6],[-37.28,-22.78,-28.7,-15.35,0.91,5.6]],lights:[[0,6.4,-3],[-6,6.2,-5],[6,6.2,-5],[0,6.2,-8.5],[-11.5,6,-5],[11.5,6,-5],[33,4.8,-19],[-33,4.8,-19]]},
  luxue_in:{name:'芦雪广 · 地炕屋',en:'Reed Snow Cottage',rooms:[[-7.37,-3.05,7.37,2.65,0.36,4.6]],lights:[[-5,2.6,-1],[0,2.6,-0.5],[4.6,2.6,-0.6]]},
  longcui_in:{name:'栊翠庵',en:'Green Lattice Nunnery',names:['栊翠庵 · 佛殿','栊翠庵 · 东禅堂','栊翠庵 · 耳房'],namesEn:['Green Lattice Nunnery · Buddha Hall','Green Lattice Nunnery · East Meditation Hall','Green Lattice Nunnery · Side Chamber'],rooms:[[-4.84,-9.18,4.84,-4.83,1.64,7.4,[0,-4.83]],[8.36,-2.68,11.08,6.28,1.34,5.6,[8.36,1.8]],[7.47,-8.48,10.03,-5.54,1.29,5.3,[8.75,-5.54]]],lights:[[0,4.6,-7.0],[-3,4.2,-7],[3,4.2,-7],[9.7,4.0,1.8],[9.7,3.8,-1.4],[9.7,3.8,4.9],[8.75,3.6,-7.0]]},
  ouxiang_in:{name:'藕香榭',en:'Lotus Fragrance Pavilion',rooms:[[-4.66,-3.26,4.66,3.26,0.9,5.9,[0,3.3]]],lights:[[0,4.4,-1.0],[3.05,4.2,-0.2],[-2.6,4.2,-0.3],[0,4.2,2.2]]},
@@ -1362,19 +1409,29 @@ function buildDaguan(){const y=Z.daguan.y,M=T(0,y,-90,0);if(!GLB){
  plaque('省亲别墅',P,0,5.15,0.28,0,0.62);plaque('省亲别墅',P,0,5.15,-0.28,Math.PI,0.62);}
  if(!GLB)for(const [x,z,yy] of[[-21,-80,y+1.5],[21,-80,y+1.5],[-21,-99,y+1.5],[21,-99,y+1.5],[-12,-75,null],[12,-75,null]])addTree('blossom',x,z,R(0.8,0.95),pick(['#f6f1e6','#f3eadb','#f8f4ec']),yy??undefined);
  if(!GLB)for(const [x,z] of[[-26,-84],[26,-84],[-26,-96],[26,-96]])addTree('pine',x,z,R(0.75,0.9),'#3f5a3c',y);
- if(GLB){const q=Z.daguan,W=q.hw+1.2,Dn=q.z+q.hd+0.8,Ds=q.z-q.hd-1.2;const WO={h:3.4};
+ if(GLB){const q=Z.daguan,W=q.hw+1.2,Dn=q.z+q.hd+0.8,Ds=q.z-q.hd-3.6;const WO={h:3.4};
   wall(-W,Dn,-5.2,Dn,WO);wall(5.2,Dn,W,Dn,WO);wall(W,Dn,W,Ds,WO);wall(W,Ds,-W,Ds,WO);wall(-W,Ds,-W,Dn,WO);
   for(const sx of[-1,1]){box('stone',T(sx*5.2,q.y,Dn),0.9,3.9,0.9,0,1.95,0);box('roofGrey',T(sx*5.2,q.y,Dn),1.4,0.22,1.4,0,4.05,0,{noCol:1});}}
- if(GLB){const y=Z.daguan.y;const pits=[[-16,-2.4,'pine'],[16,-2.4,'pine'],[-9.5,6,'pine'],[9.5,6,'pine'],[-18,6,'pine'],[18,6,'pine'],[-28,-5.5,'bai'],[28,-5.5,'bai'],[-28,-28,'bai'],[28,-28,'bai'],[-6.2,22,'blossom'],[6.2,22,'blossom']];
-  for(const [lx,lz,k] of pits){const x=lx,z=Z.daguan.z+lz;TREES[k].push({x,y:y+0.05,z,s:k==='pine'?R(1.0,1.2):k==='bai'?R(0.9,1.05):R(1.1,1.3),ry:rnd()*6.283,tint:k==='blossom'?HAITANG[0]:k==='bai'?'#3d5a3a':pick(['#3f5a3c','#46613f']),plum:false,v:Math.floor(rnd()*2)});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}}
- for(let i=0;i<22;i++){const x=R(-30,30),z=GLB?Z.daguan.z+R(-44,-34):R(-117,-106);if(Math.abs(x)<3||!treeOK(x,z,2.2))continue;if(i%2)addTree('bai',x,z,R(.9,1.2),'#3d5a3a');else addTree('pine',x,z,R(.9,1.25),pick(['#3f5a3c','#46613f','#3a5238']));}}
+ if(GLB){const y=Z.daguan.y;const pits=[[-24.2,0,'pine'],[24.2,0,'pine'],[-23.5,-28.5,'pine'],[23.5,-28.5,'pine'],[-13,-35,'pine'],[13,-35,'pine'],[-4.5,-35,'pine'],[4.5,-35,'pine'],[-23.5,32,'pine'],[23.5,32,'pine'],
+   [-28,-5.5,'bai'],[28,-5.5,'bai'],[-28,-28,'bai'],[28,-28,'bai'],
+   ...[[5.4,15.2],[9.2,16.4],[13.2,15.6],[17.2,16.8],[7.4,19.4],[11.6,19.8],[15.8,20.2],[20.2,20.6],[21.5,24.5],[21.5,29],[21.5,33.2]].flatMap(([x,z])=>[[-x,z,'yulan'],[x,z,'yulan']])];  // 玉兰绕砌：牌坊到台阶之间、水池外侧；青松拂檐：台基两旁、楼后
+
+  for(const [lx,lz,k0] of pits){const x=lx,z=Z.daguan.z+lz,yl=k0==='yulan',k=yl?'blossom':k0;TREES[k].push({x,y:y+0.05,z,s:k==='pine'?R(1.1,1.35):k==='bai'?R(0.9,1.05):yl?R(0.95,1.15):R(1.1,1.3),ry:rnd()*6.283,tint:yl?pick(['#fbf8f0','#f8f4ec','#f6f1e6']):k==='blossom'?HAITANG[0]:k==='bai'?'#3d5a3a':pick(['#3f5a3c','#46613f']),plum:false,v:Math.floor(rnd()*2)});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}}
+ for(let i=0;i<22;i++){const x=R(-30,30),z=GLB?Z.daguan.z+R(-47,-39):R(-117,-106);if(Math.abs(x)<3||!treeOK(x,z,2.2))continue;if(i%2)addTree('bai',x,z,R(.9,1.2),'#3d5a3a');else addTree('pine',x,z,R(.9,1.25),pick(['#3f5a3c','#46613f','#3a5238']));}}
 function buildYihong(){const y=Z.yihong.y;if(!GLB){court({x:85,z:65,hw:22,hd:18,h:3.6,gates:[{side:'w',pos:65,moon:true,w:5}]});pave(85,65,22,18,y);
  hall(T(88,y,53,0),{w:17,d:8.5,h:4.2,bays:5,roofH:2.6,plaque:'怡红快绿',lanterns:true});
  hall(T(101.5,y,68,-Math.PI/2),{w:11,d:6,h:3.6,bays:3,roof:'gable',roofH:2.0});
  hall(T(88,y,79,Math.PI),{w:13,d:5.5,h:3.6,bays:3,roof:'gable',roofH:1.9});
  addTree('blossom',80,63,1.7,HAITANG[0],y);addTree('blossom',76,68,1.2,HAITANG[1%HAITANG.length],y);}
- {let n=0,t=0;while(n<28&&t<1400){t++;const a=rnd()*6.28,x=Z.yihong.x+Math.cos(a)*R(25,29),z=Z.yihong.z+Math.sin(a)*R(21,24);if(nearPath(x,z,2.2)||height(x,z)<0.5||!inGarden(x,z,3)||Math.abs(z-Z.yihong.z)<4&&x<Z.yihong.x-15||!treeOK(x,z,3))continue;if(n%3===1)addTree('pine',x,z,R(0.9,1.2),pick(['#3f5a3c','#46613f','#3a5238']),height(x,z));else addTree('willow',x,z,R(0.85,1.05),pick(GREENS),height(x,z));n++;}}if(!GLB){BANANAS.push([95,62,2.4,y],[96.5,63.5,2.0,y],[94,64,1.8,y]);
- rock(80,y+1,73,1.4,2.2,1.2);rock(81.5,y+0.6,72.5,1,1.4,1);}else{{const [dx,dz]=MV.yihong;BANANAS.push([79.1+dx,63.7+dz,2.3,y+0.5],[80.3+dx,64.5+dz,1.9,y+0.5],[79.7+dx,64.9+dz,1.6,y+0.5]);addTree('blossom',90.3+dx,64.2+dz,1.35,HAITANG[0],y+0.5);}}}
+ {let n=0,t=0;while(n<28&&t<1400){t++;const a=rnd()*6.28,x=Z.yihong.x+Math.cos(a)*R(25,29),z=Z.yihong.z+Math.sin(a)*R(21,24);if(nearPath(x,z,2.2)||height(x,z)<0.5||!inGarden(x,z,3)||Math.abs(z-Z.yihong.z)<4&&x<Z.yihong.x-15||!treeOK(x,z,3))continue;if(n%3===1)addTree('willow',x,z,R(0.95,1.15),pick(GREENS),height(x,z));else addTree('willow',x,z,R(0.85,1.05),pick(GREENS),height(x,z));n++;}}/* 粉垣环护，绿柳周垂：院外一圈全是垂柳（原来三株里夹一株松） */if(!GLB){BANANAS.push([95,62,2.4,y],[96.5,63.5,2.0,y],[94,64,1.8,y]);
+ rock(80,y+1,73,1.4,2.2,1.2);rock(81.5,y+0.6,72.5,1,1.4,1);}else{{const [dx,dz]=MV.yihong;const nb=TREES.blossom.length;addTree('blossom',90.3+dx,64.2+dz,1.35,HAITANG[0],y+0.5);if(TREES.blossom.length>nb)TREES.blossom.pop();}  // 海棠换成 PROPS.yihong 里的 Blender 西府海棠，这里只留树距和树干碰撞
+  /* 精修（第十七回）：“一边种几本芭蕉”——西花池一丛五本，改用 PROPS.yihong 里的 Blender 芭蕉；“一径引入，绕着碧桃花”——院门外小径两旁几株碧桃（模型见 PROPS.yihong，这里只登记树距、碰撞）。
+     不用全局 rnd，园中其余随机布局不变 */
+  {const X=Z.yihong.x,Zc=Z.yihong.z,yr=mulberry32(1717);
+   for(const [x,z,s] of[[67,152.6,1.05],[68.5,162.9,1.15],[76.7,153,0.95],[76.8,163,1.0],[62.5,153.6,0.9],[63,161.6,1.1]]){const yy=height(x,z);treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:yy+4,bot:yy-1});}}}}
+/* 院门外这一块让给花园（见 PROPS.yihong）：园中各处随机种下的树、灌木落在里面的拔掉，连同树干碰撞 */
+function clearYihongGarden(){if(!GLB)return;const X=Z.yihong.x,Zc=Z.yihong.z,inG=(x,z)=>x>X-47&&x<X-20.6&&z>Zc-0.5&&z<Zc+21;
+ for(const k in TREES){const L=TREES[k];for(let i=L.length-1;i>=0;i--){const t=L[i];if(!inG(t.x,t.z))continue;L.splice(i,1);for(const c of COL)if(c.x===t.x&&c.z===t.z){c.hx=c.hz=0;c.top=-1e9;}}}}
 function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,hd:12,h:3.2,gates:[{side:'e',pos:30,plaque:'潇湘馆'}]});
  if(!GLB)hall(T(-83,y,23.5,0),{w:10.5,d:6,h:3.6,bays:3,base:0.5,pad:0.9,roof:'gable',roofH:2.1,over:1.0,plaque:'有凤来仪',pscale:0.72,lanterns:true});
  buildPath(GLB?{pts:[[-64,30],[-63.5,37],[-66,44],[-70.5,47.5],[-74.5,46.5],[-74.5,44.5]].map(([x,z])=>[x+MV.xiaoxiang[0],z+MV.xiaoxiang[1]]),w:1.4}:{pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
@@ -2350,7 +2407,7 @@ async function build(){
  await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();try{buildHuaxu();}catch(e){console.warn('huaxu',e);}buildDaoxiang();buildLongcui();buildOuxiang();
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
- await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildBarriers();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
+ await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildBarriers();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);clearYihongGarden();buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}try{buildCrops();}catch(e){console.warn('crops',e);}try{buildBeds();}catch(e){console.warn('beds',e);}try{buildHengwuYard();}catch(e){console.warn('hengwu',e);}buildHuaxuCave().catch(e=>console.warn('huaxu cave',e));
  await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();

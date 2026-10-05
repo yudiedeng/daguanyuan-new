@@ -1178,7 +1178,7 @@ const GATES = [   // [建筑根节点 id, 局部 x, 局部 z, 中文名, 英文�
   ['aojing', 0, 1.3, '凹晶馆', 'Concave Crystal Lodge'],
   ['aojing', 0, -3.4, '凹晶馆 · 后门', 'Concave Crystal Lodge · back door'],
   ['luxue', 0, 4.4, '芦雪广', 'Reed Snow Cottage'],
-  ['daguan', 0, -13.6, '大观楼 · 顾恩思义殿', 'Grand View Tower · Main Hall'],
+  ['daguan', 0, 2.4, '大观楼 · 顾恩思义殿', 'Grand View Tower · Main Hall'],
   ['daguan', 33, -14.2, '缀锦阁', 'Variegated Brocade Pavilion'],
   ['daguan', -33, -14.2, '含芳阁', 'Fragrance-Holding Pavilion'],
   ['qiushuang', 0, 12.6, '秋爽斋 · 院门', 'Autumn Freshness Studio · gate']];
