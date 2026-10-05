@@ -1988,9 +1988,11 @@ function buildQinfangFX(){
   if(j>0){const k=(j-1)*nc;for(let m=0;m<nc-1;m++)wi.push(k+m,k+m+nc,k+m+1,k+m+1,k+m+nc,k+m+nc+1);}});
  const gw=new THREE.BufferGeometry();gw.setAttribute('position',new THREE.Float32BufferAttribute(wp,3));gw.setAttribute('aF',new THREE.Float32BufferAttribute(wa,4));gw.setIndex(wi);gw.computeVertexNormals();
  const wm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,
-  uniforms:{gTime:G.time,gNoise:G.noise,gSunCol:G.sunCol,gSunDir:G.sunDir,pet:{value:0},petCol:{value:new THREE.Color('#f0b4c4')}},
-  vertexShader:'attribute vec4 aF;varying vec4 vF;varying vec3 vW,vN;void main(){vF=aF;vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vN=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*viewMatrix*w;}',
-  fragmentShader:`uniform float gTime,pet;uniform sampler2D gNoise;uniform vec3 gSunCol,gSunDir,petCol;varying vec4 vF;varying vec3 vW,vN;
+  uniforms:{gTime:G.time,gNoise:G.noise,gSunCol:G.sunCol,gSunDir:G.sunDir,pet:{value:0},petCol:{value:new THREE.Color('#f0b4c4')},
+   /* 倒影：直接读池子 Water 那张实时镜像（同一次渲染，不另算）；低画质没有镜像时退回渐变 */
+   mirrorSampler:water?water.material.uniforms.mirrorSampler:{value:null},textureMatrix:water?water.material.uniforms.textureMatrix:{value:new THREE.Matrix4()},mOn:{value:0}},
+  vertexShader:'uniform mat4 textureMatrix;attribute vec4 aF;varying vec4 vF,vM;varying vec3 vW,vN;void main(){vF=aF;vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vM=textureMatrix*w;vN=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*viewMatrix*w;}',
+  fragmentShader:`uniform float gTime,pet,mOn;uniform sampler2D gNoise,mirrorSampler;uniform vec3 gSunCol,gSunDir,petCol;varying vec4 vF,vM;varying vec3 vW,vN;
    float hf(vec2 a,vec2 b){return texture2D(gNoise,a).r*0.6+texture2D(gNoise,b).g*0.4;}
    float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
    void main(){float T=vF.x,c=vF.y,fo=vF.z,nap=vF.w,cm=c*0.6,t=gTime;
@@ -2003,6 +2005,7 @@ function buildQinfangFX(){
     float L=clamp(length(gSunCol)*0.55,0.0,1.1)+0.2;vec3 V=normalize(cameraPosition-vW),R=reflect(-V,N);float fr=0.02+0.98*pow(1.0-abs(dot(N,V)),5.0);
     // 水本身是透的：往下看主要透出底下真的卵石，只染一点绿；斜看才映岸上花木与天光
     vec3 refl=mix(vec3(0.05,0.075,0.045),vec3(0.4,0.48,0.53),smoothstep(0.05,0.7,R.y))*L;
+    if(mOn>0.5){float dist=length(cameraPosition-vW);vec2 dsp=(N.xz-Ng.xz)*(0.001+1.0/dist)*1.6;vec3 mr=texture2D(mirrorSampler,vM.xy/vM.w+dsp).rgb;refl=mix(mr,refl,nap);}
     float dep=1.0-c*c;vec3 tint=mix(vec3(0.05,0.11,0.09),vec3(0.025,0.07,0.055),dep)*L;
     float aw=0.4+0.3*dep+0.2*nap;float rf=clamp(fr*1.15,0.0,0.85);
     vec3 col=mix(tint,refl,rf/(rf+aw*(1.0-rf)));float alpha=aw*(1.0-rf)+rf;
@@ -2046,7 +2049,7 @@ function buildQinfangFX(){
  const mtx=new THREE.CanvasTexture(mt);mtx.colorSpace=THREE.SRGBColorSpace;const mist=[];const rr=mulberry32(4242);
  const cx=QINFANG?QINFANG.x:0,cz=QINFANG?QINFANG.z:50;
  for(let k=0;k<22;k++){const x=cx+(rr()-0.5)*64,z=cz+4+rr()*30,s=9+rr()*10;const y=Math.max(0,height(x,z))+0.8+rr()*2.2;const sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:mtx,transparent:true,depthWrite:false,opacity:0,fog:false}));sp2.scale.set(s*1.6,s*0.55,1);sp2.position.set(x,y,z);sp2.userData={x,z,y,ph:rr()*6.28,sp:0.15+rr()*0.25};sp2.renderOrder=4;scene.add(sp2);mist.push(sp2);}
- FX.push((dt,et)=>{wm.uniforms.pet.value=season===0?1:season===2?0.7:0;wm.uniforms.petCol.value.set(season===2?'#c98a3a':'#f0b4c4');
+ FX.push((dt,et)=>{wm.uniforms.mOn.value=water&&water.visible?1:0;wm.uniforms.pet.value=season===0?1:season===2?0.7:0;wm.uniforms.petCol.value.set(season===2?'#c98a3a':'#f0b4c4');
   for(const mm of sm){const t=(et*0.9+mm.userData.ph)%1;mm.scale.setScalar(0.45+t*0.6);mm.material.opacity=0.45*(1-t);}
   for(const s2 of spray){const u=s2.userData,t=(et*0.7+u.ph)%1;s2.position.set(u.x+u.dx*t,u.y+0.15+t*0.9,u.z+u.dz*t);s2.scale.setScalar(0.5+t*1.7);s2.material.opacity=0.3*Math.sin(Math.PI*t);}
   const morn=sstep(4.5,6.0,hour)*(1-sstep(8.5,11,hour)),eve=sstep(17.5,19,hour)*(1-sstep(21,23,hour));const dens=(0.2+0.62*morn+0.3*eve)*(1-snowAmt*0.5);const lum=0.35+0.65*(1-night);
