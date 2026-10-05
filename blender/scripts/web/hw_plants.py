@@ -141,12 +141,12 @@ def vine(g, pts, out, kind, spread=1.0, twig=True):
     if kind == 'jin':  # 金绳：再绕一根更细的
         tw = [P[i] + (O[i].cross(Vector((0, 1, 0))).normalized() * math.sin(A[i] * 18) * 0.012 if O[i].cross(Vector((0, 1, 0))).length > 0.1 else Vector()) for i in range(0, n, 4)]
         tube(g, tw, 0.0025, mul3(stemc, 0.85))
-    CARD = {'cui': (0.14, (0.26, 0.4), ('oak', 'aspg')), 'jin': (0.17, (0.2, 0.3), ('ash',)), 'shan': (0.13, (0.26, 0.38), ('ash', 'aspg')), 'xi': (0.11, (0.18, 0.26), ('ash',))}
+    CARD = {'cui': (0.075, (0.3, 0.46), ('oak', 'aspg')), 'jin': (0.11, (0.24, 0.34), ('ash',)), 'shan': (0.07, (0.3, 0.42), ('ash', 'aspg')), 'xi': (0.065, (0.22, 0.3), ('ash',))}
     sp, (l0, l1), tiles = CARD[kind]
     s, alt = R(0, sp), 1
     while s < total:
         i = min(int(s / 0.03), n - 1); f = s / max(total, 1e-6)
-        if rnd.random() < f * 0.4: s += sp; continue          # 越往下越稀
+        if rnd.random() < f * 0.25: s += sp; continue          # 越往下越稀
         p = P[i]; t = (P[min(i + 1, n - 1)] - P[max(i - 1, 0)]).normalized(); o = O[i]
         side = t.cross(o); side = side.normalized() if side.length > 1e-4 else Vector((1, 0, 0))
         k = (1.0 - 0.35 * f) * R(0.85, 1.15)

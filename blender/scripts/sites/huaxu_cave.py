@@ -47,28 +47,42 @@ PEAKS = [((-3.2, 5.4, -1.0), (1.7, 1.9, 1.5)), ((2.4, 6.0, 0.6), (1.5, 2.3, 1.3)
          ((-6.4, 4.6, 1.6), (1.6, 1.6, 1.5)), ((-0.6, 5.0, 2.0), (1.3, 1.3, 1.1)), ((7.2, 4.0, 1.8), (1.3, 1.5, 1.2))]
 FLANK = [((-4.6, 0.2, -4.3), (1.1, 1.4, 1.0)), ((4.5, 0.0, -4.5), (1.0, 1.2, 0.9)), ((-4.8, 0.0, 4.4), (1.0, 1.1, 0.9)), ((4.7, 0.3, 4.3), (1.2, 1.5, 1.0))]
 HOLES = []
-for _ in range(16):   # 孔窍：多数顺 z 或 x 穿透，少数斜着
-    c = np.array([rng.uniform(-8, 8), rng.uniform(2.8, 6.4), rng.uniform(-3.2, 3.2)])
+for _ in range(34):   # 孔窍：多数顺 z 或 x 穿透，少数斜着；石墩上也有
+    c = np.array([rng.uniform(-8.5, 8.5), rng.uniform(0.6, 6.6), rng.uniform(-3.4, 3.4)])
     if abs(c[0]) < 3.6 and c[1] < 3.4: continue
     ax = rng.choice(3, p=[0.35, 0.15, 0.5]); r = np.full(3, rng.uniform(0.28, 0.75)); r[ax] *= rng.uniform(3, 6)
     HOLES.append((c, r))
+# 堆叠的石块：竖长的不规则椭球，沿两岸石墩、拱顶、峰头堆起来（太湖石“瘦、皱、漏、透”，轮廓参差）
+LUMPS = []
+for sx in (-1, 1):      # 两岸石墩：三四层往上叠
+    for z in np.linspace(-3.4, 3.4, 5):
+        y = -1.2
+        while y < 3.6:
+            r = np.array([rng.uniform(0.8, 1.5), rng.uniform(1.0, 1.9), rng.uniform(0.8, 1.4)])
+            LUMPS.append((np.array([sx * rng.uniform(4.6, 7.8), y + r[1] * 0.7, z + rng.uniform(-0.4, 0.4)]), r)); y += r[1] * rng.uniform(1.0, 1.4)
+for z in np.linspace(-3.3, 3.3, 5):   # 拱顶：横跨的石块，略往中间探
+    for x in np.linspace(-5.2, 5.2, 5):
+        r = np.array([rng.uniform(1.1, 1.8), rng.uniform(0.8, 1.3), rng.uniform(0.8, 1.3)])
+        LUMPS.append((np.array([x + rng.uniform(-0.4, 0.4), rng.uniform(3.9, 4.6), z + rng.uniform(-0.3, 0.3)]), r))
+for _ in range(14):     # 峰头：竖长的立石，高低错落
+    r = np.array([rng.uniform(0.6, 1.1), rng.uniform(1.2, 2.2), rng.uniform(0.6, 1.0)])
+    LUMPS.append((np.array([rng.uniform(-7.5, 7.5), rng.uniform(5.2, 6.4), rng.uniform(-2.8, 2.8)]), r))
+LUMPS += [(np.array(c), np.array(r)) for c, r in FLANK]
 def sdf(P):
-    d = sd_rbox(P, np.array([-6.3, 1.0, 0]), (2.7, 3.0, 4.0), 1.2)
-    d = smin(d, sd_rbox(P, np.array([6.3, 1.0, 0]), (2.7, 3.0, 4.0), 1.2), 0.8)
-    d = smin(d, sd_rbox(P, np.array([0, 4.1, 0]), (8.4, 1.05, 3.7), 0.9), 1.0)
-    for c, r in PEAKS: d = smin(d, sd_ell(P, np.array(c), np.array(r)), 0.9)
-    for c, r in FLANK: d = smin(d, sd_ell(P, np.array(c), np.array(r)), 0.6)
+    d = np.full(len(P), 1e3, np.float32)
+    for c, r in LUMPS: d = smin(d, sd_ell(P, c, r), 0.45)
     # 拱洞：下部方、上部半椭圆，顺 z 贯通
     ax = np.abs(P[:, 0]); y = P[:, 1]
     arch = np.where(y < 1.7, ax - 3.2, np.sqrt((ax / 3.2) ** 2 + ((y - 1.7) / 1.35) ** 2) * 1.6 - 1.6)
     arch = np.maximum(arch, -(y + 3.0))
-    d = smax(d, -arch, 0.5)
-    for c, r in HOLES: d = smax(d, -sd_ell(P, c, r), 0.35)
-    d = d + 0.32 * fbm(P * 0.55) + 0.1 * fbm(P * 2.1, 3)
+    d = smax(d, -arch, 0.4)
+    for c, r in HOLES: d = smax(d, -sd_ell(P, c, r), 0.3)
+    V = P * np.array([0.9, 0.3, 0.9])
+    d = d + 0.35 * fbm(P * 0.6) + 0.28 * np.abs(fbm(V * 1.6, 3)) - 0.1 + 0.1 * fbm(P * 1.8, 3) + 0.035 * fbm(P * 5.0, 2)
     return d
 
 # ---------------------------------------------------------------- 取面
-S = 0.12; xs = np.arange(-10.5, 10.5, S); ys = np.arange(-2.2, 9.0, S); zs = np.arange(-6.2, 6.2, S)
+S = 0.1; xs = np.arange(-10.5, 10.5, S); ys = np.arange(-2.2, 9.0, S); zs = np.arange(-6.2, 6.2, S)
 G = np.stack(np.meshgrid(xs, ys, zs, indexing='ij'), -1).reshape(-1, 3).astype(np.float32)
 D = np.concatenate([sdf(G[i:i + 400000]) for i in range(0, len(G), 400000)]).reshape(len(xs), len(ys), len(zs))
 D[:, 0, :] = 1  # 底面封口（埋在河床下）
@@ -100,24 +114,36 @@ for sz in (-1, 1):
             if sdf(p[None])[0] < 0.05: break
             p = p - np.array([0, 0.1, 0])
         if p[1] > 2.2: anchors.append(p + np.array([0, 0, sz * 0.05]))
+# 所有藤一起往下走（向量化）
+A = np.array(anchors, dtype=np.float64); N = len(A)
+g0 = grad(A); H = np.stack([g0[:, 0], np.zeros(N), g0[:, 2]], 1); hl = np.linalg.norm(H, axis=1)
+ang = rng.uniform(0, 6.28, N); H = np.where(hl[:, None] > 0.1, H / np.maximum(hl[:, None], 1e-6), np.stack([np.cos(ang), np.zeros(N), np.sin(ang)], 1))
+Lmax = rng.uniform(1.2, 4.5, N); P = A.copy(); tot = np.zeros(N); free = np.zeros(N, bool); alive = np.ones(N, bool); stall = np.zeros(N, int)
+paths = [[p.copy()] for p in A]
+for step in range(60):
+    if not alive.any(): break
+    idx = np.where(alive)[0]; side = np.stack([-H[idx, 2], np.zeros(len(idx)), H[idx, 0]], 1) * rng.uniform(-0.03, 0.03, (len(idx), 1))
+    Q = P[idx] + np.array([0, -0.15, 0]) + side; fr = free[idx].copy()
+    for _ in range(3):
+        nf = ~fr
+        if not nf.any(): break
+        d = sdf(Q[nf].astype(np.float32)); gq = grad(Q[nf])
+        under = (gq[:, 1] < -0.35) & (d > -0.02)
+        sub = np.where(nf)[0]; fr[sub[under]] = True
+        mv = ~under; Q[sub[mv]] -= gq[mv] * (d[mv] - 0.04)[:, None]
+        hh = np.stack([gq[:, 0], np.zeros(len(gq)), gq[:, 2]], 1); n = np.linalg.norm(hh, axis=1)
+        ok = mv & (n > 0.2); H[idx[sub[ok]]] = hh[ok] / n[ok, None]
+    hit = fr & (sdf(Q.astype(np.float32)) < 0.03) & free[idx]   # 直垂又碰到石头就停
+    free[idx] = fr
+    stp = np.linalg.norm(Q - P[idx], axis=1); dy = P[idx, 1] - Q[:, 1]
+    stall[idx] = np.where(dy < 0.03, stall[idx] + 1, 0)
+    for k, i2 in enumerate(idx):
+        if hit[k]: alive[i2] = False; continue
+        P[i2] = Q[k]; tot[i2] += stp[k]; paths[i2].append(Q[k].copy())
+        if tot[i2] >= Lmax[i2] or Q[k, 1] < 0.25 or stall[i2] >= 3: alive[i2] = False
 D_out = []
-for a in anchors:
-    p = np.array(a, dtype=np.float64); g = grad(p[None])[0]; h = np.array([g[0], 0, g[2]]); hl = np.linalg.norm(h)
-    h = h / hl if hl > 0.1 else np.array([math.cos(rng.uniform(0, 6.28)), 0, math.sin(rng.uniform(0, 6.28))])
-    L = rng.uniform(1.2, 4.5); pts = [p.copy()]; tot = 0; free = False
-    while tot < L and p[1] > 0.25:
-        q = p + np.array([0, -0.15, 0]) + np.array([-h[2], 0, h[0]]) * rng.uniform(-0.03, 0.03)
-        if not free:
-            for _ in range(3):
-                d = sdf(q[None])[0]; gq = grad(q[None])[0]
-                if gq[1] < -0.35 and d > -0.02: free = True; break      # 到了朝下的面（洞顶下、石檐下）：离开石面直垂
-                q = q - gq * (d - 0.04)
-            if not free:
-                hh = np.array([gq[0], 0, gq[2]]); n = np.linalg.norm(hh)
-                if n > 0.2: h = hh / n
-        if free and sdf(q[None])[0] < 0.03: break                         # 直垂又碰到石头就停
-        tot += np.linalg.norm(q - p); p = q; pts.append(p.copy())
-    if len(pts) >= 3: D_out.append([round(float(h[0]), 2), round(float(h[2]), 2)] + [round(float(v), 2) for pt in pts for v in pt])
+for i2, pts in enumerate(paths):
+    if len(pts) >= 3: D_out.append([round(float(H[i2, 0]), 2), round(float(H[i2, 2]), 2)] + [round(float(v), 2) for pt in pts for v in pt])
 json.dump({'D': D_out}, open(os.path.join(ROOT, 'models', 'b', 'hx_vines.json'), 'w'))
 print('vines', len(D_out), 'pts', sum((len(d) - 2) // 3 for d in D_out))
 
@@ -130,7 +156,7 @@ ob = bpy.data.objects.new('HX_港洞', me); bpy.context.scene.collection.objects
 mat = bpy.data.materials.new('M_HW_玲珑石'); me.materials.append(mat)
 bpy.context.view_layer.objects.active = ob; ob.select_set(True)
 bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='SELECT'); bpy.ops.mesh.normals_make_consistent(inside=False); bpy.ops.object.mode_set(mode='OBJECT')
-md = ob.modifiers.new('dec', 'DECIMATE'); md.ratio = 70000 / len(faces)
+md = ob.modifiers.new('dec', 'DECIMATE'); md.ratio = 90000 / len(faces)
 bpy.ops.object.modifier_apply(modifier='dec')
 for p in me.polygons: p.use_smooth = True
 print('decimated tris', sum(len(p.vertices) - 2 for p in me.polygons))

@@ -44,7 +44,7 @@ for i, (a, b) in enumerate(bays):
     cx, w = (a + b) / 2, b - a
     with K.at(cx, 8.0, Z0):
         if i in (0, 4):
-            K.duobaoge(WOOD, w, 0.36, 3.0, seed=11 + i, back=False)
+            K.duobaoge(WOOD, w, 0.36, 3.0, seed=11 + i, back=False, carve=True)
             K.box(WOOD, -w / 2, -0.05, 3.0, w / 2, 0.05, 3.06)
             with K.at(0, 0, 3.06):                                     # 多宝格上：缠枝花卉透雕横披（五彩）
                 K.carved_panel(WOOD, '雕花_chanzhi', w, H - 3.06)
@@ -62,11 +62,11 @@ for i, (a, b) in enumerate(bays):
 XP = -5.0
 for (y0, y1, seed) in ((8.2, 10.0, 21), (11.3, YB, 23)):
     with K.at(XP, (y0 + y1) / 2, Z0, 90):            # 正面朝东（明间）
-        K.duobaoge(WOOD, y1 - y0, 0.36, 3.0, seed=seed, back=False)
+        K.duobaoge(WOOD, y1 - y0, 0.36, 3.0, seed=seed, back=False, carve=True)
         K.box(WOOD, -(y1 - y0) / 2, -0.19, 0.0, (y1 - y0) / 2, 0.19, 0.75)        # 下为柜门裙板
         for k in range(int((y1 - y0) / 0.6)):
             x = -(y1 - y0) / 2 + 0.3 + k * 0.6
-            K.box('画绢', x - 0.24, -0.2, 0.1, x + 0.24, -0.19, 0.65)
+            K.box('雕花_guimen', x - 0.25, -0.2, 0.1, x + 0.25, -0.19, 0.66)          # 柜门：夔龙团寿心板
     with K.at(XP, (y0 + y1) / 2, Z0 + 3.0, 90):
         K.carved_panel(WOOD, '雕花_bingmei', y1 - y0, H - 3.0)    # 镜壁上部：冰梅透雕
 # 镜门：门轴在南框 y=10.05，关上时镜面朝东；向卧室推开 45°（“西洋机括，可以开合”）
@@ -178,6 +178,9 @@ K.ceiling(-7.84, 5.02, 7.84, 7.9, 4.06, cell=0.64)
 for sx in (-1, 1):
     K.wall_finish((sx * XG, 8.16), (sx * XG, YB), Z0, 5.5, (-sx, 0))
 K.wall_finish((-XG, YB), (XG, YB), Z0, 5.5, (0, -1), dado=0.95)
+# 明间后墙两侧：满墙槽子（“满墙皆是随依古董玩器之形抠成的槽子，如琴、剑、悬瓶、桌屏之类”），中间横披、对联处留白
+for (xa, xb) in ((-4.75, -2.42), (2.42, 4.88)):
+    K.niche_wall(xa, xb, Z0 + 1.0, Z0 + 4.35, YB)
 
 # ---- 外壳碰撞：抱厦/正房墙体（实心块已去） ----
 W = []

@@ -11,8 +11,11 @@ from mathutils import Matrix, Vector
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 # 近似底色（仅供 Blender 内预览；网页以 BMR 为准）
+UV_FIT = {'雕花_guimen', '雕花_huaya', '雕花_huayar'}   # 每个面铺满整张贴图
+UV_TILE = {'雕花_caozi': 1.0}                         # 满墙槽子板 1 m 一格（与 diao_textures.NICHES 对应）
+
 COLORS = {
-    '雕花_yunfu': '#5a2a1c', '雕花_chanzhi': '#5a2a1c', '雕花_songmei': '#5a2a1c', '雕花_huiwen': '#5a2a1c', '雕花_bingmei': '#5a2a1c',
+    '雕花_yunfu': '#5a2a1c', '雕花_guimen': '#5a2a1c', '雕花_huaya': '#c9a04a', '雕花_huayar': '#c9a04a', '雕花_caozi': '#5a2a1c', '雕花_chanzhi': '#5a2a1c', '雕花_songmei': '#5a2a1c', '雕花_huiwen': '#5a2a1c', '雕花_bingmei': '#5a2a1c',
     '紫檀': '#3a1e16', '花梨': '#7a4a2a', '黄花梨': '#9a6a3a', '朱漆': '#7a2a21', '黑漆': '#1d1a18', '描金': '#e0b855',
     '本色木': '#b28f66', '旧木': '#8a7358', '竹竿': '#b9a25f', '湘妃竹': '#a8894e', '棋盘': '#d8b878', '黄竹': '#c4ad63', '藤编': '#a88a55',
     '锦缎': '#9a2a2a', '锦缎黄': '#c8a040', '锦帐': '#c98a8a', '碧纱': '#9fbfa6', '青纱': '#7f98a0', '素绸': '#e8e2d2',
@@ -430,7 +433,7 @@ class Kit:
                     z += bh
             x += bw + r.uniform(0.02, 0.06)
 
-    def duobaoge(self, m, w, d, h, seed=1, col=True, items=True, back=True):
+    def duobaoge(self, m, w, d, h, seed=1, col=True, items=True, back=True, carve=False):
         """多宝格：不规则格子，格内摆瓶、鼎、书、盆景。正面朝 -Y。"""
         r = random.Random(seed)
         t = 0.025
@@ -460,12 +463,23 @@ class Kit:
                 split(x0, z0, x1, zm - t / 2, depth + 1)
                 split(x0, zm + t / 2, x1, z1, depth + 1)
         split(-w / 2 + t, 0.1, w / 2 - t, h - 0.06, 0)
+        if carve:                      # 外框正面一圈贴金线
+            y = -d / 2 - 0.003
+            self.box('描金', -w / 2, y, 0.08, w / 2, y + 0.004, 0.1)
+            self.box('描金', -w / 2, y, h - 0.06, w / 2, y + 0.004, h - 0.04)
+            for sx in (-1, 1):
+                self.box('描金', sx * w / 2 - (0.012 if sx > 0 else 0), y, 0.1, sx * w / 2 + (0 if sx > 0 else 0.012), y + 0.004, h - 0.06)
         for (x0, z0, x1, z1) in cells:
             W, H = x1 - x0, z1 - z0
             # 格口：随机做成圆、海棠、方
             kind = r.random()
             if W > 0.3 and H > 0.3 and kind < 0.35:
                 self.opening(m, x0, z0, x1, z1, -d / 2 + 0.006, 0.012, 'round' if kind < 0.18 else 'kui')
+            elif carve and W > 0.2 and H > 0.2:          # 方格口上角贴一对透雕角花
+                sz = min(0.17, W * 0.32, H * 0.4)
+                y = -d / 2 + 0.002
+                self.box('雕花_huaya', x0, y, z1 - sz, x0 + sz, y + 0.006, z1)
+                self.box('雕花_huayar', x1 - sz, y, z1 - sz, x1, y + 0.006, z1)
             if not items or H < 0.15:
                 continue
             cx, y = (x0 + x1) / 2, 0.0
@@ -485,6 +499,46 @@ class Kit:
                 self.sph('玉', cx + 0.12, y, z0 + 0.04, 0.04, 0.03, 0.03, seg=8)
         if col:
             self.col(-w / 2, -d / 2, 0, w / 2, d / 2, h)
+
+    def niche_wall(self, xa, xb, za, zb, yw, wood='紫檀'):
+        """满墙槽子（第十七回）：后墙 y=yw 前 10 cm 立一块槽子板（雕花_caozi，透明处即槽口），槽里摆与槽形对应的器物。
+        世界坐标、正面朝 -Y；槽口位置与 diao_textures.NICHES 同表，按 1 m 一格平铺。"""
+        from diao_textures import NICHES
+        T, yb = 1.0, yw - 0.1
+        self.box('雕花_caozi', xa, yb, za, xb, yb + 0.012, zb)
+        self.box('黑漆', xa, yw - 0.014, za, xb, yw - 0.002, zb)                     # 槽底
+        for (x0, z0, x1, z1) in ((xa - 0.05, za - 0.05, xb + 0.05, za), (xa - 0.05, zb, xb + 0.05, zb + 0.05), (xa - 0.05, za, xa, zb), (xb, za, xb + 0.05, zb)):
+            self.box(wood, x0, yb - 0.01, z0, x1, yw, z1)
+        for (x0, z0, x1, z1) in ((xa, za, xb, za + 0.012), (xa, zb - 0.012, xb, zb)):
+            self.box('描金', x0, yb - 0.004, z0, x1, yb, z1)
+        y = yw - 0.055
+        for kx in range(math.floor(xa / T), math.ceil(xb / T)):
+            for kz in range(math.floor(za / T), math.ceil(zb / T)):
+                for (sh, u, v, w, h) in NICHES:
+                    cx, cz, W, H = (kx + u) * T, (kz + v) * T, w * T, h * T
+                    if cx - W / 2 < xa + 0.02 or cx + W / 2 > xb - 0.02 or cz - H / 2 < za + 0.02 or cz + H / 2 > zb - 0.02:
+                        continue
+                    if sh == 'vase':
+                        self.vase('青花', cx, y, cz - H / 2, H * 0.92, 'meiping')
+                    elif sh == 'gourd':
+                        self.sph('粉彩', cx, y, cz - H * 0.18, W * 0.44, 0.04, H * 0.3, seg=12)
+                        self.sph('粉彩', cx, y, cz + H * 0.27, W * 0.3, 0.035, H * 0.2, seg=12)
+                    elif sh == 'qin':
+                        self.box('黑漆', cx - W * 0.47, y - 0.018, cz - H * 0.3, cx + W * 0.47, y + 0.018, cz + H * 0.3)
+                        for i in range(7):
+                            self.sph('玉', cx - W * 0.35 + i * W * 0.1, y - 0.02, cz + H * 0.12, 0.006, 0.004, 0.006, seg=6)
+                    elif sh == 'sword':
+                        self.bar('铜', (cx, y, cz - H * 0.48), (cx, y, cz + H * 0.15), 0.022, 0.012)
+                        self.bar('黑漆', (cx, y, cz + H * 0.2), (cx, y, cz + H * 0.47), 0.02, 0.012)
+                        self.box('描金', cx - W * 0.45, y - 0.012, cz + H * 0.15, cx + W * 0.45, y + 0.012, cz + H * 0.2)
+                    elif sh == 'round':
+                        self.sph('青花', cx, y + 0.02, cz, W * 0.46, 0.012, H * 0.46, seg=16)
+                    elif sh == 'fan':
+                        self.box('画绢', cx - W / 2, yw - 0.016, cz - H / 2, cx + W / 2, yw - 0.014, cz + H / 2)
+                    elif sh == 'screen':
+                        self.box('画绢', cx - W * 0.45, y - 0.006, cz - H * 0.35, cx + W * 0.45, y + 0.006, cz + H * 0.48)
+                        self.box(wood, cx - W * 0.3, y - 0.02, cz - H / 2, cx + W * 0.3, y + 0.02, cz - H * 0.35)
+        self.col(xa - 0.05, yb - 0.01, za - 0.05, xb + 0.05, yw, zb + 0.05)
 
     def opening(self, m, x0, z0, x1, z1, y, t, shape='round'):
         """在矩形格口上贴一块带孔的花板（圆光、葵花、海棠）。"""
@@ -902,19 +956,27 @@ class Kit:
             bmesh.ops.remove_doubles(b, verts=b.verts[:], dist=1e-5)
             b.to_mesh(me)
             b.free()
-            if m.startswith('雕花'):          # 透雕贴图：按面朝向平面投影，0.5 m 一格
+            if m.startswith('雕花'):          # 透雕贴图：按面朝向平面投影，0.5 m 一格；FIT 类（柜门、角花）每个面铺满整张图
                 uvl = me.uv_layers.new(name='UVMap')
+                fit = m in UV_FIT
+                T = UV_TILE.get(m, 0.5)
                 for poly in me.polygons:
                     nx, ny, nz = (abs(c) for c in poly.normal)
-                    for li in poly.loop_indices:
-                        co = me.vertices[me.loops[li].vertex_index].co
+                    def proj(co):
                         if ny >= nx and ny >= nz:
-                            u, v = co.x, co.z
-                        elif nx >= nz:
-                            u, v = co.y, co.z
-                        else:
-                            u, v = co.x, co.y
-                        uvl.data[li].uv = (u / 0.5, v / 0.5)
+                            return co.x, co.z
+                        if nx >= nz:
+                            return co.y, co.z
+                        return co.x, co.y
+                    pts = [proj(me.vertices[me.loops[li].vertex_index].co) for li in poly.loop_indices]
+                    if fit:
+                        us, vs = [p[0] for p in pts], [p[1] for p in pts]
+                        u0, u1, v0, v1 = min(us), max(us), min(vs), max(vs)
+                        pts = [((u - u0) / max(u1 - u0, 1e-6), (v - v0) / max(v1 - v0, 1e-6)) for u, v in pts]
+                    else:
+                        pts = [(u / T, v / T) for u, v in pts]
+                    for li, uv in zip(poly.loop_indices, pts):
+                        uvl.data[li].uv = uv
             mat = bpy.data.materials.get('M_' + m) or bpy.data.materials.new('M_' + m)
             mat.use_nodes = True
             bsdf = mat.node_tree.nodes.get('Principled BSDF')
