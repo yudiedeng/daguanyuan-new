@@ -52,21 +52,33 @@ for _ in range(34):   # 孔窍：多数顺 z 或 x 穿透，少数斜着；石�
     if abs(c[0]) < 3.6 and c[1] < 3.4: continue
     ax = rng.choice(3, p=[0.35, 0.15, 0.5]); r = np.full(3, rng.uniform(0.28, 0.75)); r[ax] *= rng.uniform(3, 6)
     HOLES.append((c, r))
+# 堆叠的石块：竖长的不规则椭球，沿两岸石墩、拱顶、峰头堆起来（太湖石“瘦、皱、漏、透”，轮廓参差）
+LUMPS = []
+for sx in (-1, 1):      # 两岸石墩：三四层往上叠
+    for z in np.linspace(-3.4, 3.4, 5):
+        y = -1.2
+        while y < 3.6:
+            r = np.array([rng.uniform(0.8, 1.5), rng.uniform(1.0, 1.9), rng.uniform(0.8, 1.4)])
+            LUMPS.append((np.array([sx * rng.uniform(4.6, 7.8), y + r[1] * 0.7, z + rng.uniform(-0.4, 0.4)]), r)); y += r[1] * rng.uniform(1.0, 1.4)
+for z in np.linspace(-3.3, 3.3, 5):   # 拱顶：横跨的石块，略往中间探
+    for x in np.linspace(-5.2, 5.2, 5):
+        r = np.array([rng.uniform(1.1, 1.8), rng.uniform(0.8, 1.3), rng.uniform(0.8, 1.3)])
+        LUMPS.append((np.array([x + rng.uniform(-0.4, 0.4), rng.uniform(3.9, 4.6), z + rng.uniform(-0.3, 0.3)]), r))
+for _ in range(14):     # 峰头：竖长的立石，高低错落
+    r = np.array([rng.uniform(0.6, 1.1), rng.uniform(1.2, 2.2), rng.uniform(0.6, 1.0)])
+    LUMPS.append((np.array([rng.uniform(-7.5, 7.5), rng.uniform(5.2, 6.4), rng.uniform(-2.8, 2.8)]), r))
+LUMPS += [(np.array(c), np.array(r)) for c, r in FLANK]
 def sdf(P):
-    d = sd_rbox(P, np.array([-6.3, 1.0, 0]), (2.7, 3.0, 4.0), 1.8)
-    d = smin(d, sd_rbox(P, np.array([6.3, 1.0, 0]), (2.7, 3.0, 4.0), 1.8), 0.8)
-    d = smin(d, sd_rbox(P, np.array([0, 4.1, 0]), (8.4, 1.1, 3.7), 1.0), 1.0)
-    for c, r in PEAKS: d = smin(d, sd_ell(P, np.array(c), np.array(r)), 0.9)
-    for c, r in FLANK: d = smin(d, sd_ell(P, np.array(c), np.array(r)), 0.6)
+    d = np.full(len(P), 1e3, np.float32)
+    for c, r in LUMPS: d = smin(d, sd_ell(P, c, r), 0.45)
     # 拱洞：下部方、上部半椭圆，顺 z 贯通
     ax = np.abs(P[:, 0]); y = P[:, 1]
     arch = np.where(y < 1.7, ax - 3.2, np.sqrt((ax / 3.2) ** 2 + ((y - 1.7) / 1.35) ** 2) * 1.6 - 1.6)
     arch = np.maximum(arch, -(y + 3.0))
-    d = smax(d, -arch, 0.5)
-    for c, r in HOLES: d = smax(d, -sd_ell(P, c, r), 0.35)
-    # 太湖石：大起伏 + 竖向溶蚀沟纹（y 方向拉长的噪声）+ 细碎皱纹
+    d = smax(d, -arch, 0.4)
+    for c, r in HOLES: d = smax(d, -sd_ell(P, c, r), 0.3)
     V = P * np.array([0.9, 0.3, 0.9])
-    d = d + 0.65 * fbm(P * 0.45) + 0.35 * np.abs(fbm(V * 1.4, 3)) - 0.12 + 0.12 * fbm(P * 1.6, 3) + 0.04 * fbm(P * 5.0, 2)
+    d = d + 0.35 * fbm(P * 0.6) + 0.28 * np.abs(fbm(V * 1.6, 3)) - 0.1 + 0.1 * fbm(P * 1.8, 3) + 0.035 * fbm(P * 5.0, 2)
     return d
 
 # ---------------------------------------------------------------- 取面
