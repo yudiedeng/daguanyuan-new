@@ -233,6 +233,56 @@
   "faces": 50000,
   "neg": "legs, table, gate, pillars, ground plane, text, low quality, blurry"
  },
+ "paifang": {
+  "prompt": "ornate Chinese white jade marble memorial archway gate, four tall square pillars each wrapped by a deeply carved coiling dragon from base to top, three openings with the center one wider, two tiers of horizontal beams filled with lace-like pierced openwork lattice and chi-dragon scrollwork, a large carved double-dragon crest on top of the center, a blank rectangular plaque panel in the middle, small white stone eaves, lotus finials, intricate highly detailed, all white marble, symmetrical front view",
+  "faces": 40000,
+  "neg": "color, red, gold, roof tiles, ground plane, base slab, text, low quality, people"
+ },
+ "gongdeng": {
+  "prompt": "ornate Chinese Qing dynasty imperial palace lantern (gongdeng), hexagonal gilded carved rosewood frame with glass panels painted with flowers, red silk tassels hanging from each corner, hook on top, isolated object",
+  "faces": 9000,
+  "neg": "ground plane, base, stand, pole, table, text, low quality"
+ },
+ "yugang": {
+  "prompt": "large antique Chinese blue and white porcelain fish jar (yugang) with dragon and lotus scroll decoration, filled with water and green lotus leaves and two pink lotus flowers, on a small carved rosewood stand",
+  "faces": 12000,
+  "neg": "ground plane, text, low quality"
+ },
+ "muji": {
+  "prompt": "a single brown farm hen standing on the ground, realistic domestic chicken, detailed feathers, small red comb",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "gongji": {
+  "prompt": "a single rooster standing proudly, realistic domestic chicken, big red comb and wattles, orange neck feathers, dark green arched tail feathers",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "e": {
+  "prompt": "a single white Chinese domestic goose standing, long neck, orange bill with an orange knob at its base, orange feet, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "ya": {
+  "prompt": "a single white domestic farm duck standing, yellow-orange bill and feet, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 4000
+ },
+ "jiutan": {
+  "prompt": "three old brown glazed Chinese earthenware wine jars of different sizes grouped together, mouths covered with red cloth tied with string, rustic, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 6000
+ },
+ "mutong": {
+  "prompt": "two old weathered wooden water buckets with bamboo hoops and rope handles standing side by side, rustic Chinese farm, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 4000
+ },
+ "zhukuang": {
+  "prompt": "a round woven bamboo basket full of fresh green vegetables next to a round flat bamboo winnowing tray leaning against it, rustic Chinese farm, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 5000
+ },
  "pf_jilong": {
   "prompt": "free-standing white marble ridge crest sculpture for the top of a Chinese stone archway: two long slender Chinese dragons with sinuous bodies walking toward each other along a narrow carved ridge beam, a tall flaming pearl standing upright on a cloud between their heads, curling clouds under their claws, open silhouette with sky visible between the dragons, no background panel, low and very wide, about four times wider than tall, crisp deep carving, white jade stone",
   "faces": 50000,

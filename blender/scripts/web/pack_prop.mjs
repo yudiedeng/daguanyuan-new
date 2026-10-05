@@ -17,6 +17,12 @@ const b=getBounds(scene),h=b.max[1]-b.min[1],cx=(b.min[0]+b.max[0])/2,cz=(b.min[
 const M=[s,0,0,0, 0,s,0,0, 0,0,s,0, -cx*s,-b.min[1]*s,-cz*s,1];
 if(mode!=='keep')for(const n of R.listNodes()){const m=n.getMesh();if(!m)continue;transformMesh(m,M);n.setMatrix([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);}
 for(const m of R.listMaterials()){m.setMetallicFactor(Math.min(m.getMetallicFactor(),0.6));}
-await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',resize:[+tex,+tex],quality:80}),dedup(),prune(),meshopt({encoder:MeshoptEncoder,level:'medium'}));
+// 带透明的贴图（花叶贴图集、芭蕉叶）不经 textureCompress：sharp 缩放、编 webp 都会把透明处的颜色抹黑，远处 mip 后叶片发黑。
+// 这类贴图原样存无损 webp（exact 保留透明处颜色），其余有损 webp 缩到 tex
+const alphaTex=new Set(R.listMaterials().filter(m=>m.getAlphaMode()!=='OPAQUE').map(m=>m.getBaseColorTexture()).filter(Boolean));
+for(const t of R.listTextures())if(alphaTex.has(t))t.setName('A__'+t.getName());
+await doc.transform(textureCompress({encoder:sharp,targetFormat:'webp',resize:[+tex,+tex],quality:80,pattern:/^(?!A__).+$/}));
+for(const t of alphaTex){t.setImage(await sharp(Buffer.from(t.getImage())).webp({lossless:true,exact:true}).toBuffer());t.setMimeType('image/webp');t.setName(t.getName().replace(/^A__/,''));}
+await doc.transform(dedup(),prune(),meshopt({encoder:MeshoptEncoder,level:'medium'}));
 fs.writeFileSync(dst,await io.writeBinary(doc));
 console.log(src.split('/').pop(),'tris',Math.round(t0),'->',Math.round(tris()),'w/d',((b.max[0]-b.min[0])*s).toFixed(2),((b.max[2]-b.min[2])*s).toFixed(2),'bytes',fs.statSync(dst).size);
