@@ -161,6 +161,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { Water } from 'three/addons/objects/Water.js';
+import { Water as Water2 } from 'three/addons/objects/Water2.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -1981,11 +1982,16 @@ function buildQinfangFX(){
    for(let k=1;k<K;k++){const u=k/K,v=Math.sqrt(0.25+2*9.8*drop*u*u);push(a.x+(p.x-a.x)*u*0.9,y0-drop*u*u,a.z+(p.z-a.z)*u*0.9,a.tx,a.tz,v,0.15+0.75*u*u,1,0);}
    since=0;}
   const v=0.35+1.1*Math.exp(-since/3),fo=since<99?0.95*Math.exp(-since/2.5):0;push(p.x,lvAt(i),p.z,p.tx,p.tz,v,fo,0,1);since++;if(p.wet)break;}
+ // 平缓的一段（同一水位最长、离跌水白沫远的一段）交给 three.js 的 Water2：真折射（透出水下卵石）＋真倒影，水纹顺河道流
+ let seg=null;for(let j=0,st=-1;j<=rows.length;j++){const r=rows[j],good=!!r&&!r.nap&&r.fo<0.12&&r.y>0.1;
+  if(good&&st>=0&&Math.abs(r.y-rows[st].y)<0.005)continue;
+  if(st>=0&&j-st>=8&&(!seg||j-st>seg[1]-seg[0]))seg=[st,j];st=good?j:-1;}
+ const inSeg=j=>seg&&j-1>=seg[0]&&j<=seg[1]-1;
  // 水面：一整条，每行 7 点横排
  const CN=[-1,-0.66,-0.33,0,0.33,0.66,1],nc=CN.length;
- const wp=[],wa=[],wi=[];
+ const wp=[],wa=[],wi=[],wiS=[];
  rows.forEach((r,j)=>{for(const c of CN)wp.push(r.x-r.tz*W*c,r.y,r.z+r.tx*W*c),wa.push(r.T,c,r.fo,r.nap);
-  if(j>0){const k=(j-1)*nc;for(let m=0;m<nc-1;m++)wi.push(k+m,k+m+nc,k+m+1,k+m+1,k+m+nc,k+m+nc+1);}});
+  if(j>0){const k=(j-1)*nc,I=inSeg(j)?wiS:wi;for(let m=0;m<nc-1;m++)I.push(k+m,k+m+nc,k+m+1,k+m+1,k+m+nc,k+m+nc+1);}});
  const gw=new THREE.BufferGeometry();gw.setAttribute('position',new THREE.Float32BufferAttribute(wp,3));gw.setAttribute('aF',new THREE.Float32BufferAttribute(wa,4));gw.setIndex(wi);gw.computeVertexNormals();
  const wm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,
   uniforms:{gTime:G.time,gNoise:G.noise,gSunCol:G.sunCol,gSunDir:G.sunDir,pet:{value:0},petCol:{value:new THREE.Color('#f0b4c4')},
@@ -2021,6 +2027,17 @@ function buildQinfangFX(){
      col=mix(col,petCol*(0.6+0.4*r*6.0)*L*0.8,petal);alpha=max(alpha,petal);}
     gl_FragColor=vec4(col,alpha);}`});
  const water_=new THREE.Mesh(gw,wm);water_.renderOrder=2;water_.frustumCulled=false;water_.name='清溪';scene.add(water_);
+ let w2=null,wSeg=null;
+ if(seg){const gs=gw.clone();gs.setIndex(wiS);wSeg=new THREE.Mesh(gs,wm);wSeg.renderOrder=2;wSeg.frustumCulled=false;scene.add(wSeg);/* 低画质或走远时用回自绘水面 */
+  try{const y0=rows[seg[0]].y,P=[],U=[],I=[];
+   for(let j=seg[0];j<seg[1];j++){const r=rows[j];for(const c of CN){P.push(r.x-r.tz*W*c,-(r.z+r.tx*W*c),0);U.push(c*W,r.S);}
+    if(j>seg[0]){const k=(j-1-seg[0])*nc;for(let m=0;m<nc-1;m++)I.push(k+m,k+m+1,k+m+nc,k+m+1,k+m+nc+1,k+m+nc);}}
+   const g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g2.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g2.setIndex(I);g2.computeBoundingSphere();
+   // uv：横向米数、顺流米数，所以流向在 uv 里恒为 +v；flowSpeed 换算成约 0.35 米/秒
+   const sc=0.9;w2=new Water2(g2,{color:'#d3e6da',scale:sc,flowDirection:new THREE.Vector2(0,-1),flowSpeed:0.35*sc,reflectivity:0.03,textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,normalMap0:WATERN,normalMap1:WATERN});
+   w2.rotation.x=-Math.PI/2;w2.position.y=y0;w2.renderOrder=2;w2.name='清溪·Water2';scene.add(w2);
+   w2.material.side=THREE.DoubleSide;const ctr=new V3();ctr.copy(g2.boundingSphere.center).applyEuler(w2.rotation).add(w2.position);w2.userData.ctr=ctr;}
+  catch(e){console.warn('Water2',e);w2=null;}}
  // 溪底：卵石，中间深 0.2 米、两边浅；水下有晃动的光网
  {const BC=[-1.3,-1,-0.5,0,0.5,1,1.3],BD=[0.0,-0.07,-0.16,-0.2,-0.16,-0.07,0.0],bp=[],bc=[],bi=[];let prev=-1;
   rows.forEach((r,j)=>{if(!r.bed){prev=-1;return;}const base=bp.length/3;BC.forEach((c,m)=>{bp.push(r.x-r.tz*W*c,r.y+BD[m]-(Math.abs(c)>1.1?0.1:0),r.z+r.tx*W*c);const sh=Math.abs(c)>0.9?0.62:0.78+0.1*Math.sin(r.S*2.3+m);bc.push(sh,sh,sh*0.96);});
@@ -2049,7 +2066,7 @@ function buildQinfangFX(){
  const mtx=new THREE.CanvasTexture(mt);mtx.colorSpace=THREE.SRGBColorSpace;const mist=[];const rr=mulberry32(4242);
  const cx=QINFANG?QINFANG.x:0,cz=QINFANG?QINFANG.z:50;
  for(let k=0;k<22;k++){const x=cx+(rr()-0.5)*64,z=cz+4+rr()*30,s=9+rr()*10;const y=Math.max(0,height(x,z))+0.8+rr()*2.2;const sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:mtx,transparent:true,depthWrite:false,opacity:0,fog:false}));sp2.scale.set(s*1.6,s*0.55,1);sp2.position.set(x,y,z);sp2.userData={x,z,y,ph:rr()*6.28,sp:0.15+rr()*0.25};sp2.renderOrder=4;scene.add(sp2);mist.push(sp2);}
- FX.push((dt,et)=>{wm.uniforms.mOn.value=water&&water.visible?1:0;wm.uniforms.pet.value=season===0?1:season===2?0.7:0;wm.uniforms.petCol.value.set(season===2?'#c98a3a':'#f0b4c4');
+ FX.push((dt,et)=>{wm.uniforms.mOn.value=water&&water.visible?1:0;if(wSeg){const on=!!w2&&Q>0&&camera.position.distanceTo(w2.userData.ctr)<70;if(w2)w2.visible=on;wSeg.visible=!on;}wm.uniforms.pet.value=season===0?1:season===2?0.7:0;wm.uniforms.petCol.value.set(season===2?'#c98a3a':'#f0b4c4');
   for(const mm of sm){const t=(et*0.9+mm.userData.ph)%1;mm.scale.setScalar(0.45+t*0.6);mm.material.opacity=0.45*(1-t);}
   for(const s2 of spray){const u=s2.userData,t=(et*0.7+u.ph)%1;s2.position.set(u.x+u.dx*t,u.y+0.15+t*0.9,u.z+u.dz*t);s2.scale.setScalar(0.5+t*1.7);s2.material.opacity=0.3*Math.sin(Math.PI*t);}
   const morn=sstep(4.5,6.0,hour)*(1-sstep(8.5,11,hour)),eve=sstep(17.5,19,hour)*(1-sstep(21,23,hour));const dens=(0.2+0.62*morn+0.3*eve)*(1-snowAmt*0.5);const lum=0.35+0.65*(1-night);
