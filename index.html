@@ -960,7 +960,7 @@ async function buildCrops(){if(!GLB)return;const y0=Z.daoxiang.y,ox=Z.daoxiang.x
  let items=[];try{items=(await (await fetch('tex/crops_daoxiang.json')).json()).items;}catch(e){console.warn('crops.json',e);return;}
  const at=it=>new V3(ox+it[2],y0+it[4],oz-it[3]);
  const inst=(g,m,list,sx)=>{const im=new THREE.InstancedMesh(g,m,list.length);list.forEach((it,i)=>{const s=it[6]*(sx||1);_m4.compose(at(it),new THREE.Quaternion().setFromAxisAngle(UP,it[5]),new V3(s,s,s));im.setMatrixAt(i,_m4);});
-  im.castShadow=false;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);return im;};
+  im.castShadow=false;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);return im;};  // 作物都在稻香村一片地里：开视锥剔除，看不到那片田就整块不画
  if(Q>0){try{const g=await new GLTFLoader().loadAsync('models/p/crops.glb');const geos={};g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh){const q=o.geometry.clone();q.applyMatrix4(o.matrixWorld);geos[o.name]=q;}});
    const m=patch(new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.78,metalness:0}),{key:'crop3d',vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'});
    const by={};for(const it of items)(by[it[0]+'_'+it[1]]??=[]).push(it);
@@ -1052,7 +1052,7 @@ function buildHengwuYard(){if(!GLB)return;const q=Z.hengwu,rr=mulberry32(1717);c
   for(let k=0;k<(Q===0?Math.min(n,1):Q===1?Math.min(n,2):n);k++){const px=x+(rr()-0.5)*0.5,pz=z+(rr()-0.5)*0.5;if(!free(px,pz))continue;const u=rr(),v=u<0.4?0:u<0.72?1:u<0.84?2:3;items[v].push([q.x+px,q.y+0.01,q.z+pz,rr()*6.283,(0.8+rr()*0.6)*(dd<=2?1:1.15)]);}}
  plants().then(({herb,herbM})=>{const cc=new THREE.Color();items.forEach((list,v)=>{if(!list.length||!herb[v])return;const im=new THREE.InstancedMesh(herb[v],herbM,list.length);
   list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.85+rr()*0.3),it[4]));im.setMatrixAt(i,_m4);const b=0.85+rr()*0.25;cc.setRGB(b*(0.94+rr()*0.06),b,b*(0.94+rr()*0.08));im.setColorAt(i,cc);});
-  im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});}).catch(e=>console.warn('hw herbs',e));
+  im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);});}).catch(e=>console.warn('hw herbs',e));
  window.__hwherb=items.map(l=>l.length);
  hengwuVines(q).catch(e=>console.warn('hengwu vines',e));}
 /* 藤萝：“或垂山巅，或穿石隙，甚至垂檐绕柱，萦砌盘阶，或如翠带飘摇，或如金绳蟠屈，或实若丹砂，或花如金桂”。
@@ -1068,7 +1068,7 @@ async function hengwuVines(q){const J=await (await fetch('models/b/hw_vines.json
   for(const [x,y,z] of J.R){if(rr()<0.35)continue;const u=rr(),v=u<0.3?0:u<0.6?2:u<0.82?1:3;L[v].push([x,y-0.04,z,new THREE.Quaternion().setFromAxisAngle(UP,rr()*6.283),0.55+rr()*0.5]);}
   for(const [x,y,z,dx,dz] of J.S){if(rr()<0.4)continue;const qq=new THREE.Quaternion().setFromAxisAngle(new V3(dz,0,-dx),0.9+rr()*0.5).multiply(new THREE.Quaternion().setFromAxisAngle(UP,rr()*6.283));L[rr()<0.7?2:0].push([x-dx*0.05,y,z-dz*0.05,qq,0.5+rr()*0.4]);}
   L.forEach((list,v)=>{if(!list.length)return;const im=new THREE.InstancedMesh(herb[v],herbM,list.length);list.forEach((t,i)=>{_m4.compose(new V3(q.x+t[0],q.y+t[1],q.z+t[2]),t[3],new V3(t[4],t[4],t[4]));im.setMatrixAt(i,_m4);const b=0.85+rr()*0.25;cc.setRGB(b,b,b*0.95);im.setColorAt(i,cc);});
-   im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});}
+   im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);});}
  // 插天的大玲珑山石：巨石正面补几块带孔的太湖石，迎门一立
  if(J.H.length)new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/p/hushi.glb').then(g=>{let src=null;g.scene.traverse(o=>{if(o.isMesh&&!src)src=o;});if(!src)return;
   const mat=src.material.clone();mat.color=new THREE.Color('#b8b8ae');mat.roughness=0.95;const im=new THREE.InstancedMesh(src.geometry,mat,J.H.length);
@@ -1172,7 +1172,9 @@ function mergeGeos(list){let vc=0,ic=0;for(const g of list){vc+=g.attributes.pos
  for(const g of list){const p=g.attributes.position,n=g.attributes.normal,u=g.attributes.uv,c=g.attributes.color,cnt=p.count;pos.set(p.array.subarray(0,cnt*3),vo*3);if(n)nor.set(n.array.subarray(0,cnt*3),vo*3);if(u)uv.set(u.array.subarray(0,cnt*2),vo*2);if(c)col.set(c.array.subarray(0,cnt*3),vo*3);else col.fill(1,vo*3,(vo+cnt)*3);
   if(g.index){const a=g.index.array;for(let k=0;k<a.length;k++)idx[io++]=a[k]+vo;}else{for(let k=0;k<cnt;k++)idx[io++]=vo+k;}vo+=cnt;}
  const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.BufferAttribute(pos,3));o.setAttribute('normal',new THREE.BufferAttribute(nor,3));o.setAttribute('uv',new THREE.BufferAttribute(uv,2));o.setAttribute('color',new THREE.BufferAttribute(col,3));o.setIndex(new THREE.BufferAttribute(idx,1));o.computeBoundingSphere();return o;}
-function flush(){for(const k in BATCH){const m=new THREE.Mesh(mergeGeos(BATCH[k]),MAT[k]);m.castShadow=!NOSHADOW.has(k);m.receiveShadow=true;scene.add(m);}}
+/* 程序生成的构件按材质合并；再按 32 m 格子分块（按构件中心归格），每块有自己的包围球，看不见的块（画面外、阴影相机外、倒影外）不画 */
+function flush(){const _c=new V3();for(const k in BATCH){const C=new Map();for(const g of BATCH[k]){g.computeBoundingBox();g.boundingBox.getCenter(_c);const key=Math.floor(_c.x/32)+','+Math.floor(_c.z/32);(C.get(key)||C.set(key,[]).get(key)).push(g);}
+ for(const l of C.values()){const m=new THREE.Mesh(mergeGeos(l),MAT[k]);m.castShadow=!NOSHADOW.has(k);m.receiveShadow=true;scene.add(m);}}}
 function T(x=0,y=0,z=0,ry=0,sx=1,sy=1,sz=1,rx=0,rz=0){const q=new THREE.Quaternion().setFromAxisAngle(UP,ry);if(rx)q.multiply(new THREE.Quaternion().setFromAxisAngle(XA,rx));if(rz)q.multiply(new THREE.Quaternion().setFromAxisAngle(ZA,rz));return new THREE.Matrix4().compose(new V3(x,y,z),q,new V3(sx,sy,sz));}
 function at(M,x,y,z,ry,sx,sy,sz,rx,rz){return M.clone().multiply(T(x,y,z,ry,sx,sy,sz,rx,rz));}
 // colliders: oriented boxes in xz with [bot,top]
@@ -1830,6 +1832,10 @@ function leafMat(map,kind,ph){const m=a2c(patch(new THREE.MeshStandardMaterial({
 function makeInst(geo,mat,list,fn,shadow,layer){const m=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));const M4=new THREE.Matrix4(),c=new THREE.Color();
  list.forEach((it,i)=>{fn(M4,it);m.setMatrixAt(i,M4);c.set(it.c||it.tint||'#ffffff');m.setColorAt(i,c);});if(!list.length)m.count=0;
  m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;m.castShadow=shadow!==false;m.receiveShadow=true;m.frustumCulled=false;if(layer)m.layers.set(layer);scene.add(m);return m;}
+/* 分块实例：按 cell 米见方的格子拆成多块，每块算包围球（再放宽 pad 米给风摆），开视锥剔除——
+   看不见的块（画面外、阴影相机外、湖面倒影外）整块不画，画出来的东西与不分块完全一样。返回各块数组。 */
+function makeInstC(geo,mat,list,fn,shadow,cell,pad){const C=new Map();for(const it of list){const k=Math.floor(it.x/cell)+','+Math.floor(it.z/cell);if(!C.has(k))C.set(k,[]);C.get(k).push(it);}
+ const out=[];for(const l of C.values()){const m=makeInst(geo,mat,l,fn,shadow);m.computeBoundingSphere();m.boundingSphere.radius+=pad||0;m.frustumCulled=true;out.push(m);}return out;}
 function buildInstances(){
  const BARKP=patch(std('#c6c7c4',.93,{map:PHOTO.bark.map,normalMap:PHOTO.bark.nrm,normalScale:new THREE.Vector2(1.4,1.4)}),{key:'bap',snowLo:'0.4',snowHi:'0.85'});
  const LEAFTEX={broad:LEAF_BROAD,blossom:LEAF_BLOSSOM,pine:LEAF_PINE,willow:LEAF_WILLOW,bush:LEAF_BROAD,gui:LEAF_BROAD,bai:LEAF_PINE,sangyu:LEAF_BROAD,jinzhe:LEAF_BROAD};
@@ -1864,8 +1870,8 @@ function buildInstances(){
    const P=[];for(let x=x0;x<=x1;x+=1.8)for(let z=z0;z<=z1;z+=1.8){const cx=x+R(-0.4,0.4),cz=z+R(-0.4,0.4);let n=0;const l=SH.get(Math.floor(cx/3)+','+Math.floor(cz/3))||[];for(let q=0;q<l.length;q+=2)if(Math.hypot(l[q]-cx,l[q+1]-cz)<2.2)n++;
     if(Math.abs(cx-XQ.x)>XQ.hw+12||Math.abs(cz-XQ.z)>XQ.hd+12||RILLD(cx,cz)<1.45)continue;  // 立体落叶只铺潇湘馆一带，远处靠贴图
     if(n<2||![[0,0],[0.8,0.8],[-0.8,0.8],[0.8,-0.8],[-0.8,-0.8]].every(([a,b])=>ok(cx+a,cz+b)))continue;P.push({x:cx,y:height(cx,cz)-0.01,z:cz,ry:rnd()*6.283,s:R(0.85,1.1)});}
-   const lm2=new THREE.MeshStandardMaterial({map:ZHU.lit.map,roughness:.85,side:THREE.DoubleSide});const li=makeInst(ZHU.lit.geo,lm2,P,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,1,it.s)),false);}
-  for(let v=0;v<6;v++){const L=STALKS.filter((it,i)=>(i*7+(i>>3))%6===v);const a=makeInst(ZHU[v].culm,cm,L,setZ);a.customDepthMaterial=cd;const b=makeInst(ZHU[v].leaf,lm,L.map(it=>({...it,c:it.lc||'#ffffff'})),setZ);b.customDepthMaterial=ldm;}
+   const lm2=new THREE.MeshStandardMaterial({map:ZHU.lit.map,roughness:.85,side:THREE.DoubleSide});makeInstC(ZHU.lit.geo,lm2,P,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,1,it.s)),false,16,0.5);}
+  for(let v=0;v<6;v++){const L=STALKS.filter((it,i)=>(i*7+(i>>3))%6===v);for(const m of makeInstC(ZHU[v].culm,cm,L,setZ,true,16,1.5))m.customDepthMaterial=cd;for(const m of makeInstC(ZHU[v].leaf,lm,L.map(it=>({...it,c:it.lc||'#ffffff'})),setZ,true,16,1.5))m.customDepthMaterial=ldm;}
  }else{
  const st=makeInst(bs,patch(std('#ffffff',.5,{map:STALK}),{key:'bst',vWorld:sw}),STALKS,setQ);st.customDepthMaterial=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),{key:'bstd',vWorld:sw});
  const parts=[];for(let i=0;i<3;i++){const p=new THREE.PlaneGeometry(1.35,1.0);p.translate(0,-0.28,0);p.rotateY(i*Math.PI/3);parts.push(p);}
@@ -1876,16 +1882,16 @@ function buildInstances(){
   for(const [M,x,y,z,ry] of QUE)add('que',qg.clone(),at(M,x,y,z,ry));}
  // eave tiles & rafters & dougong
  const et=new THREE.CylinderGeometry(0.1,0.1,0.14,12);et.rotateX(Math.PI/2);
- makeInst(et,patch(std('#ffffff',.45),{key:'eav'}),EAVE,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0.25,it.yaw,0,'YXZ')),new V3(1,1,1)),false);
+ makeInstC(et,patch(std('#ffffff',.45),{key:'eav'}),EAVE,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0.25,it.yaw,0,'YXZ')),new V3(1,1,1)),false,24,0.3);
  const rg=new THREE.CylinderGeometry(0.065,0.065,0.6,8);rg.rotateX(Math.PI/2);
- makeInst(rg,std('#ffffff',.6),RAFT.map(r=>({...r,c:'#7a3324'})),(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3,it.yaw,0,'YXZ')),new V3(1,1,1)),false);
+ makeInstC(rg,std('#ffffff',.6),RAFT.map(r=>({...r,c:'#7a3324'})),(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3,it.yaw,0,'YXZ')),new V3(1,1,1)),false,24,0.5);
  const dg=mergeGeos([(()=>{const g=new THREE.BoxGeometry(0.26,0.18,0.3);g.translate(0,0.09,0);return g;})(),(()=>{const g=new THREE.BoxGeometry(0.62,0.12,0.16);g.translate(0,0.24,0);return g;})(),(()=>{const g=new THREE.BoxGeometry(0.2,0.14,0.62);g.translate(0,0.24,0.12);return g;})()]);
- makeInst(dg,std('#ffffff',.6),DOUG.map((d,i)=>({...d,c:i%2?'#2f6a64':'#3a6a8c'})),(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.yaw),new V3(1,1,1)),false);
+ makeInstC(dg,std('#ffffff',.6),DOUG.map((d,i)=>({...d,c:i%2?'#2f6a64':'#3a6a8c'})),(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.yaw),new V3(1,1,1)),false,24,0.5);
  // lotus
  const lg=(()=>{const P=[],U=[],I=[];const Rn=7,S=36;P.push(0,-0.05,0);U.push(0.5,0.5);for(let i=1;i<=Rn;i++){const r=i/Rn;for(let j=0;j<S;j++){const a=j/S*Math.PI*2;const y=0.17*r*r-0.05+0.03*Math.sin(a*7+1.3)*r*r*r+0.02*Math.sin(a*3)*r*r;P.push(Math.cos(a)*r,y,Math.sin(a)*r);U.push(0.5+Math.cos(a)*r*0.5,0.5-Math.sin(a)*r*0.5);}}
   for(let j=0;j<S;j++)I.push(0,1+(j+1)%S,1+j);for(let i=1;i<Rn;i++){const b0=1+(i-1)*S,b1=1+i*S;for(let j=0;j<S;j++){const a=b0+j,b=b0+(j+1)%S,c=b1+j,d=b1+(j+1)%S;I.push(a,b,d,a,d,c);}}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setIndex(I);g.computeVertexNormals();return g;})();
- LOTUS_MESH=makeInst(lg,a2c(patch(new THREE.MeshStandardMaterial({map:LOTUS.map,normalMap:LOTUS.nrm,alphaTest:0.5,side:THREE.DoubleSide,roughness:.42}),{key:'lot',alphaFix:1,fOut:LEAF_OUT})),LOTUSL,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(it.tilt,it.ry,0,'YXZ')),new V3(it.s,it.s,it.s)),false);
+ LOTUS_MESH=makeInst(lg,a2c(patch(new THREE.MeshStandardMaterial({map:LOTUS.map,normalMap:LOTUS.nrm,alphaTest:0.5,side:THREE.DoubleSide,roughness:.42}),{key:'lot',alphaFix:1,fOut:LEAF_OUT})),LOTUSL,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromEuler(new THREE.Euler(it.tilt,it.ry,0,'YXZ')),new V3(it.s,it.s,it.s)),false);LOTUS_MESH.computeBoundingSphere();LOTUS_MESH.boundingSphere.radius+=1;LOTUS_MESH.frustumCulled=true;  // 荷叶只在池里：开剔除（换季只缩放，不会超出）
  const sg=new THREE.CylinderGeometry(0.016,0.022,1,5);sg.translate(0,0.5,0);
  const STK=[...LOTUSL.filter(l=>l.y>0.2).map(l=>({x:l.x,z:l.z,h:l.y,c:'#6f8a4a'})),...LOTUSF.map(f=>({x:f.x,z:f.z,h:f.y,c:'#6a8646'}))];
  LOTUS_STALK=makeInst(sg,std('#ffffff',.6),STK,(M4,it)=>M4.compose(new V3(it.x,-0.3,it.z),new THREE.Quaternion(),new V3(1,it.h+0.3,1)),false);
@@ -1907,7 +1913,7 @@ function buildInstances(){
     vec3 moss=vec3(0.085,0.13,0.045)*(0.7+0.8*ta.g)*mix(vec3(1.0),gSeasonTint,0.6);moss=mix(moss,vec3(0.16,0.13,0.07),gDry*0.7);diffuseColor.rgb=mix(diffuseColor.rgb,moss,rkM*0.85);}`,
   fNormal:`if(tReady>0.5){vec2 a1=texture2D(tRN,vWPos.zy/2.4).rg*2.0-1.0,a2=texture2D(tRN,vWPos.xz/2.4+0.3).rg*2.0-1.0,a3=texture2D(tRN,vWPos.xy/2.4+0.6).rg*2.0-1.0;
    vec3 pn=vec3(0.0,a1.y,a1.x)*rkW.x+vec3(a2.x,0.0,a2.y)*rkW.y+vec3(a3.x,a3.y,0.0)*rkW.z;vec3 nw=normalize(wN+pn*(1.0-rkM*0.6)*1.2);normal=normalize((viewMatrix*vec4(nw,0.0)).xyz);wN=nw;roughnessFactor=mix(0.9,0.97,rkM);}`});
- for(let v=0;v<5;v++){const L=ROCKS.filter(r=>r.v===v);makeInst(RG[v],rm,L,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.sx,it.sy,it.sz)));}
+ for(let v=0;v<5;v++){const L=ROCKS.filter(r=>r.v===v);makeInstC(RG[v],rm,L,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.sx,it.sy,it.sz)),true,24,0.2);}
 }
 function banana(x,z,h,y){const stalk=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.16,h,8),std('#6c7d3c',.8));stalk.position.set(x,y+h/2,z);stalk.castShadow=true;scene.add(stalk);
  const lg=new THREE.PlaneGeometry(0.8,2.6,1,10);lg.translate(0,1.3,0);const p=lg.attributes.position;for(let i=0;i<p.count;i++){const yy=p.getY(i);p.setZ(i,-0.11*yy*yy);}lg.computeVertexNormals();
