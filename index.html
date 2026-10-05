@@ -1403,7 +1403,8 @@ function prepViews(){for(const p of PLACES){if(!p.view)continue;const c=p.view.c
  VIEWSEG.push([-1,91,1,44,8]);}
 function inView(x,z,extra,segs){for(const v of segs||VIEWSEG){if(!v[4])continue;const dx=v[2]-v[0],dz=v[3]-v[1],L2=dx*dx+dz*dz;let u=((x-v[0])*dx+(z-v[1])*dz)/L2;if(u<0.15||u>0.92)continue;const px=v[0]+dx*u,pz=v[1]+dz*u;const r=v[4]+(extra||0);if((px-x)**2+(pz-z)**2<r*r)return true;}return false;}
 // 新景点（芦雪广、凹晶馆、凸碧山庄）占地：x, z, 半宽, 半深
-const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9]]:[];
+const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9],
+ [-86,0,14,4],[-105,26,3.5,8]]:[];// 后两块：秋爽斋晓翠堂后墙外、探春三间西墙外——园里随机种的桂、柳离墙太近，树冠伸进屋里（树距照旧登记，别处布局不变）
 function inSite(x,z,extra){for(const f of SITE_FP)if(Math.abs(x-f[0])<f[2]&&Math.abs(z-f[1])<f[3])return true;return VIEWSEG_NEW.length>0&&inView(x,z,extra||0,VIEWSEG_NEW);}
 function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(nearStream(x,z,3))return;/* 清溪两岸不种树，叠水露出来 */if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)){TREES[sp].pop();treeAdd(x,z);return;}/* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
 const RC=['#c9c6bc','#d6d3ca','#bdbbb2','#c4c6b6','#aeb59e','#cfcbc0'];
@@ -1595,7 +1596,9 @@ function buildRill(){const y0=Z.xiaoxiang.y+0.1-0.085,OX=-82+MV.xiaoxiang[0],OZ=
    fragmentShader:'uniform vec3 gSunCol;varying float vA;void main(){vec2 d=gl_PointCoord-0.5;float r=dot(d,d);if(r>0.25)discard;gl_FragColor=vec4(vec3(0.9,0.95,0.95)*(0.35+0.4*clamp(length(gSunCol),0.0,1.5)),vA*(1.0-r*4.0)*0.8);}'});
   const pts=new THREE.Points(pg,pm);pts.frustumCulled=false;pts.renderOrder=3;scene.add(pts);}}
 function buildQiushuang(){if(!GLB)return;const q=Z.qiushuang,y=q.y;
- for(const [lx,lz] of[[8,10],[11,2.5],[-6,-15.8],[6,-15.8]]){const x=-86+lx,z=19+lz;TREES.broad.push({x,y:y+0.05,z,s:R(0.75,0.9),ry:rnd()*6.283,tint:pick(GREENS),plum:false,v:1});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}
+ /* 院里四株梧桐（v1）：东边两株；后面两株原在北墙外 0.8 m，离晓翠堂后墙不到 3 m，树冠伸进堂里——北墙外地势又陡降，
+    改种院内东北、西北两角，离两山墙约 6 m，株形略小（树冠半径约 5.5 m）。R() 调用次数不变，不动全园随机序列 */
+ for(const [lx,lz,k] of[[8,10,1],[11,2.5,1],[-13,-12.4,0],[13,-12.4,0]]){const x=-86+lx,z=19+lz;const s0=R(0.75,0.9);TREES.broad.push({x,y:y+0.05,z,s:k?s0:0.62+(s0-0.75)*0.4,ry:rnd()*6.283,tint:pick(GREENS),plum:false,v:1});treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.4,hz:0.4,top:y+4,bot:y-1});}
  BANANAS.push([-86+3.2,19+6.0,2.3,y],[-86+4.4,19+7.2,1.9,y],[-86+3.6,19+8.3,1.6,y],[-86+12.5,19+9.5,2.1,y],[-86+13.2,19+11,1.7,y]);}
 function buildHengwu(){const y=Z.hengwu.y;if(GLB)return;court({x:62,z:-92,hw:18,hd:14,h:3.6,gates:[{side:'s',pos:62,moon:true,w:5}]});pave(62,-92,18,14,y);
  hall(T(62,y,-99.5,0),{w:15,d:7.5,h:4.0,bays:5,roof:'gable',round:true,roofH:2.2,over:1.5,plaque:'蘅芷清芬',lanterns:true});

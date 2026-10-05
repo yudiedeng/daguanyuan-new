@@ -163,6 +163,16 @@ n2 = cut_faces('QS_晓翠堂_抱厦_paper', (-1.62, 2.6, 0.93, 1.62, 2.95, 3.2))
 n3 = cut_faces('QS_晓翠堂_抱厦_red', (-1.62, 2.6, 0.93, 1.62, 2.95, 3.2))
 n4 = cut_faces('QS_晓翠堂_抱厦_gold', (-1.62, 2.6, 0.93, 1.62, 2.95, 3.2))
 print('抱厦明间删面', n1, n2, n3, n4)
+# 上面按「整面落在盒内」删，门扇的抹头一半伸出盒外（x 到 ±1.65）没删掉，悬在门洞两侧成几根红横杆：
+# 再按三角形质心删一遍（z 0.955…3.18：留下门槛顶 0.949 与上槛 3.192）
+def cut_centroid(obj_name, box):
+    o = O[obj_name]; me = o.data; mw = o.matrix_world
+    bm = bmesh.new(); bm.from_mesh(me); bm.faces.ensure_lookup_table()
+    x0, y0, z0, x1, y1, z1 = box
+    dead = [f for f in bm.faces if (lambda c: x0 <= c.x <= x1 and y0 <= c.y <= y1 and z0 <= c.z <= z1)(mw @ f.calc_center_median())]
+    bmesh.ops.delete(bm, geom=dead, context='FACES'); bm.to_mesh(me); bm.free(); return len(dead)
+for part in ('lat', 'red'):
+    print('抱厦明间残留抹头', part, cut_centroid(f'QS_晓翠堂_抱厦_{part}', (-1.62, 2.6, 0.955, 1.62, 2.95, 3.18)))
 # 正房前檐（y≈5.9）的五块木板隔断（借怡红院时带过来的）：整排剪去，晓翠堂前后通敞
 for part in ('red', 'gold', 'green'):
     n = f'QS_晓翠堂_正房_{part}'
