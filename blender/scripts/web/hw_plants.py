@@ -36,11 +36,15 @@ def lerp3(a, b, t): return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
 def mul3(a, k): return tuple(min(1, x * k) for x in a)
 
 STAT = {}
+# 叶片图集 tex/hw_leaf_atlas.webp（2×2 格，Blender UV 左下为原点）：白蜡羽状叶、山杨圆叶（调成深绿）、橡树裂叶、山杨黄叶（紫芸染红用）
+# 照片枝叶取自 three.js 植物库 ez-tree（MIT，@dgreenheck/ez-tree）。茎、果、花的 UV 指向图集里一块实心白，颜色靠顶点色。
+TILE = {'ash': (0.0, 0.5), 'aspg': (0.5, 0.5), 'oak': (0.0, 0.0), 'aspy': (0.5, 0.0)}
+WHITE = (1000 / 2048, 1 - 2024 / 2048)
 class Geo:
-    def __init__(s): s.V = []; s.F = []; s.C = []
-    def add(s, verts, faces, cols):
+    def __init__(s): s.V = []; s.F = []; s.C = []; s.U = []
+    def add(s, verts, faces, cols, uvs=None):
         k = sys._getframe(1).f_code.co_name; STAT[k] = STAT.get(k, 0) + sum(len(f) - 2 for f in faces)
-        b = len(s.V); s.V += verts; s.F += [[b + i for i in f] for f in faces]; s.C += cols
+        b = len(s.V); s.V += verts; s.F += [[b + i for i in f] for f in faces]; s.C += cols; s.U += uvs or [WHITE] * len(verts)
     def tris(s): return sum(len(f) - 2 for f in s.F)
 
 def frame(d, up_hint):
@@ -72,6 +76,16 @@ def leaf(g, base, d, up_hint, L, W, shape, cb, ct, cup=0.35, droop=0.25, rows=4)
         for j in range(2):
             a = i * 3 + j; faces.append([a, a + 1, a + 4, a + 3])
     g.add(verts, faces, cols)
+
+def card(g, base, d, n_hint, L, tile, tint, fold=0.3, droop=0.2):
+    """照片枝叶卡：叶枝基部在 base，朝 d 方向伸出长 L（宽同长），叶面大致朝 n_hint；沿中线对折一点、梢头下垂。"""
+    d, side, up = frame(d, n_hint); u0, v0 = TILE[tile]; verts, cols, uvs = [], [], []
+    for u in (0, 0.5, 1):
+        for v in (-1, 0, 1):
+            p = base + d * (u * L) + side * (v * L / 2) + up * (fold * abs(v) * L * 0.22 - droop * u * u * L)
+            verts.append(tuple(p)); cols.append(mul3(tint, 1.0 if v else 1.06)); uvs.append((u0 + 0.25 + v * 0.25, v0 + u * 0.5))
+    faces = [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]]
+    g.add(verts, faces, cols, uvs)
 
 def tube(g, pts, r, col, sides=3):
     if len(pts) < 2: return
@@ -127,21 +141,18 @@ def vine(g, pts, out, kind, spread=1.0, twig=True):
     if kind == 'jin':  # 金绳：再绕一根更细的
         tw = [P[i] + (O[i].cross(Vector((0, 1, 0))).normalized() * math.sin(A[i] * 18) * 0.012 if O[i].cross(Vector((0, 1, 0))).length > 0.1 else Vector()) for i in range(0, n, 4)]
         tube(g, tw, 0.0025, mul3(stemc, 0.85))
-    lc = [tuple(srgb(h) for h in pair) for pair in LEAF[kind]]
-    sp = {'cui': 0.058, 'jin': 0.08, 'shan': 0.056, 'xi': 0.04}[kind]
+    CARD = {'cui': (0.14, (0.26, 0.4), ('oak', 'aspg')), 'jin': (0.17, (0.2, 0.3), ('ash',)), 'shan': (0.13, (0.26, 0.38), ('ash', 'aspg')), 'xi': (0.11, (0.18, 0.26), ('ash',))}
+    sp, (l0, l1), tiles = CARD[kind]
     s, alt = R(0, sp), 1
     while s < total:
         i = min(int(s / 0.03), n - 1); f = s / max(total, 1e-6)
-        if rnd.random() < f * 0.45: s += sp; continue          # 越往下越稀
+        if rnd.random() < f * 0.4: s += sp; continue          # 越往下越稀
         p = P[i]; t = (P[min(i + 1, n - 1)] - P[max(i - 1, 0)]).normalized(); o = O[i]
         side = t.cross(o); side = side.normalized() if side.length > 1e-4 else Vector((1, 0, 0))
-        k = (1.0 - 0.45 * f) * R(0.8, 1.2)
-        d = (side * alt * R(0.6, 1.0) * spread + o * R(0.3, 0.7) - t * R(-0.1, 0.3) + Vector((R(-.2, .2), R(-.1, .2), R(-.2, .2)))).normalized()
-        cb, ct = rnd.choice(lc); jit = R(0.85, 1.12); cb, ct = mul3(cb, jit), mul3(ct, jit)
-        if kind == 'cui': leaf(g, p, d, o + Vector((0, 0.4, 0)), 0.155 * k, 0.13 * k, rnd.choice(('ivy', 'ovate', 'heart')), cb, ct, 0.3, 0.3, 2)
-        elif kind == 'jin': leaf(g, p, d, o + Vector((0, 0.3, 0)), 0.11 * k, 0.042 * k, 'lance', cb, ct, 0.25, 0.2, 2)
-        elif kind == 'shan': leaf(g, p, d, o + Vector((0, 0.3, 0)), 0.125 * k, 0.056 * k, 'lance', cb, ct, 0.35, 0.3, 2)
-        else: leaf(g, p, d, o, 0.065 * k, 0.04 * k, 'ovate', cb, ct, 0.2, 0.15, 2)
+        k = (1.0 - 0.35 * f) * R(0.85, 1.15)
+        d = (side * alt * R(0.5, 0.9) * spread + o * R(0.2, 0.5) + t * R(0.2, 0.7) + Vector((R(-.15, .15), R(-.1, .15), R(-.15, .15)))).normalized()   # 枝叶顺藤往下、往两边斜出
+        b = R(0.78, 1.0); tint = (b * R(0.92, 1.0), b, b * R(0.9, 1.0))
+        card(g, p, d, o + Vector((0, 0.3, 0)), R(l0, l1) * k, rnd.choice(tiles), tint, 0.3, R(0.05, 0.25))
         if kind == 'jin' and rnd.random() < 0.3:   # 花如金桂
             for _ in range(rnd.randint(4, 7)): ball(g, p + side * alt * 0.025 + Vector((R(-.02, .02), R(-.03, .01), R(-.02, .02))), R(0.004, 0.006), rnd.choice(GOLD), 0.7)
         alt = -alt; s += sp * R(0.8, 1.2)
@@ -149,7 +160,7 @@ def vine(g, pts, out, kind, spread=1.0, twig=True):
     if twig:
         s = R(0.1, 0.35)
         while s < total * 0.85:
-            if rnd.random() < 0.35:
+            if rnd.random() < 0.18:
                 i = min(int(s / 0.03), n - 1); p = P[i]; o = O[i]; t = (P[min(i + 1, n - 1)] - P[max(i - 1, 0)]).normalized()
                 sd = t.cross(o); sd = sd.normalized() if sd.length > 1e-4 else Vector((1, 0, 0)); sd *= (1 if rnd.random() < 0.5 else -1)
                 tl = R(0.12, 0.28); q = [p, p + (sd * 0.6 + o * 0.3 + t * 0.5).normalized() * tl * 0.5, p + (sd * 0.5 + o * 0.25 + t * 0.9).normalized() * tl]
@@ -225,29 +236,31 @@ while x <= 14.5:    # 南墙内外两面（院门左右）
     x += R(0.45, 0.95)
 print('vines tris', V.tris(), 'verts', len(V.V), STAT)
 
+# ------------------------------------------------------------------ 1b. 花溆港洞的藤萝（路径由 blender/scripts/sites/huaxu_cave.py 沿石面算出；港洞局部坐标）
+HX = Geo(); HXP = os.path.join(ROOT, 'models', 'b', 'hx_vines.json')
+if os.path.exists(HXP):
+    for d in json.load(open(HXP))['D']:
+        dx, dz = d[0], d[1]; pts = [Vector((d[i], d[i + 1], d[i + 2])) for i in range(2, len(d), 3)]
+        keep, tot, stall = [pts[0]], 0.0, 0     # 截短：总长不过 5 m；连续三步不往下走（在石面上打转）就停
+        for a, b in zip(pts, pts[1:]):
+            tot += (b - a).length; stall = stall + 1 if a.y - b.y < 0.03 else 0
+            if tot > 5 or stall >= 3: break
+            keep.append(b)
+        if len(keep) >= 3: vine(HX, keep, Vector((dx, 0, dz)), pick((0.4, 0.15, 0.3, 0.15)))
+    print('huaxu vines tris', HX.tris())
+
 # ------------------------------------------------------------------ 2. 单株异草、垂藤
-def herb_duheng():
+def herb_duheng():     # 杜蘅：一丛圆叶贴地斜展
     g = Geo()
-    for i in range(16):
-        a = i / 16 * 6.283 + R(-.3, .3); r = R(0.08, 0.24); h = R(0.1, 0.28)
-        tip = Vector((math.cos(a) * r, h, math.sin(a) * r)); mid = Vector((math.cos(a) * r * 0.3, h * 0.85, math.sin(a) * r * 0.3))
-        tube(g, [Vector((0, 0, 0)), mid, tip], 0.003, srgb('#3e4a26'))
-        dirv = Vector((math.cos(a), R(-0.15, 0.1), math.sin(a)))
-        cb, ct = rnd.choice([(srgb('#1d3a18'), srgb('#2f5a26')), (srgb('#22421c'), srgb('#386630')), (srgb('#1a3316'), srgb('#2a4f22'))])
-        leaf(g, tip, dirv, Vector((0, 1, 0)), R(0.12, 0.17), R(0.11, 0.15), 'heart', cb, ct, 0.5, 0.1)
+    for i in range(9):
+        a = i / 9 * 6.283 + R(-.3, .3); d = Vector((math.cos(a), R(0.35, 0.8), math.sin(a)))
+        b = R(0.75, 0.95); card(g, Vector((0, 0, 0)), d, Vector((0, 1, 0)), R(0.24, 0.34), 'aspg', (b * 0.95, b, b * 0.95), 0.35, R(0.15, 0.3))
     return g
-def herb_baizhi():
+def herb_baizhi():     # 白芷：羽状复叶几枝斜出
     g = Geo()
-    for i in range(6):
-        a = i / 6 * 6.283 + R(-.4, .4); L = R(0.4, 0.65); bend = R(0.5, 0.9)
-        P = [Vector((math.cos(a) * L * t * bend, L * (1.3 * t - 0.75 * t * t), math.sin(a) * L * t * bend)) for t in (0, .2, .4, .6, .8, 1)]
-        tube(g, P, 0.004, srgb('#4c6a2c'))
-        for k in range(1, 7):
-            t = k / 7; q = P[0].lerp(P[-1], t); q.y = L * (1.3 * t - 0.75 * t * t); tg = (P[min(5, int(t * 5) + 1)] - P[int(t * 5)]).normalized()
-            sd = tg.cross(Vector((0, 1, 0))).normalized(); sz = (1 - t) * 0.06 + 0.035
-            cb, ct = srgb('#2c4c22'), srgb('#4a7434')
-            for s in (-1, 1): leaf(g, q, sd * s + tg * 0.35 + Vector((0, 0.15, 0)), Vector((0, 1, 0)), sz * 1.7, sz * 0.6, 'lance', cb, ct, 0.3, 0.2, 2)
-        leaf(g, P[-1], (P[-1] - P[-2]).normalized(), Vector((0, 1, 0)), 0.05, 0.02, 'lance', srgb('#2c4c22'), srgb('#4a7434'), 0.3, 0.2, 3)
+    for i in range(8):
+        a = i / 8 * 6.283 + R(-.3, .3); d = Vector((math.cos(a) * R(0.4, 0.8), 1, math.sin(a) * R(0.4, 0.8)))
+        b = R(0.8, 1.0); card(g, Vector((R(-.03, .03), 0, R(-.03, .03))), d, Vector((math.cos(a), 0.2, math.sin(a))), R(0.38, 0.55), 'ash', (b * 0.95, b, b * 0.92), 0.3, R(0.1, 0.25))
     return g
 def herb_lanhui():
     g = Geo()
@@ -262,67 +275,45 @@ def herb_lanhui():
         for k in range(9):
             p = Vector((0, 0, 0)).lerp(top, R(0.65, 1.0)) + Vector((R(-.02, .02), R(-.01, .01), R(-.02, .02))); ball(g, p, R(0.005, 0.007), rnd.choice(GOLD), 0.8)
     return g
-def herb_shanhu():
+def herb_shanhu():     # 珊瑚豆：小叶枝几枝，结一串串红果
     g = Geo()
-    for i in range(5):
-        a = i / 5 * 6.283 + R(-.4, .4); L = R(0.3, 0.5)
-        P = [Vector((math.cos(a) * L * t * 0.5 + math.sin(t * 6 + i) * 0.02, L * t, math.sin(a) * L * t * 0.5)) for t in (0, .25, .5, .75, 1)]
-        tube(g, P, 0.004, srgb('#43402a'))
-        for k in range(15):
-            t = R(0.15, 1); q = P[0].lerp(P[-1], t); q.y = L * t
-            leaf(g, q, Vector((R(-1, 1), R(0, 0.5), R(-1, 1))), Vector((0, 1, 0)), R(0.06, 0.085), R(0.026, 0.036), 'lance', srgb('#22401b'), srgb('#3a6430'), 0.3, 0.2, 2)
+    for i in range(7):
+        a = i / 7 * 6.283 + R(-.3, .3); d = Vector((math.cos(a) * R(0.3, 0.7), 1, math.sin(a) * R(0.3, 0.7)))
+        b = R(0.75, 0.95); L = R(0.32, 0.45); card(g, Vector((0, 0, 0)), d, Vector((math.cos(a), 0.2, math.sin(a))), L, rnd.choice(('ash', 'aspg')), (b * 0.92, b, b * 0.92), 0.3, 0.15)
         if i % 2 == 0:
-            q = P[0].lerp(P[-1], R(0.6, 0.95)); q.y = L * R(0.6, 0.95)
-            for _ in range(rnd.randint(5, 8)): ball(g, q + Vector((R(-.025, .025), R(-.05, 0), R(-.025, .025))), R(0.011, 0.015), rnd.choice(BERRY))
+            q = d.normalized() * L * R(0.5, 0.8)
+            for _ in range(rnd.randint(5, 8)): ball(g, q + Vector((R(-.03, .03), R(-.05, 0), R(-.03, .03))), R(0.011, 0.015), rnd.choice(BERRY))
     return g
-# 高一层的异草（宝玉点名的“茝兰”“清葛”“杜若”“紫芸”），压在矮草上面，做出高低
-def herb_chailan():   # 茝兰：粗茎直立 0.8~1.3 m，大羽状复叶
+def herb_chailan():   # 茝兰：一人来高，几枝大羽状复叶
     g = Geo()
     for i in range(5):
-        a = i / 5 * 6.283 + R(-.4, .4); H = R(0.8, 1.3); lean = R(0.05, 0.2)
-        top = Vector((math.cos(a) * H * lean, H, math.sin(a) * H * lean)); P = [Vector((0, 0, 0)).lerp(top, t) for t in (0, .33, .66, 1)]
-        tube(g, P, 0.008, srgb('#4e5e30'))
-        for k in range(6):
-            t = R(0.15, 0.98); q = P[0].lerp(P[-1], t); b = R(0, 6.283); dirv = Vector((math.cos(b), R(-0.1, 0.25), math.sin(b))).normalized()
-            for j in range(4):
-                c = q + dirv * (0.05 + j * 0.08); sd = dirv.cross(Vector((0, 1, 0))).normalized()
-                for sgn in (-1, 1): leaf(g, c, sd * sgn + dirv * 0.5, Vector((0, 1, 0)), R(0.17, 0.22), R(0.07, 0.09), 'lance', srgb('#2a4a20'), srgb('#4a7434'), 0.35, 0.3, 2)
-            leaf(g, q + dirv * 0.36, dirv, Vector((0, 1, 0)), 0.2, 0.08, 'lance', srgb('#2a4a20'), srgb('#4a7434'), 0.35, 0.3, 2)
+        a = i / 5 * 6.283 + R(-.4, .4); H = R(0.45, 0.75); top = Vector((math.cos(a) * 0.08, H, math.sin(a) * 0.08))
+        tube(g, [Vector((0, 0, 0)), top], 0.007, srgb('#4e5e30'))
+        for k in range(3):
+            b2 = a + k * 2.1 + R(-.3, .3); d = Vector((math.cos(b2) * R(0.4, 0.8), R(0.6, 1.0), math.sin(b2) * R(0.4, 0.8)))
+            b = R(0.8, 1.0); card(g, top * R(0.6, 1.0), d, Vector((math.cos(b2), 0.3, math.sin(b2))), R(0.5, 0.7), 'ash', (b * 0.92, b, b * 0.9), 0.3, R(0.15, 0.3))
     return g
-def herb_qingge():    # 清葛：蔓生成团，三出复叶，半人来高、一米多宽
+def herb_qingge():    # 清葛：大叶蔓生成团，贴地铺开一米多宽
     g = Geo()
-    for i in range(9):
-        a = i / 9 * 6.283 + R(-.3, .3); r = R(0.4, 0.75); h = R(0.12, 0.3)
-        P = [Vector((math.cos(a) * r * t, h * math.sin(math.pi * min(1, t * 1.1)) + 0.02, math.sin(a) * r * t)) for t in (0, .2, .4, .6, .8, 1)]
-        tube(g, P, 0.004, srgb('#4a4a2a'))
-        for k in range(8):
-            t = (k + 0.5) / 8; idx = min(int(t * 5), 4); q = P[idx].lerp(P[idx + 1], t * 5 - idx)
-            c = q + Vector((R(-.03, .03), 0.04, R(-.03, .03))); b = R(0, 6.283)
-            cb, ct = rnd.choice([(srgb('#24421c'), srgb('#3e6a32')), (srgb('#2a4a20'), srgb('#46723a'))])
-            for j in range(3):   # 三出复叶
-                d = Vector((math.cos(b + j * 2.1), R(0.1, 0.4), math.sin(b + j * 2.1)))
-                leaf(g, c, d, Vector((0, 1, 0)), R(0.14, 0.18), R(0.11, 0.14), 'ovate', cb, ct, 0.3, 0.2, 2)
+    for i in range(14):
+        a = i / 14 * 6.283 + R(-.25, .25); r0 = R(0.0, 0.25); base = Vector((math.cos(a) * r0, R(0.05, 0.25), math.sin(a) * r0))
+        d = Vector((math.cos(a), R(0.05, 0.35), math.sin(a))); b = R(0.75, 0.95)
+        card(g, base, d, Vector((0, 1, 0)), R(0.38, 0.55), 'oak', (b * 0.95, b, b * 0.92), 0.35, R(0.2, 0.35))
     return g
-def herb_duruo():     # 杜若：直立茎，宽披针叶螺旋互生，顶上几粒蓝黑果
+def herb_duruo():     # 杜若：直立几枝，顶上几粒蓝黑果
     g = Geo()
-    for i in range(4):
-        a = R(0, 6.283); H = R(0.5, 0.85); top = Vector((math.cos(a) * 0.06, H, math.sin(a) * 0.06))
-        tube(g, [Vector((0, 0, 0)), top * 0.5, top], 0.005, srgb('#3e5428'))
-        for k in range(7):
-            t = 0.2 + k * 0.11; q = top * t; b = a + k * 2.4
-            leaf(g, q, Vector((math.cos(b), R(0.15, 0.45), math.sin(b))), Vector((0, 1, 0)), R(0.18, 0.26), R(0.045, 0.065), 'lance', srgb('#22401b'), srgb('#3c6830'), 0.4, 0.45, 3)
-        for _ in range(rnd.randint(3, 6)): ball(g, top + Vector((R(-.03, .03), R(0, .05), R(-.03, .03))), R(0.009, 0.012), srgb(rnd.choice(('#2a3a6a', '#3a4a7a', '#283058'))))
+    for i in range(5):
+        a = i / 5 * 6.283 + R(-.3, .3); d = Vector((math.cos(a) * R(0.15, 0.4), 1, math.sin(a) * R(0.15, 0.4))); L = R(0.5, 0.75)
+        b = R(0.75, 0.92); card(g, Vector((0, 0, 0)), d, Vector((math.cos(a), 0, math.sin(a))), L, 'aspg', (b * 0.9, b, b * 0.95), 0.3, 0.08)
+        if i < 2:
+            top = d.normalized() * L * 0.95
+            for _ in range(rnd.randint(3, 6)): ball(g, top + Vector((R(-.03, .03), R(-.02, .03), R(-.03, .03))), R(0.009, 0.012), srgb(rnd.choice(('#2a3a6a', '#3a4a7a', '#283058'))))
     return g
-def herb_ziyun():     # 紫芸：“红的自然是紫芸”，紫红叶一丛
+def herb_ziyun():     # 紫芸：“红的自然是紫芸”——山杨黄叶染成紫红
     g = Geo()
-    for i in range(6):
-        a = i / 6 * 6.283 + R(-.4, .4); L = R(0.35, 0.6)
-        P = [Vector((math.cos(a) * L * t * 0.45, L * t, math.sin(a) * L * t * 0.45)) for t in (0, .33, .66, 1)]
-        tube(g, P, 0.004, srgb('#4a2a2a'))
-        for k in range(10):
-            t = R(0.2, 1); q = P[0].lerp(P[-1], t)
-            cb, ct = rnd.choice([(srgb('#3a1c24'), srgb('#7a3444')), (srgb('#42202a'), srgb('#8a3c4a')), (srgb('#33221e'), srgb('#6a3a2e'))])
-            leaf(g, q, Vector((R(-1, 1), R(0.1, 0.6), R(-1, 1))), Vector((0, 1, 0)), R(0.07, 0.1), R(0.04, 0.06), 'ovate', cb, ct, 0.35, 0.2, 2)
+    for i in range(8):
+        a = i / 8 * 6.283 + R(-.3, .3); d = Vector((math.cos(a) * R(0.4, 0.8), 1, math.sin(a) * R(0.4, 0.8)))
+        b = R(0.55, 0.75); card(g, Vector((0, 0, 0)), d, Vector((math.cos(a), 0.2, math.sin(a))), R(0.32, 0.45), 'aspy', (b, b * 0.32, b * 0.4), 0.3, R(0.1, 0.25))
     return g
 HERBS = [herb_duheng(), herb_baizhi(), herb_lanhui(), herb_shanhu(), herb_chailan(), herb_qingge(), herb_duruo(), herb_ziyun()]
 STRANDS = []
@@ -342,6 +333,9 @@ def build(name, g):
     ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT')
     for i, c in enumerate(g.C): ca.data[i].color = (c[0], c[1], c[2], 1.0)
     me.color_attributes.active_color = ca
+    uvl = me.uv_layers.new(name='UVMap')
+    for poly in me.polygons:
+        for li in poly.loop_indices: uvl.data[li].uv = g.U[me.loops[li].vertex_index]
     for p in me.polygons: p.use_smooth = True
     me.materials.append(mat)
     ob = bpy.data.objects.new(name, me); bpy.context.scene.collection.objects.link(ob); return ob
@@ -349,11 +343,14 @@ def export(objs, dst):
     bpy.ops.object.select_all(action='DESELECT')
     for o in objs: o.select_set(True)
     bpy.ops.export_scene.gltf(filepath=dst, export_format='GLB', use_selection=True, export_apply=False, export_image_format='NONE',
-                              export_materials='EXPORT', export_yup=True, export_vertex_color='ACTIVE', export_normals=True, export_texcoords=False)
+                              export_materials='EXPORT', export_yup=True, export_vertex_color='ACTIVE', export_normals=True, export_texcoords=True)
 ov = build('hw_vines', V)
 export([ov], os.path.join(TMP, 'hw_vines.glb'))
+if HX.F:
+    ohx = build('hx_vines', HX); export([ohx], os.path.join(TMP, 'hx_vines.glb'))
 objs = [build('herb_%d' % i, h) for i, h in enumerate(HERBS)] + [build('strand_%d' % i, s) for i, s in enumerate(STRANDS)]
 export(objs, os.path.join(TMP, 'hw_plants.glb'))
 pk = os.path.join(HERE, 'pack_plants.mjs')
 subprocess.run(['node', pk, os.path.join(TMP, 'hw_vines.glb'), os.path.join(ROOT, 'models', 'b', 'hw_vines.wasm')], check=True, cwd=HERE)
+if HX.F: subprocess.run(['node', pk, os.path.join(TMP, 'hx_vines.glb'), os.path.join(ROOT, 'models', 'b', 'hx_vines.wasm')], check=True, cwd=HERE)
 subprocess.run(['node', pk, os.path.join(TMP, 'hw_plants.glb'), os.path.join(ROOT, 'models', 'p', 'hw_plants.glb')], check=True, cwd=HERE)

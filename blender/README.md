@@ -44,9 +44,11 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 
 ## 大观楼改样（blender/scripts/sites/）
 
-正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层、整座放大（顶脊约 35 m），全组最高；
+正殿与大观楼原来摞成一座两层楼。改成：正殿（顾恩思义殿）前移 16 m、改重檐；大观楼立在殿后 4.5 m 高的须弥座白石台上，三层逐层收分、金宝顶（顶脊约 33 m），全组最高；缀锦阁、含芳阁加成三层；
 复道接大观楼首层两山；前面两层白石台基、汉白玉甬路与栏杆、两方水池；屋面全改灰瓦。玉石牌坊、石狮、石灯座是 Tripo 件
-（`models/p/paifang.glb`、`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+（`shishi.glb`、`shideng.glb`，提示词在 `tools/props.json`），网页 `PROPS.daguan` 放置。
+牌坊 `models/p/paifang.glb` 由 `paifang_build.py` 搭白石骨架、挂 Tripo 精雕件（盘龙柱 pf_zhu、镂空螭纹花板 pf_hua、双龙戏珠板 pf_ding）：
+`python3 blender/scripts/sites/paifang_build.py <tripo 原始 glb 目录> /tmp/paifang.glb && node blender/scripts/web/pack_prop.mjs /tmp/paifang.glb models/p/paifang.glb 150000 1024`
 
 ```bash
 python3 blender/scripts/sites/daguan_rebuild.py                      # 只能跑一次（在 daguan_doors.py 之后）
@@ -100,6 +102,8 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
+node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
+node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 # 稻香村正房明间：门板剪掉后残留在门洞里的横带也剪掉，另由 daoxiang_men 补两扇敞开的板门（scripts/sites/daoxiang_door.py）
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.62,12.05,0.42,-3.38,12.55,2.52,"旧木|本色木|描金"]]'
