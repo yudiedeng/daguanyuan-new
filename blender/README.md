@@ -190,3 +190,17 @@ node blender/scripts/web/pack_glb.mjs /tmp/daoxiang_tian.glb models/b/daoxiang_t
 - 作物 → `models/p/crops.glb`：三维小株、顶点色——油菜（开花，「菜花」）、青菜、葱，各两三种变体。
 - 株位 → `tex/crops_daoxiang.json`：顺着弯曲的垄排，偶有缺苗；网页 `buildCrops()` 实例化，低画质退回插片。
 - 原 `daoxiang.blend` 里的菜畦没动；网页模型里的旧菜畦用上面那条 glb_cut 剪掉。
+
+## 园路（石子甬路，blender/scripts/sites/paths_build.py）
+
+园路不再是贴图带子，改为 Blender 建的 3D 路：两侧条石路牙（长短不一、留缝、下埋）、路牙内青砖立砌、路心卵石花街（斜方格深色石子拼线，格心一朵暖黄）。
+路面贴着网页里看得见的地形网格走；桥面、石磴两段跳过（另有桥、台阶）；与别的路相接的一侧不立路牙、不镶砖。颜色全是顶点色。
+每 12 米切一块：`lu_<名>_<k>_base`（灰浆底、砖、路牙）和 `lu_<名>_<k>_peb`（卵石，网页只在 60 米内、中高画质显示）。网页里 `PATHS` 某条带 `lu:'<名>'` 就不画贴图带子，改载 `models/b/lu_<名>.wasm`；别的路伸进它路面的那截带子自动剪掉。
+目前只有中轴（`lu_zhou`）。
+```
+npx http-server -p 8765 &   # 仓库根目录
+node blender/scripts/web/lu_data.mjs http://localhost:8765/index.html 0 zhou      # 取横断面 → blender/data/lu_zhou.json（PATHS 第 0 条）
+python3 blender/scripts/sites/paths_build.py blender/data/lu_zhou.json /tmp/lu_zhou.glb   # 需要 bpy（pip install bpy，Python 3.11）
+node blender/scripts/web/pack_lu.mjs /tmp/lu_zhou.glb models/b/lu_zhou.wasm
+```
+改了地形、`PATHS` 里这条路的走向或宽度，要重跑这三步。
