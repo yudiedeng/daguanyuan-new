@@ -138,7 +138,7 @@ python3 blender/scripts/sites/daoxiang_fields.py [--preview]
 node blender/scripts/web/pack_glb.mjs /tmp/daoxiang_tian.glb models/b/daoxiang_tian.wasm
 ```
 
-- 垄沟 → `models/b/daoxiang_tian.wasm`：垄宽窄高低、走向略有起伏，土块颗粒，垄头参差，边缘缓缓落进地面；与 daoxiang 同一原点。
+- 垄沟 → `models/b/daoxiang_tian.wasm`：畦面比原菜畦四边各收进 0.9 m，外围一道土埂（夯土地）；窄垄（垄距 1.1 m）宽窄高低、走向略有起伏，土块颗粒，垄头参差，边缘缓缓落进地面；与 daoxiang 同一原点。
 - 作物 → `models/p/crops.glb`：三维小株、顶点色——油菜（开花，「菜花」）、青菜、葱，各两三种变体。
 - 株位 → `tex/crops_daoxiang.json`：顺着弯曲的垄排，偶有缺苗；网页 `buildCrops()` 实例化，低画质退回插片。
 - 原 `daoxiang.blend` 里的菜畦没动；网页模型里的旧菜畦用上面那条 glb_cut 剪掉。
