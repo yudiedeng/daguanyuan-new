@@ -1754,6 +1754,8 @@ function buildTerrain(){
  const g=new THREE.PlaneGeometry(340,410,340,410);g.rotateX(-Math.PI/2);g.translate(0,0,5);
  const p=g.attributes.position;HG.data=new Float32Array(p.count);
  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);const h=height(x,z);p.setY(i,h);const ix=Math.round(x-HG.x0),iz=Math.round(z-HG.z0);HG.data[iz*HG.nx+ix]=h;}
+ /* 清溪溪槽：只把地形网格沿溪往下挖（height() 不变，布树、草、走路都不受影响），水面才能和地面持平 */
+ for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);if(x<0||x>18||z<56||z>94)continue;let d=99;for(const q of STREAM_PTS)d=Math.min(d,Math.hypot(q.x-x,q.z-z));if(d<1.7)p.setY(i,p.getY(i)-0.45*sstep(1.7,0.95,d));}
  g.computeVertexNormals();const nrm=g.attributes.normal;const cols=new Float32Array(p.count*3);
  for(let i=0;i<p.count;i++){const h=p.getY(i);const wet=sstep(0.62,0.12,h);const slope=1-nrm.getY(i);cols[i*3]=wet;cols[i*3+1]=clamp((slope-0.12)*2.2,0,1);/* 坡陡才露石：45° 坡仍以草为主，近 60° 才成石壁（“翠嶂”“青山”） */cols[i*3+2]=sstep(2,9,h);}
  g.setAttribute('color',new THREE.BufferAttribute(cols,3));
@@ -1938,13 +1940,14 @@ const CASCADE=[[6,87.2],[8.6,84],[6.4,80.6],[8.2,77.2],[9.8,73],[8.4,69.4],[10.4
 const STREAM_PTS=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal').getSpacedPoints(120);
 function nearStream(x,z,r){for(const p of STREAM_PTS)if((p.x-x)**2+(p.z-z)**2<r*r)return true;return false;}// 溪边不长草
 /* 叠水布局：沿溪每 0.25 米取点；平处水面随地，坡上水面保持一级，地面比水面低出 0.75 米就跌一道水（“泻雪”），下一级从坎下接着走 */
-function cascadeLayout(){if(cascadeLayout.r)return cascadeLayout.r;
+function cascadeLayout(th=0.75){const M=cascadeLayout.m||(cascadeLayout.m={});if(M[th])return M[th];/* th：地面比水面低出多少就跌一级；沿溪山石按 0.75 的老布局放（随机数序列不变），水面与石槽按 0.22 贴地走 */
  const cc=new THREE.CatmullRomCurve3(CASCADE.map(p=>new V3(p[0],0,p[1])),false,'centripetal'),n=Math.ceil(cc.getLength()/0.25),sp=cc.getSpacedPoints(n),pts=[];
  for(let i=0;i<=n;i++){const p=sp[i],wet=isWet(p.x,p.z);pts.push({x:p.x,z:p.z,h:wet?-0.3:height(p.x,p.z),wet});if(wet)break;}
  for(let i=0;i<pts.length;i++){const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)];let tx=b.x-a.x,tz=b.z-a.z;const l=Math.hypot(tx,tz)||1;pts[i].tx=tx/l;pts[i].tz=tz/l;}
  const falls=[];let lvl=pts[0].h+0.1;
- for(let i=0;i<pts.length;i++){const p=pts[i],g=p.wet?0.03:p.h+0.1;if(g>lvl)lvl=g;if(lvl-g>=0.75||(p.wet&&lvl-g>0.2)){falls.push({i,top:lvl,bot:g});lvl=g;}p.lvl=lvl;}
- return cascadeLayout.r={pts,falls};}
+ for(let i=0;i<pts.length;i++){const p=pts[i],g=p.wet?0.03:p.h+0.1;if(g>lvl)lvl=g;if(th==='follow'){if(p.wet&&lvl-g>0.2)falls.push({i,top:lvl,bot:g});lvl=g;p.lvl=lvl;continue;}/* 贴地：水面随地势斜下去，只在入池处翻一道坎 */
+  if(lvl-g>=th||(p.wet&&lvl-g>0.2)){falls.push({i,top:lvl,bot:g});lvl=g;}p.lvl=lvl;}
+ return M[th]={pts,falls};}
 function buildQinfangScene(){const SH=['#6a8a42','#5b7d3a','#7a9a4c','#4f7034'],FL=[...PINK,...APRICOT,'#f3f0e6'];
  const bush=(x,z,s,tint)=>{if(nearPath(x,z,1.9)||!treeOK(x,z,1.1)||height(x,z)<0.35)return false;if(nearStream(x,z,2.5))return false;TREES.bush.push({x,y:height(x,z),z,s:s*0.72,ry:rnd()*6.283,tint,fl:FL.includes(tint),v:Math.floor(rnd()*2)});treeAdd(x,z);return true;};
  // 石磴两旁：灌木、花丛、山石，一路从出洞口铺到池边
@@ -1961,9 +1964,9 @@ function buildQinfangScene(){const SH=['#6a8a42','#5b7d3a','#7a9a4c','#4f7034'],
  // 池边垂柳
  if(QINFANG)for(let n=0,t=0;n<10&&t<600;t++){const s2=SHORE[Math.floor(rnd()*SHORE.length)];if(Math.hypot(s2[0]-QINFANG.x,s2[1]-QINFANG.z)>34)continue;const x=s2[0]+s2[2]*R(1.2,2.4),z=s2[1]+s2[3]*R(1.2,2.4);if(height(x,z)<0.35||nearPath(x,z,2.2)||!treeOK(x,z,4))continue;addTree('willow',x,z,R(0.85,1.1),pick(['#8fae4e','#9ab85a','#86a648']));n++;}
  // 清溪：坡上叠水的石砌水槽（水面高出地面处垫石），每道跌水坎口压一块石、两旁夹大石（“泻于石隙之下”）
- {const {pts,falls}=cascadeLayout();
-  for(let i=0;i<pts.length;i++){const p=pts[i];if(p.wet)break;const lift=p.lvl-p.h;if(lift<0.06||i%1)continue;const ry=Math.atan2(p.tx,p.tz);
-   box('stone',T(p.x,0,p.z,ry),1.9,lift+0.35,0.3,0,p.h-0.35+(lift+0.35)/2-0.08,0,{noCol:1});}
+ {const {pts,falls}=cascadeLayout(),fine=cascadeLayout('follow').pts;
+  for(let i=0;i<fine.length;i++){const p=fine[i];if(p.wet)break;const lift=p.lvl-p.h;if(lift<0.3||i%1)continue;const ry=Math.atan2(p.tx,p.tz);
+   box('stone',T(p.x,0,p.z,ry),1.9,lift+0.35,0.3,0,p.h-0.35+(lift+0.35)/2-0.38,0,{noCol:1});}
   for(const f of falls){const p=pts[Math.max(0,f.i-1)];
    for(const sd of[-1,1]){if(rnd()<0.3)continue;const sx=R(0.35,0.6),sy=R(0.4,0.7),x=p.x-p.tz*(1.55+sx*0.6)*sd,z=p.z+p.tx*(1.55+sx*0.6)*sd;rock(x,Math.max(height(x,z),f.bot)+sy*0.3,z,sx,sy,R(0.35,0.55));}}
   for(let i=6;i<pts.length;i+=7){const p=pts[i];if(p.wet)break;for(const sd of[-1,1]){if(rnd()<0.5)continue;const sx=R(0.2,0.4),sy=R(0.2,0.35),off=1.45+sx*0.8,x=p.x-p.tz*off*sd,z=p.z+p.tx*off*sd;rock(x,Math.max(height(x,z),p.lvl-0.3)+sy*0.2,z,sx,sy,R(0.2,0.4));}
@@ -1972,7 +1975,7 @@ function buildQinfangScene(){const SH=['#6a8a42','#5b7d3a','#7a9a4c','#4f7034'],
 function buildQinfangFX(){
  // ---- 清溪泻雪：一条真的水——卵石溪底在水下 0.2 米、两岸石沿夹住；水面与跌水是一整条连着的水，
  //      过坎口顺抛物线翻下去、落进下一级，水纹按流速走（平处慢、跌处快且拉长），不是贴在地上的一层皮
- const RZ=0.14,W=0.6;const {pts,falls}=cascadeLayout(),fallAt=new Map(falls.map(f=>[f.i,f]));
+ const RZ=-0.14,W=0.6;/* 水面在地面下约 4 厘米，石沿顶与地面齐平 */const {pts,falls}=cascadeLayout('follow'),fallAt=new Map(falls.map(f=>[f.i,f]));
  const lvAt=i=>pts[i].wet?0.02:pts[i].lvl+RZ;
  // 一行一行排：位置、走向、流时 T（∫ds/v）、顺流米数 S、白沫、是否跌水帘
  const rows=[];let T=0,S=0,since=99;
@@ -1981,10 +1984,11 @@ function buildQinfangFX(){
   if(f&&i>0){const a=pts[i-1],y0=lvAt(i-1),y1=lvAt(i),drop=Math.max(y0-y1,0.05),K=9;
    for(let k=1;k<K;k++){const u=k/K,v=Math.sqrt(0.25+2*9.8*drop*u*u);push(a.x+(p.x-a.x)*u*0.9,y0-drop*u*u,a.z+(p.z-a.z)*u*0.9,a.tx,a.tz,v,0.15+0.75*u*u,1,0);}
    since=0;}
-  const v=0.35+1.1*Math.exp(-since/3),fo=since<99?0.95*Math.exp(-since/2.5):0;push(p.x,lvAt(i),p.z,p.tx,p.tz,v,fo,0,1);since++;if(p.wet)break;}
+  const sl=i>0&&!p.wet?Math.max(0,(lvAt(i-1)-lvAt(i))/0.25):0,ra=sstep(0.08,0.45,sl);/* 坡陡处是急流：流得快、翻白 */
+  const v=0.35+2.2*Math.min(sl,1)+1.1*Math.exp(-since/3),fo=Math.max(since<99?0.95*Math.exp(-since/2.5):0,ra*0.4);/* 急流只零星翻白 */push(p.x,lvAt(i),p.z,p.tx,p.tz,v,fo,0,1);since++;if(p.wet)break;}
  // 平缓的一段（同一水位最长、离跌水白沫远的一段）交给 three.js 的 Water2：真折射（透出水下卵石）＋真倒影，水纹顺河道流
  let seg=null;for(let j=0,st=-1;j<=rows.length;j++){const r=rows[j],good=!!r&&!r.nap&&r.fo<0.12&&r.y>0.1;
-  if(good&&st>=0&&Math.abs(r.y-rows[st].y)<0.005)continue;
+  if(good&&st>=0&&Math.abs(r.y-rows[st].y)<0.03)continue;/* 起伏 3 厘米以内算平 */
   if(st>=0&&j-st>=8&&(!seg||j-st>seg[1]-seg[0]))seg=[st,j];st=good?j:-1;}
  const inSeg=j=>seg&&j-1>=seg[0]&&j<=seg[1]-1;
  // 水面：一整条，每行 7 点横排
@@ -2029,7 +2033,7 @@ function buildQinfangFX(){
  const water_=new THREE.Mesh(gw,wm);water_.renderOrder=2;water_.frustumCulled=false;water_.name='清溪';scene.add(water_);
  let w2=null,wSeg=null;
  if(seg){const gs=gw.clone();gs.setIndex(wiS);wSeg=new THREE.Mesh(gs,wm);wSeg.renderOrder=2;wSeg.frustumCulled=false;scene.add(wSeg);/* 低画质或走远时用回自绘水面 */
-  try{const y0=rows[seg[0]].y,P=[],U=[],I=[];
+  try{let y0=0;for(let j=seg[0];j<seg[1];j++)y0+=rows[j].y/(seg[1]-seg[0]);const P=[],U=[],I=[];
    for(let j=seg[0];j<seg[1];j++){const r=rows[j];for(const c of CN){P.push(r.x-r.tz*W*c,-(r.z+r.tx*W*c),0);U.push(c*W,r.S);}
     if(j>seg[0]){const k=(j-1-seg[0])*nc;for(let m=0;m<nc-1;m++)I.push(k+m,k+m+1,k+m+nc,k+m+1,k+m+nc+1,k+m+nc);}}
    const g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g2.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g2.setIndex(I);g2.computeBoundingSphere();
@@ -2050,15 +2054,15 @@ function buildQinfangFX(){
  {const kp=[],kc=[],ki=[],h1=(n)=>{const x=Math.sin(n*127.1)*43758.5453;return x-Math.floor(x);};
   for(const sd of[-1,1]){let prev=-1;
    rows.forEach((r,j)=>{if(r.nap||r.y<0.1){prev=-1;return;}const blk=Math.floor(r.S/0.45+(sd>0?0.5:0)),hb=h1(blk+sd*17),wb=h1(blk*3.1+sd);
-    const prof=[[W*0.97,-0.22],[W*1.0+0.02*wb,0.04+0.05*hb],[W*1.0+0.06+0.03*wb,0.07+0.05*hb],[W*1.0+0.28+0.08*wb,0.05+0.04*hb],[W*1.0+0.42+0.1*wb,-0.5]];
-    const base=kp.length/3;prof.forEach(([o,dy],m)=>{const x=r.x-r.tz*o*sd,z=r.z+r.tx*o*sd;let y=r.y+dy;if(m===4)y=Math.max(height(x,z)-0.06,r.y-0.6);kp.push(x,y,z);const cc=(0.72+0.22*h1(blk*7.7+sd))*(m===0?0.55:1);kc.push(cc,cc*0.98,cc*0.93);});
+    const prof=[[W*0.97,-0.26],[W*1.0+0.02*wb,0.03+0.03*hb],[W*1.0+0.06+0.03*wb,0.05+0.03*hb],[W*1.0+0.3+0.08*wb,0.04+0.02*hb],[W*1.0+0.75+0.1*wb,-0.5]];
+    const base=kp.length/3;prof.forEach(([o,dy],m)=>{const x=r.x-r.tz*o*sd,z=r.z+r.tx*o*sd;let y=r.y+dy;if(m===4)y=Math.min(r.y-0.5,height(x,z)-0.3);/* 外侧斜面埋进土里 */kp.push(x,y,z);const cc=(0.72+0.22*h1(blk*7.7+sd))*(m===0?0.55:1);kc.push(cc,cc*0.98,cc*0.93);});
     if(prev>=0){for(let m=0;m<4;m++){const A=prev+m,B=base+m;if(sd>0)ki.push(A,B,A+1,A+1,B,B+1);else ki.push(A,A+1,B,A+1,B+1,B);}}prev=base;});}
   const gk=new THREE.BufferGeometry();gk.setAttribute('position',new THREE.Float32BufferAttribute(kp,3));gk.setAttribute('color',new THREE.Float32BufferAttribute(kc,3));gk.setIndex(ki);gk.computeVertexNormals();
   const kerb=new THREE.Mesh(gk,MAT.stone);kerb.castShadow=kerb.receiveShadow=true;kerb.name='溪沿';scene.add(kerb);}
  // 帘底水花（白沫圈）与溅起的水雾
  const sp0=cnv(128,128,(g2)=>{const gr=g2.createRadialGradient(64,64,4,64,64,62);gr.addColorStop(0,'rgba(255,255,255,0.95)');gr.addColorStop(0.45,'rgba(255,255,255,0.4)');gr.addColorStop(1,'rgba(255,255,255,0)');g2.fillStyle=gr;g2.fillRect(0,0,128,128);});const stx=new THREE.CanvasTexture(sp0);
  const sm=[],spray=[];
- for(const f of falls){const a=pts[Math.max(0,f.i-1)],x=a.x+a.tx*0.24,z=a.z+a.tz*0.24;
+ for(const f of falls){if(f.top-f.bot<0.4)continue;const a=pts[Math.max(0,f.i-1)],x=a.x+a.tx*0.24,z=a.z+a.tz*0.24;/* 小坎不起水花 */
   for(let k=0;k<2;k++){const mm=new THREE.Mesh(new THREE.CircleGeometry(0.8,24).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:stx,transparent:true,depthWrite:false,opacity:0.85}));mm.position.set(x,f.bot+RZ+0.02+k*0.004,z);mm.renderOrder=4;mm.userData.ph=k*0.5+f.i*0.13;scene.add(mm);sm.push(mm);}
   for(let k=0;k<5;k++){const s2=new THREE.Sprite(new THREE.SpriteMaterial({map:stx,transparent:true,depthWrite:false,opacity:0}));s2.userData={x,z,y:f.bot+RZ,ph:Math.random(),dx:(Math.random()-0.5)*0.8,dz:(Math.random()-0.5)*0.8};s2.renderOrder=5;scene.add(s2);spray.push(s2);}}
  // ---- 池谷晨雾：低处的软雾团，清晨最浓、白天淡淡一层，人走近了就散开
