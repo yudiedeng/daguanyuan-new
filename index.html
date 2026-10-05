@@ -608,7 +608,7 @@ function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];let
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
-  {id:'yihong',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0},{id:'hengwu',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0},{id:'daoxiang',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},
+  {id:'yihong',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0},{id:'hengwu',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0},{id:'daoxiang',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},{id:'daoxiang_tian',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},// 菜畦垄沟：blender/scripts/sites/daoxiang_fields.py
   {id:'daguan',p:[0,Z.daguan.y,Z.daguan.z],ry:0},{id:'longcui',p:[Z.longcui.x,Z.longcui.y,Z.longcui.z],ry:-Math.PI/2},{id:'ouxiang',p:[40+MV.ouxiang[0],0,2+MV.ouxiang[1]],ry:Math.PI/2},
   {id:'qinfang',p:[QINFANG?QINFANG.x:0,0,QINFANG?QINFANG.z:50],ry:QINFANG?QINFANG.ry:0},
   {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0},
@@ -805,19 +805,23 @@ function updateInteriorLight(lamp){if(!IPL.length)for(let i=0;i<2;i++){const l=n
  if(!inRoom){IPL.forEach(l=>l.intensity=0);return;}
  const ls=inRoom.lights.map(p=>{const v=new V3(...p);inRoom.root.localToWorld(v);return v;}).sort((a,b)=>a.distanceToSquared(camera.position)-b.distanceToSquared(camera.position));
  IPL.forEach((l,i)=>{if(!ls[i]){l.intensity=0;return;}l.position.copy(ls[i]);l.intensity=(2.5+lamp*16)*(i?0.7:1);});}
-/* ---- 稻香村菜畦: instanced impostor crops (Blender-baked cards) ---- */
-function buildCrops(){if(!GLB)return;const y0=Z.daoxiang.y,ox=Z.daoxiang.x,oz=Z.daoxiang.z;const TL=new THREE.TextureLoader();
- const defs={rape:{f:'card_rape.png',w:0.62,h:0.9,sp:0.42,jit:0.16},veg:{f:'card_veg.png',w:0.62,h:0.31,sp:0.5,jit:0.14}};
- const plots=[{x:[-26,-8.2],y:[-22.3,-9],al:'x',k:'rape'},{x:[-1.2,11.5],y:[-22.3,-5.2],al:'y',k:'veg'},{x:[12.5,26],y:[-22.3,-5.2],al:'y',k:'rape'},{x:[16.5,26],y:[-3.8,9.4],al:'x',k:'veg'}];
- const rr=mulberry32(515);const items={rape:[],veg:[]};
- for(const P of plots){const D=defs[P.k];const L=P.al==='x'?P.x[1]-P.x[0]:P.y[1]-P.y[0];const n=Math.floor(((P.al==='x'?P.y[1]-P.y[0]:P.x[1]-P.x[0])-0.6)/1.5);
-  for(let k=0;k<n;k++){const c=(P.al==='x'?P.y[0]:P.x[0])+1.05+k*1.5;for(let t=0.6;t<L-0.6;t+=D.sp){const a=(P.al==='x'?P.x[0]:P.y[0])+t;
-   const bx=(P.al==='x'?a:c)+(rr()-0.5)*D.jit,by=(P.al==='x'?c:a)+(rr()-0.5)*D.jit*1.6;items[P.k].push([ox+bx,y0+0.17,oz-by,rr()*6.28,0.8+rr()*0.45]);}}}
- for(const k in defs){const D=defs[k],list=items[k];if(!list.length)continue;const t=TL.load('tex/'+D.f);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;
-  const q1=new THREE.PlaneGeometry(D.w,D.h);q1.translate(0,D.h/2,0);const q2=q1.clone();q2.rotateY(Math.PI/2);const g=mergeGeos([q1,q2]);
-  const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.85,metalness:0}),{alphaFix:1,key:'crop'+k,vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'}));
-  const im=new THREE.InstancedMesh(g,m,list.length);list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.9+0.2*((i*7)%5)/5),it[4]));im.setMatrixAt(i,_m4);});
-  im.castShadow=false;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);}}
+/* ---- 稻香村菜畦：油菜（开花）、青菜、葱 ----
+   垄沟（models/b/daoxiang_tian.wasm）、作物三维小株（models/p/crops.glb）和每株位置（tex/crops_daoxiang.json）
+   都由 blender/scripts/sites/daoxiang_fields.py 生成；株位是 Blender 坐标 [种类,变体,x,y,z,转角,缩放]。
+   低画质不载三维小株，退回到插片（card_rape / card_veg）。 */
+async function buildCrops(){if(!GLB)return;const y0=Z.daoxiang.y,ox=Z.daoxiang.x,oz=Z.daoxiang.z;
+ let items=[];try{items=(await (await fetch('tex/crops_daoxiang.json')).json()).items;}catch(e){console.warn('crops.json',e);return;}
+ const at=it=>new V3(ox+it[2],y0+it[4],oz-it[3]);
+ const inst=(g,m,list,sx)=>{const im=new THREE.InstancedMesh(g,m,list.length);list.forEach((it,i)=>{const s=it[6]*(sx||1);_m4.compose(at(it),new THREE.Quaternion().setFromAxisAngle(UP,it[5]),new V3(s,s,s));im.setMatrixAt(i,_m4);});
+  im.castShadow=false;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);return im;};
+ if(Q>0){try{const g=await new GLTFLoader().loadAsync('models/p/crops.glb');const geos={};g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh){const q=o.geometry.clone();q.applyMatrix4(o.matrixWorld);geos[o.name]=q;}});
+   const m=patch(new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.78,metalness:0}),{key:'crop3d',vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'});
+   const by={};for(const it of items)(by[it[0]+'_'+it[1]]??=[]).push(it);
+   for(const k in by)if(geos[k])inst(geos[k],m,by[k]);return;}catch(e){console.warn('crops.glb',e);}}
+ const TL=new THREE.TextureLoader();const defs={rape:{f:'card_rape.png',w:0.62,h:0.9},veg:{f:'card_veg.png',w:0.62,h:0.31}};
+ for(const k in defs){const D=defs[k],list=items.filter(it=>(it[0]==='youcai')===(k==='rape'));if(!list.length)continue;const t=TL.load('tex/'+D.f);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;
+  const q1=new THREE.PlaneGeometry(D.w,D.h);q1.translate(0,D.h/2,0);const q2=q1.clone();q2.rotateY(Math.PI/2);
+  inst(mergeGeos([q1,q2]),a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.85,metalness:0}),{alphaFix:1,key:'crop'+k,vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'})),list);}}
 /* ---- 原著花圃: 牡丹亭(圃)、芍药圃、蔷薇院、荼蘼架 — Cycles-baked clump cards on instanced cross planes ---- */
 function fenceLine(a,b,y,h){const dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz),n=Math.max(1,Math.round(L/1.4));const ry=Math.atan2(dx,dz);
  for(let i=0;i<=n;i++){const x=a[0]+dx*i/n,z=a[1]+dz*i/n;cyl('colWood',T(x,y,z),0.035,0.04,h,0,h/2,0,6,{noCol:1});}
@@ -2025,7 +2029,7 @@ async function build(){
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
  await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);buildInstances();
- await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}try{buildCrops();}catch(e){console.warn('crops',e);}try{buildBeds();}catch(e){console.warn('beds',e);}
+ await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}buildCrops().catch(e=>console.warn('crops',e));try{buildBeds();}catch(e){console.warn('beds',e);}
  await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}

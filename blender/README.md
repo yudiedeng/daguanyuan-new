@@ -63,6 +63,8 @@ node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
+# 稻香村菜畦：剪掉旧的光滑垄条和凸起边框（连同其下地面），由 daoxiang_tian 接替，见下文「菜畦」
+node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[16.26,-4.04,-0.5,26.24,9.64,0.6,"田土|夯土地"],[12.26,-22.54,-0.5,26.24,-4.96,0.6,"田土|夯土地"],[-1.44,-22.54,-0.5,11.74,-4.96,0.6,"田土|夯土地"],[-26.24,-22.54,-0.5,-7.96,-8.76,0.6,"田土|夯土地"]]'
 ```
 
 ## 树（blender/scripts/trees/）
@@ -77,3 +79,17 @@ python3 blender/scripts/trees/build_trees.py [sang yu mujin zhe] [--preview]
 - 树模型：递归分枝的树皮管 + 叶卡四边形 → `models/t/<sp>_1.wasm`（`<sp>_bark`、`<sp>_leaf` 两个节点）。
 - 远景替身：侧视自发光渲染 → `tex/imp_<sp>1.png`，尺寸写进 `tex/imp.json`。
 - 网页里是两类树：`sangyu`（v0 桑、v1 榆）和 `jinzhe`（v0 槿、v1 柘），栽在 `buildDaoxiang()` 里。
+
+## 菜畦（blender/scripts/sites/daoxiang_fields.py）
+
+第十七回「下面分畦列亩，佳蔬菜花，漫然无际」。原来四块菜畦像沙盘（一圈硬边框、光滑等宽的垄、两种插片作物），重做为：
+
+```bash
+python3 blender/scripts/sites/daoxiang_fields.py [--preview]
+node blender/scripts/web/pack_glb.mjs /tmp/daoxiang_tian.glb models/b/daoxiang_tian.wasm
+```
+
+- 垄沟 → `models/b/daoxiang_tian.wasm`：垄宽窄高低、走向略有起伏，土块颗粒，垄头参差，边缘缓缓落进地面；与 daoxiang 同一原点。
+- 作物 → `models/p/crops.glb`：三维小株、顶点色——油菜（开花，「菜花」）、青菜、葱，各两三种变体。
+- 株位 → `tex/crops_daoxiang.json`：顺着弯曲的垄排，偶有缺苗；网页 `buildCrops()` 实例化，低画质退回插片。
+- 原 `daoxiang.blend` 里的菜畦没动；网页模型里的旧菜畦用上面那条 glb_cut 剪掉。
