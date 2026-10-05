@@ -947,8 +947,8 @@ function buildHengwuYard(){if(!GLB)return;const q=Z.hengwu,rr=mulberry32(1717);c
  const NX=71,NZ=55,dist=new Uint8Array(NX*NZ).fill(255),qq=[];for(let j=0;j<NZ;j++)for(let i=0;i<NX;i++){const k=j*NX+i;if((HWMASK[k>>3]>>(k&7)&1)===1){dist[k]=0;qq.push(k);}}
  for(let h=0;h<qq.length;h++){const k=qq[h],i=k%NX,j=(k/NX)|0;for(const [a,b] of[[1,0],[-1,0],[0,1],[0,-1]]){const ni=i+a,nj=j+b;if(ni<0||nj<0||ni>=NX||nj>=NZ)continue;const nk=nj*NX+ni;if(dist[nk]>dist[k]+1){dist[nk]=dist[k]+1;qq.push(nk);}}}
  const items=[[],[],[],[]];for(let z=-13.5;z<=13.5;z+=0.5)for(let x=-17.5;x<=17.5;x+=0.5){if(!free(x,z))continue;const dd=dist[Math.round((z+13.5)/0.5)*NX+Math.round((x+17.5)/0.5)];
-  const n=dd<=1?4:dd===2?3:dd<=4?2:dd<=6?1:(rr()<0.45?1:0);  // 石脚、墙根、阶边最密，往开阔处渐稀，但不留空地
-  for(let k=0;k<(Q===0?Math.min(n,1):n);k++){const px=x+(rr()-0.5)*0.5,pz=z+(rr()-0.5)*0.5;if(!free(px,pz))continue;const u=rr(),v=u<0.4?0:u<0.72?1:u<0.84?2:3;items[v].push([q.x+px,q.y+0.01,q.z+pz,rr()*6.283,(0.7+rr()*0.6)*(dd<=2?1:0.8)]);}}
+  const n=dd<=2?4:3;  // 满院都是异草：石脚、墙根、阶边最密，开阔处也铺满（开阔处单株放大些）
+  for(let k=0;k<(Q===0?Math.min(n,1):Q===1?Math.min(n,2):n);k++){const px=x+(rr()-0.5)*0.5,pz=z+(rr()-0.5)*0.5;if(!free(px,pz))continue;const u=rr(),v=u<0.4?0:u<0.72?1:u<0.84?2:3;items[v].push([q.x+px,q.y+0.01,q.z+pz,rr()*6.283,(0.8+rr()*0.6)*(dd<=2?1:1.15)]);}}
  plants().then(({herb,herbM})=>{const cc=new THREE.Color();items.forEach((list,v)=>{if(!list.length||!herb[v])return;const im=new THREE.InstancedMesh(herb[v],herbM,list.length);
   list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.85+rr()*0.3),it[4]));im.setMatrixAt(i,_m4);const b=0.85+rr()*0.25;cc.setRGB(b*(0.94+rr()*0.06),b,b*(0.94+rr()*0.08));im.setColorAt(i,cc);});
   im.instanceColor.needsUpdate=true;im.castShadow=Q>1;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);});}).catch(e=>console.warn('hw herbs',e));
