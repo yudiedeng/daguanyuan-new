@@ -741,15 +741,15 @@ const PROPS={
    // 蘅芜苑室内（第四十回）：“雪洞一般，一色玩器全无，案上只有一个土定瓶中供着数枝菊花，并两部书，茶奁茶杯而已。床上只吊着青纱帐幔，衾褥也十分朴素。”
    // Tripo 精细模型（tools/props.json 的 hw_*）；碰撞在 build_hengwu.py。坐标：院落局部，地面 y=0.75，网页 z=-Blender y
    // 椅、榻模型的正面朝自身 +x（椅背在 -x）：ry=-π/2 面朝 +z（朝门、朝书案）
-   {f:'hw_qiaotou',p:[0,0.75,-9.95],fit:[2.2,0.86,0.45],ry:0},
-   {f:'hw_guanmao',p:[-0.7,0.75,-9.1],fit:[0.58,1.05,0.55],ry:-Math.PI/2},{f:'hw_guanmao',p:[0.7,0.75,-9.1],fit:[0.58,1.05,0.55],ry:-Math.PI/2},
-   {f:'hw_chuang',p:[6.95,0.75,-8.4],fit:[1.5,2.3,2.1],ry:0},
-   {f:'hw_shuan',p:[4.1,0.75,-5.3],fit:[0.6,0.82,1.4],ry:Math.PI/2},
-   {f:'hw_tuding',p:[3.65,1.57,-5.35],h:0.45},
-   {f:'hw_shuhan',p:[4.2,1.57,-5.28],fit:[0.2,0.1,0.3],ry:Math.PI/2+0.1},
-   {f:'hw_chalian',p:[4.6,1.57,-5.3],fit:[0.3,0.14,0.2],ry:-0.2},
-   {f:'hw_quanyi',p:[4.1,0.75,-5.95],fit:[0.6,1.0,0.6],ry:-Math.PI/2},
-   {f:'hw_ta',p:[-5.5,0.75,-9.8],fit:[0.8,0.85,2.0],ry:-Math.PI/2}],
+   {matte:1,f:'hw_qiaotou',p:[0,0.75,-9.95],fit:[2.2,0.86,0.45],ry:0},
+   {matte:1,f:'hw_guanmao',p:[-0.7,0.75,-9.1],fit:[0.58,1.05,0.55],ry:-Math.PI/2},{matte:1,f:'hw_guanmao',p:[0.7,0.75,-9.1],fit:[0.58,1.05,0.55],ry:-Math.PI/2},
+   {matte:1,f:'hw_chuang',p:[6.95,0.75,-8.4],fit:[1.5,2.3,2.1],ry:0},
+   {matte:1,f:'hw_shuan',p:[4.1,0.75,-5.3],fit:[0.6,0.82,1.4],ry:Math.PI/2},
+   {matte:1,f:'hw_tuding',p:[3.65,1.57,-5.35],h:0.45},
+   {matte:1,f:'hw_shuhan',p:[4.2,1.57,-5.28],fit:[0.2,0.1,0.3],ry:Math.PI/2+0.1},
+   {matte:1,f:'hw_chalian',p:[4.6,1.57,-5.3],fit:[0.3,0.14,0.2],ry:-0.2},
+   {matte:1,f:'hw_quanyi',p:[4.1,0.75,-5.95],fit:[0.6,1.0,0.6],ry:-Math.PI/2},
+   {matte:1,f:'hw_ta',p:[-5.5,0.75,-9.8],fit:[0.8,0.85,2.0],ry:-Math.PI/2}],
  xiaoxiang_ct:[{f:'hushi',p:[-6.6,0,11.6],h:2.3,ry:0.6,r:0.6},{f:'hushi',p:[-10.9,0.1,9.7],h:1.4,ry:2.2,r:0.4},
    {f:'yingwu',p:[-4.75,2.0,0.55],h:0.9,ry:0,hang:5.15},
    // 读书、品茗的去处：竹下石桌石墩（桌上书、青瓷茶具），旁边一只风炉；前廊一张湘妃竹躺椅（书、团扇）；台阶两边两盆兰；门两侧挂两盏绿纱灯
@@ -819,7 +819,7 @@ function addProps(L,id,root){if(id==='yihong'){root.traverse(m=>{if(m.isMesh&&/�
  if(q.panels){root.updateMatrixWorld(true);const [a,b]=q.panels,c=Math.cos(q.ry||0),sn=Math.sin(q.ry||0);for(const sd of[-1,1]){const u=sd*(a+b)/2,w=root.localToWorld(new V3(q.p[0]+u*sn,0,q.p[2]+u*c));const top=root.position.y+o.position.y+q.h;colAdd({x:w.x,z:w.z,c,s:sn,hx:0.15,hz:(b-a)/2,top,bot:top-q.h-1,walk:false});}}  // 门洞两边的花障挡人（模型宽度沿局部 z）
 
  if(q.plate){const r=q.plate,pl=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[r*0.55,0],[r*0.6,0.006],[r*0.72,0.012],[r,0.03],[r*1.02,0.032],[r*0.98,0.028],[r*0.7,0.018],[0,0.018]].map(([a,b])=>new THREE.Vector2(a,b)),40),plateMat());{const P=pl.geometry.attributes.position,U=pl.geometry.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*r*1.02)+0.5,P.getZ(i)/(2*r*1.02)+0.5);}pl.position.set(q.p[0],q.p[1],q.p[2]);pl.castShadow=pl.receiveShadow=true;root.add(pl);}
- o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(/^(花叶|芭蕉叶|芭蕉老叶|芭蕉枯叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(q.matte){m.material=m.material.clone();m.material.metalness=0;m.material.metalnessMap=null;m.material.roughness=1;}/* matte：Tripo 材质的金属度（0.6）让布、木头反射天光发亮，归零 */if(/^(花叶|芭蕉叶|芭蕉老叶|芭蕉枯叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
  if(q.hang){const len=q.hang-q.p[1]-q.h,cord=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,len,5),std('#3a2c22',.9));cord.position.set(q.p[0],q.p[1]+q.h+len/2,q.p[2]);root.add(cord);}
  if(q.box){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));colAdd({x:w.x,z:w.z,c:Math.cos(q.ry||0),s:Math.sin(q.ry||0),hx:q.box[0],hz:q.box[1],top:root.position.y+o.position.y+0.6,bot:root.position.y+o.position.y-0.5,walk:false});}
  if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}
