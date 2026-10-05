@@ -1,4 +1,4 @@
-"""竹（潇湘馆一带的“千百竿翠竹”）：Blender 建模，导出三株竹 models/t/zhu_<n>.wasm 和叶簇贴图 tex/zhu_spray.png。
+"""竹（潇湘馆一带的“千百竿翠竹”）：Blender 建模，导出六株竹 models/t/zhu_<n>.wasm（弯度、根部斜出各不同） 和叶簇贴图 tex/zhu_spray.png。
 用法：python3 blender/scripts/flora/build_bamboo.py --out /tmp/zhu      （需要 bpy；之后的打包见文末）
 
 一、叶簇贴图：先在 Blender 里真把两枝竹叶簇建出来（一根下垂的小枝，两侧互生、梢头成扇，每簇约 35 片细长披针形叶，
@@ -197,7 +197,7 @@ def spray_card(bm, uv, base, d, droop, size, half):
             loop[uv].uv = (u0 + 0.5 * uu, vv)
 
 
-def bamboo(seed, H):
+def bamboo(seed, H, bend=0.35, sbase=0.0):
     rnd = random.Random(seed)
     culm = bmesh.new()
     cuv = culm.loops.layers.uv.new('UVMap')
@@ -211,7 +211,8 @@ def bamboo(seed, H):
         nodes.append(min(z, H))
     lean = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), 0)).normalized()
     def axis(z):
-        return Vector((0, 0, z)) + lean * (0.35 * (z / H) ** 2.2 * H / 10)
+        f = z / H   # 梢头弯 bend（米/10 m），根部斜出 sbase（先往外斜、再直起来）
+        return Vector((0, 0, z)) + lean * (bend * f ** 2.2 * H / 10 + sbase * min(f, 0.25) * 4 * H / 10)
     def rad(z):
         return 0.026 * (1 - 0.7 * z / H) + 0.005
     culm_tube(culm, cuv, axis, nodes, rad)
@@ -269,9 +270,10 @@ def obj(name, bm, m):
 
 spray_texture(os.path.join(OUT, 'zhu_spray.png'))
 culm_texture(os.path.join(OUT, 'zhu_culm.png'))
-for n, (seed, H) in enumerate(((11, 10.0), (23, 10.6), (37, 9.4)), 1):
+VARS = ((11, 10.0, 0.35, 0.0), (23, 10.6, 0.6, 0.15), (37, 9.4, 0.9, 0.0), (51, 8.5, 0.5, 0.25), (67, 11.2, 0.25, 0.1), (83, 9.8, 1.1, 0.2))
+for n, (seed, H, bend, sbase) in enumerate(VARS, 1):
     clear()
-    c, l = bamboo(seed, H)
+    c, l = bamboo(seed, H, bend, sbase)
     obj('zhu_culm', c, leaf_mat(os.path.join(OUT, 'zhu_culm.png'), 'zhu_culm'))
     obj('zhu_leaf', l, leaf_mat(os.path.join(OUT, 'zhu_spray.png')))
     tris = sum(len(p.vertices) - 2 for o in bpy.data.objects for p in o.data.polygons)
@@ -280,5 +282,5 @@ for n, (seed, H) in enumerate(((11, 10.0), (23, 10.6), (37, 9.4)), 1):
     print('zhu_%d' % n, 'H', H, 'tris', tris, path)
 
 # 打包到网页（保留 UV、不减面；pack_prop 会把高度归一成 1 m，网页里按竹高缩放）：
-#   node blender/scripts/web/pack_prop.mjs /tmp/zhu/zhu_1.glb models/t/zhu_1.wasm 99999   （2、3 同）
+#   node blender/scripts/web/pack_prop.mjs /tmp/zhu/zhu_1.glb models/t/zhu_1.wasm 99999   （2–6 同）
 #   cp /tmp/zhu/zhu_spray.png /tmp/zhu/zhu_culm.png tex/
