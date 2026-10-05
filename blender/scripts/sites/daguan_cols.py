@@ -1,7 +1,7 @@
 """大观楼外壳碰撞框（改样之后；可重复执行）：写 col.json['daguan']。
 用法：flock /tmp/coljson.lock python3 blender/scripts/sites/daguan_cols.py
 体素式（同 daguan_doors.colliders）：先向下找地坪（台基、台阶，作可走面），再在离地 0.45/0.9/1.35 m 处找是否贴着构件。
-楼台 3 m，射线从 4.2 m 起。白石栏杆单独处理：栏杆细、柱头又在 1 m 以上，向下的射线会把柱头当成地坪，
+楼台 4.5 m，射线从 6 m 起。白石栏杆单独处理：栏杆细、柱头又在 1 m 以上，向下的射线会把柱头当成地坪，
 所以先不算栏杆求地坪，再把栏杆经过的格子一律记成挡人框。
 """
 import bpy, bmesh, os, json
@@ -41,7 +41,7 @@ def bvh_of(objs):
     return bvh
 
 
-def colliders(xr, zr, step=0.4, ray_z=4.2, floor_max=3.6):
+def colliders(xr, zr, step=0.4, ray_z=6.0, floor_max=5.2):
     meshes = [o for o in O if o.type == 'MESH' and not is_roof(o)]
     bvh = bvh_of([o for o in meshes if not is_rail(o)])
     rail = bvh_of([o for o in meshes if is_rail(o)])
@@ -76,7 +76,7 @@ def colliders(xr, zr, step=0.4, ray_z=4.2, floor_max=3.6):
 
 
 bpy.context.view_layer.update()
-boxes = colliders((-40.0, 40.0), (-31.6, 34.4))
+boxes = colliders((-40.0, 40.0), (-36.8, 34.4))
 colp = os.path.join(REPO, 'models', 'b', 'col.json')
 cj = json.load(open(colp, encoding='utf-8')); cj['daguan'] = boxes
 json.dump(cj, open(colp, 'w', encoding='utf-8'), ensure_ascii=False)

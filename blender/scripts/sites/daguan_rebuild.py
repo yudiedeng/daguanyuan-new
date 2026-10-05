@@ -10,9 +10,9 @@
 
 原模型把顾恩思义殿与大观楼摞成一座两层楼。改成：
   1. 正殿（顾恩思义殿）前移 16 m（Blender y −16），自身改重檐歇山：下檐不动，加一层上檐（借大观楼上檐放大）、上檐下一圈槅扇/彩画。
-  2. 大观楼立在正殿后面一座 3 m 高的白石台上，三层：首层、二层、三层各一节楼身（借原大观楼楼身，面阔放大 1.25 倍），
-     层间腰檐（借正殿下檐缩小），顶上重檐歇山（原上檐）。全组最高。
-  3. 缀锦阁、含芳阁不动；两条双层复道后移 2.5 m、加长，接到大观楼首层两山。
+  2. 大观楼立在正殿后面一座 4.5 m 高的须弥座白石台上，三层：首层、二层、三层各一节楼身（借原大观楼楼身），
+     层间腰檐（借正殿下檐缩小），顶上重檐歇山（原上檐）；整座面阔×1.4、进深×1.2、层高×1.3，顶脊约 35 m，正殿约 18 m。
+  3. 缀锦阁、含芳阁不动；两条双层复道后移 2.5 m，接到大观楼首层两山。
   4. 前面：两层白石台基、正中石阶；台基前一条汉白玉甬路，两旁矮白石栏杆、石灯座；甬路尽头玉石牌坊（Tripo，网页里放），
      牌坊两侧石狮（Tripo）；甬路两旁两方水池，池岸山石。玉兰、青松由网页种。
   5. 屋面全部改灰色筒瓦（M_灰瓦），脊饰金色不变。
@@ -34,9 +34,9 @@ random.seed(17)
 COLL = O['daguan_顾恩思义殿_marble'].users_collection[0]
 
 DH = -16.0                 # 正殿前移
-T = 3.0                    # 大观楼台高
-TY = 23.5                  # 大观楼中心 y
-SX, SY = 1.25, 1.1         # 大观楼楼身放大
+T = 4.5                    # 大观楼台高（须弥座）
+TY = 25.0                  # 大观楼中心 y
+SX, SY, SZ = 1.4, 1.2, 1.3 # 大观楼整座放大：面阔、进深、层高（顶脊约 35 m，正殿约 18 m）
 
 
 def names(prefix):
@@ -104,12 +104,11 @@ for o in HALL:
     bake(o, move(0, DH, 0))
 
 # ============================================================ 2. 大观楼（三层）
-TOWER = scale_about(0, 20, 0, SX, SY, 1.0)
-TOWER = move(0, TY - 20, 0) @ TOWER
-floors = [T - 13.1, None, None]             # 首层：平座面落在台面
-eave_dz = [T + 3.0 - 8.8, None]             # 腰檐一：檐口 z = T+3.0
+# 先按原件尺寸从 z=0 往上摞（首层平座面在 0），再整座放大、抬到台面上
+TOWER = move(0, TY - 20, T) @ scale_about(0, 20, 0, SX, SY, SZ)
 storey_top = lambda dz: 16.5 + dz
-eave_dz[0] = storey_top(floors[0]) - 0.4 - 8.8
+floors = [-13.1, None, None]                # 首层：平座面落在台面
+eave_dz = [storey_top(floors[0]) - 0.4 - 8.8, None]
 floors[1] = eave_dz[0]                      # 原件里楼身(11.3)与下檐(8.8)的高差保持不变
 eave_dz[1] = storey_top(floors[1]) - 0.4 - 8.8
 floors[2] = eave_dz[1]
@@ -118,18 +117,20 @@ print('大观楼 层 dz', floors, '腰檐 dz', eave_dz)
 for k, dz in enumerate(floors):
     src = STOREY if k == 2 else [dup(o, f'_{k + 1}层') for o in STOREY]
     for o in src:
-        bake(o, move(0, 0, dz) @ TOWER)
+        bake(o, TOWER @ move(0, 0, dz))
 for o in TOPROOF:
-    bake(o, move(0, 0, floors[2]) @ TOWER)
-for o in PLAQUE:     # 匾只平移，贴到放大后的楼身前檐
-    bake(o, move(0, (14.7 - 20) * (SY - 1) + TY - 20, floors[2]))
+    bake(o, TOWER @ move(0, 0, floors[2]))
+# 匾：按楼身前檐等比放大 1.35 倍（不随面阔拉宽）
+pc = Vector((0, 14.7, 15.65 + floors[2])); pw = TOWER @ pc
+for o in PLAQUE:
+    bake(o, Matrix.Translation(pw) @ Matrix.Scale(1.35, 4) @ Matrix.Translation(-pc))
 # 腰檐：借正殿下檐，缩到大观楼楼身
 for k, dz in enumerate(eave_dz):
     for o in EAVE:
         c = dup(o, f'_大观楼腰{k + 1}')
         c.name = c.name.replace('daguan_下檐_', f'daguan_大观楼腰檐{k + 1}_')
         # 下檐已随正殿前移 DH，先移回原处再缩放
-        bake(c, move(0, TY - 20, dz) @ scale_about(0, 20, 8.8, 0.93, 0.8, 1.0) @ move(0, -DH, 0))
+        bake(c, TOWER @ move(0, 0, dz) @ scale_about(0, 20, 8.8, 0.93, 0.8, 1.0) @ move(0, -DH, 0))
 
 # ---- 楼层之间的填充（腰檐里面，挡住缝） ----
 RED = mat('M_朱漆'); CAI = mat('M_daguan_彩画青'); MARBLE = mat('M_汉白玉'); TILE = mat('M_灰瓦', (0.43, 0.44, 0.44))
@@ -166,10 +167,10 @@ def flush():
     BOX_BM.clear()
 
 
-bx, by = 10.9 * SX - 0.25, 4.6 * SY - 0.25
+bx, by = 10.9 * SX - 0.3, 4.6 * SY - 0.3
 for k in range(2):
     z0 = storey_top(floors[k]) - 0.3; z1 = 11.3 + floors[k + 1] + 0.3
-    add_box('大观楼层间_lacquer_red', RED, -bx, TY - by, z0, bx, TY + by, z1)
+    add_box('大观楼层间_lacquer_red', RED, -bx, TY - by, T + SZ * z0, bx, TY + by, T + SZ * z1)
 # 正殿重檐：上下檐之间的一圈墙（楼身压扁件之外再垫一层，防漏缝）
 add_box('正殿重檐_lacquer_red', RED, -12.6, 20 + DH - 5.0, 9.3, 12.6, 20 + DH + 5.0, 12.6)
 
@@ -250,7 +251,7 @@ def stairs(key, xc, w, y_edge, z0, z1, direction=-1, tread=0.36, axis='y', rise=
 
 
 # 正殿台基两层：一层 0…0.75，二层 0.75…1.5（正殿自带的台明 1.5…2.1 在其上）
-P1 = (-22.0, -12.0, 22.0, 14.0); P2 = (-18.5, -8.5, 18.5, 14.0)
+P1 = (-25.0, -12.0, 25.0, 14.0); P2 = (-21.5, -8.5, 21.5, 14.0)
 platform('台基_marble', *P1, 0.0, 0.75)
 platform('台基_marble', *P2, 0.75, 1.5)
 SW = 7.0
@@ -265,18 +266,27 @@ balustrade('台基栏杆_marble', [(g, P1[1]), (P1[2], P1[1]), (P1[2], P1[3])], 
 balustrade('台基栏杆_marble', [(-g, P2[1]), (P2[0], P2[1]), (P2[0], 9.6)], 1.5)
 balustrade('台基栏杆_marble', [(g, P2[1]), (P2[2], P2[1]), (P2[2], 9.6)], 1.5)
 
-# 大观楼台：3 m，台前两侧各一道踏跺从正殿二层台上去
-P3 = (-18.0, 13.6, 18.0, 31.0)
-platform('楼台_marble', *P3, 0.0, T)
-add_box('台面_pave', mat('M_方砖地'), P3[0] + 0.1, P3[1] + 0.1, T, P3[2] - 0.1, P3[3] - 0.1, T + 0.005)
-for s in (-1, 1):
+# 大观楼台：4.5 m 须弥座（土衬、圭角、束腰、上枭、台面），台前两侧各一道踏跺从正殿二层台上去
+P3 = (-21.0, 14.6, 21.0, 33.2)
+x0, y0, x1, y1 = P3
+add_box('楼台_marble', MARBLE, x0 - 0.35, y0 - 0.35, 0.0, x1 + 0.35, y1 + 0.35, 0.35)          # 土衬
+add_box('楼台_marble', MARBLE, x0 - 0.2, y0 - 0.2, 0.35, x1 + 0.2, y1 + 0.2, 0.9)             # 圭角
+add_box('楼台_marble', MARBLE, x0 - 0.05, y0 - 0.05, 0.9, x1 + 0.05, y1 + 0.05, 1.25)         # 下枭
+add_box('楼台_marble', MARBLE, x0 + 0.2, y0 + 0.2, 1.25, x1 - 0.2, y1 - 0.2, T - 1.0)         # 束腰
+for k in range(int((x1 - x0) / 2.4) + 1):                                                      # 束腰上的间柱
+    x = x0 + 0.2 + k * (x1 - x0 - 0.4) / int((x1 - x0) / 2.4)
+    add_box('楼台_marble', MARBLE, x - 0.18, y0 + 0.08, 1.25, x + 0.18, y0 + 0.3, T - 1.0)
+add_box('楼台_marble', MARBLE, x0 - 0.05, y0 - 0.05, T - 1.0, x1 + 0.05, y1 + 0.05, T - 0.45)  # 上枭
+add_box('楼台_marble', MARBLE, x0 - 0.25, y0 - 0.25, T - 0.45, x1 + 0.25, y1 + 0.25, T)       # 台面压面石
+add_box('台面_pave', mat('M_方砖地'), x0, y0, T, x1, y1, T + 0.005)
+for s_ in (-1, 1):
     # 台面高过 1.8 m 的地坪格在网页里从下面算墙，每级须低于 0.2 m 才上得去
-    stairs('台阶_marble', s * 17.2, 1.6, P3[1], 1.5, T, direction=-1, tread=0.4, rise=0.125)
-balustrade('楼台栏杆_marble', [(-16.2, P3[1]), (-12.0, P3[1])], T)
-balustrade('楼台栏杆_marble', [(12.0, P3[1]), (16.2, P3[1])], T)
-for s in (-1, 1):
-    balustrade('楼台栏杆_marble', [(s * P3[2], P3[1]), (s * P3[2], 18.8)], T)
-    balustrade('楼台栏杆_marble', [(s * P3[2], 24.2), (s * P3[2], P3[3]), (0, P3[3])], T)
+    stairs('台阶_marble', s_ * 20.15, 1.6, P3[1] - 0.25, 1.5, T, direction=-1, tread=0.35, rise=0.125)
+balustrade('楼台栏杆_marble', [(-19.1, P3[1] - 0.1), (-12.0, P3[1] - 0.1)], T)
+balustrade('楼台栏杆_marble', [(12.0, P3[1] - 0.1), (19.1, P3[1] - 0.1)], T)
+for s_ in (-1, 1):
+    balustrade('楼台栏杆_marble', [(s_ * (P3[2] + 0.1), P3[1]), (s_ * (P3[2] + 0.1), 18.8)], T)
+    balustrade('楼台栏杆_marble', [(s_ * (P3[2] + 0.1), 24.2), (s_ * (P3[2] + 0.1), P3[3] + 0.1), (0, P3[3] + 0.1)], T)
 
 # ============================================================ 6. 甬路、石灯座、水池
 Y0, Y1 = -34.0, P1[1] - r1          # 甬路从院门到台阶脚
