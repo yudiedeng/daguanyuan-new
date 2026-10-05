@@ -10,9 +10,9 @@
 
 原模型把顾恩思义殿与大观楼摞成一座两层楼。改成：
   1. 正殿（顾恩思义殿）前移 16 m（Blender y −16），自身改重檐歇山：下檐不动，加一层上檐（借大观楼上檐放大）、上檐下一圈槅扇/彩画。
-  2. 大观楼立在正殿后面一座 4.5 m 高的须弥座白石台上，三层：首层、二层、三层各一节楼身（借原大观楼楼身），
-     层间腰檐（借正殿下檐缩小），顶上重檐歇山（原上檐）；整座面阔×1.4、进深×1.2、层高×1.3，顶脊约 35 m，正殿约 18 m。
-  3. 缀锦阁、含芳阁不动；两条双层复道后移 2.5 m，接到大观楼首层两山。
+  2. 大观楼立在正殿后面一座 4.5 m 高的须弥座白石台上，三层逐层收分：首层七开间殿身带下檐（顾恩思义殿副本），
+     二层五开间楼身带平座与匾（原大观楼楼身），三层再收 0.8，顶上歇山、金宝顶；整座等比放大 1.15，顶脊约 33 m，正殿约 18 m。
+  3. 缀锦阁、含芳阁加成三层飞楼（底层不动）；两条双层复道后移 2.5 m，接到大观楼首层两山。
   4. 前面：两层白石台基、正中石阶；台基前一条汉白玉甬路，两旁矮白石栏杆、石灯座；甬路尽头玉石牌坊（Tripo，网页里放），
      牌坊两侧石狮（Tripo）；甬路两旁两方水池，池岸山石。玉兰、青松由网页种。
   5. 屋面全部改灰色筒瓦（M_灰瓦），脊饰金色不变。
@@ -35,8 +35,9 @@ COLL = O['daguan_顾恩思义殿_marble'].users_collection[0]
 
 DH = -16.0                 # 正殿前移
 T = 4.5                    # 大观楼台高（须弥座）
-TY = 25.0                  # 大观楼中心 y
-SX, SY, SZ = 1.4, 1.2, 1.3 # 大观楼整座放大：面阔、进深、层高（顶脊约 35 m，正殿约 18 m）
+TY = 24.8                  # 大观楼中心 y
+U = 1.15                   # 大观楼整座等比放大（只等比，不拉伸：开间、斗拱、窗格比例不变）
+PH3 = 4.9                  # 缀锦阁、含芳阁一层层高（加第三层用）
 
 
 def names(prefix):
@@ -89,6 +90,11 @@ TOPROOF = names('daguan_上檐_')
 PLAQUE = names('daguan_大观楼匾')
 EAVE = names('daguan_下檐_')
 
+# ---- 大观楼用的原件副本（要在正殿前移之前，按原坐标复制） ----
+T_HALL = [dup(o, '_楼1') for o in O if o.name.startswith(('daguan_顾恩思义殿_', 'daguan_下檐_', 'daguan_垫板_'))]
+T_EAVE2 = [dup(o, '_楼腰2') for o in EAVE]
+T_STOREY3 = [dup(o, '_楼3') for o in STOREY]
+
 # ---- 正殿上檐：借原上檐放大（先复制，原件之后给大观楼用） ----
 for o in TOPROOF:
     c = dup(o, '_正殿')
@@ -103,34 +109,26 @@ for o in names('daguan_大观楼_'):
 for o in HALL:
     bake(o, move(0, DH, 0))
 
-# ============================================================ 2. 大观楼（三层）
-# 先按原件尺寸从 z=0 往上摞（首层平座面在 0），再整座放大、抬到台面上
-TOWER = move(0, TY - 20, T) @ scale_about(0, 20, 0, SX, SY, SZ)
-storey_top = lambda dz: 16.5 + dz
-floors = [-13.1, None, None]                # 首层：平座面落在台面
-eave_dz = [storey_top(floors[0]) - 0.4 - 8.8, None]
-floors[1] = eave_dz[0]                      # 原件里楼身(11.3)与下檐(8.8)的高差保持不变
-eave_dz[1] = storey_top(floors[1]) - 0.4 - 8.8
-floors[2] = eave_dz[1]
-print('大观楼 层 dz', floors, '腰檐 dz', eave_dz)
-
-for k, dz in enumerate(floors):
-    src = STOREY if k == 2 else [dup(o, f'_{k + 1}层') for o in STOREY]
-    for o in src:
-        bake(o, TOWER @ move(0, 0, dz))
+# ============================================================ 2. 大观楼（三层，逐层收分）
+# 原件就是“顾恩思义殿 + 下檐 + 大观楼楼身 + 上檐”摞成的两层楼，比例是对的；这里整座等比放大 U，
+#   首层：七开间殿身（顾恩思义殿副本）+ 下檐；二层：五开间楼身（原大观楼楼身，带平座与匾）；
+#   三层：楼身再收 0.8；二三层之间腰檐（下檐等比 0.74）；顶上歇山（上檐等比 0.8）、正脊中央金宝顶。
+# TW：原坐标 (0, 20, 1.5)（殿台底）→ 楼台面 (0, TY, T)
+TW = move(0, TY, T) @ Matrix.Scale(U, 4) @ move(0, -20, -1.5)
+W = lambda x, y, z: TW @ Vector((x, y, z))
+for o in T_HALL + STOREY + PLAQUE:
+    bake(o, TW)
+for o in T_EAVE2:
+    o.name = o.name.replace('daguan_下檐_', 'daguan_大观楼腰檐_')
+    bake(o, TW @ move(0, 0, 16.1 - 8.8) @ scale_about(0, 20, 8.8, 0.74, 0.74, 0.74))
+Z3 = 16.1 + 2.5 * 0.77                       # 三层平座底（与腰檐的高差同原件，等比缩）
+for o in T_STOREY3:
+    bake(o, TW @ move(0, 0, Z3 - 11.3) @ scale_about(0, 20, 11.3, 0.8, 0.8, 0.8))
+Z3T = Z3 + (16.5 - 11.3) * 0.8               # 三层楼身顶
 for o in TOPROOF:
-    bake(o, TOWER @ move(0, 0, floors[2]))
-# 匾：按楼身前檐等比放大 1.35 倍（不随面阔拉宽）
-pc = Vector((0, 14.7, 15.65 + floors[2])); pw = TOWER @ pc
-for o in PLAQUE:
-    bake(o, Matrix.Translation(pw) @ Matrix.Scale(1.35, 4) @ Matrix.Translation(-pc))
-# 腰檐：借正殿下檐，缩到大观楼楼身
-for k, dz in enumerate(eave_dz):
-    for o in EAVE:
-        c = dup(o, f'_大观楼腰{k + 1}')
-        c.name = c.name.replace('daguan_下檐_', f'daguan_大观楼腰檐{k + 1}_')
-        # 下檐已随正殿前移 DH，先移回原处再缩放
-        bake(c, TOWER @ move(0, 0, dz) @ scale_about(0, 20, 8.8, 0.93, 0.8, 1.0) @ move(0, -DH, 0))
+    bake(o, TW @ move(0, 0, Z3T - 0.2 - 16.3) @ scale_about(0, 20, 16.3, 0.8, 0.8, 0.8))
+RIDGE = Z3T - 0.2 + (21.7 - 16.3) * 0.8      # 顶脊高（原坐标系）
+print('大观楼 顶脊', round(W(0, 20, RIDGE).z, 2), 'm')
 
 # ---- 楼层之间的填充（腰檐里面，挡住缝） ----
 RED = mat('M_朱漆'); CAI = mat('M_daguan_彩画青'); MARBLE = mat('M_汉白玉'); TILE = mat('M_灰瓦', (0.43, 0.44, 0.44))
@@ -167,19 +165,45 @@ def flush():
     BOX_BM.clear()
 
 
-bx, by = 10.9 * SX - 0.3, 4.6 * SY - 0.3
-for k in range(2):
-    z0 = storey_top(floors[k]) - 0.3; z1 = 11.3 + floors[k + 1] + 0.3
-    add_box('大观楼层间_lacquer_red', RED, -bx, TY - by, T + SZ * z0, bx, TY + by, T + SZ * z1)
+# 二、三层之间（腰檐里面）
+a_, b_ = W(-10.9 * 0.8 + 0.2, 20 - 4.6 * 0.8 + 0.2, 16.2), W(10.9 * 0.8 - 0.2, 20 + 4.6 * 0.8 - 0.2, Z3 + 0.3)
+add_box('大观楼层间_lacquer_red', RED, *a_, *b_)
+# 首层明间门已开（原 daguan_doors），里面是空壳：放一块暗盒
+a_, b_ = W(-14.3, 15.3, 2.2), W(14.3, 26.6, 9.0)
+add_box('大观楼首层暗_dark', mat('M_daguan_室内暗'), *a_, *b_)
+# 金宝顶：须弥座 + 宝珠，立在正脊中央
+def lathe(key, m, prof, cx, cy, z0, n=16):
+    if key not in BOX_BM: BOX_BM[key] = (bmesh.new(), m)
+    bm = BOX_BM[key][0]; rings = []
+    for r, z in prof:
+        rings.append([bm.verts.new((cx + r * math.cos(2 * math.pi * i / n), cy + r * math.sin(2 * math.pi * i / n), z0 + z)) for i in range(n)])
+    for ra, rb in zip(rings[:-1], rings[1:]):
+        for i in range(n): bm.faces.new((ra[i], ra[(i + 1) % n], rb[(i + 1) % n], rb[i]))
+top = W(0, 20, RIDGE - 0.15)
+lathe('大观楼宝顶_gold', GOLD, [(0.55, 0), (0.7, 0.25), (0.45, 0.45), (0.5, 0.75), (0.75, 1.0), (0.85, 1.35), (0.6, 1.75), (0.25, 2.0), (0.32, 2.2), (0.12, 2.6), (0.01, 2.75)], top.x, top.y, top.z)
 # 正殿重檐：上下檐之间的一圈墙（楼身压扁件之外再垫一层，防漏缝）
 add_box('正殿重檐_lacquer_red', RED, -12.6, 20 + DH - 5.0, 9.3, 12.6, 20 + DH + 5.0, 12.6)
 
 # ============================================================ 3. 复道：后移、加长，接大观楼首层两山
 for o in names('daguan_复道'):
     s = 1 if o.name.startswith(('daguan_复道东', 'daguan_复道顶东')) else -1
-    end = 10.9 * SX
+    end = 14.9 * U                          # 大观楼首层山墙
     f = (28.5 - end) / (28.5 - 14.6)
     bake(o, move(0, 2.5, 0) @ scale_about(s * 28.5, 0, 0, f, 1, 1))
+
+# ============================================================ 3b. 缀锦阁、含芳阁加一层（三层飞楼）
+# 楼上那一层（z > 5.6 的面）复制一份抬高一层；腰檐复制一份放到新旧两层之间；上檐、匾整体抬高。底层（第四十回宴席处）不动。
+for name in ('缀锦阁', '含芳阁'):
+    for o in [o for o in O if o.type == 'MESH' and o.name.startswith(f'daguan_{name}_') and not o.name.startswith((f'daguan_{name}_上檐', f'daguan_{name}_腰檐'))]:
+        c = dup(o, '_三层')
+        bm = bmesh.new(); bm.from_mesh(c.data); mw = c.matrix_world
+        dead = [f for f in bm.faces if (mw @ f.calc_center_median()).z < 5.6]
+        bmesh.ops.delete(bm, geom=dead, context='FACES'); bm.to_mesh(c.data); bm.free()
+        bake(c, move(0, 0, PH3))
+    for o in names(f'daguan_{name}_腰檐'):
+        bake(dup(o, '_三层'), move(0, 0, PH3))
+    for o in names(f'daguan_{name}_上檐') + names(f'daguan_{name}匾'):
+        bake(o, move(0, 0, PH3))
 
 # ============================================================ 4. 屋面改灰瓦
 for o in O:
@@ -267,7 +291,7 @@ balustrade('台基栏杆_marble', [(-g, P2[1]), (P2[0], P2[1]), (P2[0], 9.6)], 1
 balustrade('台基栏杆_marble', [(g, P2[1]), (P2[2], P2[1]), (P2[2], 9.6)], 1.5)
 
 # 大观楼台：4.5 m 须弥座（土衬、圭角、束腰、上枭、台面），台前两侧各一道踏跺从正殿二层台上去
-P3 = (-21.0, 14.6, 21.0, 33.2)
+P3 = (-21.0, 13.4, 21.0, 35.2)
 x0, y0, x1, y1 = P3
 add_box('楼台_marble', MARBLE, x0 - 0.35, y0 - 0.35, 0.0, x1 + 0.35, y1 + 0.35, 0.35)          # 土衬
 add_box('楼台_marble', MARBLE, x0 - 0.2, y0 - 0.2, 0.35, x1 + 0.2, y1 + 0.2, 0.9)             # 圭角
@@ -281,7 +305,7 @@ add_box('楼台_marble', MARBLE, x0 - 0.25, y0 - 0.25, T - 0.45, x1 + 0.25, y1 +
 add_box('台面_pave', mat('M_方砖地'), x0, y0, T, x1, y1, T + 0.005)
 for s_ in (-1, 1):
     # 台面高过 1.8 m 的地坪格在网页里从下面算墙，每级须低于 0.2 m 才上得去
-    stairs('台阶_marble', s_ * 20.15, 1.6, P3[1] - 0.25, 1.5, T, direction=-1, tread=0.35, rise=0.125)
+    stairs('台阶_marble', s_ * 20.15, 1.6, P3[1] - 0.25, 1.5, T, direction=-1, tread=0.45, rise=0.125)   # 踏面宽过 0.4 m 碰撞格，每格最多升一级
 balustrade('楼台栏杆_marble', [(-19.1, P3[1] - 0.1), (-12.0, P3[1] - 0.1)], T)
 balustrade('楼台栏杆_marble', [(12.0, P3[1] - 0.1), (19.1, P3[1] - 0.1)], T)
 for s_ in (-1, 1):
@@ -324,11 +348,9 @@ for (cx, cy, rx, ry) in PONDS:
     add_box('水池挡_tripo', PH, cx - rx, cy - ry, 0.0, cx + rx, cy + ry, 1.6)
 
 # ============================================================ 7. Tripo 占位（牌坊柱、石狮、石灯座、香炉；网页 PROPS.daguan 放模型）
-PF_H = 12.0
-for xn in (-0.46, -0.21, 0.21, 0.46):
-    x = xn * PF_H
-    add_box('牌坊柱_tripo', PH, x - 0.55, PF - 0.55, 0.0, x + 0.55, PF + 0.55, 6.0)
-LIONS = [(s * 7.0, PF - 1.6) for s in (-1, 1)]
+for x in (-7.0, -2.8, 2.8, 7.0):            # 牌坊四柱（paifang_build.py：明间柱 ±2.8、次间柱 ±7.0）
+    add_box('牌坊柱_tripo', PH, x - 0.75, PF - 0.75, 0.0, x + 0.75, PF + 0.75, 6.0)
+LIONS = [(s * 3.7, PF - 1.9) for s in (-1, 1)]   # 石狮蹲在明间柱前（参考图）
 for x, y in LIONS:
     add_box('石狮_tripo', PH, x - 0.85, y - 0.7, 0.0, x + 0.85, y + 0.7, 2.6)
 LAMPS = [(s * 3.35, y) for s in (-1, 1) for y in (-31.5, -26.5, -17.6)]

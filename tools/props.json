@@ -52,11 +52,6 @@
   "faces": 8000,
   "neg": "cage, ground plane, base, pedestal, table, text, low quality"
  },
- "paifang": {
-  "prompt": "ornate Chinese white jade marble memorial archway gate, four tall square pillars each wrapped by a deeply carved coiling dragon from base to top, three openings with the center one wider, two tiers of horizontal beams filled with lace-like pierced openwork lattice and chi-dragon scrollwork, a large carved double-dragon crest on top of the center, a blank rectangular plaque panel in the middle, small white stone eaves, lotus finials, intricate highly detailed, all white marble, symmetrical front view",
-  "faces": 40000,
-  "neg": "color, red, gold, roof tiles, ground plane, base slab, text, low quality, people"
- },
  "shishi": {
   "prompt": "Chinese imperial white marble guardian lion statue (shishi) sitting on a tall carved rectangular white marble pedestal, curly mane, one paw on an embroidered ball, Qing dynasty palace gate lion, all white stone",
   "faces": 12000,
@@ -147,14 +142,150 @@
   "faces": 8000,
   "neg": "ground plane, base, pedestal, rock, water, text, low quality"
  },
- "yuedongmen": {
-  "prompt": "Chinese garden flowering fence screen woven from bamboo poles and lattice, with a large circular moon gate opening in the middle, covered with climbing vines of small pink flowers and green leaves, freestanding wide fence panel, flat front",
-  "faces": 14000,
-  "neg": "wall, roof, building, ground plane, base, text, low quality"
- },
  "huacong_mudan": {
   "prompt": "a Chinese tree peony shrub in full bloom, several large deep red and pink double peony flowers, broad green leaves, garden plant, realistic",
   "faces": 12000,
   "neg": "pot, vase, planter, ground plane, base, text, low quality"
+ },
+ "hw_shuan": {
+  "prompt": "plain antique Chinese Ming dynasty writing desk of dark rosewood, rectangular top, four straight round legs with simple stretchers, no carving, austere minimalist",
+  "faces": 6000
+ },
+ "hw_tuding": {
+  "prompt": "small antique Chinese earthenware vase with creamy ivory Ding ware glaze, simple round belly and narrow neck, holding several sprigs of yellow chrysanthemum flowers with green leaves",
+  "faces": 8000
+ },
+ "hw_shuhan": {
+  "prompt": "two stacked Chinese thread-bound books each wrapped in a dark blue cloth book case (shu han) with bone clasps, lying flat",
+  "faces": 3000
+ },
+ "hw_chalian": {
+  "prompt": "small antique Chinese plain wooden tea caddy box with lid, next to two small white porcelain tea cups on saucers",
+  "faces": 5000
+ },
+ "hw_chuang": {
+  "prompt": "plain antique Chinese canopy bed with a simple dark wooden frame and four posts, hung with pale celadon blue-green translucent gauze curtains tied back, plain white quilt and pillow, no carving, austere",
+  "faces": 12000
+ },
+ "hw_quanyi": {
+  "prompt": "plain antique Chinese horseshoe-back armchair of dark huanghuali rosewood, smooth curved crest rail, plain splat, no cushion, no carving",
+  "faces": 6000
+ },
+ "hw_guanmao": {
+  "prompt": "plain antique Chinese official's hat armchair (guanmaoyi) of dark rosewood, straight legs, plain back splat, austere Ming style",
+  "faces": 6000
+ },
+ "hw_qiaotou": {
+  "prompt": "long narrow plain antique Chinese altar table with everted ends (qiaotou an) of dark rosewood, simple straight legs, nothing on top",
+  "faces": 6000
+ },
+ "hw_ta": {
+  "prompt": "plain antique Chinese wooden daybed couch (luohan bed) of dark rosewood with low plain back and side rails and a plain off-white cushion, austere",
+  "faces": 8000
+ },
+ "shizhuo": {
+  "prompt": "round Chinese scholar garden stone table with four drum-shaped stone stools around it, weathered grey stone with a little moss, an open thread-bound book, a small celadon teapot and two tea cups on the table top, isolated",
+  "faces": 10000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "zhuyi": {
+  "prompt": "antique Chinese reclining lounge chair made of mottled spotted bamboo, long sloping back, an open thread-bound book and a round embroidered silk fan lying on the seat, isolated furniture",
+  "faces": 9000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "huachu": {
+  "prompt": "Chinese gardening flower hoe with a long slender bamboo handle, an embroidered silk flower pouch hanging from the handle, standing leaning, isolated",
+  "faces": 5000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "huazhong": {
+  "prompt": "small Chinese flower grave: a low rounded mound of dark earth covered with fallen pink and white blossom petals, a small rough upright stone tablet in front, isolated",
+  "faces": 6000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "penlan": {
+  "prompt": "Chinese blue and white porcelain flower pot with an orchid plant with long arching leaves and a few pale flowers, isolated",
+  "faces": 5000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "shadeng": {
+  "prompt": "Chinese hanging gauze lantern, hexagonal pale green silk lantern with a dark wooden frame, a hook on top and a red tassel below, isolated",
+  "faces": 5000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "zhusun": {
+  "prompt": "cluster of three young bamboo shoots emerging from the ground, brown hairy sheaths, pointed tips, isolated",
+  "faces": 4000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "pf_zhu": {
+  "prompt": "a tall slender square white marble column for a Chinese memorial archway, carved in high relief with a long Chinese dragon spiraling around the shaft among clouds, carved lotus pedestal at the bottom, a cloud-shaped cap with a small golden pearl ornament on top, white jade, isolated object",
+  "faces": 60000,
+  "neg": "ground plane, base slab, text, people, low quality, blurry"
+ },
+ "pf_hua": {
+  "prompt": "a long thin horizontal rectangular white marble screen panel, about four times wider than tall, pierced openwork lattice of interlocking chi-dragons and ruyi clouds, carved border frame, crisp deep carving, white jade stone, flat slab, front view, isolated object",
+  "faces": 50000,
+  "neg": "legs, table, gate, pillars, ground plane, text, low quality, blurry"
+ },
+ "paifang": {
+  "prompt": "ornate Chinese white jade marble memorial archway gate, four tall square pillars each wrapped by a deeply carved coiling dragon from base to top, three openings with the center one wider, two tiers of horizontal beams filled with lace-like pierced openwork lattice and chi-dragon scrollwork, a large carved double-dragon crest on top of the center, a blank rectangular plaque panel in the middle, small white stone eaves, lotus finials, intricate highly detailed, all white marble, symmetrical front view",
+  "faces": 40000,
+  "neg": "color, red, gold, roof tiles, ground plane, base slab, text, low quality, people"
+ },
+ "gongdeng": {
+  "prompt": "ornate Chinese Qing dynasty imperial palace lantern (gongdeng), hexagonal gilded carved rosewood frame with glass panels painted with flowers, red silk tassels hanging from each corner, hook on top, isolated object",
+  "faces": 9000,
+  "neg": "ground plane, base, stand, pole, table, text, low quality"
+ },
+ "yugang": {
+  "prompt": "large antique Chinese blue and white porcelain fish jar (yugang) with dragon and lotus scroll decoration, filled with water and green lotus leaves and two pink lotus flowers, on a small carved rosewood stand",
+  "faces": 12000,
+  "neg": "ground plane, text, low quality"
+ },
+ "muji": {
+  "prompt": "a single brown farm hen standing on the ground, realistic domestic chicken, detailed feathers, small red comb",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "gongji": {
+  "prompt": "a single rooster standing proudly, realistic domestic chicken, big red comb and wattles, orange neck feathers, dark green arched tail feathers",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "e": {
+  "prompt": "a single white Chinese domestic goose standing, long neck, orange bill with an orange knob at its base, orange feet, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "ya": {
+  "prompt": "a single white domestic farm duck standing, yellow-orange bill and feet, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 4000
+ },
+ "jiutan": {
+  "prompt": "three old brown glazed Chinese earthenware wine jars of different sizes grouped together, mouths covered with red cloth tied with string, rustic, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 6000
+ },
+ "mutong": {
+  "prompt": "two old weathered wooden water buckets with bamboo hoops and rope handles standing side by side, rustic Chinese farm, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 4000
+ },
+ "zhukuang": {
+  "prompt": "a round woven bamboo basket full of fresh green vegetables next to a round flat bamboo winnowing tray leaning against it, rustic Chinese farm, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 5000
+ },
+ "pf_jilong": {
+  "prompt": "free-standing white marble ridge crest sculpture for the top of a Chinese stone archway: two long slender Chinese dragons with sinuous bodies walking toward each other along a narrow carved ridge beam, a tall flaming pearl standing upright on a cloud between their heads, curling clouds under their claws, open silhouette with sky visible between the dragons, no background panel, low and very wide, about four times wider than tall, crisp deep carving, white jade stone",
+  "faces": 50000,
+  "neg": "background panel, flat slab, frame, square plaque, wall, ground plane, text, people, low quality, blurry"
+ },
+ "pf_juancao": {
+  "prompt": "low wide white marble ridge cresting for a Chinese stone archway: a row of large curling ruyi cloud scrolls and lotus scrolls standing on a narrow carved ridge beam, open silhouette with gaps between the scrolls, no background panel, about four times wider than tall, crisp deep carving, white jade stone, symmetrical, front view",
+  "faces": 30000,
+  "neg": "background panel, flat slab, frame, square plaque, wall, ground plane, text, people, low quality, blurry"
  }
 }
