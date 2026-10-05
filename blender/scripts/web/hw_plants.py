@@ -13,6 +13,7 @@
        南墙内外两面垂挂
   2. models/p/hw_plants.glb —— 网页实例化用的单株：
        herb_0 杜蘅（心形叶贴地）  herb_1 白芷（羽状复叶）  herb_2 兰蕙（长带叶，两枝金桂似的小黄花）  herb_3 珊瑚豆（小叶，结红果）
+       herb_4 茝兰（高 1 m 上下）  herb_5 清葛（蔓生成团，三出复叶）  herb_6 杜若（直立宽叶，蓝黑果）  herb_7 紫芸（紫红叶）
        strand_0..3 垂藤一条（2 m，顶端为原点往下垂）：翠带、金绳、珊瑚豆、细叶垂帘 —— 花溆洞口等处用
 四种藤：翠带（常春藤似的叶）、金绳（金黄细藤，叶稀，缀小金花）、珊瑚豆（叶密，一串串红果）、细叶（薜荔似的小叶）。
 
@@ -274,7 +275,56 @@ def herb_shanhu():
             q = P[0].lerp(P[-1], R(0.6, 0.95)); q.y = L * R(0.6, 0.95)
             for _ in range(rnd.randint(5, 8)): ball(g, q + Vector((R(-.025, .025), R(-.05, 0), R(-.025, .025))), R(0.011, 0.015), rnd.choice(BERRY))
     return g
-HERBS = [herb_duheng(), herb_baizhi(), herb_lanhui(), herb_shanhu()]
+# 高一层的异草（宝玉点名的“茝兰”“清葛”“杜若”“紫芸”），压在矮草上面，做出高低
+def herb_chailan():   # 茝兰：粗茎直立 0.8~1.3 m，大羽状复叶
+    g = Geo()
+    for i in range(5):
+        a = i / 5 * 6.283 + R(-.4, .4); H = R(0.8, 1.3); lean = R(0.05, 0.2)
+        top = Vector((math.cos(a) * H * lean, H, math.sin(a) * H * lean)); P = [Vector((0, 0, 0)).lerp(top, t) for t in (0, .33, .66, 1)]
+        tube(g, P, 0.008, srgb('#4e5e30'))
+        for k in range(6):
+            t = R(0.15, 0.98); q = P[0].lerp(P[-1], t); b = R(0, 6.283); dirv = Vector((math.cos(b), R(-0.1, 0.25), math.sin(b))).normalized()
+            for j in range(4):
+                c = q + dirv * (0.05 + j * 0.08); sd = dirv.cross(Vector((0, 1, 0))).normalized()
+                for sgn in (-1, 1): leaf(g, c, sd * sgn + dirv * 0.5, Vector((0, 1, 0)), R(0.17, 0.22), R(0.07, 0.09), 'lance', srgb('#2a4a20'), srgb('#4a7434'), 0.35, 0.3, 2)
+            leaf(g, q + dirv * 0.36, dirv, Vector((0, 1, 0)), 0.2, 0.08, 'lance', srgb('#2a4a20'), srgb('#4a7434'), 0.35, 0.3, 2)
+    return g
+def herb_qingge():    # 清葛：蔓生成团，三出复叶，半人来高、一米多宽
+    g = Geo()
+    for i in range(9):
+        a = i / 9 * 6.283 + R(-.3, .3); r = R(0.4, 0.75); h = R(0.12, 0.3)
+        P = [Vector((math.cos(a) * r * t, h * math.sin(math.pi * min(1, t * 1.1)) + 0.02, math.sin(a) * r * t)) for t in (0, .2, .4, .6, .8, 1)]
+        tube(g, P, 0.004, srgb('#4a4a2a'))
+        for k in range(8):
+            t = (k + 0.5) / 8; idx = min(int(t * 5), 4); q = P[idx].lerp(P[idx + 1], t * 5 - idx)
+            c = q + Vector((R(-.03, .03), 0.04, R(-.03, .03))); b = R(0, 6.283)
+            cb, ct = rnd.choice([(srgb('#24421c'), srgb('#3e6a32')), (srgb('#2a4a20'), srgb('#46723a'))])
+            for j in range(3):   # 三出复叶
+                d = Vector((math.cos(b + j * 2.1), R(0.1, 0.4), math.sin(b + j * 2.1)))
+                leaf(g, c, d, Vector((0, 1, 0)), R(0.14, 0.18), R(0.11, 0.14), 'ovate', cb, ct, 0.3, 0.2, 2)
+    return g
+def herb_duruo():     # 杜若：直立茎，宽披针叶螺旋互生，顶上几粒蓝黑果
+    g = Geo()
+    for i in range(4):
+        a = R(0, 6.283); H = R(0.5, 0.85); top = Vector((math.cos(a) * 0.06, H, math.sin(a) * 0.06))
+        tube(g, [Vector((0, 0, 0)), top * 0.5, top], 0.005, srgb('#3e5428'))
+        for k in range(7):
+            t = 0.2 + k * 0.11; q = top * t; b = a + k * 2.4
+            leaf(g, q, Vector((math.cos(b), R(0.15, 0.45), math.sin(b))), Vector((0, 1, 0)), R(0.18, 0.26), R(0.045, 0.065), 'lance', srgb('#22401b'), srgb('#3c6830'), 0.4, 0.45, 3)
+        for _ in range(rnd.randint(3, 6)): ball(g, top + Vector((R(-.03, .03), R(0, .05), R(-.03, .03))), R(0.009, 0.012), srgb(rnd.choice(('#2a3a6a', '#3a4a7a', '#283058'))))
+    return g
+def herb_ziyun():     # 紫芸：“红的自然是紫芸”，紫红叶一丛
+    g = Geo()
+    for i in range(6):
+        a = i / 6 * 6.283 + R(-.4, .4); L = R(0.35, 0.6)
+        P = [Vector((math.cos(a) * L * t * 0.45, L * t, math.sin(a) * L * t * 0.45)) for t in (0, .33, .66, 1)]
+        tube(g, P, 0.004, srgb('#4a2a2a'))
+        for k in range(10):
+            t = R(0.2, 1); q = P[0].lerp(P[-1], t)
+            cb, ct = rnd.choice([(srgb('#3a1c24'), srgb('#7a3444')), (srgb('#42202a'), srgb('#8a3c4a')), (srgb('#33221e'), srgb('#6a3a2e'))])
+            leaf(g, q, Vector((R(-1, 1), R(0.1, 0.6), R(-1, 1))), Vector((0, 1, 0)), R(0.07, 0.1), R(0.04, 0.06), 'ovate', cb, ct, 0.35, 0.2, 2)
+    return g
+HERBS = [herb_duheng(), herb_baizhi(), herb_lanhui(), herb_shanhu(), herb_chailan(), herb_qingge(), herb_duruo(), herb_ziyun()]
 STRANDS = []
 for kind in ('cui', 'jin', 'shan', 'xi'):
     g = Geo(); pts = [Vector((math.sin(t * 3.0) * 0.03, -2.0 * t, 0)) for t in [i / 10 for i in range(11)]]
