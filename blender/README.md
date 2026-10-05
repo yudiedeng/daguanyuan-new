@@ -100,6 +100,8 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
+node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
+node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 # 稻香村菜畦：剪掉旧的光滑垄条和凸起边框（连同其下地面），由 daoxiang_tian 接替，见下文「菜畦」
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[16.26,-4.04,-0.5,26.24,9.64,0.6,"田土|夯土地"],[12.26,-22.54,-0.5,26.24,-4.96,0.6,"田土|夯土地"],[-1.44,-22.54,-0.5,11.74,-4.96,0.6,"田土|夯土地"],[-26.24,-22.54,-0.5,-7.96,-8.76,0.6,"田土|夯土地"]]'
