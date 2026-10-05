@@ -31,7 +31,7 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 ```
 
 - `scripts/cuizhang/build_cuizhang.py`：从零生成翠嶂，同时写 `models/b/col.json` 的 `cuizhang` 碰撞框与 `cuizhang_trees`。
-- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
+- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao（`bajiao_textures.py` 画鲜叶、老叶、枯叶、假茎贴图：侧脉、沿脉撕裂、焦边；叶两半下垂、叶缘起伏，茎上挂枯叶、茎基枯鞘）、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
   ```bash
   python3 blender/scripts/sites/yihong_garden.py /tmp/yh          # YH_ONLY=haitang,bitao 只重建其中几种
   node blender/scripts/web/pack_prop.mjs /tmp/yh/yh_haitang.glb models/p/yh_haitang.glb 85000 1024   # 其余 200000 1024（不减面）
