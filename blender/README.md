@@ -68,6 +68,24 @@ node blender/scripts/web/pack_glb.mjs /tmp/daguan.glb models/b/daguan.wasm model
 ```
 
 - `build_daguan.py`（室内）仍按旧坐标生成；重跑它之后要再跑一次 `daguan_in_shift.py`（先删 col.json 里的 `daguan_in_shift` 标记）。
+## 栊翠庵外观细部（blender/scripts/sites/longcui_detail.py）
+
+原模型佛殿檐檩直接压在额枋上、檐下一片平板；各屋正脊是两块方条，吻兽、戗脊翘头是小方块垒的“像素”弯钩。改为：
+佛殿屋面抬高 0.66 m，让出一圈五踩单翘单昂斗栱（柱头科、平身科、角科，青绿相间，拱眼壁朱红）；
+各屋正脊重做（当沟、压当条、混砖、盖脊筒瓦）+ 正吻（吞脊龙头、卷尾、剑把、背兽）；佛殿垂脊、戗脊（随屋面、末端起翘）、
+垂兽戗兽、仙人走兽、套兽、风铎、莲座宝瓶宝顶、山花绶带、博缝梅花钉、悬鱼；佛殿、禅堂、耳房檐柱加雀替；
+顺手封住歇山山花与屋面之间原有的一道缝（殿里抬头能看见天）。新件在 `models/b/longcui_xi.wasm`（网页 `{id:'longcui_xi'}`，与 longcui 同位）。
+
+```bash
+python3 blender/scripts/sites/longcui_detail.py        # 改 longcui.blend（抬屋面只做一次）、导出 /tmp/longcui_xi.glb
+node blender/scripts/web/pack_glb.mjs /tmp/longcui_xi.glb models/b/longcui_xi.wasm
+# 外壳 wasm 只能从原始模型跑一次：
+node tools/glb_lift.mjs models/b/longcui.wasm models/b/longcui.wasm "$(python3 blender/scripts/sites/longcui_detail.py --liftspec)"
+node tools/glb_cut.mjs  models/b/longcui.wasm models/b/longcui.wasm "$(python3 blender/scripts/sites/longcui_detail.py --cutspec)"
+```
+
+- 凸碧山庄（build_sites.py）从 longcui.blend 借佛殿；重跑它会借到抬高后的屋面，须连斗栱一起借。
+
 ## 竹（blender/scripts/flora/build_bamboo.py）
 
 潇湘馆一带和园中竹丛用的三株竹（models/t/zhu_1–3.wasm）和叶簇贴图（tex/zhu_spray.png）：先在 Blender 里建两枝真实的竹叶簇、用 Cycles 俯拍成透明贴图，再建竹竿（节环、上细下粗）、互生下垂的枝，枝上挂十字交叉的叶簇片。网页按每竿高度等比缩放，低画质下退回程序生成的竹。
