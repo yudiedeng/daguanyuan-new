@@ -12,6 +12,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')
 
 # 近似底色（仅供 Blender 内预览；网页以 BMR 为准）
 COLORS = {
+    '雕花_yunfu': '#5a2a1c', '雕花_chanzhi': '#5a2a1c', '雕花_songmei': '#5a2a1c', '雕花_huiwen': '#5a2a1c', '雕花_bingmei': '#5a2a1c',
     '紫檀': '#3a1e16', '花梨': '#7a4a2a', '黄花梨': '#9a6a3a', '朱漆': '#7a2a21', '黑漆': '#1d1a18', '描金': '#e0b855',
     '本色木': '#b28f66', '旧木': '#8a7358', '竹竿': '#b9a25f', '湘妃竹': '#a8894e', '棋盘': '#d8b878', '黄竹': '#c4ad63', '藤编': '#a88a55',
     '锦缎': '#9a2a2a', '锦缎黄': '#c8a040', '锦帐': '#c98a8a', '碧纱': '#9fbfa6', '青纱': '#7f98a0', '素绸': '#e8e2d2',
@@ -701,7 +702,7 @@ class Kit:
         else:
             self.col(-w / 2, y - 0.1, 0, w / 2, y + 0.1, h)
 
-    def luodizhao(self, m, w, h, shape='round', t=0.08, gauze=None, carve=True):
+    def luodizhao(self, m, w, h, shape='round', t=0.08, gauze=None, carve=True, fill=None):
         """落地罩 / 圆光罩：XZ 面上的透雕框，中开圆、八方或葵花门。局部 x ∈ [-w/2,w/2]，z ∈ [0,h]，面在 y=0。"""
         n = 40
         cx, cz = 0.0, h * 0.5
@@ -719,13 +720,25 @@ class Kit:
                 a = math.pi * i / n
                 hole.append((hw * math.cos(a), h * 0.62 + (h * 0.24) * math.sin(a)))
             hole.append((-hw, h * 0.62))
-        self.fret_panel(m, w, h, hole, t, gold=carve)
+        self.fret_panel(m, w, h, hole, t, gold=carve, fill=fill)
         # 碰撞：两侧实体
         xs = sorted(p[0] for p in hole)
         self.col(-w / 2, -t, 0, xs[0], t, h)
         self.col(xs[-1], -t, 0, w / 2, t, h)
 
-    def fret_panel(self, m, w, h, hole, t, step=0.13, frame=0.07, ring=0.08, gold=True):
+    def carved_panel(self, m, fill, w, h, frame=0.06, t=0.06, gold=True):
+        """透雕板：木框 + 满铺透雕心子（fill 为 雕花_* 材质）。局部 x∈[-w/2,w/2]，z∈[0,h]，面在 y=0。"""
+        self.box(m, -w / 2, -t / 2, 0, w / 2, t / 2, frame)
+        self.box(m, -w / 2, -t / 2, h - frame, w / 2, t / 2, h)
+        for sx in (-1, 1):
+            self.box(m, sx * w / 2 - (frame if sx > 0 else 0), -t / 2, 0, sx * w / 2 + (0 if sx > 0 else frame), t / 2, h)
+        if gold:
+            for y in (-t / 2 - 0.003, t / 2 + 0.003):
+                self.box('描金', -w / 2 + frame, y - 0.002, h - frame - 0.012, w / 2 - frame, y + 0.002, h - frame)
+                self.box('描金', -w / 2 + frame, y - 0.002, frame, w / 2 - frame, y + 0.002, frame + 0.012)
+        self.box(fill, -w / 2 + frame, -0.006, frame, w / 2 - frame, 0.006, h - frame)
+
+    def fret_panel(self, m, w, h, hole, t, step=0.13, frame=0.07, ring=0.08, gold=True, fill=None):
         """雕空玲珑的罩面：外框 + 门洞周圈实心边 + 其余空透的方格/拐子棂。门洞须为凸形。"""
         n = len(hole)
         cx = sum(p[0] for p in hole) / n
@@ -774,6 +787,15 @@ class Kit:
             if len(zs) == 1:  # 落地门洞：竖线只在洞顶以上
                 return [(zs[0], hi)]
             return [(lo, hi)]
+        if fill:                       # 透雕板（贴 tex/diao_*.png）：逐行薄板铺满门洞以外的部分，代替方格棂
+            z, dz = (0.0 if on_floor else frame), 0.04
+            while z < h - frame - 1e-4:
+                z1 = min(z + dz, h - frame)
+                for a, b in segs_h((z + z1) / 2):
+                    if b - a > 0.01:
+                        self.box(fill, a, -0.006, z, b, 0.006, z1)
+                z = z1
+            return
         bw = 0.022
         z = step
         k = 0
@@ -880,6 +902,19 @@ class Kit:
             bmesh.ops.remove_doubles(b, verts=b.verts[:], dist=1e-5)
             b.to_mesh(me)
             b.free()
+            if m.startswith('雕花'):          # 透雕贴图：按面朝向平面投影，0.5 m 一格
+                uvl = me.uv_layers.new(name='UVMap')
+                for poly in me.polygons:
+                    nx, ny, nz = (abs(c) for c in poly.normal)
+                    for li in poly.loop_indices:
+                        co = me.vertices[me.loops[li].vertex_index].co
+                        if ny >= nx and ny >= nz:
+                            u, v = co.x, co.z
+                        elif nx >= nz:
+                            u, v = co.y, co.z
+                        else:
+                            u, v = co.x, co.y
+                        uvl.data[li].uv = (u / 0.5, v / 0.5)
             mat = bpy.data.materials.get('M_' + m) or bpy.data.materials.new('M_' + m)
             mat.use_nodes = True
             bsdf = mat.node_tree.nodes.get('Principled BSDF')
