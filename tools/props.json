@@ -192,5 +192,40 @@
  "hw_ta": {
   "prompt": "plain antique Chinese wooden daybed couch (luohan bed) of dark rosewood with low plain back and side rails and a plain off-white cushion, austere",
   "faces": 8000
+ },
+ "shizhuo": {
+  "prompt": "round Chinese scholar garden stone table with four drum-shaped stone stools around it, weathered grey stone with a little moss, an open thread-bound book, a small celadon teapot and two tea cups on the table top, isolated",
+  "faces": 10000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "zhuyi": {
+  "prompt": "antique Chinese reclining lounge chair made of mottled spotted bamboo, long sloping back, an open thread-bound book and a round embroidered silk fan lying on the seat, isolated furniture",
+  "faces": 9000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "huachu": {
+  "prompt": "Chinese gardening flower hoe with a long slender bamboo handle, an embroidered silk flower pouch hanging from the handle, standing leaning, isolated",
+  "faces": 5000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "huazhong": {
+  "prompt": "small Chinese flower grave: a low rounded mound of dark earth covered with fallen pink and white blossom petals, a small rough upright stone tablet in front, isolated",
+  "faces": 6000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "penlan": {
+  "prompt": "Chinese blue and white porcelain flower pot with an orchid plant with long arching leaves and a few pale flowers, isolated",
+  "faces": 5000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "shadeng": {
+  "prompt": "Chinese hanging gauze lantern, hexagonal pale green silk lantern with a dark wooden frame, a hook on top and a red tassel below, isolated",
+  "faces": 5000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
+ },
+ "zhusun": {
+  "prompt": "cluster of three young bamboo shoots emerging from the ground, brown hairy sheaths, pointed tips, isolated",
+  "faces": 4000,
+  "neg": "ground plane, base platform, room, wall, text, people, low quality"
  }
 }
