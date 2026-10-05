@@ -26,6 +26,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BLEND_DIR = os.path.normpath(os.path.join(HERE, '..', '..'))
 
 PAL = {
+    '瓦灰': (0.3, 0.31, 0.32), '灰塑': (0.82, 0.81, 0.78),
+    '竹': (0.42, 0.36, 0.2), '竹青': (0.3, 0.34, 0.16), '竹节': (0.26, 0.21, 0.12), '麻绳': (0.45, 0.36, 0.24),
     '芭蕉叶': (0.3, 0.5, 0.2), '芭蕉老叶': (0.4, 0.45, 0.2), '芭蕉枯叶': (0.4, 0.3, 0.15), '芭蕉茎': (0.4, 0.5, 0.25), '叶柄': (0.42, 0.52, 0.22),
     '树皮': (0.3, 0.22, 0.17),
     '叶深': (0.13, 0.26, 0.08), '叶': (0.2, 0.36, 0.11), '叶浅': (0.32, 0.47, 0.16), '茎': (0.2, 0.25, 0.1),
@@ -92,7 +94,7 @@ class Geo:
         U.extend(uvs or [(0.0, 0.0)] * len(verts))
         F.extend([tuple(i + o for i in f) for f in faces])
 
-    def build(self, name):
+    def build(self, name, fix_normals=False):
         objs = []
         for mname, (V, F, U) in self.d.items():
             me = bpy.data.meshes.new(f'{name}_{mname}')
@@ -101,9 +103,13 @@ class Geo:
             for lp in me.loops:
                 uvl.data[lp.index].uv = U[lp.vertex_index]
             me.validate()
+            if fix_normals:                   # 实体（漏窗条子）：法线一律朝外
+                bm = bmesh.new(); bm.from_mesh(me)
+                bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+                bm.to_mesh(me); bm.free()
             me.materials.append(mat(mname))
             for p in me.polygons:
-                p.use_smooth = True
+                p.use_smooth = not fix_normals
             o = bpy.data.objects.new(f'{name}_{mname}', me)
             bpy.context.scene.collection.objects.link(o)
             objs.append(o)
@@ -172,16 +178,17 @@ def stem(G, m, a, b, r, n=4):
 CELL = {'月季红': 'petal_red', '月季粉': 'petal_pink', '月季白': 'petal_white', '月季黄': 'petal_yellow', '萱草': 'lily'}
 
 
-def rose(G, rnd, c, n, size, col):
+def rose(G, rnd, c, n, size, col, lite=False):
     """一朵重瓣月季：四圈花瓣，内圈紧抱成杯、外圈外翻。"""
     R = frame(n)
     col = CELL[col]
-    for ring, (k, tilt, Ls) in enumerate(((3, 0.12, 0.5), (4, 0.45, 0.72), (5, 0.85, 0.9), (5, 1.25, 1.0))):
+    rings = ((3, 0.3, 0.6), (5, 1.0, 1.0)) if lite else ((3, 0.12, 0.5), (4, 0.45, 0.72), (5, 0.85, 0.9), (5, 1.25, 1.0))
+    for ring, (k, tilt, Ls) in enumerate(rings):
         for i in range(k):
             tw = 2 * math.pi * i / k + ring * 0.7 + rnd.uniform(-0.2, 0.2)
             petal(G, col, c, R, size * Ls, size * Ls * 1.05, 0.55, tilt + rnd.uniform(-0.12, 0.12), tw)
     # 花萼下几片小叶
-    for i in range(3):
+    for i in range(0 if lite else 3):
         a = rnd.uniform(0, 6.28)
         leaf(G, '叶深', c - R @ Vector((0, 0, size * 0.1)), R @ Vector((math.cos(a), math.sin(a), -0.4)), size * 0.9, size * 0.5, rnd)
 
@@ -741,6 +748,250 @@ def build_pot():
     save_export('yh_pot')
 
 
-WHICH = os.environ.get('YH_ONLY', 'rosebed,huajing,rosebush,haitang,shrub,bajiao,bitao,bigbed,pot').split(',')
+def bamboo(G, rnd, a, b, r, node=0.32, m=None, seg=8):
+    """一根竹竿：分节，节处鼓一圈、颜色深；竿色在黄熟与青之间随机。"""
+    a, b = Vector(a), Vector(b)
+    L = (b - a).length
+    R = frame(b - a)
+    m = m or rnd.choice(('竹', '竹', '竹青'))
+    n = max(1, int(L / node))
+    for i in range(n):
+        p0, p1 = a + (b - a) * (i / n), a + (b - a) * ((i + 1) / n)
+        vs = []
+        for p, rr in ((p0, r), (p1, r)):
+            for k in range(seg):
+                ang = 2 * math.pi * k / seg
+                vs.append(p + R @ Vector((math.cos(ang) * rr, math.sin(ang) * rr, 0)))
+        G.add(m, vs, [(k, (k + 1) % seg, seg + (k + 1) % seg, seg + k) for k in range(seg)])
+        if i > 0:                                   # 竹节
+            vs = []
+            for dz, rr in ((-0.012, r * 1.0), (0.0, r * 1.14), (0.012, r * 1.0)):
+                p = p0 + (b - a).normalized() * dz
+                for k in range(seg):
+                    ang = 2 * math.pi * k / seg
+                    vs.append(p + R @ Vector((math.cos(ang) * rr, math.sin(ang) * rr, 0)))
+            G.add('竹节', vs, [(j * seg + k, j * seg + (k + 1) % seg, (j + 1) * seg + (k + 1) % seg, (j + 1) * seg + k) for j in range(2) for k in range(seg)])
+
+
+def build_huazhang():
+    """竹篱花障编就的月洞门（第十七回“穿过一层竹篱花障编就的月洞门”）：
+    粗竹立柱、上下横杆，竹片斜编成菱格，中开月洞（两圈弯竹箍边），蔷薇、木香的藤沿篱爬满、开花。
+    篱沿 Blender Y（网页 z）展开，宽 5 m、高 2.8 m，月洞直径 2.1 m；正反两面一样。"""
+    new_scene()
+    rnd = random.Random(1709)
+    G = Geo()
+    HW, H = 2.5, 2.8
+    CZ, RR = 1.22, 1.05                       # 月洞圆心高、半径
+    inside = lambda y, z: (y * y + (z - CZ) ** 2) < (RR + 0.02) ** 2
+    # 立柱、横杆
+    for y in (-HW, -1.32, 1.32, HW):
+        bamboo(G, rnd, (0, y, -0.05), (0, y, H + 0.12), 0.05, 0.34, '竹')
+    for z in (0.12, 1.15, H - 0.05):
+        for x in (-0.03, 0.03):
+            if z < 2.4:                        # 下、中横杆在月洞处断开
+                for (ya, yb) in ((-HW - 0.08, -math.sqrt(max(0, (RR + 0.09) ** 2 - (z - CZ) ** 2))), (math.sqrt(max(0, (RR + 0.09) ** 2 - (z - CZ) ** 2)), HW + 0.08)):
+                    bamboo(G, rnd, (x, ya, z), (x, yb, z), 0.026, 0.4)
+            else:
+                bamboo(G, rnd, (x, -HW - 0.08, z), (x, HW + 0.08, z), 0.026, 0.4)
+    # 斜编菱格：两组斜竹片，被月洞剪开
+    step = 0.22
+    for sgn in (1, -1):
+        c = -HW - H
+        while c < HW + H:
+            pts = []
+            for t in [i / 120 for i in range(121)]:
+                z = 0.12 + t * (H - 0.17)
+                y = c + sgn * z
+                pts.append((y, z))
+            seg = []
+            for (y, z) in pts:
+                ok = -HW < y < HW and not inside(y, z)
+                if ok:
+                    seg.append((y, z))
+                elif seg:
+                    if len(seg) > 1:
+                        x = 0.012 * sgn
+                        bamboo(G, rnd, (x, seg[0][0], seg[0][1]), (x, seg[-1][0], seg[-1][1]), 0.009, 9, rnd.choice(('竹', '竹青')), 5)
+                    seg = []
+            if len(seg) > 1:
+                x = 0.012 * sgn
+                bamboo(G, rnd, (x, seg[0][0], seg[0][1]), (x, seg[-1][0], seg[-1][1]), 0.009, 9, rnd.choice(('竹', '竹青')), 5)
+            c += step
+    # 月洞：两圈弯竹
+    for rr, x in ((RR + 0.03, -0.02), (RR + 0.09, 0.02)):
+        n = 40
+        for k in range(n):
+            a0, a1 = 2 * math.pi * k / n, 2 * math.pi * (k + 1) / n
+            p0 = (x, rr * math.cos(a0), CZ + rr * math.sin(a0))
+            p1 = (x, rr * math.cos(a1), CZ + rr * math.sin(a1))
+            if p0[2] < 0.12 and p1[2] < 0.12:
+                continue
+            bamboo(G, rnd, p0, p1, 0.03, 9, '竹', 8)
+    # 绑绳：月洞圈与菱格交接处、立柱与横杆交接处
+    for (y, z) in [(y, z) for y in (-HW, -1.32, 1.32, HW) for z in (0.12, 1.15, H - 0.05)]:
+        for k in range(3):
+            stem(G, '麻绳', (-0.06, y - 0.05, z - 0.02 + 0.015 * k), (0.06, y + 0.05, z - 0.02 + 0.015 * k), 0.006, 4)
+    # 藤：从两脚起，沿篱面蜿蜒上爬、搭到月洞顶和上杆；藤上叶丛、花
+    def vine(y0, side, colors, flower='rose'):
+        p = Vector((side * 0.06, y0, 0.0))
+        d = Vector((0, rnd.uniform(-0.3, 0.3), 1)).normalized()
+        path = [p.copy()]
+        for i in range(70):
+            # 往上爬，碰到月洞就绕圈沿洞爬，到顶后沿上杆横走
+            if p.z > H - 0.15:
+                d = Vector((0, 1 if p.y < 0 else -1, 0)) * 0.8 + Vector((0, rnd.uniform(-.3, .3), rnd.uniform(-.15, .05)))
+            else:
+                d = (d + Vector((0, rnd.uniform(-.45, .45), rnd.uniform(0.0, 0.35)))).normalized()
+            q = p + d.normalized() * 0.07
+            if inside(q.y, q.z):
+                rel = Vector((0, q.y, q.z - CZ)).normalized()
+                q = Vector((q.x, rel.y * (RR + 0.06), CZ + rel.z * (RR + 0.06)))
+            q.y = max(-HW + 0.05, min(HW - 0.05, q.y))
+            q.x = side * (0.05 + 0.03 * rnd.random())
+            stem(G, '茎', p, q, 0.007, 4)
+            path.append(q.copy())
+            p = q
+            if p.z > H + 0.1:
+                break
+        for i, q in enumerate(path[2:]):
+            for k in range(rnd.randint(5, 7)):            # 叶丛
+                dd = Vector((side * rnd.uniform(0.3, 1.0), rnd.uniform(-1, 1), rnd.uniform(-0.6, 0.8))).normalized()
+                leaf(G, 'leaf', q + Vector((0, rnd.uniform(-.09, .09), rnd.uniform(-.07, .07))), dd, rnd.uniform(0.05, 0.08), rnd.uniform(0.035, 0.05), rnd)
+            if rnd.random() < 0.6:                        # 花
+                for k in range(rnd.randint(2, 4)):
+                    fp = q + Vector((side * rnd.uniform(0.02, 0.07), rnd.uniform(-.06, .06), rnd.uniform(-.05, .06)))
+                    nn = (Vector((side, rnd.uniform(-.5, .5), rnd.uniform(-.2, .6)))).normalized()
+                    if flower == 'rose':
+                        rose(G, rnd, fp, nn, rnd.uniform(0.022, 0.032), rnd.choice(colors), lite=True)
+                    else:
+                        small_flower(G, rnd, fp, nn, rnd.uniform(0.018, 0.024), '小白花')
+    for side in (-1, 1):
+        for y0 in [-2.4 + 0.3 * i for i in range(17) if abs(-2.4 + 0.3 * i) > 0.75]:
+            vine(y0 + rnd.uniform(-.1, .1), side, ('月季粉', '月季粉', '月季白', '月季红'), 'rose' if rnd.random() < 0.65 else 'muxiang')
+    # 月洞顶上再垂几条带花的藤
+    for k in range(16):
+        a = math.pi * (0.1 + 0.8 * k / 15)
+        q0 = Vector((rnd.uniform(-.06, .06), (RR + 0.06) * math.cos(a), CZ + (RR + 0.06) * math.sin(a)))
+        q = q0
+        for i in range(rnd.randint(3, 6)):
+            q1 = q + Vector((0, rnd.uniform(-.03, .03), -0.07))
+            if inside(q1.y, q1.z) and (q1.y ** 2 + (q1.z - CZ) ** 2) < (RR * 0.8) ** 2:
+                break
+            stem(G, '茎', q, q1, 0.005, 4)
+            for j in range(2):
+                leaf(G, 'leaf', q1, Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), -0.5)), 0.05, 0.035, rnd)
+            q = q1
+        rose(G, rnd, q, Vector((rnd.choice((-1, 1)), 0, -0.4)), 0.026, rnd.choice(('月季粉', '月季白')), lite=True)
+    G.build('yh_huazhang')
+    save_export('yh_huazhang')
+
+
+def build_louchuang():
+    """粉墙漏窗的窗心（第十七回“粉垣环护”）：青瓦片立砌、外抹灰，四种规整纹样——海棠、冰裂、套方、鱼鳞。
+    各存 yh_lc_<纹>：1×1 m、厚 6 cm，XZ 平面（正面朝 -Y），底边在 z=0；网页里按窗洞尺寸 fit 拉伸。"""
+    import itertools
+    W, T, w = 1.0, 0.06, 0.032
+    def strip(G, a, b, m='瓦灰', ww=w):
+        (x0, z0), (x1, z1) = a, b
+        d = Vector((x1 - x0, 0, z1 - z0))
+        L = d.length
+        if L < 1e-4:
+            return
+        d /= L
+        nrm = Vector((-d.z, 0, d.x)) * (ww / 2)
+        P = [Vector((x0, 0, z0)) - d * ww * 0.3, Vector((x1, 0, z1)) + d * ww * 0.3]
+        vs = []
+        for y in (-T / 2, T / 2):
+            for q in (P[0] - nrm, P[1] - nrm, P[1] + nrm, P[0] + nrm):
+                vs.append(Vector((q.x, y, q.z)))
+        G.add(m, vs, [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)])
+    def poly(G, pts, closed=True):
+        for i in range(len(pts) - (0 if closed else 1)):
+            strip(G, pts[i], pts[(i + 1) % len(pts)])
+    def clipseg(a, b):
+        """把线段剪到窗框内 [-0.47, 0.47]×[0.03, 0.97]（Liang–Barsky）。"""
+        x0, z0 = a; x1, z1 = b; dx, dz = x1 - x0, z1 - z0
+        t0, t1 = 0.0, 1.0
+        for p_, q_ in ((-dx, x0 + 0.47), (dx, 0.47 - x0), (-dz, z0 - 0.03), (dz, 0.97 - z0)):
+            if abs(p_) < 1e-9:
+                if q_ < 0:
+                    return None
+                continue
+            r_ = q_ / p_
+            if p_ < 0:
+                t0 = max(t0, r_)
+            else:
+                t1 = min(t1, r_)
+        if t0 >= t1:
+            return None
+        return (x0 + dx * t0, z0 + dz * t0), (x0 + dx * t1, z0 + dz * t1)
+    def frame(G):
+        poly(G, [(-0.485, 0.015), (0.485, 0.015), (0.485, 0.985), (-0.485, 0.985)])
+        for (x0, z0, x1, z1) in ((-0.5, 0, 0.5, 0.03), (-0.5, 0.97, 0.5, 1.0), (-0.5, 0, -0.47, 1.0), (0.47, 0, 0.5, 1.0)):
+            vs = [Vector((x, y, z)) for y in (-T / 2 - 0.004, T / 2 + 0.004) for (x, z) in ((x0, z0), (x1, z0), (x1, z1), (x0, z1))]
+            G.add('灰塑', vs, [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)])
+    def clipped_poly(G, pts, closed=True):
+        for i in range(len(pts) - (0 if closed else 1)):
+            c = clipseg(pts[i], pts[(i + 1) % len(pts)])
+            if c:
+                strip(G, *c)
+    # 1 海棠纹：每格一朵四瓣海棠（四段圆弧），格与格相接
+    new_scene(); G = Geo(); frame(G)
+    n, cell = 2, 0.94 / 2
+    for i, j in itertools.product(range(n + 1), range(n + 1)):
+        cx, cz = -0.47 + i * cell, 0.03 + j * cell
+        for k in range(4):
+            a0 = k * math.pi / 2
+            ox, oz = cx + math.cos(a0 + math.pi / 4) * cell * 0.25, cz + math.sin(a0 + math.pi / 4) * cell * 0.25
+            arc = [(ox + cell * 0.22 * math.cos(a0 - math.pi / 4 + t * math.pi * 1.5 / 10 - 0.0), oz + cell * 0.22 * math.sin(a0 - math.pi / 4 + t * math.pi * 1.5 / 10)) for t in range(11)]
+            clipped_poly(G, arc, False)
+        for (dx, dz) in ((1, 0), (0, 1)):
+            c = clipseg((cx + dx * cell * 0.35, cz + dz * cell * 0.35), (cx + dx * cell * 0.65, cz + dz * cell * 0.65))
+            if c:
+                strip(G, *c)
+    G.build('yh_lc_haitang', True); save_export('yh_lc_haitang')
+    # 2 冰裂纹：大小不一的折线碎冰格
+    new_scene(); G = Geo(); frame(G)
+    rnd = random.Random(1711)
+    pts = [(rnd.uniform(-0.42, 0.42), rnd.uniform(0.08, 0.92)) for _ in range(18)]
+    border = [(-0.47, 0.03), (0.47, 0.03), (0.47, 0.97), (-0.47, 0.97), (0, 0.03), (0, 0.97), (-0.47, 0.5), (0.47, 0.5)]
+    done = set()
+    for i, p_ in enumerate(pts):
+        q = sorted([o for o in pts if o != p_] + border, key=lambda o: (o[0] - p_[0]) ** 2 + (o[1] - p_[1]) ** 2)
+        for o in q[:3]:
+            key = tuple(sorted((p_, o)))
+            if key in done:
+                continue
+            done.add(key)
+            c = clipseg(p_, o)
+            if c:
+                strip(G, *c)
+    G.build('yh_lc_binglie', True); save_export('yh_lc_binglie')
+    # 3 套方：大方套小方、四角连斜，中心一方
+    new_scene(); G = Geo(); frame(G)
+    for r in (0.36, 0.22):
+        poly(G, [(-r, 0.5 - r), (r, 0.5 - r), (r, 0.5 + r), (-r, 0.5 + r)])
+    poly(G, [(0, 0.5 - 0.3), (0.3, 0.5), (0, 0.5 + 0.3), (-0.3, 0.5)])
+    for sx, sz in itertools.product((-1, 1), (-1, 1)):
+        strip(G, (sx * 0.36, 0.5 + sz * 0.36), (sx * 0.47, 0.5 + sz * 0.47))
+        strip(G, (sx * 0.22, 0.5 + sz * 0.22), (sx * 0.36, 0.5 + sz * 0.36))
+    for k in (-1, 1):
+        strip(G, (k * 0.36, 0.5), (k * 0.47, 0.5)); strip(G, (0, 0.5 + k * 0.36), (0, 0.5 + k * 0.47))
+    G.build('yh_lc_taofang', True); save_export('yh_lc_taofang')
+    # 4 鱼鳞：一排排半圆错位相叠
+    new_scene(); G = Geo(); frame(G)
+    rr = 0.105
+    for row in range(6):
+        z = 0.03 + row * rr * 1.55
+        off = (row % 2) * rr
+        x = -0.47 - rr + off
+        while x < 0.47 + rr:
+            arc = [(x + rr * math.cos(math.pi * t / 10), z + rr * math.sin(math.pi * t / 10)) for t in range(11)]
+            clipped_poly(G, arc, False)
+            x += 2 * rr
+    G.build('yh_lc_yulin', True); save_export('yh_lc_yulin')
+
+
+WHICH = os.environ.get('YH_ONLY', 'rosebed,huajing,rosebush,haitang,shrub,bajiao,bitao,bigbed,pot,huazhang,louchuang').split(',')
 for nm in WHICH:
     globals()['build_' + nm]()
