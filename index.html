@@ -606,7 +606,7 @@ const BMR={ // name -> [color, roughness, tri, extra]
  '青布':['#33456a',.95,null,{side:2}],'白布':['#e9e4d4',.95,null,{side:2}],'墨':['#17161a',.7],'刻字':['#2a2a2a',.7],'经文':['#3a3630',.7],'麻绳':['#a08a5a',.95],
 };
 const BMW={'YZ_虎皮石':'mg','YZ_石子甬路':'g','SAMPLE_旧绿漆木':'f','XS_灰瓦色差_0':'m','XS_灰瓦色差_1':'m','XS_灰瓦色差_2':'m','XS_灰瓦色差_3':'m','XS_灰瓦色差_4':'m','XS_灰瓦色差_5':'m','XS_灰瓦色差_6':'m','MAT_廊面青砖_养护旧化_paving':'mg','MAT_台帮青砖块_养护旧化_wall':'g','MAT_青灰石_微风化_养护旧化_wall':'g','XS_旧白灰墙':'g','SAMPLE2_深绿漆':'f','MAT_暗褐旧木_顺纹':'f','XS_门窗深褐木':'f','XS_顶棚暖木':'f','灰瓦':'m','亭顶瓦':'m','花堵瓦':'m','黄琉璃瓦':'m','黄琉璃瓦.001_底瓦':'m','绿琉璃瓦':'m','绿琉璃瓦.001_底瓦':'m','茅草':'m','茅草旧':'m','茅草新':'m','方砖地':'mg','青砖':'g','水磨砖':'g','白灰墙':'g','赭墙':'g','黄泥墙':'g','虎皮石':'mg','青石':'g','汉白玉':'g','朱漆':'f','绿漆':'f','旧木':'f','本色木':'f','栗色柱':'f','栗壳漆':'f','栗壳漆_柱':'f','彩画青':'f','枋青':'f','daguan_彩画青':'f','daguan_彩画绿':'f','枋绿':'f','包袱':'f','油壁':'fg','竹篱':'f','竹竿':'f','山石':'m','太湖石':'m','湖石':'m'};
-function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];
+function bmat(name,src,ao){const k=name.replace(/^M_/,''),ck=ao?k+'|ao':k;if(BM[ck])return BM[ck];  // ao：模型带 Blender 烘的做旧顶点颜色（R 遮蔽、G 墙根溅泥、B 青苔）
  if(/^彩画_/.test(k)){/* 梁枋彩画（怡红院包袱）：tex/caihua_*.jpg 按 UV 贴 */const t=new THREE.TextureLoader().load('tex/caihua_'+k.slice(3)+'.jpg');t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;
   const m=patch(std('#ffffff',.6,{map:t}),{key:'bm_'+k});m.name=k;BM[k]=m;return m;}
  if(/^雕花_/.test(k)){/* 透雕板（怡红院室内）：tex/diao_*.png 平铺，透明处镂空 */const t=new THREE.TextureLoader().load('tex/diao_'+k.slice(3)+'.png');t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=ANISO;
@@ -615,14 +615,20 @@ function bmat(name,src){const k=name.replace(/^M_/,'');if(BM[k])return BM[k];
  if(!r){const c=src&&src.color?'#'+src.color.getHexString():'#b0aaa0';r=[c,src?src.roughness:0.8];console.warn('bmat: no recipe for',name);}
  const [col,rough,tri,ex]=r,e=ex||{};const m=std(col,rough,{metalness:e.metal||0,side:THREE.DoubleSide,transparent:!!e.alpha,opacity:e.alpha||1});
  if(e.em){m.emissive=new THREE.Color('#ffb060');m.emissiveIntensity=0;BM_EM.push(m);}
- const o={key:'bm_'+k};if(tri)o.tri=tri;
+ const o={key:'bm_'+k+(ao?'_ao':'')};if(tri)o.tri=tri;
 if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi='0.55';}
  const W=BMW[k]||'';let wg='';
  if(W.includes('m'))wg+='{vec3 wn_=normalize(cross(dFdx(vWPos),dFdy(vWPos)));float up=smoothstep(0.3,0.8,abs(wn_.y));float mn=texture2D(gNoise,vWPos.xz*0.31+vWPos.y*0.13).g*0.6+texture2D(gNoise,vWPos.xz*0.05).b*0.4;float mk=up*smoothstep(0.5,0.72,mn);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.15,0.18,0.085)*(0.7+0.6*mn),mk*0.75);float dk=texture2D(gNoise,vWPos.xz*0.9+vWPos.y*0.4).r;diffuseColor.rgb*=0.86+0.2*dk;}';
  if(W.includes('f'))wg+='{float fn=texture2D(gNoise,vWPos.xz*0.09+vWPos.y*0.21).r;float fl=dot(diffuseColor.rgb,vec3(0.3,0.59,0.11));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(fl)*0.88,smoothstep(0.42,0.85,fn)*0.42);float dk=texture2D(gNoise,vWPos.xz*0.7+vWPos.y*1.3).a;diffuseColor.rgb*=0.88+0.18*dk;}';
  if(W.includes('g'))wg+='{float gn=texture2D(gNoise,vWPos.xz*0.17+vWPos.y*0.6).a;diffuseColor.rgb*=1.0-0.24*smoothstep(0.5,0.9,gn);}';
+ if(ao){o.vHead='attribute vec4 color;varying vec3 vWx;\n';o.vWorld='vWx=color.rgb;';o.fHead=(o.fHead||'')+'varying vec3 vWx;\n';
+  wg+='{float ao_=vWx.r,sp_=vWx.g,ms_=vWx.b;diffuseColor.rgb*=mix(0.3,1.0,smoothstep(0.05,0.95,ao_));'+      // 烘的环境光遮蔽
+   'vec3 wn_=normalize(cross(dFdx(vWPos),dFdy(vWPos)));float vert_=1.0-smoothstep(0.35,0.75,abs(wn_.y));'+
+   'float rs_=texture2D(gNoise,vec2((vWPos.x+vWPos.z)*1.9,vWPos.y*0.11)).r;diffuseColor.rgb*=1.0-vert_*smoothstep(0.58,0.8,rs_)*smoothstep(0.97,0.6,ao_)*0.35;'+  // 檐下竖向雨痕
+   'float n_=texture2D(gNoise,vWPos.xz*2.1+vWPos.y*1.7).g;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.2,0.17,0.12)*(0.7+0.5*n_),clamp(sp_*(0.5+0.6*n_),0.0,0.75));'+  // 墙根溅泥
+   'diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.13,0.17,0.07)*(0.7+0.6*n_),clamp(ms_*smoothstep(0.35,0.7,n_)*1.3,0.0,0.8));}';}  // 青苔
  if(wg)o.fAlbedo=(o.fAlbedo||'')+wg;
- patch(m,o);m.name=k;if(e.hide)m.visible=false;BM[k]=m;return m;}
+ patch(m,o);m.name=k;if(e.hide)m.visible=false;BM[ck]=m;return m;}
 /* 单座建筑的材质改色（克隆共用材质，不影响别处）。怡红院室内：“五彩销金嵌玉”——槅断木色偏紫红、描金更亮 */
 const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',metal:0.65,rough:0.3}},
  // 怡红院按 blender/yihong.blend 的色调：深朱柱、栗色槅扇、墨绿藏青彩画、旧金、暖色窗纸。克隆材质要带上 patch 的着色（木纹、旧化）
@@ -634,7 +640,8 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
 // 菜畦垄沟：blender/scripts/sites/daoxiang_fields.py
   {id:'daguan',p:[0,Z.daguan.y,Z.daguan.z],ry:0},{id:'longcui',p:[Z.longcui.x,Z.longcui.y,Z.longcui.z],ry:-Math.PI/2},{id:'longcui_xi',p:[Z.longcui.x,Z.longcui.y,Z.longcui.z],ry:-Math.PI/2},{id:'ouxiang',p:[40+MV.ouxiang[0],0,2+MV.ouxiang[1]],ry:Math.PI/2},
   {id:'qinfang',p:[QINFANG?QINFANG.x:0,0,QINFANG?QINFANG.z:50],ry:QINFANG?QINFANG.ry:0},
-  {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json'},{id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,hideRe:/^泉水_入墙水口石/,grow:[{re:/^梨树_/,at:[-1.95,0.6,-8.6],k:2.6},{re:/^芭蕉_/,at:[1.4,0,-6.9],k:1.5}]},  // 后院“大株梨花兼着芭蕉”：以树根为心放大，梨树约 9 m 高过正房屋脊，芭蕉约 4.5 m
+  {id:'xiaoxiang',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,cards:'xx_win.json',ao:1},  // 正房：xiaoxiang.blend 完整导出 + 烘的做旧（blender/scripts/export/build_xx_house.py）
+ {id:'xiaoxiang_ct',p:[-82+MV.xiaoxiang[0],Z.xiaoxiang.y+0.1,27+MV.xiaoxiang[1]],ry:0,hideRe:/^泉水_入墙水口石/,grow:[{re:/^梨树_/,at:[-1.95,0.6,-8.6],k:2.6},{re:/^芭蕉_/,at:[1.4,0,-6.9],k:1.5}]},  // 后院“大株梨花兼着芭蕉”：以树根为心放大，梨树约 9 m 高过正房屋脊，芭蕉约 4.5 m
 
   {id:'cuizhang',p:[0,height(0,96)-0.05,96],ry:0},
   {id:'huaxu',p:[HX.c[0],0,HX.c[1]],ry:0},   // 蓼汀花溆的港洞（原点在洞心水面）
@@ -650,7 +657,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   if(d.keep){const rm=[];root.traverse(m=>{if(m.isMesh&&!d.keep.test(m.name))rm.push(m);});for(const m of rm)m.parent.remove(m);let minY=1e9,bb=null;root.updateMatrixWorld(true);root.traverse(m=>{if(m.isMesh&&/亭柱/.test(m.name)){bb=new THREE.Box3().setFromObject(m);minY=Math.min(minY,bb.min.y);}});if(minY<1e8)d.p[1]-=minY;if(bb){const cx=(bb.min.x+bb.max.x)/2,cz=(bb.min.z+bb.max.z)/2;for(const sx of[-1,1])for(const sz of[-1,1])colAdd({x:d.p[0]+cx+sx*(bb.max.x-cx-0.1),z:d.p[2]+cz+sz*(bb.max.z-cz-0.1),c:1,s:0,hx:0.16,hz:0.16,top:d.p[1]+3.2,bot:d.p[1]-1,walk:false});}}
   if(d.hideRe)root.traverse(m=>{if(m.isMesh&&d.hideRe.test(m.name))m.visible=false;});
   for(const {re,at,k} of d.grow||[]){const c=new V3(...at);root.traverse(m=>{if(m.isMesh&&re.test(m.name)){m.position.sub(c).multiplyScalar(k).add(c);m.scale.multiplyScalar(k);}});}
-  root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material);const k=nm.replace(/^M_/,'');if(BM[k].visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();c.onBeforeCompile=m.material.onBeforeCompile;c.customProgramCacheKey=m.material.customProgramCacheKey;if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
+  root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material,!!(d.ao&&m.geometry.attributes.color));const k=nm.replace(/^M_/,'');if(m.material.visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();c.onBeforeCompile=m.material.onBeforeCompile;c.customProgramCacheKey=m.material.customProgramCacheKey;if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面|雕花)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
   root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);addProps(L,d.id,root);
