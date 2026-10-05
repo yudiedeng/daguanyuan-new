@@ -252,5 +252,40 @@
   "prompt": "large antique Chinese blue and white porcelain fish jar (yugang) with dragon and lotus scroll decoration, filled with water and green lotus leaves and two pink lotus flowers, on a small carved rosewood stand",
   "faces": 12000,
   "neg": "ground plane, text, low quality"
+ },
+ "muji": {
+  "prompt": "a single brown farm hen standing on the ground, realistic domestic chicken, detailed feathers, small red comb",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "gongji": {
+  "prompt": "a single rooster standing proudly, realistic domestic chicken, big red comb and wattles, orange neck feathers, dark green arched tail feathers",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "e": {
+  "prompt": "a single white Chinese domestic goose standing, long neck, orange bill with an orange knob at its base, orange feet, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 5000
+ },
+ "ya": {
+  "prompt": "a single white domestic farm duck standing, yellow-orange bill and feet, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized, toy",
+  "faces": 4000
+ },
+ "jiutan": {
+  "prompt": "three old brown glazed Chinese earthenware wine jars of different sizes grouped together, mouths covered with red cloth tied with string, rustic, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 6000
+ },
+ "mutong": {
+  "prompt": "two old weathered wooden water buckets with bamboo hoops and rope handles standing side by side, rustic Chinese farm, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 4000
+ },
+ "zhukuang": {
+  "prompt": "a round woven bamboo basket full of fresh green vegetables next to a round flat bamboo winnowing tray leaning against it, rustic Chinese farm, realistic",
+  "neg": "low quality, ground plane, base, text, cartoon, stylized",
+  "faces": 5000
  }
 }
