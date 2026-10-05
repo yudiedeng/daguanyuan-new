@@ -142,11 +142,6 @@
   "faces": 8000,
   "neg": "ground plane, base, pedestal, rock, water, text, low quality"
  },
- "yuedongmen": {
-  "prompt": "Chinese garden flowering fence screen woven from bamboo poles and lattice, with a large circular moon gate opening in the middle, covered with climbing vines of small pink flowers and green leaves, freestanding wide fence panel, flat front",
-  "faces": 14000,
-  "neg": "wall, roof, building, ground plane, base, text, low quality"
- },
  "huacong_mudan": {
   "prompt": "a Chinese tree peony shrub in full bloom, several large deep red and pink double peony flowers, broad green leaves, garden plant, realistic",
   "faces": 12000,

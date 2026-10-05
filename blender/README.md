@@ -31,7 +31,7 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 ```
 
 - `scripts/cuizhang/build_cuizhang.py`：从零生成翠嶂，同时写 `models/b/col.json` 的 `cuizhang` 碰撞框与 `cuizhang_trees`。
-- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao（`bajiao_textures.py` 画鲜叶、老叶、枯叶、假茎贴图：侧脉、沿脉撕裂、焦边；叶两半下垂、叶缘起伏，茎上挂枯叶、茎基枯鞘）、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
+- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao（`bajiao_textures.py` 画鲜叶、老叶、枯叶、假茎贴图：侧脉、沿脉撕裂、焦边；叶两半下垂、叶缘起伏，茎上挂枯叶、茎基枯鞘）、月季花坛 yh_rosebed、院中大花床 yh_bigbed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub、青花盆栽 yh_pot、竹篱花障月洞门 yh_huazhang、粉墙漏窗窗心 yh_lc_*（海棠、冰裂、套方、鱼鳞；原模型窗心用 glb_cut 剪掉了材质 屋脊灰 在各窗洞里的部分）。贴图集每格四周留空边并用本格颜色填满，远处 mip 不串色。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
   ```bash
   python3 blender/scripts/sites/yihong_garden.py /tmp/yh          # YH_ONLY=haitang,bitao 只重建其中几种
   node blender/scripts/web/pack_prop.mjs /tmp/yh/yh_haitang.glb models/p/yh_haitang.glb 85000 1024   # 其余 200000 1024（不减面）
@@ -39,7 +39,7 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
   ```
   网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
 - `pack_prop.mjs`：带透明的贴图不缩放、存无损 webp（exact），否则透明处颜色被抹黑、远处叶丛发黑发红。
-- 怡红院其余道具（仙鹤、鸟笼、竹篱花障月洞门、牡丹、描金宫灯、青花龙纹鱼缸）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
+- 怡红院其余道具（仙鹤、鸟笼、牡丹、描金宫灯、青花龙纹鱼缸）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
 
@@ -105,6 +105,7 @@ node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
 node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
+node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-7.93,4.72,0.77,7.93,10.3,1.75,"青石|水磨砖"]]'   # 清厦室内露出的外壳槛墙内侧（青砖），室内另贴白灰墙
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 # 稻香村正房明间：门板剪掉后残留在门洞里的横带也剪掉，另由 daoxiang_men 补两扇敞开的板门（scripts/sites/daoxiang_door.py）
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.62,12.05,0.42,-3.38,12.55,2.52,"旧木|本色木|描金"]]'
