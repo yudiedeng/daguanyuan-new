@@ -256,7 +256,116 @@ def bingmei(seed=5):
     return shade(m, [(rd, np.array((0.88, 0.8, 0.72)))], seed)
 
 
-PATTERNS = {'yunfu': yunfu, 'chanzhi': chanzhi, 'songmei': songzhumei, 'huiwen': huiwen, 'bingmei': bingmei}
+# ---------------- 多宝格：柜门、角花 ----------------
+def guimen(seed=6):
+    """柜门心板：起线框 + 中间夔龙团寿开光，四角云纹，满贴金线。不透空。"""
+    m = canvas(); d = ImageDraw.Draw(m)
+    d.rectangle((0, 0, S, S), fill=255)
+    hl = canvas(); dh = ImageDraw.Draw(hl)                    # 凸起部分（受光、贴金）
+    dh.rectangle((30 * K, 30 * K, (N - 30) * K, (N - 30) * K), outline=255, width=10 * K)
+    dh.rectangle((56 * K, 56 * K, (N - 56) * K, (N - 56) * K), outline=255, width=5 * K)
+    dh.ellipse((176 * K, 176 * K, 336 * K, 336 * K), outline=255, width=14 * K)
+    # 团寿：回环方折
+    w = 12
+    for pts in ([(206, 216), (306, 216)], [(256, 200), (256, 312)], [(216, 256), (296, 256)], [(206, 296), (306, 296)],
+                [(216, 236), (216, 276)], [(296, 236), (296, 276)]):
+        stroke(dh, pts, w)
+    for (x, y, rot) in ((100, 100, 0.8), (412, 100, 2.4), (100, 412, -0.8), (412, 412, -2.4)):
+        ruyi_cloud(dh, x, y, 34, rot)
+    gl = hl.filter(ImageFilter.MaxFilter(3))
+    img = shade(m, [(gl, GOLD * 0.95)], seed)
+    return img
+
+
+def huaya(seed=7, flip=False):
+    """角花（花牙子）：贴在格口上角的三角透雕——直角贴框，斜边内凹成弧，里面镂出卷草、如意，整体贴金。左上为直角，镜像得右上。"""
+    m = canvas(); d = ImageDraw.Draw(m)
+    # 实心三角：直角在左上，斜边是向角内凹的二次曲线
+    curve = [((1 - t) ** 2 * 500 + 2 * (1 - t) * t * 150 + t * t * 0, (1 - t) ** 2 * 0 + 2 * (1 - t) * t * 150 + t * t * 500) for t in np.linspace(0, 1, 40)]
+    d.polygon([(0, 0)] + [(x * K, y * K) for x, y in curve], fill=255)
+    # 镂空：卷草两道、如意一朵、小圆眼
+    cut = canvas(); dc = ImageDraw.Draw(cut)
+    stroke(dc, spiral(150, 95, 62, 1.15, 0.2, 1), 15)
+    stroke(dc, spiral(95, 150, 62, 1.15, -1.7, -1), 15)
+    for (x, y, r) in ((60, 60, 22), (250, 40, 14), (40, 250, 14), (190, 190, 10)):
+        dc.ellipse(((x - r) * K, (y - r) * K, (x + r) * K, (y + r) * K), fill=255)
+    stroke(dc, [(320, 30), (380, 50), (420, 30)], 12)
+    stroke(dc, [(30, 320), (50, 380), (30, 420)], 12)
+    a = np.asarray(m).astype(np.int16) - np.asarray(cut).astype(np.int16)
+    m = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+    img = shade(m, [(m.copy(), GOLD)], seed)
+    if flip:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    return img
+
+
+# ---------------- 满墙槽子（第十七回“满墙皆是随依古董玩器之形抠成的槽子”）----------------
+# 1 m 见方一格的平铺板，槽口位置（u, v 自左下 0..1）、形状、宽、高；kit.niche_wall 按同一表在槽里摆器物
+NICHES = [
+    ('vase', 0.17, 0.62, 0.17, 0.36), ('qin', 0.6, 0.87, 0.56, 0.09), ('sword', 0.91, 0.43, 0.07, 0.62),
+    ('gourd', 0.5, 0.53, 0.17, 0.31), ('round', 0.19, 0.2, 0.21, 0.21), ('fan', 0.53, 0.17, 0.32, 0.17),
+    ('screen', 0.73, 0.55, 0.15, 0.19),
+]
+
+
+def niche_poly(shape, cx, cy, w, h, n=40):
+    """槽口轮廓（tile 坐标 0..1，v 向上）。"""
+    pts = []
+    if shape == 'vase':
+        prof = [(0.3, 0), (0.45, 0.05), (0.75, 0.35), (1.0, 0.68), (0.85, 0.84), (0.32, 0.92), (0.28, 0.97), (0.38, 1.0)]
+        right = [(cx + r * w / 2, cy - h / 2 + t * h) for r, t in prof]
+        pts = right + [(2 * cx - x, y) for x, y in reversed(right)]
+    elif shape == 'gourd':
+        prof = [(0, 0.15), (0.06, 0.62), (0.18, 0.98), (0.34, 0.98), (0.47, 0.66), (0.53, 0.42), (0.6, 0.52), (0.72, 0.66), (0.86, 0.6), (0.96, 0.32), (1.0, 0.1)]
+        right = [(cx + r * w / 2, cy - h / 2 + t * h) for t, r in prof]
+        pts = right + [(2 * cx - x, y) for x, y in reversed(right)]
+    elif shape in ('round',):
+        pts = [(cx + w / 2 * math.cos(2 * math.pi * i / n), cy + h / 2 * math.sin(2 * math.pi * i / n)) for i in range(n)]
+    elif shape == 'qin':
+        pts = [(cx - w / 2, cy - h * 0.35), (cx + w / 2 - h * 0.3, cy - h / 2), (cx + w / 2, cy - h * 0.2), (cx + w / 2, cy + h * 0.2),
+               (cx + w / 2 - h * 0.3, cy + h / 2), (cx - w / 2, cy + h * 0.35)]
+    elif shape == 'sword':
+        pts = [(cx - w * 0.2, cy - h / 2), (cx + w * 0.2, cy - h / 2), (cx + w * 0.2, cy + h * 0.15), (cx + w / 2, cy + h * 0.15), (cx + w / 2, cy + h * 0.2),
+               (cx + w * 0.2, cy + h * 0.2), (cx + w * 0.2, cy + h * 0.44), (cx, cy + h / 2), (cx - w * 0.2, cy + h * 0.44), (cx - w * 0.2, cy + h * 0.2),
+               (cx - w / 2, cy + h * 0.2), (cx - w / 2, cy + h * 0.15), (cx - w * 0.2, cy + h * 0.15)]
+    elif shape == 'fan':
+        R, r0, a0 = h * 1.9, h * 0.85, math.radians(42)
+        ox, oy = cx, cy - h / 2 - r0 + h * 0.05
+        arc = [(ox + R * math.sin(t), oy + R * math.cos(t)) for t in np.linspace(-a0, a0, 18)]
+        inner = [(ox + r0 * math.sin(t), oy + r0 * math.cos(t)) for t in np.linspace(a0, -a0, 12)]
+        pts = arc + inner
+    elif shape == 'screen':
+        pts = [(cx - w / 2, cy - h / 2 + h * 0.12), (cx - w * 0.3, cy - h / 2 + h * 0.12), (cx - w * 0.3, cy - h / 2), (cx + w * 0.3, cy - h / 2),
+               (cx + w * 0.3, cy - h / 2 + h * 0.12), (cx + w / 2, cy - h / 2 + h * 0.12), (cx + w / 2, cy + h / 2), (cx - w / 2, cy + h / 2)]
+    return pts
+
+
+def caozi(seed=8):
+    """满墙槽子板：紫檀板面，槽口镂空，口沿一圈贴金线。1024²，网页里 1 m 一格。"""
+    n2 = 1024
+    m = Image.new('L', (n2 * K, n2 * K), 255)
+    d = ImageDraw.Draw(m)
+    rim = Image.new('L', (n2 * K, n2 * K), 0)
+    dr = ImageDraw.Draw(rim)
+    for (sh, cx, cy, w, h) in NICHES:
+        poly = [(u * n2 * K, (1 - v) * n2 * K) for u, v in niche_poly(sh, cx, cy, w, h)]
+        dr.polygon(poly, outline=255, width=14 * K)
+        d.polygon(poly, fill=0)
+    m = m.resize((n2, n2), Image.LANCZOS)
+    rim = rim.resize((n2, n2), Image.LANCZOS)
+    a = np.asarray(m).astype(np.float32) / 255
+    rr = np.asarray(rim).astype(np.float32)[..., None] / 255
+    r = np.random.RandomState(seed)
+    yy = np.mgrid[0:n2, 0:n2][1].astype(np.float32)
+    grain = 0.5 + 0.5 * np.sin(yy / 7 + np.asarray(Image.fromarray((r.rand(64, 64) * 255).astype(np.uint8)).resize((n2, n2), Image.BICUBIC)).astype(np.float32) / 255 * 9)
+    col = WOOD[None, None, :] * (0.85 + 0.25 * grain[..., None])
+    col = col * (1 - rr) + GOLD[None, None, :] * rr
+    out = np.dstack([np.clip(col, 0, 1) * 255, a * 255]).astype(np.uint8)
+    return Image.fromarray(out, 'RGBA')
+
+
+PATTERNS = {'yunfu': yunfu, 'chanzhi': chanzhi, 'songmei': songzhumei, 'huiwen': huiwen, 'bingmei': bingmei,
+            'guimen': guimen, 'huaya': huaya, 'huayar': lambda: huaya(7, True), 'caozi': caozi}
 
 if __name__ == '__main__':
     out = sys.argv[-1] if len(sys.argv) > 1 else 'tex'

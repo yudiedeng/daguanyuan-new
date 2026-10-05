@@ -619,7 +619,9 @@ if(e.macro)o.macro=1;if(e.streak)o.streak=1;if(e.snow){o.snowLo='0.15';o.snowHi=
  if(wg)o.fAlbedo=(o.fAlbedo||'')+wg;
  patch(m,o);m.name=k;if(e.hide)m.visible=false;BM[k]=m;return m;}
 /* 单座建筑的材质改色（克隆共用材质，不影响别处）。怡红院室内：“五彩销金嵌玉”——槅断木色偏紫红、描金更亮 */
-const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',metal:0.65,rough:0.3}}},BOVC={};
+const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',metal:0.65,rough:0.3}},
+ // 怡红院是全园最富丽的一处（富贵公子的住处）：朱漆更艳、描金更亮、青绿彩画更浓
+ yihong:{'朱漆':{c:'#9c2418',rough:0.32},'描金':{c:'#f3c650',metal:0.75,rough:0.26},'绿漆':{c:'#16705a',rough:0.38},'彩画青':{c:'#1a4aa0',rough:0.45},'包袱':{c:'#f2e6c6'}}},BOVC={};
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
@@ -736,21 +738,28 @@ const PROPS={
  // 怡红院（第十七回、第二十六回）：“一边种几本芭蕉，那一边乃是一树西府海棠，其势若伞，丝垂翠缕，葩吐丹砂”——西花池芭蕉、东花池海棠
  // 为 Blender 程序化建模（blender/scripts/sites/yihong_garden.py）；两丛花池旁各立一块太湖石；东南角溪边两只仙鹤；两边游廊下挂“各色笼子，各色仙禽异鸟”；
  // 院门外竹篱花障编就的月洞门（模型里原来贴墙的竹篱藏掉）。仙鹤、鸟笼、月洞门、牡丹为 Tripo 生成（tools/props.json）
- yihong:[{f:'yh_haitang',p:[5.3,0.55,-0.85],h:5.6,ry:0.5},{f:'yh_bajiao',p:[-5.35,0.55,-0.9],h:3.9,ry:2.6},
+ yihong:[{f:'yh_haitang',p:[5.3,0.55,-0.85],h:6.6,ry:0.5},{f:'yh_bajiao',p:[-5.35,0.55,-0.9],h:4.8,ry:2.6},
    {f:'hushi',p:[-7.75,0.05,-1.05],h:2.1,ry:1.1,r:0.5},{f:'hushi',p:[7.55,0.05,-1.7],h:1.5,ry:3.6,r:0.4},
-   {f:'xianhe',p:[9.6,0.05,12.3],h:1.45,ry:-2.1},{f:'xianhe2',p:[8.7,0.05,14.1],h:1.5,ry:-0.7},
+   {f:'xianhe',p:[8.6,0.05,13.0],h:1.45,ry:-2.4},{f:'xianhe2',p:[9.9,0.05,12.6],h:1.5,ry:-0.9},
    ...[[-18.4,-3.6],[-18.4,1.4],[-18.4,6.2],[-18.4,15.9],[18.4,-3.6],[18.4,1.4],[18.4,6.2],[18.4,13.5]].map(([x,z],i)=>({f:i%3===1?'niaolong2':'niaolong',p:[x,2.5,z],h:0.55,ry:i*1.3,hang:3.6})),
    {f:'yuedongmen',p:[-24.6,0,11.25],h:2.9,ry:0,ground:1,panels:[1.25,2.45]},
-   // 院内花木（参考图：满院花木，不是光铺地）：花池脚下月季、牡丹；厢房檐下两条花径；南半院两座卵石镶边的月季花坛；山石边牡丹。
-   // 月季花坛、花径、单丛月季是 Blender 程序化建模（blender/scripts/sites/yihong_garden.py，花瓣叶片贴 yihong_atlas 画的贴图集），牡丹是 Tripo
+   // 院内花木（参考图：满院花木，几乎不露铺地）：铺地大半改成卵石镶边、苔面细草的大花床（灌木、月季、地被花），
+   // 只留正中甬路（正房前）和院门进来那条横路，东边溪沟让开；厢房檐下一溜青花盆栽；花池脚下月季、牡丹。
+   // 花床、盆栽、月季、灌木是 Blender 程序化建模（blender/scripts/sites/yihong_garden.py，花瓣叶片贴 yihong_atlas 画的贴图集），牡丹、湖石是 Tripo
+   ...[[-4.95,4.95,0,1.12],[4.3,5.0,Math.PI/2,1.0],[-12.3,14.6,0.05,1.3],[-4.9,14.9,-0.04,1.25],[3.4,14.9,0.03,1.25],[12.2,14.6,-0.05,1.3]].map(([x,z,ry,k])=>({f:'yh_bigbed',p:[x,0.03,z],h:1.26*k,ry,box:[2.8*k,1.6*k]})),
+   ...[[-12.4,10.9,0.1,1.1],[12.5,10.4,-0.1,1.05],[-5.0,9.9,0.03,1.0],[4.9,9.8,Math.PI/2,1.0]].map(([x,z,ry,k])=>({f:'yh_bigbed',p:[x,0.03,z],h:1.26*k,ry,box:[2.8*k,1.6*k]})),
+   ...[3.2,5.2,7.2,9.2].flatMap((z,i)=>[{f:'yh_pot',p:[-1.75,0.04,z],h:0.86,ry:i*1.3},{f:'yh_pot',p:[1.75,0.04,z],h:0.86,ry:i*1.9+0.6}]),  // 甬路两旁一溜青花盆景
+   ...[[-13.4,15.6,4.6],[-6.2,15.9,4.0],[5.0,15.8,4.2],[13.2,15.5,4.8]].map(([x,z,h],i)=>({f:'yh_bitao',p:[x,0.25,z],h,ry:i*1.9})),  // 南半院花床里几株碧桃
+   {f:'hushi',p:[-3.1,0.2,4.0],h:1.7,ry:0.6,r:0.4},{f:'hushi',p:[4.7,0.2,6.9],h:1.4,ry:2.0,r:0.35},{f:'hushi',p:[-6.9,0.2,15.6],h:1.8,ry:4.1,r:0.4},
    ...[[-6.0,0.06,0.65],[-4.65,0.06,0.7]].map(([x,y,z],i)=>({f:'yh_rosebush',p:[x,y,z],h:0.8+0.1*i,ry:i*2.3})),
-   ...[[4.65,0.06,0.7],[6.0,0.06,0.65],[7.15,0.05,-2.8],[-12.4,0.05,14.3],[12.7,0.05,11.1]].map(([x,y,z],i)=>({f:'huacong_mudan',p:[x,y,z],h:0.8+0.06*(i%3),ry:i*2.1})),
+   ...[[4.65,0.06,0.7],[6.0,0.06,0.65],[7.15,0.05,-2.8]].map(([x,y,z],i)=>({f:'huacong_mudan',p:[x,y,z],h:0.8+0.06*(i%3),ry:i*2.1})),
    {f:'yh_rosebush',p:[-7.0,0.05,-2.5],h:0.95,ry:1.0},
-   {f:'yh_huajing',p:[-7.85,0.04,6.4],h:0.71,ry:Math.PI/2,box:[0.55,2.0]},{f:'yh_huajing',p:[7.85,0.04,6.4],h:0.71,ry:-Math.PI/2,box:[0.55,2.0]},
-   {f:'yh_rosebed',p:[-5.3,0.04,5.4],h:0.94,ry:0,box:[1.7,0.95]},{f:'yh_rosebed',p:[5.3,0.04,5.4],h:0.94,ry:Math.PI,box:[1.7,0.95]},
-   {f:'yh_rosebed',p:[-5.6,0.04,14.7],h:0.94,ry:0.05,box:[1.7,0.95]},{f:'yh_rosebed',p:[4.9,0.04,14.9],h:0.94,ry:-0.08,box:[1.7,0.95]},
-   ...[[-13.6,15.8,1.05],[-9.6,9.9,0.9],[10.2,9.9,0.95],[14.2,15.6,1.1],[-15.4,12.6,0.85],[15.0,12.2,0.9]].map(([x,z,k],i)=>({f:'yh_shrub',p:[x,0.04,z],h:0.9*k,ry:i*1.7})),
-   {f:'yh_huajing',p:[-9.6,0.04,16.45],h:0.71,ry:0,box:[2.0,0.5]},{f:'yh_huajing',p:[10.6,0.04,16.45],h:0.71,ry:0,box:[2.0,0.5]},
+   ...[-2.3,-0.9,0.5,1.9].flatMap((z,i)=>[{f:'yh_pot',p:[-8.25,0.04,z],h:0.86,ry:i*1.7},{f:'yh_pot',p:[8.3,0.04,z],h:0.86,ry:i*2.3+1}]),
+   ...[[-1.95,9.3],[1.95,9.3],[-1.95,-0.9],[1.95,-0.9],[-0.9,12.7],[0.9,12.7]].map(([x,z],i)=>({f:'yh_pot',p:[x,0.04,z],h:0.86,ry:i*1.1})),
+   // 富贵气象：抱厦、厢房檐下一溜描金宫灯（红穗），台阶前一对青花龙纹大鱼缸养荷（Tripo）
+   ...[-6.5,-3.4,-0.9,0.9,3.4,6.5].map((x,i)=>({f:'gongdeng',p:[x,2.95,-4.15],h:0.72,ry:i*0.5,hang:4.05})),
+   ...[-0.3,2.6,5.6].flatMap((z,i)=>[{f:'gongdeng',p:[-8.0,2.7,z],h:0.66,ry:i,hang:3.7},{f:'gongdeng',p:[8.0,2.7,z],h:0.66,ry:i+0.5,hang:3.7}]),
+   {f:'yugang',p:[-3.35,0.04,1.95],h:1.3,ry:0.3,r:0.45},{f:'yugang',p:[3.35,0.04,1.95],h:1.3,ry:-0.3,r:0.45},
    {f:'xianglu',p:[-2.35,0.05,0.35],h:0.85},{f:'xianglu',p:[2.35,0.05,0.35],h:0.85,ry:Math.PI},  // 台阶前一对铜香炉
    // 院门外花园（“一径引入，绕着碧桃花”）：碧桃夹道，小径两边各一座月季花坛、一条花径，月洞门脚下月季，院墙根花径，牡丹、湖石点缀
    ...[[-37.0,5.6,4.6],[-35.5,15.9,5.0],[-27.3,6.0,4.2],[-27.2,16.0,4.4],[-41.5,6.6,4.8],[-41.0,14.6,4.5]].map(([x,z,h],i)=>({f:'yh_bitao',p:[x,0,z],h,ry:i*1.7,ground:1})),
@@ -767,8 +776,16 @@ const PROPS={
    {f:'hushi',p:[-38.6,0,12.5],h:1.8,ry:0.4,ground:1,r:0.5}],  // 潇湘馆院中太湖石；鹦鹉架——第三十五回黛玉“令将架摘下来，另挂在月洞窗外的钩上”：正房西山墙月洞窗外的廊下，hang 是绳子拴到廊顶的高度
 };
 const PROPC={};  // 同一道具只载一次，其余克隆（共用几何和材质）
-const FAR={yh_rosebed:70,yh_huajing:60,yh_rosebush:55,yh_shrub:70,huacong_mudan:55,niaolong:60,niaolong2:60,yh_bitao:180,yh_haitang:220,yh_bajiao:200};
-function addProps(L,id,root){if(id==='yihong')root.traverse(m=>{if(m.isMesh&&/竹篱/.test(m.name))m.visible=false;});
+const FAR={gongdeng:90,yugang:70,yh_bigbed:75,yh_pot:50,yh_rosebed:70,yh_huajing:60,yh_rosebush:55,yh_shrub:70,huacong_mudan:55,niaolong:60,niaolong2:60,yh_bitao:180,yh_haitang:220,yh_bajiao:200};
+/* 怡红院正房门口：粉纱帐幔左右挽起，上有帘头，金钩（参考图） */
+function yihongDrapes(root){const silk=patch(std('#eaa2b2',.7,{side:THREE.DoubleSide,transparent:true,opacity:0.88}),{key:'yhsilk'}),gold=bmat('描金');
+ const drape=(x0,x1,y0,y1,z,gather)=>{const nx=24,ny=10,g=new THREE.PlaneGeometry(1,1,nx,ny),P=g.attributes.position;
+  for(let i=0;i<P.count;i++){const u=P.getX(i)+0.5,v=P.getY(i)+0.5;const tie=gather?Math.exp(-(((v-0.38)/0.12)**2)):0;const w=1-tie*0.55*(gather>0?u:1-u);
+   const x=gather>0?x0+(x1-x0)*u*w:x1-(x1-x0)*(1-u)*w;P.setXYZ(i,x,y0+(y1-y0)*v,z+0.045*Math.sin(u*nx*1.3)*(0.6+0.4*v));}
+  g.computeVertexNormals();const m=new THREE.Mesh(g,silk);m.castShadow=true;root.add(m);};
+ const z=-4.72;drape(-1.62,-0.95,0.95,3.18,z,1);drape(0.95,1.62,0.95,3.18,z,-1);drape(-1.66,1.66,2.82,3.2,z-0.02,0);
+ for(const sx of[-1,1]){const b=new THREE.Mesh(new THREE.TorusGeometry(0.06,0.012,6,14),gold);b.position.set(sx*1.32,1.8,z-0.05);root.add(b);}}
+function addProps(L,id,root){if(id==='yihong'){root.traverse(m=>{if(m.isMesh&&/竹篱/.test(m.name))m.visible=false;});yihongDrapes(root);}
  for(const q0 of PROPS[id]||[]){const q=FAR[q0.f]&&!q0.far?{...q0,far:FAR[q0.f]}:q0;(PROPC[q.f]??=L.loadAsync('models/p/'+q.f+'.glb')).then(g=>{const o=g.scene.clone();
   // fit：按模型自身 x、高、z 拉到给定尺寸（米）
  if(q.fit){const sz=new THREE.Box3().setFromObject(o).getSize(new V3());o.scale.set(q.fit[0]/sz.x,q.fit[1]/sz.y,q.fit[2]/sz.z);}else o.scale.setScalar(q.h);
@@ -777,7 +794,7 @@ function addProps(L,id,root){if(id==='yihong')root.traverse(m=>{if(m.isMesh&&/�
  if(q.panels){root.updateMatrixWorld(true);const [a,b]=q.panels,c=Math.cos(q.ry||0),sn=Math.sin(q.ry||0);for(const sd of[-1,1]){const u=sd*(a+b)/2,w=root.localToWorld(new V3(q.p[0]+u*sn,0,q.p[2]+u*c));const top=root.position.y+o.position.y+q.h;colAdd({x:w.x,z:w.z,c,s:sn,hx:0.15,hz:(b-a)/2,top,bot:top-q.h-1,walk:false});}}  // 门洞两边的花障挡人（模型宽度沿局部 z）
 
  if(q.plate){const r=q.plate,pl=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[r*0.55,0],[r*0.6,0.006],[r*0.72,0.012],[r,0.03],[r*1.02,0.032],[r*0.98,0.028],[r*0.7,0.018],[0,0.018]].map(([a,b])=>new THREE.Vector2(a,b)),40),plateMat());{const P=pl.geometry.attributes.position,U=pl.geometry.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*r*1.02)+0.5,P.getZ(i)/(2*r*1.02)+0.5);}pl.position.set(q.p[0],q.p[1],q.p[2]);pl.castShadow=pl.receiveShadow=true;root.add(pl);}
- o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(/^(花叶|芭蕉叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
  if(q.hang){const len=q.hang-q.p[1]-q.h,cord=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,len,5),std('#3a2c22',.9));cord.position.set(q.p[0],q.p[1]+q.h+len/2,q.p[2]);root.add(cord);}
  if(q.box){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));colAdd({x:w.x,z:w.z,c:Math.cos(q.ry||0),s:Math.sin(q.ry||0),hx:q.box[0],hz:q.box[1],top:root.position.y+o.position.y+0.6,bot:root.position.y+o.position.y-0.5,walk:false});}
  if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}

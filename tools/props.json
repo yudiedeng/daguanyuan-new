@@ -156,5 +156,15 @@
   "prompt": "a Chinese tree peony shrub in full bloom, several large deep red and pink double peony flowers, broad green leaves, garden plant, realistic",
   "faces": 12000,
   "neg": "pot, vase, planter, ground plane, base, text, low quality"
+ },
+ "gongdeng": {
+  "prompt": "ornate Chinese Qing dynasty imperial palace lantern (gongdeng), hexagonal gilded carved rosewood frame with glass panels painted with flowers, red silk tassels hanging from each corner, hook on top, isolated object",
+  "faces": 9000,
+  "neg": "ground plane, base, stand, pole, table, text, low quality"
+ },
+ "yugang": {
+  "prompt": "large antique Chinese blue and white porcelain fish jar (yugang) with dragon and lotus scroll decoration, filled with water and green lotus leaves and two pink lotus flowers, on a small carved rosewood stand",
+  "faces": 12000,
+  "neg": "ground plane, text, low quality"
  }
 }

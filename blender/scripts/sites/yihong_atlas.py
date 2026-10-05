@@ -8,6 +8,7 @@ from PIL import Image, ImageFilter
 
 S = 1024          # 宽
 SH = 1280         # 高：最下一行是海棠
+PAD = 0.08        # 每格四周留的空边（占格宽的比例）
 # 名称: (x0, y0, w, h)，PIL 坐标（y 向下）；格子底边是花瓣/叶的基部
 CELLS = {
     'petal_red': (0, 0, 256, 512), 'petal_pink': (256, 0, 256, 512), 'petal_white': (512, 0, 256, 512), 'petal_yellow': (768, 0, 256, 512),
@@ -131,23 +132,42 @@ def build(path):
     }
     c, a = parts['leaf_young']
     parts['leaf_young'] = (np.clip(c * np.array((1.25, 1.35, 1.0)) + np.array((0.05, 0.06, 0.0)), 0, 1), a)
-    for k, (c, a) in parts.items():
+    for k, (c, a) in parts.items():                 # 每格四周留 PAD 的空边（下面用本格颜色填满），远处 mip 不串到邻格
         x0, y0, w, h = CELLS[k]
-        img[y0:y0 + h, x0:x0 + w, :3] = np.clip(c, 0, 1)
-        img[y0:y0 + h, x0:x0 + w, 3] = a
-    # 透明处填邻近颜色（防止 mip 时边缘发黑）
-    rgb = Image.fromarray((img[..., :3] * 255).astype(np.uint8))
-    al = Image.fromarray((img[..., 3] * 255).astype(np.uint8))
-    bl = rgb.filter(ImageFilter.GaussianBlur(6))
-    m = np.asarray(al)[..., None] > 127
-    out = np.where(m, np.asarray(rgb), np.asarray(bl))
-    Image.fromarray(np.dstack([out, np.asarray(al)]).astype(np.uint8), 'RGBA').save(path)
+        iw, ih = int(round(w * (1 - 2 * PAD))), int(round(h * (1 - 2 * PAD)))
+        ox, oy = x0 + (w - iw) // 2, y0 + (h - ih) // 2
+        cc = np.asarray(Image.fromarray((np.clip(c, 0, 1) * 255).astype(np.uint8)).resize((iw, ih), Image.LANCZOS)).astype(np.float32) / 255
+        aa = np.asarray(Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8)).resize((iw, ih), Image.LANCZOS)).astype(np.float32) / 255
+        img[oy:oy + ih, ox:ox + iw, :3] = cc
+        img[oy:oy + ih, ox:ox + iw, 3] = aa
+    # 透明处按格内自己的颜色向外扩（逐格膨胀），免得远处 mip 把别格的红花瓣混进绿叶
+    out = np.zeros((SH, S, 4), np.uint8)
+    for k, (x0, y0, w, h) in CELLS.items():
+        c = img[y0:y0 + h, x0:x0 + w, :3].copy()
+        a = img[y0:y0 + h, x0:x0 + w, 3] > 0.5
+        mean = c[a].mean(axis=0) if a.any() else np.zeros(3)
+        filled, m = c.copy(), a.copy()
+        for _ in range(400):                     # 膨胀：每轮用邻格平均补一圈，直到整格填满
+            if m.all():
+                break
+            acc = np.zeros_like(filled); cnt = np.zeros(m.shape, np.float32)
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                sm = np.roll(m, (dy, dx), (0, 1)); sc = np.roll(filled, (dy, dx), (0, 1))
+                acc += sc * sm[..., None]; cnt += sm
+            new = (~m) & (cnt > 0)
+            filled[new] = acc[new] / cnt[new][:, None]
+            m = m | new
+        filled[~m] = mean
+        out[y0:y0 + h, x0:x0 + w, :3] = (np.clip(filled, 0, 1) * 255).astype(np.uint8)
+        out[y0:y0 + h, x0:x0 + w, 3] = (img[y0:y0 + h, x0:x0 + w, 3] * 255).astype(np.uint8)
+    Image.fromarray(out, 'RGBA').save(path)
     return path
 
 
 def uv(cell, u, v):
     """格内坐标 u∈[0,1] 左→右，v∈[0,1] 基部→顶端 → Blender UV（v 向上）。"""
     x0, y0, w, h = CELLS[cell]
+    u, v = PAD + u * (1 - 2 * PAD), PAD + v * (1 - 2 * PAD)
     return ((x0 + u * w) / S, 1 - (y0 + (1 - v) * h) / SH)
 
 
