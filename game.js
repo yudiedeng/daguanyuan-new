@@ -1137,9 +1137,15 @@ function openModal(html, onDone, after) {
 }
 function closeModal() {
   modalEl.hidden = true; pauseGame(false); const f = modalDone; modalDone = null;
-  if (walk.on && !isTouch) D.renderer.domElement.requestPointerLock?.();
   if (f) f(); renderQuest();
+  /* 先跑完回调再锁鼠标：回调里常常紧接着弹下一页或回到选人界面，那时不该锁 */
+  if (walk.on && !isTouch && modalEl.hidden && startEl.hidden) D.renderer.domElement.requestPointerLock?.();
 }
+/* 锁定是异步的：请求发出后、生效前若又弹了窗，openModal 那时解不了锁，生效后光标就没了、选项也点不中。
+   所以锁一生效就检查一遍，有弹窗或选人界面开着就立刻放开 */
+document.addEventListener('pointerlockchange', () => {
+  if (document.pointerLockElement && (!modalEl.hidden || !startEl.hidden)) document.exitPointerLock();
+});
 const toastEl = $('toast'); let flashT = 0;
 function flash(msg) { toastEl.innerHTML = `<b>${esc(msg)}</b>`; toastEl.style.opacity = 1; clearTimeout(flashT); flashT = setTimeout(() => toastEl.style.opacity = 0, 2600); }
 let actx = null;
