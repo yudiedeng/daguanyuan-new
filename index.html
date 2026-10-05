@@ -641,7 +641,7 @@ const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',m
 const BAKED={};  // bake_court.py 写的各院材质表 tex/bk_<院>.json
 const BAKED_GAIN=0.6;  // .blend 的材质按 Blender 里的灯光调的；网页太阳强，整体压暗到和 Blender 渲染相近
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
-async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);for(const t of['yh'])try{BAKED[t]=await (await fetch('tex/bk_'+t+'.json')).json();}catch(e){console.warn('bk',t,e);}let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
+async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);for(const t of['yh','hw'])try{BAKED[t]=await (await fetch('tex/bk_'+t+'.json')).json();}catch(e){console.warn('bk',t,e);}let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
   {id:'yihong',p:[Z.yihong.x,Z.yihong.y,Z.yihong.z],ry:0},{id:'hengwu',p:[Z.hengwu.x,Z.hengwu.y,Z.hengwu.z],ry:0},{id:'daoxiang',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},{id:'daoxiang_tian',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},{id:'daoxiang_men',p:[Z.daoxiang.x,Z.daoxiang.y,Z.daoxiang.z],ry:0},// 正房敞开的两扇板门：blender/scripts/sites/daoxiang_door.py
 // 菜畦垄沟：blender/scripts/sites/daoxiang_fields.py

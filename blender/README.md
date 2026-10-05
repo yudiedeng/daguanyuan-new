@@ -21,7 +21,7 @@
 - `scripts/export/`：潇湘馆导出 / 减面脚本。
 - 注意：仓库里 `models/b/xiaoxiang.wasm` 的窗格是烘焙贴图版，若在 Blender 里改潇湘馆，导出时要重新做窗格烘焙。
 
-## “Blender 原样”导出（bake_court.py，目前用于怡红院）
+## “Blender 原样”导出（bake_court.py，目前用于怡红院、蘅芜苑）
 
 `.blend` 的材质 = 照片贴图（PolyHaven，盒式投影）× 底色 ×“做旧”（缝隙 AO、竖向雨痕、污渍、屋面青苔，均为节点）。普通导出（export_glb）不带贴图，网页再按材质名用自己的配色，所以比 Blender 里平、亮。
 `blender/scripts/web/bake_court.py <院.blend> <标签> <out.glb> [采样]`：
@@ -137,6 +137,10 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,
 node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0.93,1.62,5.0,3.2,"朱漆|槅扇|窗纸|描金"],[-7.82,7.9,0.85,-5.18,8.1,5.21,"朱漆|槅扇"],[-4.82,7.9,0.85,-1.98,8.1,5.21,"朱漆|槅扇"],[-1.62,7.9,0.85,1.62,8.1,5.21,"朱漆|槅扇"],[1.98,7.9,0.85,4.82,8.1,5.21,"朱漆|槅扇"],[5.18,7.9,0.85,7.82,8.1,5.21,"朱漆|槅扇"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
+# 蘅芜苑按 .blend 原样重导（玲珑山石原来只剩 13% 的面）：
+#   python3 blender/scripts/web/bake_court.py blender/hengwu.blend hw /tmp/hw.glb 10
+#   node blender/scripts/web/pack_glb.mjs /tmp/hw.glb models/b/hengwu.wasm models/b/hengwu.wasm - 0.0004
+# 然后依次执行下面四步
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
 node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
