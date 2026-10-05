@@ -31,6 +31,14 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
 ```
 
 - `scripts/cuizhang/build_cuizhang.py`：从零生成翠嶂，同时写 `models/b/col.json` 的 `cuizhang` 碰撞框与 `cuizhang_trees`。
+- `scripts/sites/yihong_garden.py`：怡红院的花木，程序化建模，各存 `yh_*.blend`：西府海棠 yh_haitang（伞形树冠、细梗垂花、朱砂花苞）、碧桃 yh_bitao、芭蕉丛 yh_bajiao、月季花坛 yh_rosebed、花径 yh_huajing、单丛月季 yh_rosebush、常绿灌木 yh_shrub。花瓣叶片贴 `yihong_atlas.py` 画的贴图集，树皮、芭蕉用 `tex/` 里的贴图。
+  ```bash
+  python3 blender/scripts/sites/yihong_garden.py /tmp/yh          # YH_ONLY=haitang,bitao 只重建其中几种
+  node blender/scripts/web/pack_prop.mjs /tmp/yh/yh_haitang.glb models/p/yh_haitang.glb 85000 1024   # 其余 200000 1024（不减面）
+  node blender/scripts/web/alpha_mask.mjs models/p/yh_*.glb       # 花叶、芭蕉叶改 alphaMode MASK
+  ```
+  网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
+- 怡红院其余道具（仙鹤、鸟笼、竹篱花障月洞门、牡丹）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
 
@@ -77,6 +85,11 @@ python3 blender/scripts/interiors/build_yihong.py      # 生成陈设 → 存 .b
 node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,y1,z1,"材质正则"],…]'
 ```
 
+- 怡红院透雕：`diao_textures.py` 画 `tex/diao_*.png`（流云百蝠嵌玉、缠枝花卉五彩、岁寒三友、回纹、冰梅，512² 可平铺、透明即镂空）。`kit.py` 里 `carved_panel()` 和 `luodizhao(..., fill='雕花_*')` 用这些材质，`雕花_*` 网格按面朝向自动展 UV（0.5 m 一格），`pack_glb.mjs` 只为 `雕花_*` 保留 UV，网页 `bmat` 按材质名贴图、alphaTest 裁空。
+  ```bash
+  python3 blender/scripts/interiors/diao_textures.py tex
+  python3 blender/scripts/interiors/build_yihong.py
+  ```
 - `kit.py`：构件库（桌案、椅凳、罗汉床、架子床、多宝格、书架、落地罩/圆光罩/八方罩、碧纱橱、屏风、穿衣镜、宫灯、天花、器物）。
 - 碰撞：脚本会从 `col.json[<id>]` 删掉原来的实心房屋块，把墙体、隔断、家具写进 `col.json[<id>_in]`。
 - 网页：`*_in` 模型在园子载完后懒加载；`美人画`、`墨竹图`、`横披`、`对联上/下`、`棋盘`、`碧绿凿花砖` 等材质在网页里贴画布纹理，`穿衣镜` 换成实时反射；进屋时有两盏暖色补光跟着走。
@@ -89,7 +102,47 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
+node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
+node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
+# 稻香村菜畦：剪掉旧的光滑垄条和凸起边框（连同其下地面），由 daoxiang_tian 接替，见下文「菜畦」
+node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[16.26,-4.04,-0.5,26.24,9.64,0.6,"田土|夯土地"],[12.26,-22.54,-0.5,26.24,-4.96,0.6,"田土|夯土地"],[-1.44,-22.54,-0.5,11.74,-4.96,0.6,"田土|夯土地"],[-26.24,-22.54,-0.5,-7.96,-8.76,0.6,"田土|夯土地"]]'
 # 潇湘馆室内：方块家具换成 Tripo 道具（index.html PROPS.xiaoxiang_in），剪掉原来的：书案、圈椅、书架、琴桌、明间条案、花几西、花几东、棋桌、官帽椅西、官帽椅东、瓷墩西、瓷墩东、床、榻、梳妆台、绣墩
 node tools/glb_cut.mjs models/b/xiaoxiang_in.wasm models/b/xiaoxiang_in.wasm '[[-3.56,-0.45,0.48,-2.94,1.29,1.3,"花梨"],[-2.95,0.08,0.48,-2.15,0.76,1.6,"湘妃竹|青布"],[-3.67,2.07,0.48,-1.5,2.53,3.42,"湘妃竹|书函|书页"],[-3.22,-1.62,0.48,-1.88,-1.12,1.0,"黑漆|描金|白布|瓷白"],[-1.13,1.95,0.48,1.13,2.5,1.35,"花梨"],[-1.39,1.98,0.48,-0.98,2.42,1.9,"湘妃竹|青花|叶绿"],[0.98,1.98,0.48,1.39,2.42,1.9,"湘妃竹|青花|叶绿"],[-0.45,0.6,0.48,0.45,1.5,1.33,"花梨"],[-1.1,0.72,0.48,-0.47,1.38,1.6,"湘妃竹|青布"],[0.47,0.72,0.48,1.1,1.38,1.6,"湘妃竹|青布"],[-1.16,-0.82,0.48,-0.74,-0.38,0.95,"瓷白|青花"],[0.74,-0.82,0.48,1.16,-0.38,0.95,"瓷白|青花"],[2.05,0.12,0.48,3.68,2.4,2.95,"花梨|青纱|素绸|青布|锦缎|描金|紫檀"],[1.92,-1.72,0.48,3.62,-0.95,1.5,"湘妃竹|青布|锦缎"],[3.05,-0.8,0.48,3.68,0.1,1.8,"花梨|紫檀|镜面|粉彩"],[2.55,-0.55,0.48,2.95,-0.15,0.95,"锦缎|描金"]]'
 ```
+
+## 蘅芜苑的藤萝异草（scripts/web/hw_plants.py）
+
+网页里蘅芜苑的藤蔓、异草和花溆洞口的垂藤都是 Blender 用脚本建的（叶片是带弧度的三维面片、茎是细管、红果和小金花是小球，颜色写在顶点色里）：
+
+```bash
+node blender/scripts/web/hw_vines.mjs        # 从院落模型算挂点、贴石垂藤的路径、玲珑石摆放 → models/b/hw_vines.json
+python3 blender/scripts/web/hw_plants.py     # 建模 → models/b/hw_vines.wasm（院中藤蔓，按位置烘好）、models/p/hw_plants.glb（单株异草、垂藤）
+```
+
+## 树（blender/scripts/trees/）
+
+`build_trees.py`：程序化生成稻香村青篱边的桑、榆、木槿、柘（第十七回「桑、榆、槿、柘，各色树稚新条，随其曲折，编就两溜青篱」），与 `models/t` 里原有精品树同一格式。
+
+```bash
+python3 blender/scripts/trees/build_trees.py [sang yu mujin zhe] [--preview]
+```
+
+- 叶片卡：在 Blender 里按各树种叶形摆一段带叶小枝（桑叶卵形心形基、粗齿；榆是一簇簇榆钱；槿叶三浅裂；柘全缘、枝上有刺），Cycles 俯视渲染 → `tex/leaf_<sp>_c.png` / `_a.png`。
+- 树模型：递归分枝的树皮管 + 叶卡四边形 → `models/t/<sp>_1.wasm`（`<sp>_bark`、`<sp>_leaf` 两个节点）。
+- 远景替身：侧视自发光渲染 → `tex/imp_<sp>1.png`，尺寸写进 `tex/imp.json`。
+- 网页里是两类树：`sangyu`（v0 桑、v1 榆）和 `jinzhe`（v0 槿、v1 柘），栽在 `buildDaoxiang()` 里。
+
+## 菜畦（blender/scripts/sites/daoxiang_fields.py）
+
+第十七回「下面分畦列亩，佳蔬菜花，漫然无际」。原来四块菜畦像沙盘（一圈硬边框、光滑等宽的垄、两种插片作物），重做为：
+
+```bash
+python3 blender/scripts/sites/daoxiang_fields.py [--preview]
+node blender/scripts/web/pack_glb.mjs /tmp/daoxiang_tian.glb models/b/daoxiang_tian.wasm
+```
+
+- 垄沟 → `models/b/daoxiang_tian.wasm`：畦面比原菜畦四边各收进 0.9 m，外围一道土埂（夯土地）；窄垄（垄距 1.1 m）宽窄高低、走向略有起伏，土块颗粒，垄头参差，边缘缓缓落进地面；与 daoxiang 同一原点。
+- 作物 → `models/p/crops.glb`：三维小株、顶点色——油菜（开花，「菜花」）、青菜、葱，各两三种变体。
+- 株位 → `tex/crops_daoxiang.json`：顺着弯曲的垄排，偶有缺苗；网页 `buildCrops()` 实例化，低画质退回插片。
+- 原 `daoxiang.blend` 里的菜畦没动；网页模型里的旧菜畦用上面那条 glb_cut 剪掉。
