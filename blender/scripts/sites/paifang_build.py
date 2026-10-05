@@ -2,14 +2,15 @@
 用法：python3 blender/scripts/sites/paifang_build.py <tripo 原始 glb 目录> /tmp/paifang.glb
       node blender/scripts/web/pack_prop.mjs /tmp/paifang.glb models/p/paifang.glb 90000 1024
 第十七回：“只见正面现出一座玉石牌坊来，上面龙蟠螭护，玲珑凿就。”按参考图：四根冲天柱高出额枋，柱身盘龙（Tripo pf_zhu），
-柱顶云冠、金火珠；明间两道额枋夹一条镂空螭纹花板（pf_hua），正中空白匾；明间额枋上一块双龙戏珠镂空大花板（pf_ding）；
-次间同样两道额枋夹花板，上置小一号双龙板。Tripo 整件生成的牌坊雕刻浅、多是贴图，分件生成每件才有足够面数。
+柱顶云冠、金火珠；明间两道额枋夹一条镂空螭纹花板（pf_hua），正中空白匾；明间大额枋上是二龙戏珠脊饰（pf_jilong：两条龙沿窄脊相向、中间立火焰珠，轮廓镂空透天）；
+次间同样两道额枋夹花板，脊上一排卷草云纹（pf_juancao）。Tripo 整件生成的牌坊雕刻浅、多是贴图，分件生成每件才有足够面数。
 单位米，底面中心在原点，正面朝 −Y（网页里 PROPS.daguan 按总高缩放）。
 """
 import bpy, bmesh, sys, os, math
 from mathutils import Vector, Matrix
 
 RAW, OUT = sys.argv[-2], sys.argv[-1]
+CREST = os.environ.get('CREST', 'pf_jilong')    # 明间脊饰用哪一版 Tripo 件
 bpy.ops.wm.read_factory_settings(use_empty=True)
 sc = bpy.context.scene
 
@@ -181,26 +182,31 @@ panels.append(('pf_hua', xa, xb, 7.52, 8.75))
 pw_ = 2.3
 box(STONE, -pw_ / 2 - 0.14, -0.36, 7.47, pw_ / 2 + 0.14, 0.36, 8.8, 0.03)            # 匾框
 box(STONE, -pw_ / 2, -0.4, 7.6, pw_ / 2, 0.4, 8.67, 0.02)                                   # 空白匾（第十七回宝玉未题）
-panels.append(('pf_ding', xa + 0.1, xb - 0.1, 9.57, 9.57 + 3.3))
+panels.append((CREST, xa - 0.3, xb + 0.3, 9.57, 9.57 + 3.3))          # 明间脊上：二龙戏珠
 # 次间
 for sgn in (-1, 1):
     a, b = sorted((sgn * XI, sgn * XO))
     xa2, xb2 = bay(a, b, 5.55, 7.05, 0)
     panels.append(('pf_hua', xa2, xb2, 6.17, 7.05))
-    panels.append(('pf_ding', xa2 + 0.2, xb2 - 0.2, 7.87, 7.87 + 2.1))
+    panels.append(('pf_juancao', xa2 + 0.05, xb2 - 0.05, 7.87, 7.87 + 1.2))  # 次间脊上：卷草云纹
 
-have = {n: os.path.exists(os.path.join(RAW, n + '.glb')) for n in ('pf_hua', 'pf_ding')}
+CUT = {'pf_jilong': 0.36, 'pf_jilong2': 0.0, 'pf_juancao': 0.6}
+have = {n: os.path.exists(os.path.join(RAW, n + '.glb')) for n in ('pf_hua', CREST, 'pf_juancao')}
 src = {n: tripo(n) for n, ok in have.items() if ok}
 for i, (n, x0, x1, za, zb) in enumerate(panels):
     if n not in src:
         box(STONE, x0, -0.18, za, x1, 0.18, zb, 0.02); continue
     c = dupo(src[n], f'{n}_{i}')
+    if n in CUT:                # Tripo 脊饰自带底座/桌腿：从下往上切掉 CUT[n] 比例的高度，只留脊上的雕刻
+        mn, mx = bbox(c); zc = mn.z + CUT[n] * (mx.z - mn.z)
+        bm = bmesh.new(); bm.from_mesh(c.data)
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().z < zc], context='FACES')
+        bm.to_mesh(c.data); bm.free()
     if n == 'pf_hua':           # 花板：铺满（略拉伸），躲开中间的匾
         fit(c, x0, x1, za, zb, 0.0, thin=0.3, keep_aspect=False)
-    else:                       # 双龙板：等比放进去，底边贴额枋
-        fit(c, x0, x1, za, zb, 0.0, thin=0.42, keep_aspect=True)
-        mn, mx = bbox(c); c.data.transform(Matrix.Translation((0, 0, za - mn.z)))
-        box(STONE, x0 + 0.1, -0.24, za - 0.12, x1 - 0.1, 0.24, za + 0.05, 0.02)    # 板座
+    else:                       # 脊饰：等比放进去、底边落在额枋顶（轮廓镂空，后面透天）
+        fit(c, x0, x1, za, zb, 0.0, thin=0.5, keep_aspect=True)
+        mn, mx = bbox(c); c.data.transform(Matrix.Translation((0, 0, za - 0.05 - mn.z)))
 for o in src.values(): bpy.data.objects.remove(o, do_unlink=True)
 if zhu: bpy.data.objects.remove(z0, do_unlink=True)
 
