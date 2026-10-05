@@ -127,7 +127,7 @@ def vine(g, pts, out, kind, spread=1.0, twig=True):
         tw = [P[i] + (O[i].cross(Vector((0, 1, 0))).normalized() * math.sin(A[i] * 18) * 0.012 if O[i].cross(Vector((0, 1, 0))).length > 0.1 else Vector()) for i in range(0, n, 4)]
         tube(g, tw, 0.0025, mul3(stemc, 0.85))
     lc = [tuple(srgb(h) for h in pair) for pair in LEAF[kind]]
-    sp = {'cui': 0.05, 'jin': 0.07, 'shan': 0.05, 'xi': 0.035}[kind]
+    sp = {'cui': 0.058, 'jin': 0.08, 'shan': 0.056, 'xi': 0.04}[kind]
     s, alt = R(0, sp), 1
     while s < total:
         i = min(int(s / 0.03), n - 1); f = s / max(total, 1e-6)
@@ -137,10 +137,10 @@ def vine(g, pts, out, kind, spread=1.0, twig=True):
         k = (1.0 - 0.45 * f) * R(0.8, 1.2)
         d = (side * alt * R(0.6, 1.0) * spread + o * R(0.3, 0.7) - t * R(-0.1, 0.3) + Vector((R(-.2, .2), R(-.1, .2), R(-.2, .2)))).normalized()
         cb, ct = rnd.choice(lc); jit = R(0.85, 1.12); cb, ct = mul3(cb, jit), mul3(ct, jit)
-        if kind == 'cui': leaf(g, p, d, o + Vector((0, 0.4, 0)), 0.125 * k, 0.105 * k, rnd.choice(('ivy', 'ovate', 'heart')), cb, ct, 0.3, 0.3, 2)
-        elif kind == 'jin': leaf(g, p, d, o + Vector((0, 0.3, 0)), 0.09 * k, 0.034 * k, 'lance', cb, ct, 0.25, 0.2, 2)
-        elif kind == 'shan': leaf(g, p, d, o + Vector((0, 0.3, 0)), 0.1 * k, 0.046 * k, 'lance', cb, ct, 0.35, 0.3, 2)
-        else: leaf(g, p, d, o, 0.05 * k, 0.032 * k, 'ovate', cb, ct, 0.2, 0.15, 2)
+        if kind == 'cui': leaf(g, p, d, o + Vector((0, 0.4, 0)), 0.155 * k, 0.13 * k, rnd.choice(('ivy', 'ovate', 'heart')), cb, ct, 0.3, 0.3, 2)
+        elif kind == 'jin': leaf(g, p, d, o + Vector((0, 0.3, 0)), 0.11 * k, 0.042 * k, 'lance', cb, ct, 0.25, 0.2, 2)
+        elif kind == 'shan': leaf(g, p, d, o + Vector((0, 0.3, 0)), 0.125 * k, 0.056 * k, 'lance', cb, ct, 0.35, 0.3, 2)
+        else: leaf(g, p, d, o, 0.065 * k, 0.04 * k, 'ovate', cb, ct, 0.2, 0.15, 2)
         if kind == 'jin' and rnd.random() < 0.3:   # 花如金桂
             for _ in range(rnd.randint(4, 7)): ball(g, p + side * alt * 0.025 + Vector((R(-.02, .02), R(-.03, .01), R(-.02, .02))), R(0.004, 0.006), rnd.choice(GOLD), 0.7)
         alt = -alt; s += sp * R(0.8, 1.2)
@@ -172,7 +172,7 @@ def pick(w):
 # ------------------------------------------------------------------ 1. 院中藤蔓（烘在原位）
 V = Geo(); WR = (0.42, 0.14, 0.24, 0.20)
 for d in J['D']:   # 垂山巅、穿石隙（短的去掉一部分，控制面数）
-    if rnd.random() > (0.82 if len(d) >= 3 * 8 + 2 else 0.5): continue
+    if len(d) < 3 * 4 + 2 and rnd.random() < 0.3: continue   # 只略去一部分最短的
     dx, dz = d[0], d[1]; pts = [Vector((d[i], d[i + 1], d[i + 2])) for i in range(2, len(d), 3)]; o = Vector((dx, 0.0, dz))
     pts = [p + o * 0.03 for p in pts]; vine(V, pts, o, pick(WR))
     if len(pts) > 6 and rnd.random() < 0.15:
