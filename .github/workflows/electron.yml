@@ -1,0 +1,40 @@
+# 在 GitHub 的 Windows 机器上打包桌面版（electron/）。
+# 成品发到 Releases 的「桌面版（最新）」：下载 daguanyuan-win.zip，不用解压，直接上传云渲染平台（zip 最外层就是 daguanyuan.exe）。
+# 改了 electron/ 会自动打包；也可以在 Actions → 打包桌面版 → Run workflow 手动跑。
+name: 打包桌面版
+on:
+  push:
+    paths: ['electron/**', '.github/workflows/electron.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i
+        working-directory: electron
+      - run: npm run dist
+        working-directory: electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: 压成 zip（exe 在最外层）
+        shell: pwsh
+        run: |
+          Set-Location electron/dist/win-unpacked
+          7z a -tzip ../daguanyuan-win.zip * -r | Out-Null
+          Set-Location ..
+          $top = 7z l -slt daguanyuan-win.zip | Select-String '^Path = daguanyuan\.exe$'
+          if (-not $top) { throw 'zip 最外层没有 daguanyuan.exe' }
+          7z l daguanyuan-win.zip | Select-Object -First 30
+      - name: 发到 Releases
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete desktop-latest --yes --cleanup-tag 2>$null
+          gh release create desktop-latest electron/dist/daguanyuan-win.zip --target $env:GITHUB_SHA --title "桌面版（最新）" --notes "云渲染平台用：下载 daguanyuan-win.zip，不要解压，直接上传；执行文件 daguanyuan.exe。打包自 $env:GITHUB_SHA" --prerelease
