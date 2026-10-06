@@ -656,7 +656,7 @@ const BAKED_GAIN=0.6;  // .blend 的材质按 Blender 里的灯光调的；网�
    顶点、材质、阴影、图层原样照搬，画出来和不切完全一样 */
 function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const list=[];
  root.traverse(m=>{if(!m.isMesh||m.isInstancedMesh||m.isSkinnedMesh)return;const g=m.geometry;if(!g.index||g.morphAttributes.position||g.groups.length>1)return;
-  for(const k in g.attributes)if(g.attributes[k].isInterleavedBufferAttribute)return;if(g.index.count/3>=MINT)list.push(m);});
+  if(g.index.count/3>=MINT)list.push(m);});
  const v=new V3();
  for(const m of list){const g=m.geometry,I=g.index.array,P=g.attributes.position,nt=I.length/3,B=new Map();
   for(let t=0;t<nt;t++){let x=0,z=0;for(let j=0;j<3;j++){v.fromBufferAttribute(P,I[t*3+j]).applyMatrix4(m.matrixWorld);x+=v.x;z+=v.z;}
@@ -664,7 +664,8 @@ function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const li
   if(B.size<2)continue;
   for(const tris of B.values()){const remap=new Map(),idx=[];for(const t of tris)for(let j=0;j<3;j++){const o=I[t*3+j];let n=remap.get(o);if(n===undefined){n=remap.size;remap.set(o,n);}idx.push(n);}
    const ng=new THREE.BufferGeometry(),olds=[...remap.keys()];
-   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,arr=new a.array.constructor(olds.length*sz);for(let i=0;i<olds.length;i++)for(let c=0;c<sz;c++)arr[i*sz+c]=a.array[olds[i]*sz+c];ng.setAttribute(k,new THREE.BufferAttribute(arr,sz,a.normalized));}
+   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,il=a.isInterleavedBufferAttribute,src=il?a.data.array:a.array,st=il?a.data.stride:sz,of=il?a.offset:0,arr=new src.constructor(olds.length*sz);  // 量化顶点（int16/int8）常是交错存放：按 stride/offset 取原始值，照原类型、原 normalized 存成普通属性
+    for(let i=0;i<olds.length;i++){const b0=olds[i]*st+of;for(let c=0;c<sz;c++)arr[i*sz+c]=src[b0+c];}ng.setAttribute(k,new THREE.BufferAttribute(arr,sz,a.normalized));}
    ng.setIndex(new THREE.BufferAttribute(olds.length>65535?new Uint32Array(idx):new Uint16Array(idx),1));ng.computeBoundingSphere();ng.computeBoundingBox();
    const c=new THREE.Mesh(ng,m.material);c.name=m.name;c.position.copy(m.position);c.quaternion.copy(m.quaternion);c.scale.copy(m.scale);
    c.castShadow=m.castShadow;c.receiveShadow=m.receiveShadow;c.visible=m.visible;c.layers.mask=m.layers.mask;c.renderOrder=m.renderOrder;c.frustumCulled=m.frustumCulled;
@@ -672,7 +673,7 @@ function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const li
   m.parent.remove(m);g.dispose();}}
 /* 手机上：模型传进显卡后就丢掉内存里那份顶点数组（three.js 默认两边各存一份），院落模型不再在手机上占双份内存而闪退 */
 function freeOnUpload(root){const f=function(){this.array=null;};root.traverse(m=>{if(!m.isMesh)return;const g=m.geometry;if(g.userData.free)return;g.userData.free=1;
- if(!g.boundingSphere)g.computeBoundingSphere();if(!g.boundingBox)g.computeBoundingBox();for(const k in g.attributes){const a=g.attributes[k];if(!a.isInterleavedBufferAttribute)a.onUpload(f);}if(g.index)g.index.onUpload(f);});}
+ if(!g.boundingSphere)g.computeBoundingSphere();if(!g.boundingBox)g.computeBoundingBox();for(const k in g.attributes){const a=g.attributes[k];(a.isInterleavedBufferAttribute?a.data:a).onUpload(f);}if(g.index)g.index.onUpload(f);});}
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);for(const t of['yh','hw'])try{BAKED[t]=await (await fetch('tex/bk_'+t+'.json')).json();}catch(e){console.warn('bk',t,e);}let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
