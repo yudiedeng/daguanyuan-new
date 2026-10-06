@@ -2738,7 +2738,8 @@ diagWrap(renderer.shadowMap,'render',()=>'阴影');
 /* 逐次绘制计时（只在诊断时）：按「院落/物件 · 材质」汇总每次绘制的 CPU 时间，找出哪类东西每画一次特别贵 */
 const DRAW={};const _BID=new Map();
 {const f0=renderer.renderBufferDirect.bind(renderer);renderer.renderBufferDirect=function(cam,sc,geo,mat,obj,grp){if(!DIAG.on)return f0(cam,sc,geo,mat,obj,grp);const t0=performance.now();try{return f0(cam,sc,geo,mat,obj,grp);}finally{
- const dt=performance.now()-t0;let k=_BID.get(obj);if(k===undefined){let p=obj,b='';while(p){const B=BLD.find(x=>x.root===p);if(B){b=B.id;break;}p=p.parent;}k=(b||obj.name||obj.type)+' · '+(mat.name||mat.type)+(obj.isInstancedMesh?' (实例)':'');_BID.set(obj,k);}
+ const dt=performance.now()-t0;let k=_BID.get(obj);if(k===undefined){let p=obj,b='';while(p){const B=BLD.find(x=>x.root===p);if(B){b=B.id;break;}p=p.parent;}let un='';for(const an in geo.attributes){const a=geo.attributes[an],st=(a.isInterleavedBufferAttribute?a.data.stride:a.itemSize)*a.array.BYTES_PER_ELEMENT;if(st%4)un+=' 未对齐:'+an+'/'+a.array.constructor.name.replace('Array','')+'x'+a.itemSize;}
+  k=(b||obj.name||obj.type)+' · '+(mat.name||mat.type)+(obj.isInstancedMesh?' (实例'+(obj.geometry.attributes.position?.count||0)+'顶点)':'')+un;_BID.set(obj,k);}
  const pass=cam===camera?'主':'倒影';const e=DRAW[k]??={n:0,ms:0,主:0,倒影:0};e.n++;e.ms+=dt;e[pass]+=dt;}};}
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
  {let nObj=0,nMesh=0,nLight=0,nSh=0;scene.traverse(o=>{nObj++;if(o.isMesh)nMesh++;if(o.isLight){nLight++;if(o.castShadow)nSh++;}});const mats=new Set();scene.traverse(o=>{if(o.isMesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m));});
