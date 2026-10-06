@@ -2645,7 +2645,7 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 const AT={max:RS,t:0,low:0,high:0};
 function autoTune(fps){if(document.hidden)return;AT.t+=0.5;if(AT.t<2)return;
  AT.low=fps<30?AT.low+1:0;AT.high=fps>50?AT.high+1:0;let r=RS;
- if(AT.low>=4&&RS>0.75){r=Math.max(0.75,Math.round((RS-0.25)*100)/100);AT.low=0;}
+ if((AT.low>=4||(fps<15&&AT.low>=2))&&RS>0.75){r=Math.max(0.75,Math.round((RS-(fps<15?0.5:0.25))*100)/100);AT.low=0;}  // 很卡（<15 帧）时 1 s 内一次降两档
  else if(AT.high>=10&&RS<AT.max){r=Math.min(AT.max,Math.round((RS+0.25)*100)/100);AT.high=0;}
  if(r!==RS){RS=r;rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';setResolution(RS);}}
 const clock=new THREE.Clock(),pv=new V3();let ftAcc=0,ftN=0,drTimer=0;const fpsEl=document.getElementById('fps');
