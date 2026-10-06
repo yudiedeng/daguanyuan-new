@@ -2683,7 +2683,7 @@ document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
 let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
-document.getElementById('fps-st').addEventListener('click',()=>{DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
+document.getElementById('fps-st').addEventListener('click',()=>{PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);AT.max=RS;AT.lock=true;AT.low=AT.high=0;rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
 let DREAM=1;try{DREAM=localStorage.getItem('dgy-dream')==='0'?0:1;}catch(e){}
@@ -2718,13 +2718,18 @@ let XXK=0,HEMI0=0.5;
 /* 卡顿诊断明细：点设置面板帧率下那行小字，统计 20 帧里每一遍绘制（主画面、阴影、水面倒影、后期）各画了多少次、多少面，
    再按院落/物件分组列出可见的面数，结果显示在下面，可整段复制。平时不统计，不占性能 */
 const DIAG={on:false,n:0,acc:{},stack:[]};
-function diagWrap(obj,fn,keyOf){const f0=obj[fn].bind(obj);obj[fn]=function(...a){if(!DIAG.on)return f0(...a);const ri=renderer.info.render,c0=ri.calls,t0=ri.triangles;DIAG.stack.push([0,0]);
- try{return f0(...a);}finally{const ch=DIAG.stack.pop(),dc=ri.calls-c0,dt=ri.triangles-t0,up=DIAG.stack[DIAG.stack.length-1];if(up){up[0]+=dc;up[1]+=dt;}
-  const k=keyOf(...a),e=DIAG.acc[k]??=[0,0,0];e[0]+=dc-ch[0];e[1]+=dt-ch[1];e[2]++;}};}
+function diagWrap(obj,fn,keyOf){const f0=obj[fn].bind(obj);obj[fn]=function(...a){if(!DIAG.on)return f0(...a);const ri=renderer.info.render,c0=ri.calls,t0=ri.triangles,m0=performance.now();DIAG.stack.push([0,0,0]);
+ try{return f0(...a);}finally{const ch=DIAG.stack.pop(),dc=ri.calls-c0,dt=ri.triangles-t0,dm=performance.now()-m0,up=DIAG.stack[DIAG.stack.length-1];if(up){up[0]+=dc;up[1]+=dt;up[2]+=dm;}
+  const k=keyOf(...a),e=DIAG.acc[k]??=[0,0,0,0];e[0]+=dc-ch[0];e[1]+=dt-ch[1];e[2]++;e[3]=(e[3]||0)+dm-ch[2];}};}
+/* 每帧耗时分解（同样只在点诊断时统计）：各更新函数、各遍绘制的 CPU 毫秒，页面里所有 requestAnimationFrame 回调（含 game.js）的耗时，以及帧间隔 */
+const PROF={t:{},iv:0,last:0};
+function tw(name,f){if(typeof f!=='function'||f.__tw)return f;const w=function(...a){if(!DIAG.on)return f.apply(this,a);const t0=performance.now();try{return f.apply(this,a);}finally{PROF.t[name]=(PROF.t[name]||0)+performance.now()-t0;}};w.__tw=1;return w;}
+{const _raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>_raf(ts=>{if(!DIAG.on)return cb(ts);const t0=performance.now();try{cb(ts);}finally{const k='回调 '+(cb.name||'匿名');PROF.t[k]=(PROF.t[k]||0)+performance.now()-t0;}});}
 diagWrap(renderer,'render',(sc,cam)=>cam===camera?'主画面':cam.isOrthographicCamera?'后期':'倒影 '+(REFLTAG||cam.name||'其他'));
 diagWrap(renderer.shadowMap,'render',()=>'阴影');
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
- L.push('【每帧各遍】');for(const [k,[c,t,n]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍');
+ L.push('【每帧耗时】帧间隔 '+(PROF.iv/N).toFixed(0)+' ms');for(const [k,v] of Object.entries(PROF.t).sort((a,b)=>b[1]-a[1]).slice(0,18))L.push(k+'：'+(v/N).toFixed(1)+' ms');
+ L.push('【每帧各遍】');for(const [k,[c,t,n,ms]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍 · CPU '+((ms||0)/N).toFixed(1)+' ms');
  const BID=new Map(BLD.map(b=>[b.root,b.id])),grp={};
  const key=o=>{let p=o;while(p){if(BID.has(p))return '楼:'+BID.get(p);if(p.parent===scene||p.parent===BROOT){const mt=Array.isArray(o.material)?o.material[0]:o.material;return (p.name||p.type)+'#'+p.id+'['+(mt?.name||mt?.type||'')+(o.isInstancedMesh?' 实例'+o.count:'')+(o.layers.mask!==1?' 层'+o.layers.mask:'')+']';}p=p.parent;}return '?';};
  const vis=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};
@@ -2734,6 +2739,7 @@ function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Mat
  for(const [k,e] of Object.entries(grp).sort((a,b)=>b[1].t-a[1].t).slice(0,25))L.push(k+'：'+(e.t/1e6).toFixed(2)+'M · '+e.m+' · '+(e.sh/1e6).toFixed(2)+'M · '+(e.nc/1e6).toFixed(2)+'M');
  L.push('相机 '+camera.position.toArray().map(v=>v.toFixed(0)).join(',')+' · '+innerWidth+'×'+innerHeight+' · dpr '+devicePixelRatio);
  const el=document.getElementById('fps-diag');el.hidden=false;el.textContent=L.join('\n');console.log(L.join('\n'));}
+try{updateWalk=tw('updateWalk',updateWalk);}catch(e){}try{updateGrass=tw('updateGrass',updateGrass);}catch(e){}try{updateFlora=tw('updateFlora',updateFlora);}catch(e){}try{layoutLOD=tw('layoutLOD',layoutLOD);}catch(e){}try{lodUpdate=tw('lodUpdate',lodUpdate);}catch(e){}try{updateAudio=tw('updateAudio',updateAudio);}catch(e){}try{updateSunShadow=tw('updateSunShadow',updateSunShadow);}catch(e){}try{updateInteriorLight=tw('updateInteriorLight',updateInteriorLight);}catch(e){}try{updateMirrors=tw('updateMirrors',updateMirrors);}catch(e){}try{updateHuaxu=tw('updateHuaxu',updateHuaxu);}catch(e){}try{updatePoultry=tw('updatePoultry',updatePoultry);}catch(e){}try{updateEnv=tw('updateEnv',updateEnv);}catch(e){}try{applyTime=tw('applyTime',applyTime);}catch(e){}try{smallToL2=tw('smallToL2',smallToL2);}catch(e){}try{updatePointLights=tw('updatePointLights',updatePointLights);}catch(e){}try{autoTune=tw('autoTune',autoTune);}catch(e){}
 function frame(){FRAMEN++;
  renderer.info.reset();
  const raw=clock.getDelta(),dt=Math.min(raw,0.05),et=clock.elapsedTime;G.time.value=et;
@@ -2776,7 +2782,7 @@ function frame(){FRAMEN++;
  {const XQ=Z.xiaoxiang,c=camera.position,d=Math.hypot(Math.max(Math.abs(c.x-XQ.x)-XQ.hw,0),Math.max(Math.abs(c.z-XQ.z)-XQ.hd,0)),k=(1-sstep(0,6,d))*(1-sstep(6,30,c.y-XQ.y));XXK+=(k-XXK)*(1-Math.exp(-dt/1.2));fogPass.uniforms.grade.value.setRGB(1-0.12*XXK,1-0.08*XXK,1-0.02*XXK);
   // 院里：色彩收一收（饱和度、对比度降），接触阴影加重，天光补光加大让竹荫的光斑不那么硬
   fogPass.uniforms.sat.value=(DREAM?1.04:0.98)*(1-0.17*XXK);fogPass.uniforms.contrast.value=1.12-0.1*XXK;fogPass.uniforms.aoK.value=1+0.9*XXK;hemi.intensity=HEMI0*(1+0.45*XXK);}
- lodUpdate(); renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
+ lodUpdate(); renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}if(DIAG.on){const now=performance.now();if(PROF.last)PROF.iv+=now-PROF.last;PROF.last=now;}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
  // dynamic resolution
  ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+' · 远景 '+BLD.filter(b=>b.lo).length+'座/在用 '+BLD.filter(b=>b.lo&&b.lo.visible).length+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
  requestAnimationFrame(frame);}
