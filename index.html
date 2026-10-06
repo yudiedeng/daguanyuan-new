@@ -666,8 +666,11 @@ function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const li
   if(B.size<2)continue;
   for(const tris of B.values()){const remap=new Map(),idx=[];for(const t of tris)for(let j=0;j<3;j++){const o=I[t*3+j];let n=remap.get(o);if(n===undefined){n=remap.size;remap.set(o,n);}idx.push(n);}
    const ng=new THREE.BufferGeometry(),olds=[...remap.keys()];
-   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,il=a.isInterleavedBufferAttribute,src=il?a.data.array:a.array,st=il?a.data.stride:sz,of=il?a.offset:0,arr=new src.constructor(olds.length*sz);  // 量化顶点（int16/int8）常是交错存放：按 stride/offset 取原始值，照原类型、原 normalized 存成普通属性
-    for(let i=0;i<olds.length;i++){const b0=olds[i]*st+of;for(let c=0;c<sz;c++)arr[i*sz+c]=src[b0+c];}ng.setAttribute(k,new THREE.BufferAttribute(arr,sz,a.normalized));}
+   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,il=a.isInterleavedBufferAttribute,src=il?a.data.array:a.array,st=il?a.data.stride:sz,of=il?a.offset:0;
+    // 量化顶点（int16/int8）原是交错存放、每个顶点补齐到 4 字节；照样补齐（stride 取 4 字节倍数），否则 Mac（Metal）每次绘制都要先把整块顶点转一遍
+    const B=src.BYTES_PER_ELEMENT,ps=Math.ceil(sz*B/4)*4/B,arr=new src.constructor(olds.length*ps);
+    for(let i=0;i<olds.length;i++){const b0=olds[i]*st+of;for(let c=0;c<sz;c++)arr[i*ps+c]=src[b0+c];}
+    ng.setAttribute(k,ps===sz?new THREE.BufferAttribute(arr,sz,a.normalized):new THREE.InterleavedBufferAttribute(new THREE.InterleavedBuffer(arr,ps),sz,0,a.normalized));}
    ng.setIndex(new THREE.BufferAttribute(olds.length>65535?new Uint32Array(idx):new Uint16Array(idx),1));ng.computeBoundingSphere();ng.computeBoundingBox();
    const c=new THREE.Mesh(ng,m.material);c.name=m.name;c.position.copy(m.position);c.quaternion.copy(m.quaternion);c.scale.copy(m.scale);
    c.castShadow=m.castShadow;c.receiveShadow=m.receiveShadow;c.visible=m.visible;c.layers.mask=m.layers.mask;c.renderOrder=m.renderOrder;c.frustumCulled=m.frustumCulled;
@@ -999,12 +1002,15 @@ function lodUpdate(){const c=camera.position;for(const b of BLD){if(!b.lo)contin
 const lodAll=on=>{const st=[];for(const b of BLD)if(b.lo){st.push([b,b.hi.visible]);b.hi.visible=!on;b.lo.visible=on;}return st;};  // 湖面、清溪的倒影/折射里一律用简化版（水波一晃看不出差别）
 /* 湖面、清溪轮流更新倒影：单数帧更湖面、双数帧更清溪，各自隔一帧重渲一次（水波一直在晃，晚一帧看不出），倒影的绘制次数减半。alt：0/1 轮到哪帧 */
 let FRAMEN=0;
+/* 借湖面倒影贴图的水面（潇湘馆泉沟、清溪自绘水面）：湖面渲倒影时先藏起来——不然它们一边被画进那张贴图、一边又读那张贴图（反馈回路），浏览器会为每次绘制做额外的同步/拷贝，湖面这一遍每次绘制慢了近十倍 */
+const MIRUSERS=[];
 let REFL=0,REFLTAG='';function reflGuard(o,tag,near=0,alt=null){const f=o.onBeforeRender;o.onBeforeRender=function(...a){if(REFL>0)return;
  if(alt!==null&&(FRAMEN&1)!==alt&&this.userData.rgOnce)return;this.userData.rgOnce=1;const hid=[];
  if(near&&this.geometry){if(!this.geometry.boundingSphere)this.geometry.computeBoundingSphere();_rgs.copy(this.geometry.boundingSphere).applyMatrix4(this.matrixWorld);
   const cp=camera.position;for(const b of BLD){const r=b.root;if(!r.visible)continue;const bs=bldSphere(r);if(bs.center.distanceTo(_rgs.center)-bs.radius-_rgs.radius>near||bs.center.distanceTo(cp)-bs.radius>near){r.visible=false;hid.push(r);}}}  // 离水面或离人超过 near 的院落都跳过（清溪长，单看离水面几乎筛不掉）
  const lst=this.isWater||tag==='清溪'||tag==='湖面'?lodAll(true):null;
- REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';for(const r of hid)r.visible=true;if(lst)for(const [b,h] of lst){b.hi.visible=h;b.lo.visible=!h;}}};}
+ const mu=tag==='湖面'?MIRUSERS.map(m=>{const v=m.visible;m.visible=false;return [m,v];}):null;
+ REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';for(const r of hid)r.visible=true;if(lst)for(const [b,h] of lst){b.hi.visible=h;b.lo.visible=!h;}if(mu)for(const [m,v] of mu)m.visible=v;}};}
 let LAMP=0;const MIRRORS=[];const _mv=new V3(),_mn=new V3();
 const _mfr=new THREE.Frustum(),_mpm=new THREE.Matrix4(),_msp=new THREE.Sphere();
 function updateMirrors(){if(!MIRRORS.length)return;camera.updateMatrixWorld();_mfr.setFromProjectionMatrix(_mpm.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
@@ -1741,12 +1747,12 @@ function buildRill(){const OX=-82+MV.xiaoxiang[0],OZ=27+MV.xiaoxiang[1],W=0.28; 
     float foam=clamp(rf*smoothstep(0.55,0.85,n3*0.7+n4*0.5)*0.8+fall*smoothstep(0.35,0.7,n3+0.2)+smoothstep(0.86,1.0,abs(c))*smoothstep(0.6,0.8,n4)*0.5,0.0,1.0);
     vec3 col=mix(under,refl,fr)+gSunCol*spec*0.35;col=mix(col,vec3(0.82,0.88,0.86)*L,foam*0.85);
     gl_FragColor=vec4(col,1.0);}`});
- const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;scene.add(mesh);
+ const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;scene.add(mesh);MIRUSERS.push(mesh);
  // 小瀑布：每级承水石上一汪翻花的浅水（与泉沟同一材质，标成跌水段），唇口间挂下的水帘，落水处溅水珠
  {const ppos=[],pF=[],pT=[],pidx=[];const pool=(d0,d1,h,hw,sd)=>{const b=ppos.length/3;for(const d of[d0,d1])for(const c of[-1,1]){const [x,z]=fat(d,sd+c*hw);ppos.push(OX+x,GY+h,OZ+z);pF.push(-0.4-d,c,hw);pT.push(FD[0],FD[1]);}pidx.push(b,b+1,b+2,b+1,b+3,b+2);};
   pool(0.1,FLIPS[0][0],FLIPS[0][1],0.1,FLIPS[0][2]);pool(FLIPS[0][0]+0.1,FLIPS[1][0],FLIPS[1][1],0.15,FLIPS[1][2]);pool(FLIPS[1][0]+0.1,FLIPS[2][0],FLIPS[2][1],0.19,FLIPS[2][2]);
   const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(ppos,3));pg.setAttribute('aF',new THREE.Float32BufferAttribute(pF,3));pg.setAttribute('aT',new THREE.Float32BufferAttribute(pT,2));pg.setIndex(pidx);
-  const pm=new THREE.Mesh(pg,m);pm.frustumCulled=false;scene.add(pm);
+  const pm=new THREE.Mesh(pg,m);pm.frustumCulled=false;scene.add(pm);MIRUSERS.push(pm);
   // 水帘：从唇口抛出、抛物线落下，横 5 段、竖 10 段
   const spos=[],suv=[],sidx=[];const sheet=(d0,h0,d1,h1,hw,sd0,sd1)=>{const b=spos.length/3,NV=10,NU=4;for(let j=0;j<=NV;j++){const t=j/NV,d=d0+(d1-d0)*Math.sqrt(t),h=h0+(h1-h0)*t*t,w=hw*(1+0.25*t);
     for(let k=0;k<=NU;k++){const c=k/NU*2-1;const [x,z]=fat(d,sd0+(sd1-sd0)*t+c*w);spos.push(OX+x,GY+h+0.01*(1-t),OZ+z);suv.push(c,t*(h0-h1));}}
@@ -2313,9 +2319,9 @@ function buildQinfangFX(){
      if(r<0.16*pet){vec2 o=(vec2(h21(id+3.1),h21(id+7.7))-0.5)*0.6;float an=r*40.0+t*0.4;vec2 d=f-o;d=mat2(cos(an),-sin(an),sin(an),cos(an))*d;petal=smoothstep(0.075,0.05,length(d*vec2(1.0,1.7)))*smoothstep(0.95,0.7,abs(c));}
      col=mix(col,petCol*(0.6+0.4*r*6.0)*L*0.8,petal);alpha=max(alpha,petal);}
     gl_FragColor=vec4(col,alpha);}`});
- const water_=new THREE.Mesh(gw,wm);water_.renderOrder=2;water_.frustumCulled=false;water_.name='清溪';scene.add(water_);
+ const water_=new THREE.Mesh(gw,wm);water_.renderOrder=2;water_.frustumCulled=false;water_.name='清溪';scene.add(water_);MIRUSERS.push(water_);
  let w2=null,wSeg=null;
- if(seg){const gs=gw.clone();gs.setIndex(wiS);wSeg=new THREE.Mesh(gs,wm);wSeg.renderOrder=2;wSeg.frustumCulled=false;scene.add(wSeg);/* 低画质或走远时用回自绘水面 */
+ if(seg){const gs=gw.clone();gs.setIndex(wiS);wSeg=new THREE.Mesh(gs,wm);wSeg.renderOrder=2;wSeg.frustumCulled=false;scene.add(wSeg);MIRUSERS.push(wSeg);/* 低画质或走远时用回自绘水面 */
   try{let y0=0;for(let j=seg[0];j<seg[1];j++)y0+=rows[j].y/(seg[1]-seg[0]);const P=[],U=[],I=[];
    for(let j=seg[0];j<seg[1];j++){const r=rows[j];for(const c of CN){P.push(r.x-r.tz*W*c,-(r.z+r.tx*W*c),0);U.push(c*W,r.S);}
     if(j>seg[0]){const k=(j-1-seg[0])*nc;for(let m=0;m<nc-1;m++)I.push(k+m,k+m+1,k+m+nc,k+m+1,k+m+nc+1,k+m+nc);}}
@@ -2719,7 +2725,7 @@ document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
 let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
-document.getElementById('fps-st').addEventListener('click',()=>{PROF.prog=renderer.info.programs.length;PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
+document.getElementById('fps-st').addEventListener('click',()=>{for(const k in DRAW)delete DRAW[k];PROF.prog=renderer.info.programs.length;PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);AT.max=RS;AT.lock=true;AT.low=AT.high=0;rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
 let DREAM=1;try{DREAM=localStorage.getItem('dgy-dream')==='0'?0:1;}catch(e){}
@@ -2763,10 +2769,17 @@ function tw(name,f){if(typeof f!=='function'||f.__tw)return f;const w=function(.
 {const _raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>_raf(ts=>{if(!DIAG.on)return cb(ts);const t0=performance.now();try{cb(ts);}finally{const k='回调 '+(cb.name||'匿名');PROF.t[k]=(PROF.t[k]||0)+performance.now()-t0;}});}
 diagWrap(renderer,'render',(sc,cam)=>cam===camera?'主画面':cam.isOrthographicCamera?'后期':'倒影 '+(REFLTAG||cam.name||'其他'));
 diagWrap(renderer.shadowMap,'render',()=>'阴影');
+/* 逐次绘制计时（只在诊断时）：按「院落/物件 · 材质」汇总每次绘制的 CPU 时间，找出哪类东西每画一次特别贵 */
+const DRAW={};const _BID=new Map();
+{const f0=renderer.renderBufferDirect.bind(renderer);renderer.renderBufferDirect=function(cam,sc,geo,mat,obj,grp){if(!DIAG.on)return f0(cam,sc,geo,mat,obj,grp);const t0=performance.now();try{return f0(cam,sc,geo,mat,obj,grp);}finally{
+ const dt=performance.now()-t0;let k=_BID.get(obj);if(k===undefined){let p=obj,b='';while(p){const B=BLD.find(x=>x.root===p);if(B){b=B.id;break;}p=p.parent;}let un='';for(const an in geo.attributes){const a=geo.attributes[an],st=(a.isInterleavedBufferAttribute?a.data.stride:a.itemSize)*a.array.BYTES_PER_ELEMENT;if(st%4)un+=' 未对齐:'+an+'/'+a.array.constructor.name.replace('Array','')+'x'+a.itemSize;}
+  k=(b||obj.name||obj.type)+' · '+(mat.name||mat.type)+(obj.isInstancedMesh?' (实例'+(obj.geometry.attributes.position?.count||0)+'顶点)':'')+un;_BID.set(obj,k);}
+ const pass=cam===camera?'主':'倒影';const e=DRAW[k]??={n:0,ms:0,主:0,倒影:0};e.n++;e.ms+=dt;e[pass]+=dt;}};}
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
  {let nObj=0,nMesh=0,nLight=0,nSh=0;scene.traverse(o=>{nObj++;if(o.isMesh)nMesh++;if(o.isLight){nLight++;if(o.castShadow)nSh++;}});const mats=new Set();scene.traverse(o=>{if(o.isMesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m));});
   L.push('【场景】物体 '+nObj+' · 网格 '+nMesh+' · 材质 '+mats.size+' · 灯 '+nLight+'（投影 '+nSh+'） · 着色器程序 '+renderer.info.programs.length+'（统计期间新增 '+(renderer.info.programs.length-PROF.prog)+'）');}
  L.push('【每帧耗时】帧间隔 '+(PROF.iv/N).toFixed(0)+' ms');for(const [k,v] of Object.entries(PROF.t).sort((a,b)=>b[1]-a[1]).slice(0,18))L.push(k+'：'+(v/N).toFixed(1)+' ms');
+ L.push('【最贵的绘制】（每帧毫秒 · 每帧次数 · 每次微秒）');for(const [k,e] of Object.entries(DRAW).sort((a,b)=>b[1].ms-a[1].ms).slice(0,20))L.push(k+'：'+(e.ms/N).toFixed(1)+' ms · '+Math.round(e.n/N)+' 次 · '+(e.ms/e.n*1000).toFixed(0)+' µs');
  L.push('【每帧各遍】');for(const [k,[c,t,n,ms]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍 · CPU '+((ms||0)/N).toFixed(1)+' ms');
  const BID=new Map(BLD.map(b=>[b.root,b.id])),grp={};
  const key=o=>{let p=o;while(p){if(BID.has(p))return '楼:'+BID.get(p);if(p.parent===scene||p.parent===BROOT){const mt=Array.isArray(o.material)?o.material[0]:o.material;return (p.name||p.type)+'#'+p.id+'['+(mt?.name||mt?.type||'')+(o.isInstancedMesh?' 实例'+o.count:'')+(o.layers.mask!==1?' 层'+o.layers.mask:'')+']';}p=p.parent;}return '?';};
@@ -2778,6 +2791,16 @@ function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Mat
  L.push('相机 '+camera.position.toArray().map(v=>v.toFixed(0)).join(',')+' · '+innerWidth+'×'+innerHeight+' · dpr '+devicePixelRatio);
  const el=document.getElementById('fps-diag');el.hidden=false;el.textContent=L.join('\n');console.log(L.join('\n'));}
 try{updateWalk=tw('updateWalk',updateWalk);}catch(e){}try{updateGrass=tw('updateGrass',updateGrass);}catch(e){}try{updateFlora=tw('updateFlora',updateFlora);}catch(e){}try{layoutLOD=tw('layoutLOD',layoutLOD);}catch(e){}try{lodUpdate=tw('lodUpdate',lodUpdate);}catch(e){}try{updateAudio=tw('updateAudio',updateAudio);}catch(e){}try{updateSunShadow=tw('updateSunShadow',updateSunShadow);}catch(e){}try{updateInteriorLight=tw('updateInteriorLight',updateInteriorLight);}catch(e){}try{updateMirrors=tw('updateMirrors',updateMirrors);}catch(e){}try{updateHuaxu=tw('updateHuaxu',updateHuaxu);}catch(e){}try{updatePoultry=tw('updatePoultry',updatePoultry);}catch(e){}try{updateEnv=tw('updateEnv',updateEnv);}catch(e){}try{applyTime=tw('applyTime',applyTime);}catch(e){}try{smallToL2=tw('smallToL2',smallToL2);}catch(e){}try{updatePointLights=tw('updatePointLights',updatePointLights);}catch(e){}try{autoTune=tw('autoTune',autoTune);}catch(e){}
+/* 测试开关：网址加 ?off=water,stream,trees,flora,bld,shadow,grass（任选几项，逗号分隔）临时关掉这些，看帧率涨多少，好知道哪一类最费显卡 */
+const OFF=new Set((new URLSearchParams(location.search).get('off')||'').split(',').filter(Boolean));
+function applyOff(){if(!OFF.size)return;
+ if(OFF.has('water')&&water){water.visible=false;if(waterLow)waterLow.visible=true;}
+ if(OFF.has('stream')){if(w2)w2.visible=false;}
+ if(OFF.has('trees'))for(const g of TG)for(const e of [...g.near,...g.far])e.m.visible=false;
+ if(OFF.has('flora')&&FLORA.meshes)for(const m of FLORA.meshes)m.visible=false;
+ if(OFF.has('bld'))BROOT.visible=false;
+ if(OFF.has('shadow'))sun.castShadow=false;
+ if(OFF.has('grass')&&GRASS.mesh)GRASS.mesh.visible=false;}
 const sceneMatrices=tw('矩阵更新',()=>scene.updateMatrixWorld());
 function frame(){FRAMEN++;
  renderer.info.reset();
@@ -2821,9 +2844,9 @@ function frame(){FRAMEN++;
  {const XQ=Z.xiaoxiang,c=camera.position,d=Math.hypot(Math.max(Math.abs(c.x-XQ.x)-XQ.hw,0),Math.max(Math.abs(c.z-XQ.z)-XQ.hd,0)),k=(1-sstep(0,6,d))*(1-sstep(6,30,c.y-XQ.y));XXK+=(k-XXK)*(1-Math.exp(-dt/1.2));fogPass.uniforms.grade.value.setRGB(1-0.12*XXK,1-0.08*XXK,1-0.02*XXK);
   // 院里：色彩收一收（饱和度、对比度降），接触阴影加重，天光补光加大让竹荫的光斑不那么硬
   fogPass.uniforms.sat.value=(DREAM?1.04:0.98)*(1-0.17*XXK);fogPass.uniforms.contrast.value=1.12-0.1*XXK;fogPass.uniforms.aoK.value=1+0.9*XXK;hemi.intensity=HEMI0*(1+0.45*XXK);}
- lodUpdate(); renderer.shadowMap.needsUpdate=true;sceneMatrices();renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}if(DIAG.on){const now=performance.now();if(PROF.last)PROF.iv+=now-PROF.last;PROF.last=now;}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
+ applyOff(); lodUpdate(); renderer.shadowMap.needsUpdate=true;sceneMatrices();renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}if(DIAG.on){const now=performance.now();if(PROF.last)PROF.iv+=now-PROF.last;PROF.last=now;}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
  // dynamic resolution
- ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+' · 远景 '+BLD.filter(b=>b.lo).length+'座/在用 '+BLD.filter(b=>b.lo&&b.lo.visible).length+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
+ ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+(OFF.size?' · 关:'+[...OFF].join(','):'')+' · 远景 '+BLD.filter(b=>b.lo).length+'座/在用 '+BLD.filter(b=>b.lo&&b.lo.visible).length+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
  requestAnimationFrame(frame);}
 
 /* =====================================================================
