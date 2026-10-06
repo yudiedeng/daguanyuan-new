@@ -2714,7 +2714,7 @@ diagWrap(renderer.shadowMap,'render',()=>'阴影');
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
  L.push('【每帧各遍】');for(const [k,[c,t,n]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍');
  const BID=new Map(BLD.map(b=>[b.root,b.id])),grp={};
- const key=o=>{let p=o;while(p){if(BID.has(p))return '楼:'+BID.get(p);if(p.parent===scene||p.parent===BROOT)return (p.name||p.type)+'#'+p.id;p=p.parent;}return '?';};
+ const key=o=>{let p=o;while(p){if(BID.has(p))return '楼:'+BID.get(p);if(p.parent===scene||p.parent===BROOT){const mt=Array.isArray(o.material)?o.material[0]:o.material;return (p.name||p.type)+'#'+p.id+'['+(mt?.name||mt?.type||'')+(o.isInstancedMesh?' 实例'+o.count:'')+(o.layers.mask!==1?' 层'+o.layers.mask:'')+']';}p=p.parent;}return '?';};
  const vis=o=>{for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};
  scene.traverse(o=>{if(!o.isMesh||!vis(o))return;const gm=o.geometry,t=((gm.index?gm.index.count:gm.attributes.position?.count||0)/3)*(o.isInstancedMesh?o.count:1);
   const e=grp[key(o)]??={t:0,m:0,sh:0,nc:0};e.t+=t;e.m++;if(o.castShadow)e.sh+=t;if(!o.frustumCulled)e.nc+=t;});
