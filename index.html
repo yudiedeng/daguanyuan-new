@@ -1393,7 +1393,12 @@ function pondRail(){if(!QINFANG)return;const qx=QINFANG.x,qz=QINFANG.z;const cr=
       if(isWet(hi,z)){for(let xx=hi;xx>=lo;xx-=0.25)if(!isWet(xx,z)){xs=xx-0.9;break;}}else if(isWet(lo,z)){for(let xx=lo;xx<=hi;xx+=0.25)if(!isWet(xx,z)){xs=xx+0.9;break;}}
       if(xs!==null&&height(xs,z)>0.3&&height(xs,z)<2.2&&!nearPath(xs,z,1.8))P.push([xs,z]);}
      P.push([x,bz]);for(let i=1;i<P.length;i++)if(Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1])<3.6)railSeg(P[i-1],P[i]);}}
-   prev=[x,bz];}}}
+   prev=[x,bz];}}
+ /* 桥头四角：桥模型自带的翼墙栏板沿岸伸到局部 (±5.9, ±8.5) 就停了，从那里接一段到池岸栏杆最近的一根望柱，栏杆才连成一圈 */
+ const ends=RAILSEG.flatMap(([ax,az,bx,bz])=>[[ax,az],[bx,bz]]);
+ for(const lx of[-5.9,5.9])for(const lz of[-8.5,8.5]){const wx=qx+lx*cr+lz*sr,wz=qz-lx*sr+lz*cr;let best=null,bd=6.5;
+  for(const e of ends){const d=Math.hypot(e[0]-wx,e[1]-wz);if(d<bd&&!inHead(e[0],e[1])){bd=d;best=e;}}
+  if(best&&bd>0.3){RAILSEG.push([wx,wz,best[0],best[1]]);balustrade(T(0,0,0),wx,wz,best[0],best[1],Math.min(height(wx,wz),height(best[0],best[1])));}}}
 function bridge(a,b,type){const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,L=Math.hypot(b[0]-a[0],b[1]-a[1])+2,ry=Math.atan2(b[0]-a[0],b[1]-a[1]),M=T(cx,0,cz,ry);BRIDGES.push({x:cx,z:cz,L,ry,type});
  if(type==='arch'){const A=Math.min(2.8,L*0.16),W=3.6,n=18,base=0.75,r=L*0.33;
   for(let i=0;i<n;i++){const s0=i/n,s1=(i+1)/n,z0=-L/2+s0*L,z1=-L/2+s1*L,y0=base+A*Math.sin(Math.PI*s0),y1=base+A*Math.sin(Math.PI*s1),zc=(z0+z1)/2,yc=(y0+y1)/2,dz=z1-z0,dy=y1-y0,sl=Math.hypot(dz,dy)+0.04,rx=-Math.atan2(dy,dz);
@@ -2740,7 +2745,7 @@ async function build(){
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
- window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={PATHS,terrainMesh,nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
+ window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={PATHS,terrainMesh,BROOT,BLD,nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
 const fontReady=document.fonts&&document.fonts.load?document.fonts.load('124px "Ma Shan Zheng"','沁芳顾恩思义大观楼缀锦阁含芳怡红快绿潇湘馆有凤来仪蘅芷清芬杏帘在望栊翠庵藕香榭省亲别墅').catch(()=>{}):Promise.resolve();
 Promise.race([fontReady,new Promise(r=>setTimeout(r,2500))]).then(()=>build()).catch(e=>{console.error(e);fail(String(e&&e.message||e));});
 </script>

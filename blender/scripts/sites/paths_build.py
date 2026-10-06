@@ -1,6 +1,7 @@
 # 园路 3D 化（第十七回“石子甬路”）：按 blender/data/lu_<名>.json 的横断面取样，在 Blender 里建一条真的路——
 #   两侧条石路牙（每块长短不一、留缝、往下埋）、路牙内青砖立砌一圈、路心卵石拼花街（斜方格，格心嵌一朵暖黄石子）；
-#   路面贴着网页里看得见的地形网格走，桥面、石磴两段跳过（那里另有桥、台阶），岔口那一侧不立路牙、不镶砖，好让支路接进来。
+#   路面贴着网页里看得见的地形网格走；桥面、石磴两段跳过（那里另有桥、台阶），落在别的路面里的一截也跳过；
+#   有路接进来的那一侧不立路牙、不镶砖，灰浆底和卵石铺满到路边，支路的路面正好从这条边接上。
 #   颜色全用顶点色，不用贴图。每 12 米切一块：<名>_<k>_base（灰浆底、砖、路牙，远近都显示）和 <名>_<k>_peb（卵石，网页只在近处显示）。
 # 用法：python3 blender/scripts/sites/paths_build.py blender/data/lu_zhou.json /tmp/lu_zhou.glb [存 .blend 的路径]
 #       node blender/scripts/web/pack_lu.mjs /tmp/lu_zhou.glb models/b/lu_zhou.wasm
@@ -12,7 +13,7 @@ blend = ARGS[2] if len(ARGS) > 2 else None
 D = json.load(open(src))
 rows, OFF, W = D['rows'], D['off'], D['w']
 HW = W / 2
-NAME = src.rsplit('lu_', 1)[-1].split('.')[0]
+NAME = D.get('lu') or src.rsplit('lu_', 1)[-1].split('.')[0]
 rnd = random.Random(1717)
 
 CURB_W, CURB_UP, CURB_DOWN = 0.16, 0.06, 0.25      # 路牙宽、高出地面、埋深
@@ -38,7 +39,9 @@ def at(r, s, o):
 
 
 def ok(r):
-    return not r['wet'] and not r['steep']
+    if 'skip' in r:
+        return not r['skip'] and not r['inn']
+    return not r['wet'] and not r['steep']     # 旧格式
 
 
 class Part:
@@ -97,6 +100,19 @@ def build_chunk(i0, i1):
         for k in range(len(across) - 1):
             vs = [grid[j][k], grid[j][k + 1], grid[j + 1][k + 1], grid[j + 1][k]]
             base.add(vs, [(0, 3, 2, 1)], jitter((0.47, 0.45, 0.41), 0.04))
+    # 有路接进来的一侧：灰浆底铺到路边（替掉砖和路牙的位置）
+    edge_in, edge_out = HW - CURB_W - BRICK_W, HW
+    for sd, flag in ((-1, 'jl'), (1, 'jr')):
+        for j in range(len(seg) - 1):
+            r, q = seg[j], seg[j + 1]
+            if not (ok(r) and ok(q)) or not (r[flag] or q[flag]):
+                continue
+            o0, o1 = sd * edge_in, sd * edge_out
+            vs = []
+            for rr, oo in ((r, o0), (r, o1), (q, o1), (q, o0)):
+                x, z = at(rr, 0, oo)
+                vs.append((x, -z, ground(rr, oo) + BED_UP))
+            base.add(vs, [(0, 1, 2, 3)] if sd > 0 else [(0, 3, 2, 1)], jitter((0.47, 0.45, 0.41), 0.04))
     # ---- 两侧：青砖立砌 + 条石路牙（岔口那一侧空着）
     for sd, flag in ((-1, 'jl'), (1, 'jr')):
         # 立砖：顺路方向每 BRICK_T 一块
@@ -151,8 +167,10 @@ def build_chunk(i0, i1):
             u = s0 + s                               # 顺路总米数
             row_i = int(round(u / PEB))
             shift = (PEB / 2) if row_i % 2 else 0.0
-            o = -inner + shift
-            while o <= inner:
+            lo = -(HW - 0.05) if (r['jl'] or q['jl']) else -inner
+            hi = (HW - 0.05) if (r['jr'] or q['jr']) else inner
+            o = lo + shift
+            while o <= hi:
                 # 花街：斜方格（格距 0.6 米）深色石子拼线；格心一朵暖黄
                 a, b = (u + o) / 0.6, (u - o) / 0.6
                 da, db = abs(a - round(a)), abs(b - round(b))
