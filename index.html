@@ -83,6 +83,9 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
 #stick i{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:rgba(255,250,235,.75)}
 #loading{position:fixed;inset:0;display:grid;place-items:center;background:#12151b;color:var(--paper);font-family:var(--f-disp);font-size:28px;letter-spacing:.24em;z-index:10;transition:opacity .7s;text-align:center;padding-inline:16px}
 #loading small{display:block;margin-top:10px;font-family:var(--f-body);font-size:13px;letter-spacing:.1em;opacity:.75}
+#load-bar{display:block;width:min(320px,70vw);height:3px;margin:22px auto 0;background:rgba(240,230,210,.14);border-radius:2px;overflow:hidden}
+#load-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b8925a,#e8cf98);border-radius:2px;transition:width .4s ease-out}
+#load-pct{display:block;margin-top:8px;font-family:var(--f-body);font-size:12px;letter-spacing:.12em;opacity:.55;font-variant-numeric:tabular-nums}
 .hint{position:fixed;left:16px;bottom:calc(20px + env(safe-area-inset-bottom,0px));margin:0;font-size:12px;color:#f1e9d6;text-shadow:0 1px 3px rgba(0,0,0,.75);letter-spacing:.05em;max-width:250px;line-height:1.6}
 @media (max-width:1320px){.hint{display:none}}
 @media (max-width:780px){
@@ -149,7 +152,7 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
 <div id="walkhud" hidden><div class="dot"></div><div class="help" id="walkhelp">WASD 行走 · Shift 快走 · 拖动鼠标转头 · Esc 退出</div></div>
 <div id="stick" hidden><i></i></div>
 <div id="toast" class="panel" style="opacity:0"><b>琉璃世界</b><span>白雪红梅 · 第四十九回</span></div>
-<div id="loading">正在营造大观园<small id="load-step">备料</small></div>
+<div id="loading"><div>正在营造大观园<span id="load-bar"><i></i></span><small id="load-step">备料</small><span id="load-pct" data-noi18n>0%</span></div></div>
 
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","ez-tree":"https://cdn.jsdelivr.net/npm/@dgreenheck/ez-tree@1.1.0/build/ez-tree.es.js"}}
@@ -174,7 +177,13 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
 
 const loadingEl=document.getElementById('loading'),loadStep=document.getElementById('load-step');
-const fail=(msg)=>{window.__DGY_ERR=1;loadingEl.innerHTML='场景搭建出错<small>'+msg+'</small>';};
+/* 加载进度条：各建造步骤按大致耗时占一段；「搬入楼阁精模」那段按已下载的模型、贴图数推进；步骤内部没有进度时缓缓往下一段爬，免得看着像卡住 */
+const LOADP={a:0,b:0.04,v:0,t0:performance.now()},loadBar=document.querySelector('#load-bar i'),loadPct=document.getElementById('load-pct');
+function loadShow(){loadBar.style.width=(LOADP.v*100).toFixed(1)+'%';const s=Math.round((performance.now()-LOADP.t0)/1000);loadPct.textContent=Math.round(LOADP.v*100)+'%  ·  '+s+'s';}
+function loadSet(a,b){LOADP.a=a;LOADP.b=b;LOADP.v=Math.max(LOADP.v,a);loadShow();}
+const loadTimer=setInterval(()=>{LOADP.v+=(LOADP.b-LOADP.v)*0.04;loadShow();},250);
+THREE.DefaultLoadingManager.onProgress=(u,n,N)=>{if(LOADP.dl&&N>0){LOADP.v=Math.max(LOADP.v,LOADP.dl[0]+(LOADP.dl[1]-LOADP.dl[0])*n/N);loadShow();}};
+const fail=(msg)=>{window.__DGY_ERR=1;try{clearInterval(loadTimer);}catch(e){}loadingEl.innerHTML='场景搭建出错<small>'+msg+'</small>';};
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isTouch=matchMedia('(pointer: coarse)').matches;
 const isSmall=Math.min(innerWidth,innerHeight)<700;
@@ -2707,7 +2716,8 @@ const PATHS=[
  {pts:[[-108.5,24],[-111.5,21]],w:2}, // 荇叶渚
  {pts:[[0,151],[0,126]],w:5.2,rail:true} // 正门外白石台矶
 ];
-const tick=(msg)=>new Promise(r=>{loadStep.textContent=tr(msg);requestAnimationFrame(()=>setTimeout(r,0));});
+const LSEG={'堆山凿池':[0.02,0.08],'铺石子路，架桥':[0.08,0.12],'起楼阁，砌粉墙':[0.12,0.2],'修馆舍，筑茅屋':[0.2,0.3],'种树栽竹，植荷，叠驳岸':[0.3,0.42],'搬入楼阁精模':[0.42,0.8],'上瓦挂匾':[0.8,0.85],'铺草':[0.85,0.89],'点野花，种蕨草':[0.89,0.94],'调天光':[0.94,0.99]};
+const tick=(msg)=>new Promise(r=>{loadStep.textContent=tr(msg);const g=LSEG[msg];if(g){loadSet(g[0],g[1]);LOADP.dl=msg==='搬入楼阁精模'?g:null;}requestAnimationFrame(()=>setTimeout(r,0));});
 async function build(){
  await tick('堆山凿池');prepPaths();prepViews();buildTerrain();buildWater();
  await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);pondRail();
@@ -2721,7 +2731,7 @@ async function build(){
  await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
- window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
+ window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};clearInterval(loadTimer);LOADP.v=1;loadShow();loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
 const fontReady=document.fonts&&document.fonts.load?document.fonts.load('124px "Ma Shan Zheng"','沁芳顾恩思义大观楼缀锦阁含芳怡红快绿潇湘馆有凤来仪蘅芷清芬杏帘在望栊翠庵藕香榭省亲别墅').catch(()=>{}):Promise.resolve();
 Promise.race([fontReady,new Promise(r=>setTimeout(r,2500))]).then(()=>build()).catch(e=>{console.error(e);fail(String(e&&e.message||e));});
 </script>
