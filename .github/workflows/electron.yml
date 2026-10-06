@@ -4,6 +4,7 @@
 name: 打包桌面版
 on:
   push:
+    branches: [main]   # 只有 main 才发 Release，别的分支推送不会覆盖「桌面版（最新）」
     paths: ['electron/**', '.github/workflows/electron.yml']
   workflow_dispatch:
 permissions:
