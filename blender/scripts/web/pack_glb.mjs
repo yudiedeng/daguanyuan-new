@@ -16,7 +16,7 @@ let bianxin=null;
 const groups=new Map(); // material name -> {mat, prims:[], names:[]}
 for(const node of R.listNodes()){const mesh=node.getMesh();if(!mesh)continue;const W=node.getWorldMatrix();
  for(const p of mesh.listPrimitives()){
-  const keepUV=/雕花|彩画_/.test(p.getMaterial()?.getName()||'');  // 透雕板、彩画要贴图，留 UV
+  const keepUV=/雕花|彩画_|西番草/.test(p.getMaterial()?.getName()||'');  // 透雕板、彩画、西番草浮雕带要贴图，留 UV
   const keepCol=/^M_[a-z]+B_/.test(p.getMaterial()?.getName()||'');  // bake_court.py 烘过的材质：顶点色是做旧层，留着
   for(const s of p.listSemantics())if(s!=='POSITION'&&s!=='NORMAL'&&!(keepUV&&s==='TEXCOORD_0')&&!((keepCol||KEEPC)&&s==='COLOR_0'))p.setAttribute(s,null);
   let mat=p.getMaterial();

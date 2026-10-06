@@ -207,3 +207,14 @@ for f in blender/data/lu_*.json; do n=$(basename $f .json)
 ```
 改了地形、`PATHS` 里这条路的走向或宽度，要重跑这三步。
 node tools/glb_cut.mjs models/b/luxue.wasm models/b/luxue.wasm '[[-1.7,5.0,-1,1.7,15,3,"^M_草$|^M_散草$"]]'   # 芦雪广：西路接到台基前的那截路上，芦苇芦花剪掉（“一条去径逶迤穿芦度苇过去”）
+
+## 正门（blender/scripts/sites/gate_build.py）
+
+照第十七回“正门五间，上面桶瓦泥鳅脊；那门栏窗槅，皆是细雕新鲜花样，并无朱粉涂饰；一色水磨群墙，下面白石台矶，凿成西番草花样。左右一望，皆雪白粉墙，下面虎皮石，随势砌去”建：
+五开间卷棚顶（泥鳅脊），筒瓦垄翻过顶、檐口勾头滴水；柱枋门窗本色楠木（`本色楠木`，不上漆）；明间板门敞开、门枕石抱鼓石，次间槅扇、梢间槛窗，格心灯笼锦嵌卡子花；
+梢间槛墙、两山墙水磨砖（`水磨砖`）；台基、门外月台和台阶白石（`汉白玉`），台帮、栏板凿西番草（`西番草`，网页按 UV 贴程序画的卷草浮雕）。门外台阶按实测地面逐级随势而下。
+园墙墙脚虎皮石加高到 1.2 米（index.html `buildGateWalls`）。碰撞框写 models/b/col.json["gate"]；PATHS 里“正门外白石台矶”那条改为 noBuild（只留地形整平）。
+```
+python3 blender/scripts/sites/gate_build.py /tmp/gate.glb
+node blender/scripts/web/pack_glb.mjs /tmp/gate.glb models/b/gate.wasm
+```
