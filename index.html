@@ -2621,13 +2621,13 @@ document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
 let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
-const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
+const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);AT.max=RS;AT.low=AT.high=0;rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
 let DREAM=1;try{DREAM=localStorage.getItem('dgy-dream')==='0'?0:1;}catch(e){}
 function applyDream(){fogPass.uniforms.dream.value=DREAM;fogPass.uniforms.sat.value=DREAM?1.04:0.98;fogPass.uniforms.warm.value=DREAM?0.05:0.02;if(bloomPass){bloomPass.threshold=DREAM?1.6:2.2;bloomPass.strength=DREAM?0.25:0.3;bloomPass.radius=DREAM?0.8:0.6;}document.querySelectorAll('#dream-seg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.d===DREAM));}
 document.querySelectorAll('#dream-seg button').forEach(b=>b.addEventListener('click',()=>{DREAM=+b.dataset.d;try{localStorage.setItem('dgy-dream',DREAM);}catch(e){}applyDream();}));
 function markQ(){document.querySelectorAll('#q-seg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.q===Q));}
-document.querySelectorAll('#q-seg button').forEach(b=>b.addEventListener('click',()=>{Q=+b.dataset.q;try{localStorage.setItem('dgy-q',Q);}catch(e){}markQ();FLORA.R=[0,30,40][Q];FLORA.sig='';setShadowQuality();RS=RS_DEF();try{localStorage.removeItem('dgy-rs2');}catch(e){}rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';setupPost();A2C.forEach(m=>{m.alphaToCoverage=Q>0;m.needsUpdate=true;});GRASS.R=walk.on?[22,30,40][Q]:[0,30,40][Q];water.visible=Q>0;waterLow.visible=Q===0;}));
+document.querySelectorAll('#q-seg button').forEach(b=>b.addEventListener('click',()=>{Q=+b.dataset.q;try{localStorage.setItem('dgy-q',Q);}catch(e){}markQ();FLORA.R=[0,30,40][Q];FLORA.sig='';setShadowQuality();RS=RS_DEF();AT.max=RS;AT.low=AT.high=0;try{localStorage.removeItem('dgy-rs2');}catch(e){}rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';setupPost();A2C.forEach(m=>{m.alphaToCoverage=Q>0;m.needsUpdate=true;});GRASS.R=walk.on?[22,30,40][Q]:[0,30,40][Q];water.visible=Q>0;waterLow.visible=Q===0;}));
 const tour={on:false,i:0,t:0};const tourBtn=document.getElementById('btn-tour');
 function startTour(){if(walk.on)exitWalk();tour.on=true;tour.i=0;tour.t=0;tourBtn.setAttribute('aria-pressed','true');select(TOUR[0],true,true);}
 function stopTour(){tour.on=false;controls.autoRotate=false;tourBtn.setAttribute('aria-pressed','false');}
@@ -2641,8 +2641,13 @@ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updat
 /* =====================================================================
    LOOP
    ===================================================================== */
-const AT={on:(()=>{try{return localStorage.getItem('dgy-rs2')===null;}catch(e){return true;}})(),t:0,low:0};
-function autoTune(fps){if(!AT.on||document.hidden)return;AT.t+=0.5;if(AT.t<2)return;if(AT.t>40){AT.on=false;return;}AT.low=fps<38?AT.low+1:0;if(AT.low>=4&&RS>1.0){RS=Math.max(1,Math.round((RS-0.25)*100)/100);rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';setResolution(RS);AT.low=0;}}
+/* 动态分辨率（全程）：每 0.5 s 看一次帧率，连续 2 s 低于 30 帧就把渲染分辨率降一档（最低 0.75，配 CAS 锐化），连续 5 s 高于 50 帧再升回去，不超过设定值 AT.max（默认值或滑块手调的值）。显卡够用时始终是满分辨率 */
+const AT={max:RS,t:0,low:0,high:0};
+function autoTune(fps){if(document.hidden)return;AT.t+=0.5;if(AT.t<2)return;
+ AT.low=fps<30?AT.low+1:0;AT.high=fps>50?AT.high+1:0;let r=RS;
+ if(AT.low>=4&&RS>0.75){r=Math.max(0.75,Math.round((RS-0.25)*100)/100);AT.low=0;}
+ else if(AT.high>=10&&RS<AT.max){r=Math.min(AT.max,Math.round((RS+0.25)*100)/100);AT.high=0;}
+ if(r!==RS){RS=r;rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';setResolution(RS);}}
 const clock=new THREE.Clock(),pv=new V3();let ftAcc=0,ftN=0,drTimer=0;const fpsEl=document.getElementById('fps');
 let XXK=0,HEMI0=0.5;
 function frame(){
