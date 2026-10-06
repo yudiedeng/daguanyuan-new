@@ -10,7 +10,7 @@ const RES = app.isPackaged ? process.resourcesPath : __dirname;
 const SITE = app.isPackaged ? path.join(RES, 'site') : path.join(__dirname, '..');
 
 function readConfig() {
-  const cfg = { url: 'https://yudiedeng.github.io/daguanyuan/', fullscreen: true };
+  const cfg = { url: 'https://yudiedeng.github.io/daguanyuan-new/', fullscreen: true };
   // exe 旁边的 config.json 优先，方便在云平台上改地址而不重新打包
   for (const p of [path.join(path.dirname(process.execPath), 'config.json'), path.join(RES, 'config.json')]) {
     try { Object.assign(cfg, JSON.parse(fs.readFileSync(p, 'utf8'))); break; } catch (e) {}
