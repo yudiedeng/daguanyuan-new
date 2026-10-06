@@ -624,7 +624,9 @@ function bmat(name,src,ao){const k=name.replace(/^M_/,''),ck=ao?k+'|ao':k;if(BM[
  {const bm_=k.match(/^([a-z]+)B_/);if(bm_){/* bake_court.py 烘过的材质：底色 × 灰度照片贴图（世界坐标三向投影）× 顶点色（AO、雨痕、污渍、青苔） */
   const r=(BAKED[bm_[1]]||{})[k]||{c:'#ffffff',rough:0.8};const col=new THREE.Color(r.c);if(r.k)col.multiplyScalar(r.k);col.multiplyScalar(BAKED_GAIN);
   const m=std('#ffffff',r.rough,{vertexColors:true,metalness:r.metal||0,side:THREE.DoubleSide});m.color.copy(col);
-  const o={key:'bm_'+k};if(r.a)o.tri={a:r.a,n:r.n,s:r.s||1,mode:'replace',nk:r.nk??0.5};if(/瓦/.test(k)){o.snowLo='0.15';o.snowHi='0.55';}
+  const o={key:'bm_'+k};if(r.a)o.tri={a:r.a,n:r.n,s:r.s||1,mode:'replace',nk:r.nk??0.5};
+  // 烘焙表里没配照片的（水磨砖墙、太湖石、苔地、花堵瓦……）沿用同名旧材质的照片纹理，蘅芜苑太湖石沿用「玲珑石」——重导成烘焙材质后这些都成了素色，墙没了砖纹、石头没了纹理显得一块块的
+  else if(bm_[1]==='hw'){const base=k.slice(bm_[0].length),alt=BMR[bm_[1]==='hw'&&base==='太湖石'?'HW_玲珑石':base];if(alt&&alt[2]){o.tri={...alt[2]};if(alt[3]&&alt[3].macro)o.macro=1;}}if(/瓦/.test(k)){o.snowLo='0.15';o.snowHi='0.55';}
   patch(m,o);m.name=k;BM[k]=m;return m;}}
  if(/^彩画_/.test(k)){/* 梁枋彩画（怡红院包袱）：tex/caihua_*.jpg 按 UV 贴 */const t=new THREE.TextureLoader().load('tex/caihua_'+k.slice(3)+'.jpg');t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;
   const m=patch(std('#ffffff',.6,{map:t}),{key:'bm_'+k});m.name=k;BM[k]=m;return m;}
