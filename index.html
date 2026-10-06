@@ -651,6 +651,28 @@ const BOVR={yihong_in:{'紫檀':{c:'#5a2619',rough:0.36},'描金':{c:'#f0c45a',m
 },BOVC={};
 const BAKED={};  // bake_court.py 写的各院材质表 tex/bk_<院>.json
 const BAKED_GAIN=0.6;  // .blend 的材质按 Blender 里的灯光调的；网页太阳强，整体压暗到和 Blender 渲染相近
+/* 大网格按格子切块：.blend 原样导出的院落常把整座院子的一种材质合成一个几十万面的网格，只要看见一角整块都得画（倒影、阴影里也是）。
+   这里把超过 MINT 面的网格按三角形中心落在哪个 CELL 米见方的格子拆开，每块有自己的包围球，转开、走远看不见的块整块跳过；
+   顶点、材质、阴影、图层原样照搬，画出来和不切完全一样 */
+function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const list=[];
+ root.traverse(m=>{if(!m.isMesh||m.isInstancedMesh||m.isSkinnedMesh)return;const g=m.geometry;if(!g.index||g.morphAttributes.position||g.groups.length>1)return;
+  for(const k in g.attributes)if(g.attributes[k].isInterleavedBufferAttribute)return;if(g.index.count/3>=MINT)list.push(m);});
+ const v=new V3();
+ for(const m of list){const g=m.geometry,I=g.index.array,P=g.attributes.position,nt=I.length/3,B=new Map();
+  for(let t=0;t<nt;t++){let x=0,z=0;for(let j=0;j<3;j++){v.fromBufferAttribute(P,I[t*3+j]).applyMatrix4(m.matrixWorld);x+=v.x;z+=v.z;}
+   const k=Math.floor(x/3/CELL)+','+Math.floor(z/3/CELL);let b=B.get(k);if(!b)B.set(k,b=[]);b.push(t);}
+  if(B.size<2)continue;
+  for(const tris of B.values()){const remap=new Map(),idx=[];for(const t of tris)for(let j=0;j<3;j++){const o=I[t*3+j];let n=remap.get(o);if(n===undefined){n=remap.size;remap.set(o,n);}idx.push(n);}
+   const ng=new THREE.BufferGeometry(),olds=[...remap.keys()];
+   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,arr=new a.array.constructor(olds.length*sz);for(let i=0;i<olds.length;i++)for(let c=0;c<sz;c++)arr[i*sz+c]=a.array[olds[i]*sz+c];ng.setAttribute(k,new THREE.BufferAttribute(arr,sz,a.normalized));}
+   ng.setIndex(new THREE.BufferAttribute(olds.length>65535?new Uint32Array(idx):new Uint16Array(idx),1));ng.computeBoundingSphere();ng.computeBoundingBox();
+   const c=new THREE.Mesh(ng,m.material);c.name=m.name;c.position.copy(m.position);c.quaternion.copy(m.quaternion);c.scale.copy(m.scale);
+   c.castShadow=m.castShadow;c.receiveShadow=m.receiveShadow;c.visible=m.visible;c.layers.mask=m.layers.mask;c.renderOrder=m.renderOrder;c.frustumCulled=m.frustumCulled;
+   c.customDepthMaterial=m.customDepthMaterial;c.customDistanceMaterial=m.customDistanceMaterial;c.userData={...m.userData,split:1};m.parent.add(c);}
+  m.parent.remove(m);g.dispose();}}
+/* 手机上：模型传进显卡后就丢掉内存里那份顶点数组（three.js 默认两边各存一份），院落模型不再在手机上占双份内存而闪退 */
+function freeOnUpload(root){const f=function(){this.array=null;};root.traverse(m=>{if(!m.isMesh)return;const g=m.geometry;if(g.userData.free)return;g.userData.free=1;
+ if(!g.boundingSphere)g.computeBoundingSphere();if(!g.boundingBox)g.computeBoundingBox();for(const k in g.attributes){const a=g.attributes[k];if(!a.isInterleavedBufferAttribute)a.onUpload(f);}if(g.index)g.index.onUpload(f);});}
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);for(const t of['yh','hw'])try{BAKED[t]=await (await fetch('tex/bk_'+t+'.json')).json();}catch(e){console.warn('bk',t,e);}let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
@@ -678,7 +700,8 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material,!!(d.ao&&m.geometry.attributes.color));const k=nm.replace(/^M_/,'');if(m.material.visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();c.onBeforeCompile=m.material.onBeforeCompile;c.customProgramCacheKey=m.material.customProgramCacheKey;if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面|雕花)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
-  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy){root.userData.nr=1;root.traverse(m=>{if(m.isMesh)m.layers.set(2);});fitInterior(d.id,root);}addProps(L,d.id,root);
+  splitBig(root);
+  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy){root.userData.nr=1;root.traverse(m=>{if(m.isMesh)m.layers.set(2);});fitInterior(d.id,root);}addProps(L,d.id,root);if(isTouch)freeOnUpload(root);
   if(d.cards)fetch('tex/'+d.cards).then(r=>r.json()).then(recs=>{const TL=new THREE.TextureLoader();const B2G=new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,0,0,1);
    for(const rc of recs){const t=TL.load('tex/'+rc.tex);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.55,metalness:0}),{alphaFix:1,key:'xxw'+rc.tex}));
     const [ax,ay]=rc.axes,lo=rc.lo,hi=rc.hi,mid=(lo[rc.thin]+hi[rc.thin])/2;
