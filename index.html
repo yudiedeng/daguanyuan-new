@@ -326,6 +326,8 @@ try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-perf
 if(!renderer.capabilities.isWebGL2){fail('需要支持 WebGL2 的浏览器');throw new Error('webgl2');}
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.6;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+/* 阴影图每帧只画一次：湖面倒影、清溪反射/折射这些嵌套渲染各自调 renderer.render 时，默认会把整张阴影图重画一遍（阴影只跟太阳有关，与视角无关，重画结果一样）。改成手动：每帧主渲染前标记一次 */
+renderer.shadowMap.autoUpdate=false;
 document.getElementById('scene').appendChild(renderer.domElement);
 const ANISO=Math.min(16,renderer.capabilities.getMaxAnisotropy());
 const scene=new THREE.Scene();
@@ -2675,7 +2677,7 @@ function frame(){
  {const XQ=Z.xiaoxiang,c=camera.position,d=Math.hypot(Math.max(Math.abs(c.x-XQ.x)-XQ.hw,0),Math.max(Math.abs(c.z-XQ.z)-XQ.hd,0)),k=(1-sstep(0,6,d))*(1-sstep(6,30,c.y-XQ.y));XXK+=(k-XXK)*(1-Math.exp(-dt/1.2));fogPass.uniforms.grade.value.setRGB(1-0.12*XXK,1-0.08*XXK,1-0.02*XXK);
   // 院里：色彩收一收（饱和度、对比度降），接触阴影加重，天光补光加大让竹荫的光斑不那么硬
   fogPass.uniforms.sat.value=(DREAM?1.04:0.98)*(1-0.17*XXK);fogPass.uniforms.contrast.value=1.12-0.1*XXK;fogPass.uniforms.aoK.value=1+0.9*XXK;hemi.intensity=HEMI0*(1+0.45*XXK);}
- renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}
+ renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}
  // dynamic resolution
  ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
  requestAnimationFrame(frame);}
