@@ -16,8 +16,11 @@ const p=await b.newPage({viewport:{width:320,height:180}});
 if(process.env.PW_ROUTE){const R=JSON.parse(process.env.PW_ROUTE);await p.route(/cdn\.jsdelivr\.net\/npm\//,async r=>{const u=r.request().url();const m=u.match(/three@[^/]+\/(.*)$/);try{await r.fulfill({path:m?R.three+m[1]:R.eztree,contentType:'text/javascript'});}catch(e){r.abort();}});await p.route(/fonts\.(googleapis|gstatic)/,r=>r.abort());}
 await p.goto(url);await p.waitForFunction(()=>window.__dgy,null,{timeout:900000});
 const outs=await p.evaluate((only)=>{const d=window.__dgy,T=d.THREE,PS=d.PATHS;
- const ray=new T.Raycaster(),down=new T.Vector3(0,-1,0),gy=(x,z)=>{ray.set(new T.Vector3(x,80,z),down);const h=ray.intersectObject(d.terrainMesh,false)[0];return h?h.point.y:d.height(x,z);};
- const curve=P=>new T.CatmullRomCurve3(P.pts.map(q=>new T.Vector3(q[0],0,q[1])),false,'centripetal');
+ // 地形网格是 PlaneGeometry(340,410,340,410)：1 米一格，x 从 -170、z 从 -200 起；每格两个三角 (a,b,d)(b,c,d)。直接按三角插值，不用射线（射线没有加速结构，几千次就要几十分钟）
+ const PA=d.terrainMesh.geometry.attributes.position,NX=341,gy=(x,z)=>{const fx=x+170,fz=z+200,c=Math.floor(fx),r=Math.floor(fz);if(c<0||r<0||c>=340||r>=410)return d.height(x,z);
+  const u=fx-c,v=fz-r,Y=(cc,rr)=>PA.getY(cc+NX*rr);const a=Y(c,r),b=Y(c,r+1),cc=Y(c+1,r+1),dd=Y(c+1,r);
+  return u+v<=1?a+(dd-a)*u+(b-a)*v:cc+(b-cc)*(1-u)+(dd-cc)*(1-v);};
+ const curve=P=>new T.CatmullRomCurve3((P.tail?P.pts.concat(P.tail):P.pts).map(q=>new T.Vector3(q[0],0,q[1])),false,'centripetal');
  // 每条路的中线（0.25 米一点），用来判断“落在别的路面里”和“有路接进来”
  const lines=PS.map(P=>{if(!P.lu)return null;const c=curve(P);return c.getSpacedPoints(Math.ceil(c.getLength()/0.25)).map(v=>[v.x,v.z]);});
  const near=(L,x,z)=>{let best=1e9,bi=0;for(let i=0;i<L.length;i++){const dd=(L[i][0]-x)**2+(L[i][1]-z)**2;if(dd<best){best=dd;bi=i;}}return [Math.sqrt(best),bi];};

@@ -196,11 +196,14 @@ node blender/scripts/web/pack_glb.mjs /tmp/daoxiang_tian.glb models/b/daoxiang_t
 园路不再是贴图带子，改为 Blender 建的 3D 路：两侧条石路牙（长短不一、留缝、下埋）、路牙内青砖立砌、路心卵石花街（斜方格深色石子拼线，格心一朵暖黄）。
 路面贴着网页里看得见的地形网格走；桥面、石磴两段跳过（另有桥、台阶）；与别的路相接的一侧不立路牙、不镶砖。颜色全是顶点色。
 每 12 米切一块：`lu_<名>_<k>_base`（灰浆底、砖、路牙）和 `lu_<名>_<k>_peb`（卵石，网页只在 60 米内、中高画质显示）。网页里 `PATHS` 某条带 `lu:'<名>'` 就不画贴图带子，改载 `models/b/lu_<名>.wasm`；别的路伸进它路面的那截带子自动剪掉。
-目前只有中轴（`lu_zhou`）。
+全园园路（`PATHS` 里除正门外白石台矶外每条都带 `lu`：中轴 `zhou`，其余 `p<序号>`）。中轴卵石细密（0.095 米、六边），支路略疏（0.12 米、五边），全园约 300 万面、28 MB。
+路头接门：`PATHS` 里的 `tail` 是另接到门前的一小段，只用于路面本身；地形整平、布树布石仍按原路（全园布局不变），tail 上的“不长草”在铺草前才登记。
 ```
 npx http-server -p 8765 &   # 仓库根目录
-node blender/scripts/web/lu_data.mjs http://localhost:8765/index.html 0 zhou      # 取横断面 → blender/data/lu_zhou.json（PATHS 第 0 条）
-python3 blender/scripts/sites/paths_build.py blender/data/lu_zhou.json /tmp/lu_zhou.glb   # 需要 bpy（pip install bpy，Python 3.11）
-node blender/scripts/web/pack_lu.mjs /tmp/lu_zhou.glb models/b/lu_zhou.wasm
+node blender/scripts/web/lu_data.mjs http://localhost:8765/index.html              # 取横断面 → blender/data/lu_<名>.json（全部；后面跟名字则只取那几条）
+for f in blender/data/lu_*.json; do n=$(basename $f .json)
+  python3 blender/scripts/sites/paths_build.py $f /tmp/$n.glb      # 需要 bpy（pip install bpy，Python 3.11）
+  node blender/scripts/web/pack_lu.mjs /tmp/$n.glb models/b/$n.wasm; done
 ```
 改了地形、`PATHS` 里这条路的走向或宽度，要重跑这三步。
+node tools/glb_cut.mjs models/b/luxue.wasm models/b/luxue.wasm '[[-1.7,5.0,-1,1.7,15,3,"^M_草$|^M_散草$"]]'   # 芦雪广：西路接到台基前的那截路上，芦苇芦花剪掉（“一条去径逶迤穿芦度苇过去”）

@@ -19,7 +19,8 @@ rnd = random.Random(1717)
 CURB_W, CURB_UP, CURB_DOWN = 0.16, 0.06, 0.25      # 路牙宽、高出地面、埋深
 BRICK_W, BRICK_T, BRICK_UP = 0.24, 0.055, 0.045    # 立砖横着砌：宽（横向）、厚（顺路方向）、顶面高出地面
 BED_UP = 0.03                                      # 灰浆底面
-PEB = 0.095                                        # 卵石间距
+PEB = 0.095 if NAME == 'zhou' else 0.12             # 卵石间距：中轴细密；支路略疏（全园路长约 1.7 公里，卵石面数要省）
+SIDES = 6 if NAME == 'zhou' else 5                 # 每颗卵石底圈几边
 CHUNK = 48                                         # 每块行数（0.25 米一行 → 12 米）
 
 
@@ -198,14 +199,15 @@ def pebble(part, x, z, y, col, ang):
     a0 = ang + rnd.uniform(-0.5, 0.5)
     ca, sa = math.cos(a0), math.sin(a0)
     vs = []
+    N = SIDES
     for ring, (k, hh) in enumerate(((1.0, -0.01), (0.7, h * 0.72))):
-        for m in range(6):
-            t = m / 6 * math.tau
+        for m in range(N):
+            t = m / N * math.tau
             ex, ez = math.cos(t) * lx * k, math.sin(t) * lz * k
             vx, vz = x + ex * ca + ez * sa, z - ex * sa + ez * ca
             vs.append((vx, -vz, y + hh))
     vs.append((x, -z, y + h))
-    faces = [(m, (m + 1) % 6, 6 + (m + 1) % 6, 6 + m) for m in range(6)] + [(6 + m, 6 + (m + 1) % 6, 12) for m in range(6)]
+    faces = [(m, (m + 1) % N, N + (m + 1) % N, N + m) for m in range(N)] + [(N + m, N + (m + 1) % N, 2 * N) for m in range(N)]
     part.add(vs, faces, col)
 
 

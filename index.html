@@ -1363,9 +1363,14 @@ function buildLu(){const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);
   // 卵石只在近处显示（60 米内），低画质不显示；远处只看灰浆底、砖、路牙
   let t=0;FX.push(()=>{const now=performance.now();if(now<t)return;t=now+400;const c=camera.position;/* 按真实时间每 0.4 秒查一次（dt 每帧封顶 0.05，低帧率时按 dt 会好久不更新） */for(const o of peb)o.visible=Q>0&&o.userData.bs.center.distanceTo(c)<60+o.userData.bs.radius;});})
   .catch(e=>console.warn('lu',P.lu,e));}
+/* tail：路头另接一小段到门前（只用于路面本身；地形整平、布树布石用的 pathAdd 仍按原路，免得全园布局跟着变），
+   这段的“路上不长草”在铺草前才登记（TAILS） */
+const TAILS=[];const fullPts=P=>P.tail?P.pts.concat(P.tail):P.pts;
 function buildPath(P){
  const c=new THREE.CatmullRomCurve3(P.pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');const L=c.getLength();const sp=c.getSpacedPoints(Math.max(6,Math.ceil(L/0.8))).map(v=>[v.x,v.z]);
- if(P.lu)LU.push({sp:new THREE.CatmullRomCurve3(P.pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal').getSpacedPoints(Math.ceil(L/0.5)).map(v=>[v.x,v.z]),hw:P.w/2});
+ const cf=P.tail?new THREE.CatmullRomCurve3(fullPts(P).map(p=>new V3(p[0],0,p[1])),false,'centripetal'):c,Lf=cf.getLength(),spf=P.tail?cf.getSpacedPoints(Math.max(6,Math.ceil(Lf/0.8))).map(v=>[v.x,v.z]):sp;
+ if(P.tail)for(const v of cf.getSpacedPoints(Math.ceil(Lf/0.8)))if(v.distanceTo(c.getPoint(1))<Lf-L+1.5)TAILS.push([v.x,v.z]);
+ if(P.lu)LU.push({sp:cf.getSpacedPoints(Math.ceil(Lf/0.5)).map(v=>[v.x,v.z]),hw:P.w/2});
  const pos=[],uv=[],nor=[],col=[],idx=[];const hw=P.w/2;let acc=0;const n=sp.length-1;
  for(let i=0;i<=n;i++){const p=sp[i],a=sp[Math.max(0,i-1)],b=sp[Math.min(n,i+1)];let tx=b[0]-a[0],tz=b[1]-a[1];const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx;if(i>0)acc+=Math.hypot(p[0]-sp[i-1][0],p[1]-sp[i-1][1]);
   for(const s of[-1,1]){const x=p[0]+nx*hw*s,z=p[1]+nz*hw*s;pos.push(x,height(x,z)+0.07,z);nor.push(0,1,0);uv.push(s<0?0:1,acc/(P.w*2));col.push(1,1,1);}pathAdd(p[0],p[1]);}
@@ -2712,23 +2717,23 @@ function frame(){
 /* 园路：tools/layout/paths.json（python3 tools/layout/check_paths.py 检查跨水与穿院）。跨水处自动架桥，bridges 依次指定桥型 */
 const PATHS=[
  {pts:[[0,113],[-0.9,108],[-0.9,105.6],[-0.9,103.2],[-1.35,101],[-2.45,99],[-2.7,97.2],[-2.05,95.5],[-1.05,94],[-0.55,92.4],[-0.5,90.5],[-0.5,86.4],[-2,81],[-5,75],[-3,67],[0,60],[0,44],[0,32],[0,14],[0,-4],[0,-20],[0,-37]],w:3,bridges:['qinfang','arch'],lamps:true,rail:true,lu:'zhou'}, // 中轴（路面为 Blender 建的石子甬路 models/b/lu_zhou.wasm，见 blender/scripts/sites/paths_build.py）
- {pts:[[-3,66.5],[-14,69],[-28,70],[-40,71],[-48,73],[-50.5,80],[-51,88],[-51.5,93.5],[-53,94]],w:2.4}, // 潇湘馆
- {pts:[[0,113],[14,110],[30,112],[44,120],[56,138],[66,156],[76,158.5],[83,158.5]],w:2.6,lamps:true}, // 怡红院
- {pts:[[56,138],[60,124],[62,110],[60,98],[57,88],[52,78],[46,68],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4}, // 东路·栊翠庵
- {pts:[[50,40],[62,26],[82,18],[100,8],[114,-12],[118,-40],[118,-70],[110,-92],[96,-100],[86,-94]],w:2.2}, // 东路·凹晶馆
- {pts:[[-30,34],[-56,37],[-72,36],[-86,36],[-100,35],[-108,28],[-109,14],[-108,2],[-118,0]],w:2.2}, // 西路·芦雪广
- {pts:[[-48,-40],[-46,-90],[-40,-112],[-20,-120],[20,-120],[44,-110],[50,-80],[48,-40]],w:2.2}, // 大观楼后
- {pts:[[86,-94],[96,-100],[98,-110],[90,-116],[80,-119]],w:2}, // 凸碧山庄
- {pts:[[0,-4],[-20,-12],[-36,-16],[-49,-17]],w:2.4}, // 藕香榭
- {pts:[[-48,-40],[-60,-46],[-74,-48]],w:2.2}, // 蜂腰桥
- {pts:[[-108,2],[-112,-16],[-108,-33],[-90,-34],[-76,-35],[-74,-50],[-75,-57],[-78,-57]],w:2.4}, // 稻香村
- {pts:[[-75,-57],[-74,-74],[-76,-86],[-79,-92],[-90,-92],[-100,-89],[-112,-88],[-128,-90],[-131,-104],[-129,-116],[-122,-128],[-108,-128],[-96,-127],[-84,-124.5],[-70,-124]],w:2.2}, // 花圃·蘅芜苑
- {pts:[[-70,-124],[-54,-122],[-40,-112]],w:2.2}, // 蘅芜苑东
- {pts:[[-79,-92],[-80,-99],[-79.5,-105],[-78,-108.6]],w:2}, // 花溆：岔到折带朱栏板桥
- {pts:[[-76.4,-120.6],[-76.2,-124.4]],w:2}, // 板桥北头接蘅芜苑门前
- {pts:[[0,-20],[24,-22],[46,-14],[60,-4],[76,6],[82,18]],w:2.4}, // 沁芳闸
- {pts:[[-86,36],[-86,33.5]],w:2.2}, // 秋爽斋门
- {pts:[[-108.5,24],[-111.5,21]],w:2}, // 荇叶渚
+ {pts:[[-3,66.5],[-14,69],[-28,70],[-40,71],[-48,73],[-50.5,80],[-51,88],[-51.5,93.5],[-53,94]],w:2.4,tail:[[-53.6,100.5],[-55.8,107.8],[-62.5,109.4]],lu:'p1'}, // 潇湘馆（院门在北墙 x≈-62.5，原路头顶着东墙，tail 绕到门前）
+ {pts:[[0,113],[14,110],[30,112],[44,120],[56,138],[66,156],[76,158.5],[83,158.5]],w:2.6,lamps:true,lu:'p2'}, // 怡红院
+ {pts:[[56,138],[60,124],[62,110],[60,98],[57,88],[52,78],[46,68],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4,tail:[[93.8,44.4]],lu:'p3'}, // 东路·栊翠庵（tail 接到山门前台地脚）
+ {pts:[[50,40],[62,26],[82,18],[100,8],[114,-12],[118,-40],[118,-70],[110,-92],[96,-100],[86,-94]],w:2.2,tail:[[84.6,-90.6],[83,-87.3]],lu:'p4'}, // 东路·凹晶馆（tail 接到馆后墙正中的后门）
+ {pts:[[-30,34],[-56,37],[-72,36],[-86,36],[-100,35],[-108,28],[-109,14],[-108,2],[-118,0]],w:2.2,tail:[[-125.8,0]],lu:'p5'}, // 西路·芦雪广（tail 接到台基边）
+ {pts:[[-48,-40],[-46,-90],[-40,-112],[-20,-120],[20,-120],[44,-110],[50,-80],[48,-40]],w:2.2,lu:'p6'}, // 大观楼后
+ {pts:[[86,-94],[96,-100],[98,-110],[90,-116],[80,-119]],w:2,lu:'p7'}, // 凸碧山庄
+ {pts:[[0,-4],[-20,-12],[-36,-16],[-49,-17]],w:2.4,lu:'p8'}, // 藕香榭
+ {pts:[[-48,-40],[-60,-46],[-74,-48]],w:2.2,lu:'p9'}, // 蜂腰桥
+ {pts:[[-108,2],[-112,-16],[-108,-33],[-90,-34],[-76,-35],[-74,-50],[-75,-57],[-78,-57]],w:2.4,lu:'p10'}, // 稻香村
+ {pts:[[-75,-57],[-74,-74],[-76,-86],[-79,-92],[-90,-92],[-100,-89],[-112,-88],[-128,-90],[-131,-104],[-129,-116],[-122,-128],[-108,-128],[-96,-127],[-84,-124.5],[-70,-124]],w:2.2,tail:[[-70,-126.1]],lu:'p11'}, // 花圃·蘅芜苑（tail 拐到院门石阶前）
+ {pts:[[-70,-124],[-54,-122],[-40,-112]],w:2.2,lu:'p12'}, // 蘅芜苑东
+ {pts:[[-79,-92],[-80,-99],[-79.5,-105],[-78,-108.6]],w:2,lu:'p13'}, // 花溆：岔到折带朱栏板桥
+ {pts:[[-76.4,-120.6],[-76.2,-124.4]],w:2,lu:'p14'}, // 板桥北头接蘅芜苑门前
+ {pts:[[0,-20],[24,-22],[46,-14],[60,-4],[76,6],[82,18]],w:2.4,lu:'p15'}, // 沁芳闸
+ {pts:[[-86,36],[-86,33.5]],w:2.2,tail:[[-86,30.2]],lu:'p16'}, // 秋爽斋门（tail 接到门前台阶）
+ {pts:[[-108.5,24],[-111.5,21]],w:2,lu:'p17'}, // 荇叶渚
  {pts:[[0,151],[0,126]],w:5.2,rail:true} // 正门外白石台矶
 ];
 const tick=(msg)=>new Promise(r=>{loadStep.textContent=tr(msg);requestAnimationFrame(()=>setTimeout(r,0));});
@@ -2742,7 +2747,7 @@ async function build(){
  await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildBarriers();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);clearYihongGarden();buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}buildCrops().catch(e=>console.warn('crops',e));buildPoultry().catch(e=>console.warn('poultry',e));try{buildBeds();}catch(e){console.warn('beds',e);}try{buildHengwuYard();}catch(e){console.warn('hengwu',e);}buildHuaxuCave().catch(e=>console.warn('huaxu cave',e));
  await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
- await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
+ await tick('铺草');for(const [x,z] of TAILS){const k=Math.floor(x/4)+','+Math.floor(z/4);(pathHash.get(k)||pathHash.set(k,[]).get(k)).push([x,z]);}/* 路头 tail 上不长草 */buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
  window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={PATHS,terrainMesh,BROOT,BLD,nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
