@@ -2230,9 +2230,9 @@ function buildQinfangFX(){
      if(r<0.16*pet){vec2 o=(vec2(h21(id+3.1),h21(id+7.7))-0.5)*0.6;float an=r*40.0+t*0.4;vec2 d=f-o;d=mat2(cos(an),-sin(an),sin(an),cos(an))*d;petal=smoothstep(0.075,0.05,length(d*vec2(1.0,1.7)))*smoothstep(0.95,0.7,abs(c));}
      col=mix(col,petCol*(0.6+0.4*r*6.0)*L*0.8,petal);alpha=max(alpha,petal);}
     gl_FragColor=vec4(col,alpha);}`});
- const water_=new THREE.Mesh(gw,wm);water_.renderOrder=2;water_.frustumCulled=false;water_.name='清溪';scene.add(water_);
+ const water_=new THREE.Mesh(gw,wm);water_.renderOrder=2;water_.frustumCulled=false;water_.layers.set(2);/* 读湖面倒影贴图，不能再画进倒影 */water_.name='清溪';scene.add(water_);
  let w2=null,wSeg=null;
- if(seg){const gs=gw.clone();gs.setIndex(wiS);wSeg=new THREE.Mesh(gs,wm);wSeg.renderOrder=2;wSeg.frustumCulled=false;scene.add(wSeg);/* 低画质或走远时用回自绘水面 */
+ if(seg){const gs=gw.clone();gs.setIndex(wiS);wSeg=new THREE.Mesh(gs,wm);wSeg.renderOrder=2;wSeg.frustumCulled=false;wSeg.layers.set(2);scene.add(wSeg);/* 低画质或走远时用回自绘水面 */
   try{let y0=0;for(let j=seg[0];j<seg[1];j++)y0+=rows[j].y/(seg[1]-seg[0]);const P=[],U=[],I=[];
    for(let j=seg[0];j<seg[1];j++){const r=rows[j];for(const c of CN){P.push(r.x-r.tz*W*c,-(r.z+r.tx*W*c),0);U.push(c*W,r.S);}
     if(j>seg[0]){const k=(j-1-seg[0])*nc;for(let m=0;m<nc-1;m++)I.push(k+m,k+m+1,k+m+nc,k+m+1,k+m+nc+1,k+m+nc);}}
