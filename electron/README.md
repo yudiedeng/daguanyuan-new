@@ -10,15 +10,22 @@
 
 包里也带了一份网站文件（`resources/site/`）作为后备：线上打不开时自动改用它。
 
-## 打包（在 Windows 电脑上）
+## 打包
+
+**不用 Windows 电脑**：GitHub 会在它的 Windows 机器上自动打包（`.github/workflows/electron.yml`）。
+改了 `electron/` 推送后自动跑；也可以在仓库 Actions → 打包桌面版 → Run workflow 手动跑。
+跑完（约 5–10 分钟）在那次运行页面底部 Artifacts 下载 `daguanyuan-win`，解压得到要上传的 zip。
+
+**在 Mac 上先试效果**（打开的是 Mac 版窗口，只用来看效果）：
 
 ```bash
 cd electron
 npm i
-npm start            # 先本机试一下（打开线上网页）
-npm run start:local  # 试一下本地文件版
-npm run dist         # 生成 dist/daguanyuan-1.0.0-win.zip，上传这个
+npm start            # 打开线上网页
+npm run start:local  # 打开本地文件版
 ```
+
+在 Windows 电脑上也可以直接 `npm run dist`，生成 `dist/daguanyuan-1.0.0-win.zip`。
 
 ## 启动参数
 

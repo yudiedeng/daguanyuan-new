@@ -1,0 +1,26 @@
+# 在 GitHub 的 Windows 机器上打包桌面版（electron/），产物在 Actions 页面下载。
+# 改了 electron/ 会自动打包；也可以在 Actions → 打包桌面版 → Run workflow 手动跑。
+name: 打包桌面版
+on:
+  push:
+    paths: ['electron/**', '.github/workflows/electron.yml']
+  workflow_dispatch:
+jobs:
+  win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i
+        working-directory: electron
+      - run: npm run dist
+        working-directory: electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daguanyuan-win
+          path: electron/dist/*.zip
+          compression-level: 0
