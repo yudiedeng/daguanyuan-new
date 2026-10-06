@@ -978,7 +978,13 @@ function fitInterior(id,root){const D=INTER_DEF[id];root.updateMatrixWorld(true)
   m.visible=false;}
  if(D)INTER.push({id,root,...D});}
 /* 倒影不套倒影：湖面、穿衣镜各自渲倒影时，画面里别的湖面/镜子不再递归去渲它们自己的倒影（套娃的倒影肉眼看不出，却让整个园子每帧多画好几遍） */
-let REFL=0,REFLTAG='';function reflGuard(o,tag){const f=o.onBeforeRender;o.onBeforeRender=function(...a){if(REFL>0)return;REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';}};}
+// near：只让离这块水面 near 米以内的院落进倒影/折射（细细一条溪水照不见远处的楼，透下去也只看得见溪底），远处院落这一遍整座跳过
+const _rgs=new THREE.Sphere(),_rgb=new THREE.Box3();
+function bldSphere(root){if(!root.userData.bs){_rgb.setFromObject(root);root.userData.bs=_rgb.getBoundingSphere(new THREE.Sphere());}return root.userData.bs;}
+let REFL=0,REFLTAG='';function reflGuard(o,tag,near=0){const f=o.onBeforeRender;o.onBeforeRender=function(...a){if(REFL>0)return;const hid=[];
+ if(near&&this.geometry){if(!this.geometry.boundingSphere)this.geometry.computeBoundingSphere();_rgs.copy(this.geometry.boundingSphere).applyMatrix4(this.matrixWorld);
+  for(const b of BLD){const r=b.root;if(!r.visible)continue;const bs=bldSphere(r);if(bs.center.distanceTo(_rgs.center)-bs.radius-_rgs.radius>near){r.visible=false;hid.push(r);}}}
+ REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';for(const r of hid)r.visible=true;}};}
 let LAMP=0;const MIRRORS=[];const _mv=new V3(),_mn=new V3();
 const _mfr=new THREE.Frustum(),_mpm=new THREE.Matrix4(),_msp=new THREE.Sphere();
 function updateMirrors(){if(!MIRRORS.length)return;camera.updateMatrixWorld();_mfr.setFromProjectionMatrix(_mpm.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
@@ -2261,7 +2267,7 @@ function buildQinfangFX(){
    const g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g2.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g2.setIndex(I);g2.computeBoundingSphere();
    // uv：横向米数、顺流米数，所以流向在 uv 里恒为 +v；flowSpeed 换算成约 0.35 米/秒
    const sc=0.9;w2=new Water2(g2,{color:'#d3e6da',scale:sc,flowDirection:new THREE.Vector2(0,-1),flowSpeed:0.35*sc,reflectivity:0.03,textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,normalMap0:WATERN,normalMap1:WATERN});
-   w2.rotation.x=-Math.PI/2;w2.position.y=y0;w2.renderOrder=2;w2.name='清溪·Water2';scene.add(w2);
+   w2.rotation.x=-Math.PI/2;w2.position.y=y0;w2.renderOrder=2;w2.name='清溪·Water2';reflGuard(w2,'清溪',50);scene.add(w2);
    w2.material.side=THREE.DoubleSide;const ctr=new V3();ctr.copy(g2.boundingSphere.center).applyEuler(w2.rotation).add(w2.position);w2.userData.ctr=ctr;}
   catch(e){console.warn('Water2',e);w2=null;}}
  // 溪底：卵石，中间深 0.2 米、两边浅；水下有晃动的光网
