@@ -1657,12 +1657,12 @@ function buildRill(){const OX=-82+MV.xiaoxiang[0],OZ=27+MV.xiaoxiang[1],W=0.28;
     float foam=clamp(rf*smoothstep(0.55,0.85,n3*0.7+n4*0.5)*0.8+fall*smoothstep(0.35,0.7,n3+0.2)+smoothstep(0.86,1.0,abs(c))*smoothstep(0.6,0.8,n4)*0.5,0.0,1.0);
     vec3 col=mix(under,refl,fr)+gSunCol*spec*0.35;col=mix(col,vec3(0.82,0.88,0.86)*L,foam*0.85);
     gl_FragColor=vec4(col,1.0);}`});
- const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;RG.add(mesh);
+ const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.layers.set(2);RG.add(mesh);  // 水面读湖面倒影贴图：不能再被画进倒影里（否则同一张贴图边读边写）
  // 小瀑布：每级承水石上一汪翻花的浅水（与泉沟同一材质，标成跌水段），唇口间挂下的水帘，落水处溅水珠
  {const ppos=[],pF=[],pT=[],pidx=[];const pool=(d0,d1,h,hw,sd)=>{const b=ppos.length/3;for(const d of[d0,d1])for(const c of[-1,1]){const [x,z]=fat(d,sd+c*hw);ppos.push(OX+x,GY+h,OZ+z);pF.push(-0.4-d,c,hw);pT.push(FD[0],FD[1]);}pidx.push(b,b+1,b+2,b+1,b+3,b+2);};
   pool(0.1,FLIPS[0][0],FLIPS[0][1],0.1,FLIPS[0][2]);pool(FLIPS[0][0]+0.1,FLIPS[1][0],FLIPS[1][1],0.15,FLIPS[1][2]);pool(FLIPS[1][0]+0.1,FLIPS[2][0],FLIPS[2][1],0.19,FLIPS[2][2]);
   const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(ppos,3));pg.setAttribute('aF',new THREE.Float32BufferAttribute(pF,3));pg.setAttribute('aT',new THREE.Float32BufferAttribute(pT,2));pg.setIndex(pidx);
-  const pm=new THREE.Mesh(pg,m);pm.frustumCulled=false;RG.add(pm);
+  const pm=new THREE.Mesh(pg,m);pm.frustumCulled=false;pm.layers.set(2);RG.add(pm);
   // 水帘：从唇口抛出、抛物线落下，横 5 段、竖 10 段
   const spos=[],suv=[],sidx=[];const sheet=(d0,h0,d1,h1,hw,sd0,sd1)=>{const b=spos.length/3,NV=10,NU=4;for(let j=0;j<=NV;j++){const t=j/NV,d=d0+(d1-d0)*Math.sqrt(t),h=h0+(h1-h0)*t*t,w=hw*(1+0.25*t);
     for(let k=0;k<=NU;k++){const c=k/NU*2-1;const [x,z]=fat(d,sd0+(sd1-sd0)*t+c*w);spos.push(OX+x,GY+h+0.01*(1-t),OZ+z);suv.push(c,t*(h0-h1));}}
