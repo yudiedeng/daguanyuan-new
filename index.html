@@ -1071,8 +1071,10 @@ function buildBeds(){if(!GLB)return;const TL=new THREE.TextureLoader();const rr=
  for(const k in cards){const D=cards[k],list=items[k];if(!list.length)continue;const t=TL.load('tex/'+D.f);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;
   let g;if(D.hang){const q1=new THREE.PlaneGeometry(D.w,D.h);q1.translate(0,-D.h/2,0);g=q1;}else{const q1=new THREE.PlaneGeometry(D.s,D.s);q1.translate(0,D.s/2-(D.s-D.h)/2,0);const q2=q1.clone();q2.rotateY(Math.PI/3);const q3=q1.clone();q3.rotateY(-Math.PI/3);g=mergeGeos([q1,q2,q3]);const nn=g.attributes.normal;for(let i=0;i<nn.count;i++)nn.setXYZ(i,0,1,0);}
   const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.8,metalness:0}),{alphaFix:1,key:'bed'+k,vWorld:D.hang?undefined:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'}));
-  const im=new THREE.InstancedMesh(g,m,list.length);const cc=new THREE.Color();list.forEach((it,i)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.92+0.16*((i*7)%5)/5),it[4]));im.setMatrixAt(i,_m4);const b=0.82+rr()*0.24;cc.setRGB(b*(1+rr()*0.08),b,b*(1+rr()*0.06));im.setColorAt(i,cc);});im.instanceColor.needsUpdate=true;
-  im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;scene.add(im);}}
+  // 按 24 m 格子分块，每块自己的包围球、开视锥剔除：转开看不见的花坛整块不画（原先一种花一整组，园子各处的都每遍照画）。随机色仍按原顺序取，颜色与原来一样
+  const cc=new THREE.Color(),cells=new Map();list.forEach((it,i)=>{const b=0.82+rr()*0.24;const col=[b*(1+rr()*0.08),b,b*(1+rr()*0.06)];const k=Math.floor(it[0]/24)+','+Math.floor(it[2]/24);let c=cells.get(k);if(!c)cells.set(k,c=[]);c.push([it,i,col]);});
+  for(const cl of cells.values()){const im=new THREE.InstancedMesh(g,m,cl.length);cl.forEach(([it,i,col],j)=>{_m4.compose(new V3(it[0],it[1],it[2]),new THREE.Quaternion().setFromAxisAngle(UP,it[3]),new V3(it[4],it[4]*(0.92+0.16*((i*7)%5)/5),it[4]));im.setMatrixAt(j,_m4);cc.setRGB(...col);im.setColorAt(j,cc);});im.instanceColor.needsUpdate=true;
+   im.computeBoundingSphere();im.boundingSphere.radius+=1.5;im.castShadow=true;im.receiveShadow=true;scene.add(im);}}}
 /* ---- 蘅芜苑院内异草：第十七回“一株花木也无，只见许多异草：或有牵藤的，或有引蔓的……或实若丹砂，或花如金桂，味香气馥” ----
    院落模型里原有的异草只是几道窄边，院土大片空着。这里在院内空地上实例化四种 Blender 建的单株（models/p/hw_plants.glb，见 blender/scripts/web/hw_plants.py）：
    杜蘅（心形叶，贴地）、白芷（羽状复叶）、兰蕙（长带叶，两枝金桂似的小黄花）、珊瑚豆（小叶，结红果——第四十回“都结了实，似珊瑚豆子一般”）。
