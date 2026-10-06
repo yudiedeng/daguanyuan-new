@@ -977,14 +977,18 @@ function slipAnim(done) {
 
 /* 带路的人：从上一步站的地方出发，沿走得通的路在前面走；玩家落得太远就站住等 */
 let guide = null;
+/* 寻路格子（每格能不能走、地面高、是不是草坪）在各次寻路之间共用：园子是静的，只有懒加载的室内会加碰撞体，碰撞体数一变就清空重算。
+   原来每次寻路都从零查一遍地面和碰撞，花瓣引路每 1.5 秒重找一次路时主线程会卡一下。 */
+const PF = { n: -1, h: new Map(), lawn: new Map() };
 function findPath(ax, az, bx, bz, maxNodes = 400000) {
-  const cell = 0.6, X0 = -156, Z0 = -186, NX = Math.ceil(312 / cell), NZ = Math.ceil(322 / cell), memo = new Map();
+  if (PF.n !== D.COL.length) { PF.n = D.COL.length; PF.h.clear(); PF.lawn.clear(); }
+  const cell = 0.6, X0 = -156, Z0 = -186, NX = Math.ceil(312 / cell), NZ = Math.ceil(322 / cell), memo = PF.h;
   const toI = (x, z) => [Math.round((x - X0) / cell), Math.round((z - Z0) / cell)];
   const hOf = (i, j) => { const k = i * NZ + j; let v = memo.get(k); if (v !== undefined) return v; const x = X0 + i * cell, z = Z0 + j * cell; let g = okAt(x, z);
     if (g != null) for (const [dx, dz] of [[0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]]) if (okAt(x + dx, z + dz) == null) { g = null; break; }
     memo.set(k, g); return g; };
   /* 草坪（不在石子路、桥、台阶、室内）走起来贵 6 倍，路线就会沿着路走 */
-  const lawnM = new Map(), lawn = (i, j) => { const k = i * NZ + j; let v = lawnM.get(k); if (v === undefined) { const x = X0 + i * cell, z = Z0 + j * cell, gr = groundAt(x, z, 99); v = gr[1] && !(window.__dgy.nearPath && window.__dgy.nearPath(x, z, 1.7)); lawnM.set(k, v); } return v; };
+  const lawnM = PF.lawn, lawn = (i, j) => { const k = i * NZ + j; let v = lawnM.get(k); if (v === undefined) { const x = X0 + i * cell, z = Z0 + j * cell, gr = groundAt(x, z, 99); v = gr[1] && !(window.__dgy.nearPath && window.__dgy.nearPath(x, z, 1.7)); lawnM.set(k, v); } return v; };
   const snap = (x, z) => { const [i0, j0] = toI(x, z); for (let r = 0; r < 8; r++) for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) { if (Math.max(Math.abs(a), Math.abs(b)) !== r) continue; if (hOf(i0 + a, j0 + b) != null) return [i0 + a, j0 + b]; } return null; };
   const s = snap(ax, az), t = snap(bx, bz); if (!s || !t) return null;
   const heap = [], push = (f, k) => { heap.push([f, k]); let c = heap.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
