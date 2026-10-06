@@ -2685,7 +2685,7 @@ document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
 let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
-document.getElementById('fps-st').addEventListener('click',()=>{PROF.prog=renderer.info.programs.length;PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
+document.getElementById('fps-st').addEventListener('click',()=>{for(const k in DRAW)delete DRAW[k];PROF.prog=renderer.info.programs.length;PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);AT.max=RS;AT.lock=true;AT.low=AT.high=0;rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
 let DREAM=1;try{DREAM=localStorage.getItem('dgy-dream')==='0'?0:1;}catch(e){}
@@ -2729,10 +2729,16 @@ function tw(name,f){if(typeof f!=='function'||f.__tw)return f;const w=function(.
 {const _raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>_raf(ts=>{if(!DIAG.on)return cb(ts);const t0=performance.now();try{cb(ts);}finally{const k='回调 '+(cb.name||'匿名');PROF.t[k]=(PROF.t[k]||0)+performance.now()-t0;}});}
 diagWrap(renderer,'render',(sc,cam)=>cam===camera?'主画面':cam.isOrthographicCamera?'后期':'倒影 '+(REFLTAG||cam.name||'其他'));
 diagWrap(renderer.shadowMap,'render',()=>'阴影');
+/* 逐次绘制计时（只在诊断时）：按「院落/物件 · 材质」汇总每次绘制的 CPU 时间，找出哪类东西每画一次特别贵 */
+const DRAW={};const _BID=new Map();
+{const f0=renderer.renderBufferDirect.bind(renderer);renderer.renderBufferDirect=function(cam,sc,geo,mat,obj,grp){if(!DIAG.on)return f0(cam,sc,geo,mat,obj,grp);const t0=performance.now();try{return f0(cam,sc,geo,mat,obj,grp);}finally{
+ const dt=performance.now()-t0;let k=_BID.get(obj);if(k===undefined){let p=obj,b='';while(p){const B=BLD.find(x=>x.root===p);if(B){b=B.id;break;}p=p.parent;}k=(b||obj.name||obj.type)+' · '+(mat.name||mat.type)+(obj.isInstancedMesh?' (实例)':'');_BID.set(obj,k);}
+ const pass=cam===camera?'主':'倒影';const e=DRAW[k]??={n:0,ms:0,主:0,倒影:0};e.n++;e.ms+=dt;e[pass]+=dt;}};}
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
  {let nObj=0,nMesh=0,nLight=0,nSh=0;scene.traverse(o=>{nObj++;if(o.isMesh)nMesh++;if(o.isLight){nLight++;if(o.castShadow)nSh++;}});const mats=new Set();scene.traverse(o=>{if(o.isMesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m));});
   L.push('【场景】物体 '+nObj+' · 网格 '+nMesh+' · 材质 '+mats.size+' · 灯 '+nLight+'（投影 '+nSh+'） · 着色器程序 '+renderer.info.programs.length+'（统计期间新增 '+(renderer.info.programs.length-PROF.prog)+'）');}
  L.push('【每帧耗时】帧间隔 '+(PROF.iv/N).toFixed(0)+' ms');for(const [k,v] of Object.entries(PROF.t).sort((a,b)=>b[1]-a[1]).slice(0,18))L.push(k+'：'+(v/N).toFixed(1)+' ms');
+ L.push('【最贵的绘制】（每帧毫秒 · 每帧次数 · 每次微秒）');for(const [k,e] of Object.entries(DRAW).sort((a,b)=>b[1].ms-a[1].ms).slice(0,20))L.push(k+'：'+(e.ms/N).toFixed(1)+' ms · '+Math.round(e.n/N)+' 次 · '+(e.ms/e.n*1000).toFixed(0)+' µs');
  L.push('【每帧各遍】');for(const [k,[c,t,n,ms]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍 · CPU '+((ms||0)/N).toFixed(1)+' ms');
  const BID=new Map(BLD.map(b=>[b.root,b.id])),grp={};
  const key=o=>{let p=o;while(p){if(BID.has(p))return '楼:'+BID.get(p);if(p.parent===scene||p.parent===BROOT){const mt=Array.isArray(o.material)?o.material[0]:o.material;return (p.name||p.type)+'#'+p.id+'['+(mt?.name||mt?.type||'')+(o.isInstancedMesh?' 实例'+o.count:'')+(o.layers.mask!==1?' 层'+o.layers.mask:'')+']';}p=p.parent;}return '?';};
