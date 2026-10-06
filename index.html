@@ -679,7 +679,7 @@ function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const li
 /* 手机上：模型传进显卡后就丢掉内存里那份顶点数组（three.js 默认两边各存一份），院落模型不再在手机上占双份内存而闪退 */
 function freeOnUpload(root){const f=function(){this.array=null;};root.traverse(m=>{if(!m.isMesh)return;const g=m.geometry;if(g.userData.free)return;g.userData.free=1;
  if(!g.boundingSphere)g.computeBoundingSphere();if(!g.boundingBox)g.computeBoundingBox();for(const k in g.attributes){const a=g.attributes[k];(a.isInterleavedBufferAttribute?a.data:a).onUpload(f);}if(g.index)g.index.onUpload(f);});}
-const LODS=new Set(["daguan", "daoxiang", "longcui", "ouxiang", "qinfang", "qiushuang", "tubi", "xiaoxiang", "xiaoxiang_ct", "yihong"]);  // 蘅芜苑不用：玲珑山石带照片贴图和做旧顶点色，简化后远看成了一块块平面  // 有远景简化版的院落（models/b/lod/）
+const LODS=new Set(["daguan", "daoxiang", "longcui", "ouxiang", "qinfang", "qiushuang", "tubi", "xiaoxiang", "xiaoxiang_ct", "yihong"]);  // 有远景简化版的院落（models/b/lod/）。蘅芜苑不用：玲珑山石带照片贴图和做旧顶点色，简化后远看成了一块块平面  // 有远景简化版的院落（models/b/lod/）
 const BLD=[],WALLSEG=[];const BROOT=new THREE.Group();scene.add(BROOT);
 async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);for(const t of['yh','hw'])try{BAKED[t]=await (await fetch('tex/bk_'+t+'.json')).json();}catch(e){console.warn('bk',t,e);}let COLS={};try{COLS=await (await fetch('models/b/col.json')).json();}catch(e){console.warn('col.json',e);}
  const defs=[
