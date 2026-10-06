@@ -1,0 +1,32 @@
+{
+  "name": "daguanyuan-desktop",
+  "productName": "大观园",
+  "version": "1.0.0",
+  "description": "大观园三维漫游的桌面壳，供云渲染平台（3DCAT、LarkXR 等）托管",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "start:local": "electron . --local",
+    "dist": "electron-builder --win zip --x64"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "io.github.yudiedeng.daguanyuan",
+    "productName": "daguanyuan",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "package.json"],
+    "extraResources": [
+      { "from": "config.json", "to": "config.json" },
+      {
+        "from": "..",
+        "to": "site",
+        "filter": ["index.html", "game.js", "i18n.js", ".nojekyll", "models/**/*", "tex/**/*"]
+      }
+    ],
+    "win": { "target": "zip" }
+  }
+}
