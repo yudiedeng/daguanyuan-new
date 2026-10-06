@@ -1,7 +1,7 @@
 {
   "name": "daguanyuan-desktop",
   "productName": "大观园",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "大观园三维漫游的桌面壳，供云渲染平台（3DCAT、LarkXR 等）托管",
   "main": "main.js",
   "private": true,
@@ -17,16 +17,53 @@
   "build": {
     "appId": "io.github.yudiedeng.daguanyuan",
     "productName": "daguanyuan",
-    "directories": { "output": "dist" },
-    "files": ["main.js", "package.json"],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "!node_modules/**/*"
+    ],
     "extraResources": [
-      { "from": "config.json", "to": "config.json" },
+      {
+        "from": "config.json",
+        "to": "config.json"
+      },
       {
         "from": "..",
         "to": "site",
-        "filter": ["index.html", "game.js", "i18n.js", ".nojekyll", "models/**/*", "tex/**/*"]
+        "filter": [
+          "index.html",
+          "game.js",
+          "i18n.js",
+          ".nojekyll",
+          "models/**/*",
+          "tex/**/*"
+        ]
+      },
+      {
+        "from": "node_modules/three",
+        "to": "three",
+        "filter": [
+          "build/**/*",
+          "examples/jsm/**/*"
+        ]
+      },
+      {
+        "from": "node_modules/@dgreenheck/ez-tree",
+        "to": "@dgreenheck/ez-tree",
+        "filter": [
+          "build/**/*"
+        ]
       }
     ],
-    "win": { "target": "zip" }
+    "win": {
+      "target": "zip"
+    }
+  },
+  "dependencies": {
+    "three": "0.170.0",
+    "@dgreenheck/ez-tree": "1.1.0"
   }
 }

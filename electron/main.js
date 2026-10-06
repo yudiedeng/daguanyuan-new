@@ -2,6 +2,7 @@
 // 默认打开线上网页（config.json 的 url），网站一更新，云端下次启动就是新版，不用重新打包。
 // 线上打不开（断网、域名被墙）时退回包里自带的 site/ 目录；加 --local 则直接用本地文件。
 const { app, BrowserWindow, protocol, net } = require('electron');
+const VENDOR = (app.isPackaged ? process.resourcesPath : __dirname + '/node_modules');  // three.js 打进包里（国内机房连 jsdelivr 常卡住）
 const path = require('path');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
@@ -47,12 +48,23 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }
 ]);
 
+const MIME = { js: 'text/javascript', mjs: 'text/javascript', css: 'text/css', html: 'text/html', json: 'application/json', wasm: 'application/wasm', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', glb: 'model/gltf-binary' };
+const fileResp = (file) => { if (!fs.existsSync(file)) return new Response('not found', { status: 404 });
+  return new Response(fs.readFileSync(file), { headers: { 'content-type': MIME[path.extname(file).slice(1)] || 'application/octet-stream', 'access-control-allow-origin': '*' } }); };
+const VMAP = [[/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@[^/]+\/(.*)$/, () => path.join(VENDOR, 'three')], [/^https:\/\/cdn\.jsdelivr\.net\/npm\/@dgreenheck\/ez-tree@[^/]+\/(.*)$/, () => path.join(VENDOR, '@dgreenheck', 'ez-tree')]];
+
 function serveLocal() {
   protocol.handle('app', req => {
     const rel = decodeURIComponent(new URL(req.url).pathname).replace(/^\/+/, '') || 'index.html';
     const file = path.normalize(path.join(SITE, rel));
     if (!file.startsWith(SITE)) return new Response('forbidden', { status: 403 });
     return net.fetch(pathToFileURL(file).toString());
+  });
+  // three.js、ez-tree 用包里的；Google 字体直接给空（用系统字体）；其余照常联网
+  protocol.handle('https', req => {
+    for (const [re, base] of VMAP) { const m = req.url.match(re); if (m) { const f = path.normalize(path.join(base(), m[1].split('?')[0])); if (f.startsWith(base())) return fileResp(f); } }
+    if (/^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(req.url)) return new Response('', { headers: { 'content-type': 'text/css' } });
+    return net.fetch(req, { bypassCustomProtocolHandlers: true });
   });
 }
 
@@ -70,7 +82,11 @@ app.whenReady().then(() => {
 
   const LOCAL = 'app://site/index.html';
   let fellBack = false;
+  let domReady = false;
+  win.webContents.on('dom-ready', () => { domReady = true; log('dom-ready', win.webContents.getURL()); });
   win.webContents.on('did-finish-load', () => log('loaded', win.webContents.getURL()));
+  // 线上网页 20 秒还没出来（国内机房连 github.io 常常不报错地卡住，只剩黑屏），改用包里的本地网页
+  if (cfg.url) setTimeout(() => { if (!domReady && !fellBack) { fellBack = true; log('online timeout, use local'); win.loadURL(LOCAL); } }, 20000);
   win.webContents.on('console-message', (e, level, msg) => { if (level >= 2) log('console', msg); });
   // 渲染进程崩了（显卡驱动、内存）就重新打开页面，而不是留一个黑窗口
   win.webContents.on('render-process-gone', (e, d) => { log('render-process-gone', d.reason, d.exitCode); setTimeout(() => win.webContents.reload(), 1000); });
