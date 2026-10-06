@@ -14,7 +14,7 @@
 
 **不用 Windows 电脑**：GitHub 会在它的 Windows 机器上自动打包（`.github/workflows/electron.yml`）。
 改了 `electron/` 推送后自动跑；也可以在仓库 Actions → 打包桌面版 → Run workflow 手动跑。
-跑完（约 5–10 分钟）在那次运行页面底部 Artifacts 下载 `daguanyuan-win`，解压得到要上传的 zip。
+跑完（约 5–10 分钟）在那次运行页面底部 Artifacts 下载 `daguanyuan-win.zip`，**不用解压，直接上传**（zip 最外层就是 `daguanyuan.exe`）。
 
 **在 Mac 上先试效果**（打开的是 Mac 版窗口，只用来看效果）：
 

@@ -1,4 +1,4 @@
-# 在 GitHub 的 Windows 机器上打包桌面版（electron/），产物在 Actions 页面下载。
+# 在 GitHub 的 Windows 机器上打包桌面版（electron/），产物在 Actions 页面下载（daguanyuan-win.zip，不用解压直接上传）。
 # 改了 electron/ 会自动打包；也可以在 Actions → 打包桌面版 → Run workflow 手动跑。
 name: 打包桌面版
 on:
@@ -21,6 +21,6 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - uses: actions/upload-artifact@v4
         with:
+          # 直接传解包后的目录：下载下来的 daguanyuan-win.zip 最外层就是 daguanyuan.exe，可以原样上传到云渲染平台
           name: daguanyuan-win
-          path: electron/dist/*.zip
-          compression-level: 0
+          path: electron/dist/win-unpacked/
