@@ -341,7 +341,7 @@ document.getElementById('scene').appendChild(renderer.domElement);
 const ANISO=Math.min(16,renderer.capabilities.getMaxAnisotropy());
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.3,4000);
-camera.layers.enable(1);
+camera.layers.enable(1);camera.layers.enable(2);  /* 第 2 层：屋里的陈设、地上的蕨草野花落叶、田里作物——主画面和阴影照画，湖面倒影、清溪反射折射这些虚拟相机只看第 0 层，就不再把它们重画一遍 */
 camera.position.set(95,150,265);
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(0,0,0);controls.enableDamping=true;controls.dampingFactor=0.08;
@@ -678,7 +678,7 @@ async function loadBuildings(){if(!GLB)return;const L=new GLTFLoader();L.setMesh
   root.traverse(m=>{if(!m.isMesh)return;const nm=d.id==='hengwu'&&m.material.name==='M_太湖石'?'HW_玲珑石':m.material.name;m.material=bmat(nm,m.material,!!(d.ao&&m.geometry.attributes.color));const k=nm.replace(/^M_/,'');if(m.material.visible===false)m.visible=false;const ov=BOVR[d.id]&&BOVR[d.id][k];if(ov){const ck=d.id+'|'+k;m.material=BOVC[ck]??=(()=>{const c=m.material.clone();c.onBeforeCompile=m.material.onBeforeCompile;c.customProgramCacheKey=m.material.customProgramCacheKey;if(ov.c)c.color.set(ov.c);if(ov.metal!=null)c.metalness=ov.metal;if(ov.rough!=null)c.roughness=ov.rough;return c;})();}
    m.castShadow=!/(方砖地|院土|田土|夯土地|踩实土路|车辙|苔地|水|池|地面|雕花)/.test(k);m.receiveShadow=true;m.frustumCulled=true;});
   const PT={qinfang:['沁芳',['绕堤柳借三篙翠','隔岸花分一脉香']],mudanting:['牡丹亭',['国色朝酣酒','天香夜染衣']],yihong:['怡红快绿'],xiaoxiang:['有凤来仪'],xiaoxiang_ct:['潇湘馆'],cuizhang:['曲径通幽'],aojing:['凹晶溪馆'],tubi:['凸碧山庄'],tubi_in:['桂魄流光'],qiushuang:['秋爽斋']}[d.id];if(PT){const bs=[];root.traverse(m=>{if(m.isMesh&&(/匾底|bianxin|匾心/.test(m.name)||(m.material&&/^匾额_(温润深栗木|院门)$/.test(m.material.name))))bs.push(m);});for(const m of bs){if(d.id==='qinfang'||d.id==='mudanting'){const m2=m.clone();m2.applyMatrix4(new THREE.Matrix4().makeScale(1,1,-1));m.parent.add(m2);plaqueOn(m2,PT[0],PT[1],-1);}plaqueOn(m,PT[0],PT[1]);}}
-  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy)fitInterior(d.id,root);addProps(L,d.id,root);
+  root.position.set(d.p[0],d.p[1],d.p[2]);root.rotation.y=d.ry;BROOT.add(root);BLD.push({id:d.id,root});if(d.lazy){root.userData.nr=1;root.traverse(m=>{if(m.isMesh)m.layers.set(2);});fitInterior(d.id,root);}addProps(L,d.id,root);
   if(d.cards)fetch('tex/'+d.cards).then(r=>r.json()).then(recs=>{const TL=new THREE.TextureLoader();const B2G=new THREE.Matrix4().set(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,0,0,1);
    for(const rc of recs){const t=TL.load('tex/'+rc.tex);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=ANISO;const m=a2c(patch(new THREE.MeshStandardMaterial({map:t,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.55,metalness:0}),{alphaFix:1,key:'xxw'+rc.tex}));
     const [ax,ay]=rc.axes,lo=rc.lo,hi=rc.hi,mid=(lo[rc.thin]+hi[rc.thin])/2;
@@ -853,7 +853,7 @@ function addProps(L,id,root){if(id==='yihong'){root.traverse(m=>{if(m.isMesh&&/�
  if(q.panels){root.updateMatrixWorld(true);const [a,b]=q.panels,c=Math.cos(q.ry||0),sn=Math.sin(q.ry||0);for(const sd of[-1,1]){const u=sd*(a+b)/2,w=root.localToWorld(new V3(q.p[0]+u*sn,0,q.p[2]+u*c));const top=root.position.y+o.position.y+q.h;colAdd({x:w.x,z:w.z,c,s:sn,hx:0.15,hz:(b-a)/2,top,bot:top-q.h-1,walk:false});}}  // 门洞两边的花障挡人（模型宽度沿局部 z）
 
  if(q.plate){const r=q.plate,pl=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[r*0.55,0],[r*0.6,0.006],[r*0.72,0.012],[r,0.03],[r*1.02,0.032],[r*0.98,0.028],[r*0.7,0.018],[0,0.018]].map(([a,b])=>new THREE.Vector2(a,b)),40),plateMat());{const P=pl.geometry.attributes.position,U=pl.geometry.attributes.uv;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*r*1.02)+0.5,P.getZ(i)/(2*r*1.02)+0.5);}pl.position.set(q.p[0],q.p[1],q.p[2]);pl.castShadow=pl.receiveShadow=true;root.add(pl);}
- o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(q.matte){m.material=m.material.clone();m.material.metalness=0;m.material.metalnessMap=null;m.material.roughness=1;}/* matte：Tripo 材质的金属度（0.6）让布、木头反射天光发亮，归零 */if(/^(花叶|芭蕉叶|芭蕉老叶|芭蕉枯叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
+ o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true;if(q.matte){m.material=m.material.clone();m.material.metalness=0;m.material.metalnessMap=null;m.material.roughness=1;}/* matte：Tripo 材质的金属度（0.6）让布、木头反射天光发亮，归零 */if(/^(花叶|芭蕉叶|芭蕉老叶|芭蕉枯叶)$/.test(m.material.name)&&!m.material.userData.a2c){const mm=m.material;mm.userData.a2c=1;mm.alphaTest=Q>0?0.12:0.3;a2c(mm);}/* 叶片：远处 mip 后透明度变低，用 alpha-to-coverage 保住疏密 */}});if(!q.far)root.add(o);if(root.userData.nr)o.traverse(m=>m.layers.set(2));(window.__props??=[]).push(id+':'+q.f);o.name='PROP_'+q.f;
  if(q.hang){const len=q.hang-q.p[1]-q.h,cord=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,len,5),std('#3a2c22',.9));cord.position.set(q.p[0],q.p[1]+q.h+len/2,q.p[2]);root.add(cord);}
  if(q.box){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],0,q.p[2]));colAdd({x:w.x,z:w.z,c:Math.cos(q.ry||0),s:Math.sin(q.ry||0),hx:q.box[0],hz:q.box[1],top:root.position.y+o.position.y+0.6,bot:root.position.y+o.position.y-0.5,walk:false});}
  if(q.r){root.updateMatrixWorld(true);const w=root.localToWorld(new V3(q.p[0],q.p[1],q.p[2]));colAdd({x:w.x,z:w.z,c:1,s:0,hx:q.r,hz:q.r,top:w.y+q.h,bot:w.y-0.2});}
@@ -951,7 +951,7 @@ function fitInterior(id,root){const D=INTER_DEF[id];root.updateMatrixWorld(true)
   for(const sgn of[1,-1]){const n=nrm.clone().multiplyScalar(sgn);const geo=oval?new THREE.CircleGeometry(0.5,48).scale(wd,ht,1):new THREE.PlaneGeometry(wd,ht);
    const rf=new Reflector(geo,{textureWidth:512,textureHeight:1024,color:0xb8bcb8,clipBias:0.003});
    rf.position.copy(c).addScaledVector(n,th/2+0.004);const xa=new V3().crossVectors(yv,n).normalize();rf.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xa,yv,n));
-   root.add(rf);rf.updateMatrixWorld(true);MIRRORS.push(rf);}
+   root.add(rf);rf.updateMatrixWorld(true);rf.camera.layers.enable(2);MIRRORS.push(rf);/* 屋里的镜子要照见第 2 层的陈设 */}
   m.visible=false;}
  if(D)INTER.push({id,root,...D});}
 let LAMP=0;const MIRRORS=[];const _mv=new V3(),_mn=new V3();
@@ -971,7 +971,7 @@ async function buildCrops(){if(!GLB)return;const y0=Z.daoxiang.y,ox=Z.daoxiang.x
  let items=[];try{items=(await (await fetch('tex/crops_daoxiang.json')).json()).items;}catch(e){console.warn('crops.json',e);return;}
  const at=it=>new V3(ox+it[2],y0+it[4],oz-it[3]);
  const inst=(g,m,list,sx)=>{const im=new THREE.InstancedMesh(g,m,list.length);list.forEach((it,i)=>{const s=it[6]*(sx||1);_m4.compose(at(it),new THREE.Quaternion().setFromAxisAngle(UP,it[5]),new V3(s,s,s));im.setMatrixAt(i,_m4);});
-  im.castShadow=false;im.receiveShadow=true;im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);return im;};  // 作物都在稻香村一片地里：开视锥剔除，看不到那片田就整块不画
+  im.castShadow=false;im.receiveShadow=true;im.layers.set(2);im.computeBoundingSphere();im.boundingSphere.radius+=1;scene.add(im);return im;};  // 作物都在稻香村一片地里：开视锥剔除，看不到那片田就整块不画
  if(Q>0){try{const g=await new GLTFLoader().loadAsync('models/p/crops.glb');const geos={};g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh){const q=o.geometry.clone();q.applyMatrix4(o.matrixWorld);geos[o.name]=q;}});
    const m=patch(new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:0.78,metalness:0}),{key:'crop3d',vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'});
    const by={};for(const it of items)(by[it[0]+'_'+it[1]]??=[]).push(it);
@@ -1881,7 +1881,7 @@ function buildInstances(){
    const P=[];for(let x=x0;x<=x1;x+=1.8)for(let z=z0;z<=z1;z+=1.8){const cx=x+R(-0.4,0.4),cz=z+R(-0.4,0.4);let n=0;const l=SH.get(Math.floor(cx/3)+','+Math.floor(cz/3))||[];for(let q=0;q<l.length;q+=2)if(Math.hypot(l[q]-cx,l[q+1]-cz)<2.2)n++;
     if(Math.abs(cx-XQ.x)>XQ.hw+12||Math.abs(cz-XQ.z)>XQ.hd+12||RILLD(cx,cz)<1.45)continue;  // 立体落叶只铺潇湘馆一带，远处靠贴图
     if(n<2||![[0,0],[0.8,0.8],[-0.8,0.8],[0.8,-0.8],[-0.8,-0.8]].every(([a,b])=>ok(cx+a,cz+b)))continue;P.push({x:cx,y:height(cx,cz)-0.01,z:cz,ry:rnd()*6.283,s:R(0.85,1.1)});}
-   const lm2=new THREE.MeshStandardMaterial({map:ZHU.lit.map,roughness:.85,side:THREE.DoubleSide});makeInstC(ZHU.lit.geo,lm2,P,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,1,it.s)),false,16,0.5);}
+   const lm2=new THREE.MeshStandardMaterial({map:ZHU.lit.map,roughness:.85,side:THREE.DoubleSide});for(const m of makeInstC(ZHU.lit.geo,lm2,P,(M4,it)=>M4.compose(new V3(it.x,it.y,it.z),new THREE.Quaternion().setFromAxisAngle(UP,it.ry),new V3(it.s,1,it.s)),false,16,0.5))m.layers.set(2);}
   for(let v=0;v<6;v++){const L=STALKS.filter((it,i)=>(i*7+(i>>3))%6===v);for(const m of makeInstC(ZHU[v].culm,cm,L,setZ,true,16,1.5))m.customDepthMaterial=cd;for(const m of makeInstC(ZHU[v].leaf,lm,L.map(it=>({...it,c:it.lc||'#ffffff'})),setZ,true,16,1.5))m.customDepthMaterial=ldm;}
  }else{
  const st=makeInst(bs,patch(std('#ffffff',.5,{map:STALK}),{key:'bst',vWorld:sw}),STALKS,setQ);st.customDepthMaterial=patch(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}),{key:'bstd',vWorld:sw});
@@ -2555,7 +2555,7 @@ async function loadFlora(){if(FLORA.R<=0)return;const L=new GLTFLoader(),TL=new 
   const mat=a2c(patch(new THREE.MeshStandardMaterial({map:src.map,normalMap:src.normalMap||null,alphaMap:alpha,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.8,metalness:0}),
    {alphaFix:1,photo:D.ref?'vec3('+D.ref.join(',')+')':0,key:'flora'+name,vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'}));
   FLORA.sp[name]={mat,vars:[...new Set(D.vars)].map(vi=>{const geo=geos[vi];const cap=Math.max(1,items.filter(t=>t.sp===name&&t.v===vi).length);
-   const m=new THREE.InstancedMesh(geo,mat,cap);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=true;m.setColorAt(0,new THREE.Color(1,1,1));scene.add(m);FLORA.meshes.push(m);return {vi,m};})};}));
+   const m=new THREE.InstancedMesh(geo,mat,cap);m.layers.set(2);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=true;m.setColorAt(0,new THREE.Color(1,1,1));scene.add(m);FLORA.meshes.push(m);return {vi,m};})};}));
  FLORA.ready=true;updateFlora(true);}
 function floraLook(sp,t,ss){const fern=!!FLORA_DEF[sp].fern;
  if(fern)return ss===0?[0.85,['#9cc864','#86b456','#a6c96a'][Math.floor(t.h*3)]]:ss===1?[1,['#6f9a45','#628e3e','#7aa14c'][Math.floor(t.h*3)]]:ss===2?[1,['#b0793a','#c29a4c','#8e6a36','#9c8a44'][Math.floor(t.h*4)]]:[0.7,'#6e6048'];
