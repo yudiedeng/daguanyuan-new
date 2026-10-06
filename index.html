@@ -140,7 +140,7 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
   <div class="row"><span>画质</span><div class="seg" id="q-seg"><button data-q="0">低</button><button data-q="1">中</button><button data-q="2">高</button></div></div>
   <div class="row"><span>时辰流转</span><button class="tbtn" id="btn-flow" aria-pressed="false">关</button></div>
   <div class="row"><label for="rs">渲染比例 <span id="rs-v" style="font-variant-numeric:tabular-nums">100%</span></label><input id="rs" type="range" min="0.5" max="2" step="0.05" value="1"></div>
-  <div class="row"><span>帧率</span><span id="fps" style="font-variant-numeric:tabular-nums;color:var(--ink-2)">—</span></div>
+  <div class="row"><span>帧率</span><span id="fps" style="font-variant-numeric:tabular-nums;color:var(--ink-2)">—</span></div><div id="fps-st" style="font-size:11px;line-height:1.4;color:var(--ink-2);font-variant-numeric:tabular-nums;user-select:all"></div>
   <div class="row"><label for="fog">雾气</label><input id="fog" type="range" min="0" max="3" step="0.05" value="0.2"></div>
   <div class="row"><span>画风</span><div class="seg" id="dream-seg"><button data-d="1">梦幻</button><button data-d="0">写实</button></div></div>
   <div class="row"><span>题签</span><button class="tbtn" id="btn-tags" aria-pressed="true">开</button></div>
@@ -331,7 +331,7 @@ function hq(x,z){if(!HG.data)return height(x,z);const fx=clamp(x-HG.x0,0,HG.nx-1
    RENDERER / SCENE
    ===================================================================== */
 let renderer;
-try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});}catch(e){fail('这台设备的浏览器不支持 WebGL，换用新版 Chrome、Edge 或 Safari 试试');throw e;}
+try{renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.info.autoReset=false;}catch(e){fail('这台设备的浏览器不支持 WebGL，换用新版 Chrome、Edge 或 Safari 试试');throw e;}
 if(!renderer.capabilities.isWebGL2){fail('需要支持 WebGL2 的浏览器');throw new Error('webgl2');}
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.6;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -2653,6 +2653,7 @@ function autoTune(fps){if(document.hidden||AT.lock)return;AT.t+=0.5;if(AT.t<2)re
 const clock=new THREE.Clock(),pv=new V3();let ftAcc=0,ftN=0,drTimer=0;const fpsEl=document.getElementById('fps');
 let XXK=0,HEMI0=0.5;
 function frame(){
+ renderer.info.reset();
  const raw=clock.getDelta(),dt=Math.min(raw,0.05),et=clock.elapsedTime;G.time.value=et;
  // gusts (drive both sound and grass/foliage)
  A.gustTimer=(A.gustTimer??0)-dt;if(A.gustTimer<=0){A.gustTimer=2+Math.random()*6;A.gustT=Math.random()<0.35?0.03+Math.random()*0.12:0.3+Math.random()*0.7;}A.gust+=(A.gustT-A.gust)*(1-Math.exp(-dt/1.4));
@@ -2695,7 +2696,7 @@ function frame(){
   fogPass.uniforms.sat.value=(DREAM?1.04:0.98)*(1-0.17*XXK);fogPass.uniforms.contrast.value=1.12-0.1*XXK;fogPass.uniforms.aoK.value=1+0.9*XXK;hemi.intensity=HEMI0*(1+0.45*XXK);}
  renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}
  // dynamic resolution
- ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
+ ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
  requestAnimationFrame(frame);}
 
 /* =====================================================================
