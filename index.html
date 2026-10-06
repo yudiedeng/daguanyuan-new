@@ -1010,7 +1010,8 @@ let REFL=0,REFLTAG='';function reflGuard(o,tag,near=0,alt=null){const f=o.onBefo
   const cp=camera.position;for(const b of BLD){const r=b.root;if(!r.visible)continue;const bs=bldSphere(r);if(bs.center.distanceTo(_rgs.center)-bs.radius-_rgs.radius>near||bs.center.distanceTo(cp)-bs.radius>near){r.visible=false;hid.push(r);}}}  // 离水面或离人超过 near 的院落都跳过（清溪长，单看离水面几乎筛不掉）
  const lst=this.isWater||tag==='清溪'||tag==='湖面'?lodAll(true):null;
  const mu=tag==='湖面'?MIRUSERS.map(m=>{const v=m.visible;m.visible=false;return [m,v];}):null;
- REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';for(const r of hid)r.visible=true;if(lst)for(const [b,h] of lst){b.hi.visible=h;b.lo.visible=!h;}if(mu)for(const [m,v] of mu)m.visible=v;}};}
+ const rt=lst?reflTreesOn():null;
+ REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';for(const r of hid)r.visible=true;if(lst)for(const [b,h] of lst){b.hi.visible=h;b.lo.visible=!h;}if(mu)for(const [m,v] of mu)m.visible=v;if(rt)for(const [m,v] of rt)m.visible=v;}};}
 let LAMP=0;const MIRRORS=[];const _mv=new V3(),_mn=new V3();
 const _mfr=new THREE.Frustum(),_mpm=new THREE.Matrix4(),_msp=new THREE.Sphere();
 function updateMirrors(){if(!MIRRORS.length)return;camera.updateMatrixWorld();_mfr.setFromProjectionMatrix(_mpm.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
@@ -2655,12 +2656,15 @@ async function loadFlora(){if(FLORA.R<=0)return;const L=new GLTFLoader(),TL=new 
 function floraLook(sp,t,ss){const fern=!!FLORA_DEF[sp].fern;
  if(fern)return ss===0?[0.85,['#9cc864','#86b456','#a6c96a'][Math.floor(t.h*3)]]:ss===1?[1,['#6f9a45','#628e3e','#7aa14c'][Math.floor(t.h*3)]]:ss===2?[1,['#b0793a','#c29a4c','#8e6a36','#9c8a44'][Math.floor(t.h*4)]]:[0.7,'#6e6048'];
  if(ss===3)return [0,null];const v=0.88+0.24*t.h;return [ss===2?0.8:ss===0?0.9:1,ss===2?new THREE.Color(v,v*0.9,v*0.72):new THREE.Color(v,v,v*(0.95+0.1*t.h))];}
+/* 地被花草只摆看得见的：身边 8 m 内不论朝向都摆，更远的只摆视野里（左右各放宽约 35°）；朝向变了约 17° 就重排一次 */
+const _ff=new V3();
 function updateFlora(force){if(!FLORA.ready)return;const cp=camera.position,R0=FLORA.R,gy=height(cp.x,cp.z);
- const far=R0<=0||cp.y-gy>R0*0.9;const sig=far?'far':Math.round(cp.x/2)+','+Math.round(cp.z/2)+','+season;if(!force&&sig===FLORA.sig)return;FLORA.sig=sig;
+ camera.getWorldDirection(_ff);_ff.y=0;_ff.normalize();const yawB=Math.round(Math.atan2(_ff.x,_ff.z)/0.3),hf=Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov)/2)*camera.aspect),cosF=Math.cos(Math.min(Math.PI,hf+0.6));
+ const far=R0<=0||cp.y-gy>R0*0.9;const sig=far?'far':Math.round(cp.x/2)+','+Math.round(cp.z/2)+','+season+','+yawB;if(!force&&sig===FLORA.sig)return;FLORA.sig=sig;
  const cnt=new Map();for(const m of FLORA.meshes)cnt.set(m,0);
  if(!far){const x0=Math.floor((cp.x-R0)/8),x1=Math.floor((cp.x+R0)/8),z0=Math.floor((cp.z-R0)/8),z1=Math.floor((cp.z+R0)/8);
   for(let i=x0;i<=x1;i++)for(let j=z0;j<=z1;j++){const l=FLORA.cells.get(i+','+j);if(!l)continue;
-   for(const t of l){const dx=t.x-cp.x,dz=t.z-cp.z;if(dx*dx+dz*dz>R0*R0)continue;const S=FLORA.sp[t.sp];if(!S)continue;const V=S.vars.find(q=>q.vi===t.v);const [sc,col]=floraLook(t.sp,t,season);if(!sc)continue;
+   for(const t of l){const dx=t.x-cp.x,dz=t.z-cp.z,d2=dx*dx+dz*dz;if(d2>R0*R0)continue;if(d2>64&&(dx*_ff.x+dz*_ff.z)/Math.sqrt(d2)<cosF)continue;const S=FLORA.sp[t.sp];if(!S)continue;const V=S.vars.find(q=>q.vi===t.v);const [sc,col]=floraLook(t.sp,t,season);if(!sc)continue;
     const n=cnt.get(V.m);if(n>=V.m.instanceMatrix.count)continue;const s1=t.s*sc;_m4.compose(new V3(t.x,t.y,t.z),new THREE.Quaternion().setFromAxisAngle(UP,t.ry),new V3(s1,s1*(0.9+0.2*t.h),s1));V.m.setMatrixAt(n,_m4);_c.set(col);V.m.setColorAt(n,_c);cnt.set(V.m,n+1);}}}
  for(const m of FLORA.meshes){m.count=cnt.get(m);m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}}
 /* 小物件不进水面倒影：半径不到 0.8 m 的凳子、灯、小石、构件碎块在晃动的倒影里看不清，却每个都要单独画一次。
@@ -2677,7 +2681,14 @@ function layoutLOD(force){const cp=camera.position,R=[0,55,75][Q]||0;if(force)up
   for(let i=0;i<g.list.length;i++){const t=g.list[i];const dx=t.x-cp.x,dz=t.z-cp.z,d=Math.hypot(dx,dz,(t.y-cp.y)*0.5);const dh=Math.hypot(dx,dz)||1;const inV=d<20||(dx*_lf.x+dz*_lf.z)/dh>cosL;const n=g.near.length&&inV&&(t._n?d<R+8:d<R);t._n=n;(n?near:far).push(t);if(n)sig+=i+',';}
   if(!force&&sig===g.sig)continue;g.sig=sig;
   for(const [set,arr] of [[g.near,near],[g.far,far]])for(const e of set){arr.forEach((t,i)=>{const [sc,col]=e.imp?impLook(g.kind,t,season):e.crown?crownLook(g.kind,t,season):[1,null];const s1=t.s*sc;_m4.compose(new V3(t.x,t.y+(e.dy||0),t.z),new THREE.Quaternion().setFromAxisAngle(UP,t.ry),e.uni?new V3(s1,s1,s1):new V3(s1,s1*(0.9+((t.x*7.3)%0.2)),s1));if(sc===0)_m4.makeScale(0,0,0);e.m.setMatrixAt(i,_m4);if(col){_c.set(col);e.m.setColorAt(i,_c);}});
-   e.m.count=arr.length;e.m.instanceMatrix.needsUpdate=true;if(e.m.instanceColor)e.m.instanceColor.needsUpdate=true;}}}
+   e.m.count=arr.length;e.m.instanceMatrix.needsUpdate=true;if(e.m.instanceColor)e.m.instanceColor.needsUpdate=true;}
+  if(force||!g.rmDone){g.rmDone=1;reflTrees(g);}}}
+/* 倒影专用树：每种树另备一份「全部用远景树」的实例（与远景树共用模型、材质），平时藏着，只在湖面、清溪渲倒影时换上——
+   近处的精细树（照片树叶、真树枝）面数是远景树的几十倍，水波一晃倒影里看不出差别。换季时随 layoutLOD(true) 重排 */
+function reflTrees(g){for(const e of g.far){if(!e.rm){e.rm=new THREE.InstancedMesh(e.m.geometry,e.m.material,Math.max(1,g.list.length));e.rm.frustumCulled=false;e.rm.castShadow=false;e.rm.receiveShadow=true;e.rm.visible=false;e.rm.userData.ls=1;if(e.m.instanceColor)e.rm.setColorAt(0,_c.set('#ffffff'));scene.add(e.rm);}
+  g.list.forEach((t,i)=>{const [sc,col]=e.imp?impLook(g.kind,t,season):e.crown?crownLook(g.kind,t,season):[1,null];const s1=t.s*sc;_m4.compose(new V3(t.x,t.y+(e.dy||0),t.z),new THREE.Quaternion().setFromAxisAngle(UP,t.ry),e.uni?new V3(s1,s1,s1):new V3(s1,s1*(0.9+((t.x*7.3)%0.2)),s1));if(sc===0)_m4.makeScale(0,0,0);e.rm.setMatrixAt(i,_m4);if(col&&e.rm.instanceColor){_c.set(col);e.rm.setColorAt(i,_c);}});
+  e.rm.count=g.list.length;e.rm.instanceMatrix.needsUpdate=true;if(e.rm.instanceColor)e.rm.instanceColor.needsUpdate=true;}}
+const reflTreesOn=()=>{const st=[];for(const g of TG){for(const e of [...g.near,...g.far]){st.push([e.m,e.m.visible]);e.m.visible=false;}for(const e of g.far)if(e.rm&&!OFF.has('trees')){st.push([e.rm,false]);e.rm.visible=true;}}return st;};
 let LOTUS_MESH=null,LOTUSF_MESH=null,LOTUS_STALK=null;
 const AUTUMN=['#c2461f','#d8762a','#e3b03c','#a0361a','#bb8a2c','#86913a','#cf5a26'];
 function crownLook(kind,t,ss){const h=hash3(t.x,t.z,7);if(KBASE[kind])kind='broad';
