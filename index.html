@@ -340,6 +340,8 @@ renderer.shadowMap.autoUpdate=false;
 document.getElementById('scene').appendChild(renderer.domElement);
 const ANISO=Math.min(16,renderer.capabilities.getMaxAnisotropy());
 const scene=new THREE.Scene();
+/* 场景矩阵每帧只算一遍：three.js 默认每次 render(scene) 都把整棵场景树的矩阵重算一次，主画面、湖面倒影、清溪倒影折射一帧就算了三四遍。改成帧里统一算一次，各遍共用 */
+scene.matrixWorldAutoUpdate=false;
 const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.3,4000);
 camera.layers.enable(1);camera.layers.enable(2);  /* 第 2 层：屋里的陈设、地上的蕨草野花落叶、田里作物——主画面和阴影照画，湖面倒影、清溪反射折射这些虚拟相机只看第 0 层，就不再把它们重画一遍 */
 camera.position.set(95,150,265);
@@ -2683,7 +2685,7 @@ document.getElementById('btn-sound').addEventListener('click',toggleSound);
 document.getElementById('btn-walk').addEventListener('click',()=>{walk.on?exitWalk():enterWalk(curSpawn());});
 let flow=false;const flowBtn=document.getElementById('btn-flow');function toggleFlow(){flow=!flow;flowBtn.setAttribute('aria-pressed',flow);flowBtn.textContent=tr(flow?'开':'关');}flowBtn.addEventListener('click',toggleFlow);
 const setEl=document.getElementById('settings'),setBtn=document.getElementById('btn-set');function toggleSettings(){setEl.hidden=!setEl.hidden;setBtn.setAttribute('aria-pressed',!setEl.hidden);}setBtn.addEventListener('click',toggleSettings);
-document.getElementById('fps-st').addEventListener('click',()=>{PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
+document.getElementById('fps-st').addEventListener('click',()=>{PROF.prog=renderer.info.programs.length;PROF.t={};PROF.iv=0;PROF.last=0;for(let i=0;i<FX.length;i++)FX[i]=tw('特效'+i+(FX[i].name?' '+FX[i].name:''),FX[i]);if(composer)composer.render=tw('后期合成',composer.render);DIAG.acc={};DIAG.n=0;DIAG.on=true;const el=document.getElementById('fps-diag');el.hidden=false;el.textContent='统计中…（约 20 帧）';});
 const rsEl=document.getElementById('rs'),rsV=document.getElementById('rs-v');rsEl.value=RS;rsV.textContent=Math.round(RS*100)+'%';rsEl.addEventListener('input',()=>{RS=parseFloat(rsEl.value);AT.max=RS;AT.lock=true;AT.low=AT.high=0;rsV.textContent=Math.round(RS*100)+'%';try{localStorage.setItem('dgy-rs2',RS);}catch(e){}setResolution(RS);});
 document.getElementById('fog').addEventListener('input',(e)=>{fogPass.uniforms.density.value=parseFloat(e.target.value);});
 let DREAM=1;try{DREAM=localStorage.getItem('dgy-dream')==='0'?0:1;}catch(e){}
@@ -2728,6 +2730,8 @@ function tw(name,f){if(typeof f!=='function'||f.__tw)return f;const w=function(.
 diagWrap(renderer,'render',(sc,cam)=>cam===camera?'主画面':cam.isOrthographicCamera?'后期':'倒影 '+(REFLTAG||cam.name||'其他'));
 diagWrap(renderer.shadowMap,'render',()=>'阴影');
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
+ {let nObj=0,nMesh=0,nLight=0,nSh=0;scene.traverse(o=>{nObj++;if(o.isMesh)nMesh++;if(o.isLight){nLight++;if(o.castShadow)nSh++;}});const mats=new Set();scene.traverse(o=>{if(o.isMesh)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>mats.add(m));});
+  L.push('【场景】物体 '+nObj+' · 网格 '+nMesh+' · 材质 '+mats.size+' · 灯 '+nLight+'（投影 '+nSh+'） · 着色器程序 '+renderer.info.programs.length+'（统计期间新增 '+(renderer.info.programs.length-PROF.prog)+'）');}
  L.push('【每帧耗时】帧间隔 '+(PROF.iv/N).toFixed(0)+' ms');for(const [k,v] of Object.entries(PROF.t).sort((a,b)=>b[1]-a[1]).slice(0,18))L.push(k+'：'+(v/N).toFixed(1)+' ms');
  L.push('【每帧各遍】');for(const [k,[c,t,n,ms]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍 · CPU '+((ms||0)/N).toFixed(1)+' ms');
  const BID=new Map(BLD.map(b=>[b.root,b.id])),grp={};
@@ -2740,6 +2744,7 @@ function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Mat
  L.push('相机 '+camera.position.toArray().map(v=>v.toFixed(0)).join(',')+' · '+innerWidth+'×'+innerHeight+' · dpr '+devicePixelRatio);
  const el=document.getElementById('fps-diag');el.hidden=false;el.textContent=L.join('\n');console.log(L.join('\n'));}
 try{updateWalk=tw('updateWalk',updateWalk);}catch(e){}try{updateGrass=tw('updateGrass',updateGrass);}catch(e){}try{updateFlora=tw('updateFlora',updateFlora);}catch(e){}try{layoutLOD=tw('layoutLOD',layoutLOD);}catch(e){}try{lodUpdate=tw('lodUpdate',lodUpdate);}catch(e){}try{updateAudio=tw('updateAudio',updateAudio);}catch(e){}try{updateSunShadow=tw('updateSunShadow',updateSunShadow);}catch(e){}try{updateInteriorLight=tw('updateInteriorLight',updateInteriorLight);}catch(e){}try{updateMirrors=tw('updateMirrors',updateMirrors);}catch(e){}try{updateHuaxu=tw('updateHuaxu',updateHuaxu);}catch(e){}try{updatePoultry=tw('updatePoultry',updatePoultry);}catch(e){}try{updateEnv=tw('updateEnv',updateEnv);}catch(e){}try{applyTime=tw('applyTime',applyTime);}catch(e){}try{smallToL2=tw('smallToL2',smallToL2);}catch(e){}try{updatePointLights=tw('updatePointLights',updatePointLights);}catch(e){}try{autoTune=tw('autoTune',autoTune);}catch(e){}
+const sceneMatrices=tw('矩阵更新',()=>scene.updateMatrixWorld());
 function frame(){FRAMEN++;
  renderer.info.reset();
  const raw=clock.getDelta(),dt=Math.min(raw,0.05),et=clock.elapsedTime;G.time.value=et;
@@ -2782,7 +2787,7 @@ function frame(){FRAMEN++;
  {const XQ=Z.xiaoxiang,c=camera.position,d=Math.hypot(Math.max(Math.abs(c.x-XQ.x)-XQ.hw,0),Math.max(Math.abs(c.z-XQ.z)-XQ.hd,0)),k=(1-sstep(0,6,d))*(1-sstep(6,30,c.y-XQ.y));XXK+=(k-XXK)*(1-Math.exp(-dt/1.2));fogPass.uniforms.grade.value.setRGB(1-0.12*XXK,1-0.08*XXK,1-0.02*XXK);
   // 院里：色彩收一收（饱和度、对比度降），接触阴影加重，天光补光加大让竹荫的光斑不那么硬
   fogPass.uniforms.sat.value=(DREAM?1.04:0.98)*(1-0.17*XXK);fogPass.uniforms.contrast.value=1.12-0.1*XXK;fogPass.uniforms.aoK.value=1+0.9*XXK;hemi.intensity=HEMI0*(1+0.45*XXK);}
- lodUpdate(); renderer.shadowMap.needsUpdate=true;renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}if(DIAG.on){const now=performance.now();if(PROF.last)PROF.iv+=now-PROF.last;PROF.last=now;}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
+ lodUpdate(); renderer.shadowMap.needsUpdate=true;sceneMatrices();renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);if(snapReq){snapReq=false;saveSnap();}if(DIAG.on){const now=performance.now();if(PROF.last)PROF.iv+=now-PROF.last;PROF.last=now;}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
  // dynamic resolution
  ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+' · 远景 '+BLD.filter(b=>b.lo).length+'座/在用 '+BLD.filter(b=>b.lo&&b.lo.visible).length+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
  requestAnimationFrame(frame);}
