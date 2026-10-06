@@ -22,6 +22,20 @@ function readConfig() {
   return cfg;
 }
 
+// 运行日志：写在 exe 旁边的 daguanyuan.log（写不进就写到用户数据目录），云平台上出错时用来排查
+let LOG = path.join(path.dirname(process.execPath), 'daguanyuan.log');
+function log(...a) {
+  const line = new Date().toISOString() + ' ' + a.map(x => (x && x.stack) || String(x)).join(' ') + '\n';
+  try { fs.appendFileSync(LOG, line); } catch (e) {
+    try { LOG = path.join(app.getPath('userData'), 'daguanyuan.log'); fs.appendFileSync(LOG, line); } catch (e2) {}
+  }
+}
+process.on('uncaughtException', e => log('uncaughtException', e));
+log('start', process.execPath, process.argv.join(' '));
+
+// 云渲染平台常以服务账号运行程序，Chromium 沙箱在那里起不来会直接闪退，所以关掉沙箱
+app.commandLine.appendSwitch('no-sandbox');
+app.commandLine.appendSwitch('disable-gpu-sandbox');
 // 云端机器上没人点“允许”：声音自动播放、不限 GPU、窗口失焦也照常渲染
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
@@ -45,17 +59,24 @@ function serveLocal() {
 app.whenReady().then(() => {
   serveLocal();
   const cfg = readConfig();
+  log('config', JSON.stringify(cfg), 'gpu', JSON.stringify(app.getGPUFeatureStatus()));
   const win = new BrowserWindow({
     width: 1920, height: 1080,
     fullscreen: cfg.fullscreen, autoHideMenuBar: true, backgroundColor: '#000000',
     title: '大观园',
-    webPreferences: { backgroundThrottling: false, contextIsolation: true, sandbox: true }
+    webPreferences: { backgroundThrottling: false, contextIsolation: true, sandbox: false }
   });
   win.setMenu(null);
 
   const LOCAL = 'app://site/index.html';
   let fellBack = false;
+  win.webContents.on('did-finish-load', () => log('loaded', win.webContents.getURL()));
+  win.webContents.on('console-message', (e, level, msg) => { if (level >= 2) log('console', msg); });
+  // 渲染进程崩了（显卡驱动、内存）就重新打开页面，而不是留一个黑窗口
+  win.webContents.on('render-process-gone', (e, d) => { log('render-process-gone', d.reason, d.exitCode); setTimeout(() => win.webContents.reload(), 1000); });
+  app.on('child-process-gone', (e, d) => log('child-process-gone', d.type, d.reason, d.exitCode));
   win.webContents.on('did-fail-load', (e, code, desc, url, isMain) => {
+    log('did-fail-load', code, desc, url);
     if (!isMain || fellBack || !cfg.url) return;
     fellBack = true;
     console.warn('线上页面打不开，改用本地文件：', desc);
