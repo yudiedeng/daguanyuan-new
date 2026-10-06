@@ -1,6 +1,5 @@
 """怡红院外檐精修（参考图：朱红廊柱、彩画梁枋、一色精雕槅扇、檐下金漆彩绘）。在 blender/yihong.blend 上就地修改：
-  1. 槅扇门窗（*_lat）单独一种材质 M_槅扇：深栗色漆，网页里配木纹；柱子仍用朱漆——红只在柱上，和青绿彩画成“红绿”对照；
-  2. 屋面换 M_YH_灰瓦（网页里不做青苔旧化，比别处干净）；
+  1. （槅扇、屋面保持 .blend 原材质 M_朱漆、M_灰瓦；早先换过的会换回）
   3. 梁上“包袱”贴苏式彩画（M_彩画_baofu，tex/caihua_baofu.jpg；按每块包袱的外接框铺满）；
   4. 抱厦、厢房、游廊、连廊外檐：柱头两侧贴金透雕雀替（M_雕花_huaya/huayar），柱间倒挂楣子（M_雕花_meizi，步步锦，tex/diao_meizi.png）。
 可重复执行：先删掉上次加的 YHR_* 对象、把材质恢复成脚本处理前的样子再做。
@@ -32,8 +31,6 @@ M_RED = bpy.data.materials['M_朱漆']
 M_TILE = bpy.data.materials['M_灰瓦']
 M_BAOFU = bpy.data.materials['M_包袱']
 
-M_GE = mat('M_槅扇', (0.12, 0.04, 0.025))
-M_YT = mat('M_YH_灰瓦', (0.16, 0.17, 0.18))
 M_CH = mat('M_彩画_baofu', (0.85, 0.82, 0.7))
 M_HY = mat('M_雕花_huaya', (0.7, 0.5, 0.15))
 M_HYR = mat('M_雕花_huayar', (0.7, 0.5, 0.15))
@@ -46,16 +43,15 @@ def set_mat(o, new, old=None):
             s.material = new
 
 
+# 槅扇、屋面沿用 .blend 原来的 M_朱漆、M_灰瓦（带照片贴图和做旧；网页烘焙后照搬）。早先版本换过，这里换回
 for o in bpy.data.objects:
-    if o.type != 'MESH' or not o.name.startswith('yihong_'):
+    if o.type != 'MESH':
         continue
-    names = [s.material.name for s in o.material_slots if s.material]
-    if o.name.endswith('_lat') and ('M_朱漆' in names or 'M_槅扇' in names):
-        for s in o.material_slots:
-            s.material = M_GE
-    for s in o.material_slots:
-        if s.material and s.material.name in ('M_灰瓦', 'M_YH_灰瓦'):
-            s.material = M_YT
+    for s_ in o.material_slots:
+        if s_.material and s_.material.name == 'M_槅扇':
+            s_.material = M_RED
+        elif s_.material and s_.material.name == 'M_YH_灰瓦':
+            s_.material = M_TILE
 
 
 # ---- 包袱：每块外接框 UV ----

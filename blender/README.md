@@ -21,6 +21,15 @@
 - `scripts/export/`：潇湘馆导出 / 减面脚本。
 - 注意：仓库里 `models/b/xiaoxiang.wasm` 的窗格是烘焙贴图版，若在 Blender 里改潇湘馆，导出时要重新做窗格烘焙。
 
+## “Blender 原样”导出（bake_court.py，目前用于怡红院、蘅芜苑）
+
+`.blend` 的材质 = 照片贴图（PolyHaven，盒式投影）× 底色 ×“做旧”（缝隙 AO、竖向雨痕、污渍、屋面青苔，均为节点）。普通导出（export_glb）不带贴图，网页再按材质名用自己的配色，所以比 Blender 里平、亮。
+`blender/scripts/web/bake_court.py <院.blend> <标签> <out.glb> [采样]`：
+- 做旧层用 Cycles 烘进顶点色（每种材质临时去掉照片和底色、接自发光，bake EMIT → 顶点色）；纯程序材质整块底色一起烘；
+- 照片贴图转灰度存 `tex/bk_<名>_g.jpg`、法线 `_n.jpg`，材质表写 `tex/bk_<标签>.json`（底色、投影尺度、粗糙度、法线强度）；
+- 材质改名 `M_<标签>B_<原名>`；`pack_glb.mjs` 对这类材质保留顶点色；网页 `bmat` 按 json 建材质：底色 × 灰度照片（世界坐标三向投影）× 顶点色，再乘 `BAKED_GAIN`（网页太阳比 Blender 强，整体压暗）。
+新的院子要用：烘焙、在 `loadBuildings` 里把标签加进 `for(const t of['yh'])`。
+
 ## 导出到网页
 
 ```bash
@@ -40,11 +49,11 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
   网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
 - `pack_prop.mjs`：带透明的贴图不缩放、存无损 webp（exact），否则透明处颜色被抹黑、远处叶丛发黑发红。
 - 怡红院外檐精修 `scripts/sites/yihong_refine.py`（就地改 yihong.blend：槅扇单独 M_槅扇、屋面 M_YH_灰瓦、包袱贴苏式彩画 M_彩画_baofu、柱头雀替 M_雕花_huaya/huayar、倒挂楣子 M_雕花_meizi）。
-  然后整座重导（原来线上那版是简化过的：屋面平直、没有瓦垄瓦当；现在用 .blend 原样导出，约 8 MB），再按上面的清单重开门洞、剪窗心：
+  然后烘焙、整座重导（原来线上那版是简化过的：屋面平直、没有瓦垄瓦当），再按上面的清单重开门洞、剪窗心：
   ```bash
   python3 blender/scripts/sites/yihong_refine.py
-  python3 blender/scripts/web/export_glb.py blender/yihong.blend /tmp/yihong.glb
-  node blender/scripts/web/pack_glb.mjs /tmp/yihong.glb models/b/yihong.wasm models/b/yihong.wasm
+  python3 blender/scripts/web/bake_court.py blender/yihong.blend yh /tmp/yh_baked.glb 10      # 约 7 分钟（CPU）
+  node blender/scripts/web/pack_glb.mjs /tmp/yh_baked.glb models/b/yihong.wasm models/b/yihong.wasm
   ```
 - `tools/glb_patch.mjs`：只把 .blend 里改过的对象补进线上模型（不整座重导时用）。
 - 怡红院其余道具（仙鹤、鸟笼、牡丹、描金宫灯、青花龙纹鱼缸）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
@@ -128,6 +137,10 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,
 node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0.93,1.62,5.0,3.2,"朱漆|槅扇|窗纸|描金"],[-7.82,7.9,0.85,-5.18,8.1,5.21,"朱漆|槅扇"],[-4.82,7.9,0.85,-1.98,8.1,5.21,"朱漆|槅扇"],[-1.62,7.9,0.85,1.62,8.1,5.21,"朱漆|槅扇"],[1.98,7.9,0.85,4.82,8.1,5.21,"朱漆|槅扇"],[5.18,7.9,0.85,7.82,8.1,5.21,"朱漆|槅扇"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
+# 蘅芜苑按 .blend 原样重导（玲珑山石原来只剩 13% 的面）：
+#   python3 blender/scripts/web/bake_court.py blender/hengwu.blend hw /tmp/hw.glb 10
+#   node blender/scripts/web/pack_glb.mjs /tmp/hw.glb models/b/hengwu.wasm models/b/hengwu.wasm - 0.0004
+# 然后依次执行下面四步
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
 node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
