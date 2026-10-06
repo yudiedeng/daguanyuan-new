@@ -627,8 +627,8 @@ function bmat(name,src,ao){const k=name.replace(/^M_/,''),ck=ao?k+'|ao':k;if(BM[
   const r=(BAKED[bm_[1]]||{})[k]||{c:'#ffffff',rough:0.8};const col=new THREE.Color(r.c);if(r.k)col.multiplyScalar(r.k);col.multiplyScalar(BAKED_GAIN);
   const m=std('#ffffff',r.rough,{vertexColors:true,metalness:r.metal||0,side:THREE.DoubleSide});m.color.copy(col);
   const o={key:'bm_'+k};if(r.a)o.tri={a:r.a,n:r.n,s:r.s||1,mode:'replace',nk:r.nk??0.5};
-  // 烘焙表里没配照片的（水磨砖墙、太湖石、苔地、花堵瓦……）沿用同名旧材质的照片纹理，蘅芜苑太湖石沿用「玲珑石」——重导成烘焙材质后这些都成了素色，墙没了砖纹、石头没了纹理显得一块块的
-  else if(bm_[1]==='hw'){const base=k.slice(bm_[0].length),alt=BMR[bm_[1]==='hw'&&base==='太湖石'?'HW_玲珑石':base];if(alt&&alt[2]){o.tri={...alt[2]};if(alt[3]&&alt[3].macro)o.macro=1;}}if(/瓦/.test(k)){o.snowLo='0.15';o.snowHi='0.55';}
+  // 烘焙表里没配照片的（蘅芜苑水磨砖墙、太湖石、苔地、花堵瓦，怡红院太湖石、花池土……）沿用同名旧材质的照片纹理，蘅芜苑太湖石沿用「玲珑石」——重导成烘焙材质后这些都成了素色，墙没了砖纹、石头没了纹理显得一块块的
+  else if(bm_[1]==='hw'||bm_[1]==='yh'){const base=k.slice(bm_[0].length),alt=BMR[bm_[1]==='hw'&&base==='太湖石'?'HW_玲珑石':base];if(alt&&alt[2]){o.tri={...alt[2]};if(alt[3]&&alt[3].macro)o.macro=1;}}if(/瓦/.test(k)){o.snowLo='0.15';o.snowHi='0.55';}
   patch(m,o);m.name=k;BM[k]=m;return m;}}
  if(k==='西番草'){/* 正门白石台矶、栏板“凿成西番草花样”：程序画的卷草浮雕（XFC）按 UV 平铺 */const mp=XFC.map.clone(),nm=XFC.nrm.clone();for(const t of[mp,nm]){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.needsUpdate=true;}
   const m=patch(std('#ffffff',.6,{map:mp,normalMap:nm,normalScale:new THREE.Vector2(1.4,1.4)}),{key:'bm_xfc',macro:1});m.name=k;BM[k]=m;return m;}
