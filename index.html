@@ -994,7 +994,10 @@ function bldSphere(root){if(!root.userData.bs){_rgb.setFromObject(root);root.use
 /* 远近切换：院落包围球表面离相机 55 m 以外画简化版 lo，回到 45 m 以内换回原样 hi（中间留 10 m 免得来回跳） */
 function lodUpdate(){const c=camera.position;for(const b of BLD){if(!b.lo)continue;const bs=bldSphere(b.root),d=c.distanceTo(bs.center)-bs.radius;const far=b.hi.visible?d>55:d>45;b.hi.visible=!far;b.lo.visible=far;}}
 const lodAll=on=>{const st=[];for(const b of BLD)if(b.lo){st.push([b,b.hi.visible]);b.hi.visible=!on;b.lo.visible=on;}return st;};  // 湖面、清溪的倒影/折射里一律用简化版（水波一晃看不出差别）
-let REFL=0,REFLTAG='';function reflGuard(o,tag,near=0){const f=o.onBeforeRender;o.onBeforeRender=function(...a){if(REFL>0)return;const hid=[];
+/* 湖面、清溪轮流更新倒影：单数帧更湖面、双数帧更清溪，各自隔一帧重渲一次（水波一直在晃，晚一帧看不出），倒影的绘制次数减半。alt：0/1 轮到哪帧 */
+let FRAMEN=0;
+let REFL=0,REFLTAG='';function reflGuard(o,tag,near=0,alt=null){const f=o.onBeforeRender;o.onBeforeRender=function(...a){if(REFL>0)return;
+ if(alt!==null&&(FRAMEN&1)!==alt&&this.userData.rgOnce)return;this.userData.rgOnce=1;const hid=[];
  if(near&&this.geometry){if(!this.geometry.boundingSphere)this.geometry.computeBoundingSphere();_rgs.copy(this.geometry.boundingSphere).applyMatrix4(this.matrixWorld);
   const cp=camera.position;for(const b of BLD){const r=b.root;if(!r.visible)continue;const bs=bldSphere(r);if(bs.center.distanceTo(_rgs.center)-bs.radius-_rgs.radius>near||bs.center.distanceTo(cp)-bs.radius>near){r.visible=false;hid.push(r);}}}  // 离水面或离人超过 near 的院落都跳过（清溪长，单看离水面几乎筛不掉）
  const lst=this.isWater||tag==='清溪'||tag==='湖面'?lodAll(true):null;
@@ -2118,7 +2121,7 @@ function updateGrass(){if(!GRASS.mesh)return;const R0=GRASS.R;const cp=camera.po
 let water=null,waterLow=null;
 function buildWater(){const geo=new THREE.PlaneGeometry(360,300);
  water=new Water(geo,{textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,waterNormals:WATERN,sunDirection:new V3(0,1,0),sunColor:0xffffff,waterColor:0x10261f,distortionScale:1.2,fog:false});
- water.rotation.x=-Math.PI/2;water.material.uniforms.size.value=6.0;reflGuard(water,'湖面');scene.add(water);
+ water.rotation.x=-Math.PI/2;water.material.uniforms.size.value=6.0;reflGuard(water,'湖面',0,0);scene.add(water);
  const m=new THREE.ShaderMaterial({uniforms:{t:G.time,sky:{value:new THREE.Color('#9fb8cc')},deep:{value:new THREE.Color('#0d2019')},sunDir:G.sunDir,sunCol:G.sunCol},
   vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
   fragmentShader:`uniform float t;uniform vec3 sky,deep,sunDir,sunCol;varying vec3 vW;float wv(vec2 p){return sin(p.x*0.35+t*0.9)*0.5+sin(p.y*0.47-t*1.1)*0.4+sin((p.x+p.y)*0.9+t*1.7)*0.18;}
@@ -2283,7 +2286,7 @@ function buildQinfangFX(){
    const g2=new THREE.BufferGeometry();g2.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g2.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g2.setIndex(I);g2.computeBoundingSphere();
    // uv：横向米数、顺流米数，所以流向在 uv 里恒为 +v；flowSpeed 换算成约 0.35 米/秒
    const sc=0.9;w2=new Water2(g2,{color:'#d3e6da',scale:sc,flowDirection:new THREE.Vector2(0,-1),flowSpeed:0.35*sc,reflectivity:0.03,textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,normalMap0:WATERN,normalMap1:WATERN});
-   w2.rotation.x=-Math.PI/2;w2.position.y=y0;w2.renderOrder=2;w2.name='清溪·Water2';reflGuard(w2,'清溪',60);scene.add(w2);
+   w2.rotation.x=-Math.PI/2;w2.position.y=y0;w2.renderOrder=2;w2.name='清溪·Water2';reflGuard(w2,'清溪',60,1);scene.add(w2);
    w2.material.side=THREE.DoubleSide;const ctr=new V3();ctr.copy(g2.boundingSphere.center).applyEuler(w2.rotation).add(w2.position);w2.userData.ctr=ctr;}
   catch(e){console.warn('Water2',e);w2=null;}}
  // 溪底：卵石，中间深 0.2 米、两边浅；水下有晃动的光网
@@ -2618,6 +2621,12 @@ function updateFlora(force){if(!FLORA.ready)return;const cp=camera.position,R0=F
    for(const t of l){const dx=t.x-cp.x,dz=t.z-cp.z;if(dx*dx+dz*dz>R0*R0)continue;const S=FLORA.sp[t.sp];if(!S)continue;const V=S.vars.find(q=>q.vi===t.v);const [sc,col]=floraLook(t.sp,t,season);if(!sc)continue;
     const n=cnt.get(V.m);if(n>=V.m.instanceMatrix.count)continue;const s1=t.s*sc;_m4.compose(new V3(t.x,t.y,t.z),new THREE.Quaternion().setFromAxisAngle(UP,t.ry),new V3(s1,s1*(0.9+0.2*t.h),s1));V.m.setMatrixAt(n,_m4);_c.set(col);V.m.setColorAt(n,_c);cnt.set(V.m,n+1);}}}
  for(const m of FLORA.meshes){m.count=cnt.get(m);m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}}
+/* 小物件不进水面倒影：半径不到 0.8 m 的凳子、灯、小石、构件碎块在晃动的倒影里看不清，却每个都要单独画一次。
+   每 3 s 扫一遍新载入的网格，把这类小件从第 0 层挪到第 2 层（主画面、阴影、屋里的镜子照画，湖面/清溪的倒影折射不画） */
+let smallT=2;const _sb=new THREE.Sphere();
+function smallToL2(){scene.traverse(o=>{if(!o.isMesh||o.userData.ls)return;o.userData.ls=1;if(o.layers.mask!==1||o.isInstancedMesh||o.isSkinnedMesh||o===water||o===waterLow||/清溪|Water/.test(o.name))return;
+ const g=o.geometry;if(!g)return;if(!g.boundingSphere){if(!g.attributes.position||!g.attributes.position.array)return;g.computeBoundingSphere();}
+ _sb.copy(g.boundingSphere).applyMatrix4(o.matrixWorld);if(_sb.radius<0.8)o.layers.set(2);});}
 /* 近处精细树只给看得见的：R 米内、且在视野左右再各放宽约 35°（转头时来得及换），身边 20 m 内不管朝向都精细；身后的用远景树（倒影、阴影里差别看不出） */
 const _lf=new V3();
 function layoutLOD(force){const cp=camera.position,R=[0,55,75][Q]||0;if(force)updateFlora(true);
@@ -2725,7 +2734,7 @@ function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Mat
  for(const [k,e] of Object.entries(grp).sort((a,b)=>b[1].t-a[1].t).slice(0,25))L.push(k+'：'+(e.t/1e6).toFixed(2)+'M · '+e.m+' · '+(e.sh/1e6).toFixed(2)+'M · '+(e.nc/1e6).toFixed(2)+'M');
  L.push('相机 '+camera.position.toArray().map(v=>v.toFixed(0)).join(',')+' · '+innerWidth+'×'+innerHeight+' · dpr '+devicePixelRatio);
  const el=document.getElementById('fps-diag');el.hidden=false;el.textContent=L.join('\n');console.log(L.join('\n'));}
-function frame(){
+function frame(){FRAMEN++;
  renderer.info.reset();
  const raw=clock.getDelta(),dt=Math.min(raw,0.05),et=clock.elapsedTime;G.time.value=et;
  // gusts (drive both sound and grass/foliage)
@@ -2754,7 +2763,7 @@ function frame(){
  const focus=walk.on?walk.pos.clone().add(new V3(-Math.sin(walk.yaw)*14,0,-Math.cos(walk.yaw)*14)):controls.target;updateSunShadow(focus);
  plTimer-=dt;if(plTimer<=0){plTimer=0.4;updatePointLights();updateInteriorLight(LAMP);}updateMirrors();
  moon.position.copy(moonDir).multiplyScalar(2200).add(camera.position);moon.lookAt(camera.position);clouds.position.copy(camera.position);stars.position.copy(camera.position);
- lodT-=raw;if(lodT<=0){lodT=0.25;layoutLOD(false);updateFlora(false);}
+ lodT-=raw;if(lodT<=0){lodT=0.25;layoutLOD(false);updateFlora(false);if((smallT-=0.25)<=0){smallT=3;smallToL2();}}
  updateGrass();updateAudio(dt,dayv);
  if(tagsOn){const W=innerWidth,H=innerHeight;for(const p of PLACES){const t=tags[p.id];if(!t)continue;pv.set(p.pos[0],p.pos[1],p.pos[2]);const dist=camera.position.distanceTo(pv);pv.project(camera);
   // 名牌靠近才出现：步行 45 m 内、俯瞰 140 m 内渐显；贴得太近（已到跟前）又收起
