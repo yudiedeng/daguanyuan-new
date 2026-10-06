@@ -5,6 +5,8 @@
    ===================================================================== */
 const wait = () => new Promise(r => { const t = () => window.__dgy && window.__DGY_OK ? r(window.__dgy) : setTimeout(t, 200); t(); });
 const D = await wait();
+/* 潇湘馆院落整体放大了 D.XK 倍（绕世界 −70, 91）：剧情里写死在院里、屋里的坐标按同一比例换算 */
+const xxP = (x, z) => [-70 + (D.XK || 1) * (x + 70), 91 + (D.XK || 1) * (z - 91)];
 const { THREE, scene, hero, walk, blockedAt, groundAt, setSeason, applyTime, enterWalk, exitWalk, camera, PLACES, isTouch, hourEl } = D;
 const V3 = THREE.Vector3;
 /* 中英双语：window.__lang 由主页面设置；切换时触发 'dgy-lang' */
@@ -521,10 +523,10 @@ const LIU = {
                       'Hearing this, the old lady pointed at Xichun and laughed: “See this little granddaughter of mine? She can paint. Shall we have her paint one for you?” You were so delighted you ran over, took Xichun’s hands and said: “My dear young lady! So young, so lovely, and so clever besides — you must be a fairy come down to earth!”',
                       'After a short rest the old lady naturally took you to see everything. First they came to the Bamboo Lodge.'] } }] },
     { tip: '跟老太太去潇湘馆。', tipEn: 'Follow the old lady to the Bamboo Lodge.', label: '跟着进院', labelEn: 'Follow them in', place: 'xiaoxiang', face: () => [-40, 92],
-      npcs: [{ who: '琥珀', whoEn: 'Hupo', color: '#c7a76a', at: () => [-50.5, 92.5] },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-53.6, 90.2] },
-             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => [-53.2, 88.6] },
-             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => [-54.4, 92.4] }],
+      npcs: [{ who: '琥珀', whoEn: 'Hupo', color: '#c7a76a', at: () => xxP(-50.5, 92.5) },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => xxP(-53.6, 90.2) },
+             { who: '鸳鸯', whoEn: 'Yuanyang', color: '#a7c0b8', at: () => xxP(-53.2, 88.6) },
+             { who: '凤姐', whoEn: 'Wang Xifeng', color: '#b6463c', at: () => xxP(-54.4, 92.4) }],
       pages: [{ say: [['', '', '一进门，只见两边翠竹夹路，土地下苍苔布满，中间羊肠一条石子漫的路。你让出路来给老太太众人走，自己却走土地。', 'Inside the gate, green bamboo lined both sides of the way; the bare earth was carpeted with moss, with a narrow pebbled path winding down the middle. You stepped aside to leave the path to the old lady and the others, and walked on the earth yourself.'],
                       ['琥珀', 'Hupo', '姥姥，你上来走，仔细苍苔滑了。', 'Granny, come up onto the path — mind the moss, it’s slippery!']], btn: ['……', '…'] },
               { ask: { q: ['你怎么回？', 'What do you say?'],
@@ -541,10 +543,10 @@ const LIU = {
                       ['贾母', 'The Lady Dowager', '可扭了腰了不曾？叫丫头们捶一捶。', 'Did you wrench your back? Let the maids pound it for you.'],
                       ['刘姥姥', 'Granny Liu', '那里说的我这么娇嫩了。那一天不跌两下子，都要捶起来，还了得呢。', 'I’m not as delicate as all that. Not a day goes by I don’t take a tumble or two — if I had to be pounded every time, where would I be?']], btn: ['进屋去', 'Go inside'] }] },
     { tip: '进屋去。紫鹃早打起湘帘，老太太已在屋里坐下了。', tipEn: 'Go inside. Zijuan has raised the bamboo blind; the old lady is already seated.', label: '在屋里看看', labelEn: 'Look around the room', place: 'xiaoxiang',
-      face: () => [-70, 86],
-      npcs: [{ who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => [-68.2, 89.6], floor: () => roomY('xiaoxiang_in') },
-             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => [-70.75, 89.95], floor: () => roomY('xiaoxiang_in'), sit: 0.5, seat: 'none', look: [-62, 90.4] },
-             { who: '紫鹃', whoEn: 'Zijuan', color: '#9d8fb0', at: () => [-66.6, 91.7], floor: () => roomY('xiaoxiang_in') }],
+      face: () => xxP(-70, 86),
+      npcs: [{ who: '林黛玉', whoEn: 'Lin Daiyu', color: '#b7c8b6', at: () => xxP(-68.2, 89.6), floor: () => roomY('xiaoxiang_in') },
+             { who: '贾母', whoEn: 'The Lady Dowager', color: '#6d5a48', at: () => xxP(-70.75, 89.95), floor: () => roomY('xiaoxiang_in'), sit: 0.5, seat: 'none', look: xxP(-62, 90.4) },
+             { who: '紫鹃', whoEn: 'Zijuan', color: '#9d8fb0', at: () => xxP(-66.6, 91.7), floor: () => roomY('xiaoxiang_in') }],
       pages: [{ say: [['', '', '林黛玉亲自用小茶盘捧了一盏茶来奉与老太太。你因见窗下案上设着笔砚，又见书架上磊着满满的书——', 'Lin Daiyu herself brought the old lady a cup of tea on a little tray. You noticed brushes and inkstones laid out on the desk by the window, and bookshelves crammed full of books —']], btn: ['……', '…'] },
               { ask: { q: ['你心想，这是谁的屋子？', 'Whose room do you suppose this is?'],
                   opts: [{ t: ['这必定是那位哥儿的书房了。', 'This must be one of the young masters’ studies.'], best: 1 },
@@ -855,7 +857,7 @@ let SY = CH17;   // 当前剧情线
 /* 室内地面：取室内模型的位置（懒加载前用院落地面） */
 const L2W = (id, lx, lz) => { const b = D.BLD.find(x => x.id === id); if (!b) return [0, 0]; const v = b.root.localToWorld(new V3(lx, 0, lz)); return [v.x, v.z]; };
 const bldY = (id, y) => { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + y : null; };
-function roomY(id) { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + 0.48 : null; }
+function roomY(id) { const b = D.BLD.find(x => x.id === id); return b ? b.root.position.y + 0.48 * b.root.scale.y : null; }
 const qf = () => { const Q = D.QINFANG; return Q ? [Q.x, Q.z] : [0, 52]; };
 const introEl = $('g-intro'), lidsEl = $('g-lids');
 let banEr = null, flowerHat = null;
