@@ -2618,9 +2618,12 @@ function updateFlora(force){if(!FLORA.ready)return;const cp=camera.position,R0=F
    for(const t of l){const dx=t.x-cp.x,dz=t.z-cp.z;if(dx*dx+dz*dz>R0*R0)continue;const S=FLORA.sp[t.sp];if(!S)continue;const V=S.vars.find(q=>q.vi===t.v);const [sc,col]=floraLook(t.sp,t,season);if(!sc)continue;
     const n=cnt.get(V.m);if(n>=V.m.instanceMatrix.count)continue;const s1=t.s*sc;_m4.compose(new V3(t.x,t.y,t.z),new THREE.Quaternion().setFromAxisAngle(UP,t.ry),new V3(s1,s1*(0.9+0.2*t.h),s1));V.m.setMatrixAt(n,_m4);_c.set(col);V.m.setColorAt(n,_c);cnt.set(V.m,n+1);}}}
  for(const m of FLORA.meshes){m.count=cnt.get(m);m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}}
+/* 近处精细树只给看得见的：R 米内、且在视野左右再各放宽约 35°（转头时来得及换），身边 20 m 内不管朝向都精细；身后的用远景树（倒影、阴影里差别看不出） */
+const _lf=new V3();
 function layoutLOD(force){const cp=camera.position,R=[0,55,75][Q]||0;if(force)updateFlora(true);
+ camera.getWorldDirection(_lf);_lf.y=0;_lf.normalize();const hf=Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov)/2)*camera.aspect),cosL=Math.cos(Math.min(Math.PI,hf+0.6));
  for(const g of TG){const near=[],far=[];let sig='';
-  for(let i=0;i<g.list.length;i++){const t=g.list[i];const d=Math.hypot(t.x-cp.x,t.z-cp.z,(t.y-cp.y)*0.5);const n=g.near.length&&(t._n?d<R+8:d<R);t._n=n;(n?near:far).push(t);if(n)sig+=i+',';}
+  for(let i=0;i<g.list.length;i++){const t=g.list[i];const dx=t.x-cp.x,dz=t.z-cp.z,d=Math.hypot(dx,dz,(t.y-cp.y)*0.5);const dh=Math.hypot(dx,dz)||1;const inV=d<20||(dx*_lf.x+dz*_lf.z)/dh>cosL;const n=g.near.length&&inV&&(t._n?d<R+8:d<R);t._n=n;(n?near:far).push(t);if(n)sig+=i+',';}
   if(!force&&sig===g.sig)continue;g.sig=sig;
   for(const [set,arr] of [[g.near,near],[g.far,far]])for(const e of set){arr.forEach((t,i)=>{const [sc,col]=e.imp?impLook(g.kind,t,season):e.crown?crownLook(g.kind,t,season):[1,null];const s1=t.s*sc;_m4.compose(new V3(t.x,t.y+(e.dy||0),t.z),new THREE.Quaternion().setFromAxisAngle(UP,t.ry),e.uni?new V3(s1,s1,s1):new V3(s1,s1*(0.9+((t.x*7.3)%0.2)),s1));if(sc===0)_m4.makeScale(0,0,0);e.m.setMatrixAt(i,_m4);if(col){_c.set(col);e.m.setColorAt(i,_c);}});
    e.m.count=arr.length;e.m.instanceMatrix.needsUpdate=true;if(e.m.instanceColor)e.m.instanceColor.needsUpdate=true;}}}
