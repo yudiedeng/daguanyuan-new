@@ -21,6 +21,15 @@
 - `scripts/export/`：潇湘馆导出 / 减面脚本。
 - 注意：仓库里 `models/b/xiaoxiang.wasm` 的窗格是烘焙贴图版，若在 Blender 里改潇湘馆，导出时要重新做窗格烘焙。
 
+## “Blender 原样”导出（bake_court.py，目前用于怡红院、蘅芜苑）
+
+`.blend` 的材质 = 照片贴图（PolyHaven，盒式投影）× 底色 ×“做旧”（缝隙 AO、竖向雨痕、污渍、屋面青苔，均为节点）。普通导出（export_glb）不带贴图，网页再按材质名用自己的配色，所以比 Blender 里平、亮。
+`blender/scripts/web/bake_court.py <院.blend> <标签> <out.glb> [采样]`：
+- 做旧层用 Cycles 烘进顶点色（每种材质临时去掉照片和底色、接自发光，bake EMIT → 顶点色）；纯程序材质整块底色一起烘；
+- 照片贴图转灰度存 `tex/bk_<名>_g.jpg`、法线 `_n.jpg`，材质表写 `tex/bk_<标签>.json`（底色、投影尺度、粗糙度、法线强度）；
+- 材质改名 `M_<标签>B_<原名>`；`pack_glb.mjs` 对这类材质保留顶点色；网页 `bmat` 按 json 建材质：底色 × 灰度照片（世界坐标三向投影）× 顶点色，再乘 `BAKED_GAIN`（网页太阳比 Blender 强，整体压暗）。
+新的院子要用：烘焙、在 `loadBuildings` 里把标签加进 `for(const t of['yh'])`。
+
 ## 导出到网页
 
 ```bash
@@ -39,6 +48,14 @@ node blender/scripts/web/pack_glb.mjs /tmp/<id>.glb models/b/<id>.wasm models/b/
   ```
   网页里在 `PROPS.yihong` 按地形摆放（院门外花园、院内花池与花坛）。
 - `pack_prop.mjs`：带透明的贴图不缩放、存无损 webp（exact），否则透明处颜色被抹黑、远处叶丛发黑发红。
+- 怡红院外檐精修 `scripts/sites/yihong_refine.py`（就地改 yihong.blend：槅扇单独 M_槅扇、屋面 M_YH_灰瓦、包袱贴苏式彩画 M_彩画_baofu、柱头雀替 M_雕花_huaya/huayar、倒挂楣子 M_雕花_meizi）。
+  然后烘焙、整座重导（原来线上那版是简化过的：屋面平直、没有瓦垄瓦当），再按上面的清单重开门洞、剪窗心：
+  ```bash
+  python3 blender/scripts/sites/yihong_refine.py
+  python3 blender/scripts/web/bake_court.py blender/yihong.blend yh /tmp/yh_baked.glb 10      # 约 7 分钟（CPU）
+  node blender/scripts/web/pack_glb.mjs /tmp/yh_baked.glb models/b/yihong.wasm models/b/yihong.wasm
+  ```
+- `tools/glb_patch.mjs`：只把 .blend 里改过的对象补进线上模型（不整座重导时用）。
 - 怡红院其余道具（仙鹤、鸟笼、牡丹、描金宫灯、青花龙纹鱼缸）由 Tripo 生成：`python3 tools/tripo_text.py tools/props.json <out> <名…>`，再 `pack_prop.mjs`；牡丹叶子发黄，再跑 `node blender/scripts/web/leaf_dark.mjs models/p/huacong_mudan.glb` 压暗。
 - `scripts/sites/build_sites.py`：生成芦雪广、凹晶馆、凸碧山庄（从现有 .blend 借构件），同时写各自的碰撞框。
 - 坐标约定：网页 x → Blender X，网页 z → Blender −Y，网页 y → Blender Z；新景点正面一律朝网页 +z。
@@ -60,6 +77,24 @@ node blender/scripts/web/pack_glb.mjs /tmp/daguan.glb models/b/daguan.wasm model
 ```
 
 - `build_daguan.py`（室内）仍按旧坐标生成；重跑它之后要再跑一次 `daguan_in_shift.py`（先删 col.json 里的 `daguan_in_shift` 标记）。
+## 栊翠庵外观细部（blender/scripts/sites/longcui_detail.py）
+
+原模型佛殿檐檩直接压在额枋上、檐下一片平板；各屋正脊是两块方条，吻兽、戗脊翘头是小方块垒的“像素”弯钩。改为：
+佛殿屋面抬高 0.66 m，让出一圈五踩单翘单昂斗栱（柱头科、平身科、角科，青绿相间，拱眼壁朱红）；
+各屋正脊重做（当沟、压当条、混砖、盖脊筒瓦）+ 正吻（吞脊龙头、卷尾、剑把、背兽）；佛殿垂脊、戗脊（随屋面、末端起翘）、
+垂兽戗兽、仙人走兽、套兽、风铎、莲座宝瓶宝顶、山花绶带、博缝梅花钉、悬鱼；佛殿、禅堂、耳房檐柱加雀替；
+顺手封住歇山山花与屋面之间原有的一道缝（殿里抬头能看见天）。新件在 `models/b/longcui_xi.wasm`（网页 `{id:'longcui_xi'}`，与 longcui 同位）。
+
+```bash
+python3 blender/scripts/sites/longcui_detail.py        # 改 longcui.blend（抬屋面只做一次）、导出 /tmp/longcui_xi.glb
+node blender/scripts/web/pack_glb.mjs /tmp/longcui_xi.glb models/b/longcui_xi.wasm
+# 外壳 wasm 只能从原始模型跑一次：
+node tools/glb_lift.mjs models/b/longcui.wasm models/b/longcui.wasm "$(python3 blender/scripts/sites/longcui_detail.py --liftspec)"
+node tools/glb_cut.mjs  models/b/longcui.wasm models/b/longcui.wasm "$(python3 blender/scripts/sites/longcui_detail.py --cutspec)"
+```
+
+- 凸碧山庄（build_sites.py）从 longcui.blend 借佛殿；重跑它会借到抬高后的屋面，须连斗栱一起借。
+
 ## 竹（blender/scripts/flora/build_bamboo.py）
 
 潇湘馆一带和园中竹丛用的三株竹（models/t/zhu_1–3.wasm）和叶簇贴图（tex/zhu_spray.png）：先在 Blender 里建两枝真实的竹叶簇、用 Cycles 俯拍成透明贴图，再建竹竿（节环、上细下粗）、互生下垂的枝，枝上挂十字交叉的叶簇片。网页按每竿高度等比缩放，低画质下退回程序生成的竹。
@@ -78,7 +113,7 @@ cp /tmp/zhu/zhu_spray.png tex/zhu_spray.png
 |---|---|---|---|
 | build_yihong.py | yihong_in.blend | models/b/yihong_in.wasm | 抱厦明间四扇槅扇；正房前檐五块木板隔断 |
 | build_xiaoxiang.py | xiaoxiang_in.blend | models/b/xiaoxiang_in.wasm | 明间两扇半掩隔扇（另删 tex/xx_win.json 中两张门格心贴片）；xiaoxiang_ct 里湘帘明间下半幅 |
-| build_hengwu.py | hengwu_in.blend | models/b/hengwu_in.wasm | 清厦前檐明间四扇隔扇 |
+| build_hengwu.py | hengwu_in.blend | models/b/hengwu_in.wasm | 清厦前檐明间四扇隔扇；室内雪洞白墙、素作井口天花、前窗内侧方格棂；外廊倒挂楣子+花牙子、鼓镜柱础 |
 | build_daoxiang.py | daoxiang_in.blend | models/b/daoxiang_in.wasm | 正房明间柴门 |
 
 ```bash
@@ -99,13 +134,18 @@ node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[x0,y0,z0,x1,
 本次实际执行的剪切（从各自原始模型出发；可重复执行）：
 
 ```bash
-node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0.93,1.62,5.0,3.2,"朱漆|窗纸|描金"],[-7.82,7.9,0.85,-5.18,8.1,5.21,"朱漆"],[-4.82,7.9,0.85,-1.98,8.1,5.21,"朱漆"],[-1.62,7.9,0.85,1.62,8.1,5.21,"朱漆"],[1.98,7.9,0.85,4.82,8.1,5.21,"朱漆"],[5.18,7.9,0.85,7.82,8.1,5.21,"朱漆"]]'
+node tools/glb_cut.mjs models/b/yihong.wasm models/b/yihong.wasm '[[-1.62,4.75,0.93,1.62,5.0,3.2,"朱漆|槅扇|窗纸|描金"],[-7.82,7.9,0.85,-5.18,8.1,5.21,"朱漆|槅扇"],[-4.82,7.9,0.85,-1.98,8.1,5.21,"朱漆|槅扇"],[-1.62,7.9,0.85,1.62,8.1,5.21,"朱漆|槅扇"],[1.98,7.9,0.85,4.82,8.1,5.21,"朱漆|槅扇"],[5.18,7.9,0.85,7.82,8.1,5.21,"朱漆|槅扇"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang.wasm models/b/xiaoxiang.wasm '[[-0.73,-1.97,0.55,0.73,-1.36,3.31,"深绿漆|窗纸"],[-0.69,-1.97,0.62,0.69,-1.36,3.31,"暗褐旧木|深绿漆|窗纸|铜|门窗深褐木|门环"]]'
 node tools/glb_cut.mjs models/b/xiaoxiang_ct.wasm models/b/xiaoxiang_ct.wasm '[[-1.2,-3.85,0.1,1.2,-3.6,2.5,"湘"]]'
+# 蘅芜苑按 .blend 原样重导（玲珑山石原来只剩 13% 的面）：
+#   python3 blender/scripts/web/bake_court.py blender/hengwu.blend hw /tmp/hw.glb 10
+#   node blender/scripts/web/pack_glb.mjs /tmp/hw.glb models/b/hengwu.wasm models/b/hengwu.wasm - 0.0004
+# 然后依次执行下面五步
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"绿漆|窗纸|描金"]]'
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-1.62,4.3,0.78,1.62,4.75,3.45,"枋青"]]'   # 隔扇下半截的裙板框（上一行漏剪，门洞地上留着四个蓝框）
 node blender/scripts/web/fix_hw_drum.mjs   # 院门右边门枕石上的石鼓建模时偏外 0.18 m，挪回与左边对称
 node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-7.93,4.72,0.77,7.93,10.3,1.75,"青石|水磨砖"]]'   # 清厦室内露出的外壳槛墙内侧（青砖），室内另贴白灰墙
+node tools/glb_cut.mjs models/b/hengwu.wasm models/b/hengwu.wasm '[[-0.95,-16,3.3,0.95,-12.5,4.1,"灰瓦"]]'   # 墙帽灰瓦穿过院门楼，在匾上露出一排圆瓦当：剪掉两门垛之间这一截
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.74,12.1,0.4,-3.26,12.5,2.58,"本色木|描金"]]'
 # 稻香村正房明间：门板剪掉后残留在门洞里的横带也剪掉，另由 daoxiang_men 补两扇敞开的板门（scripts/sites/daoxiang_door.py）
 node tools/glb_cut.mjs models/b/daoxiang.wasm models/b/daoxiang.wasm '[[-4.62,12.05,0.42,-3.38,12.55,2.52,"旧木|本色木|描金"]]'
@@ -150,3 +190,20 @@ node blender/scripts/web/pack_glb.mjs /tmp/daoxiang_tian.glb models/b/daoxiang_t
 - 作物 → `models/p/crops.glb`：三维小株、顶点色——油菜（开花，「菜花」）、青菜、葱，各两三种变体。
 - 株位 → `tex/crops_daoxiang.json`：顺着弯曲的垄排，偶有缺苗；网页 `buildCrops()` 实例化，低画质退回插片。
 - 原 `daoxiang.blend` 里的菜畦没动；网页模型里的旧菜畦用上面那条 glb_cut 剪掉。
+
+## 园路（石子甬路，blender/scripts/sites/paths_build.py）
+
+园路不再是贴图带子，改为 Blender 建的 3D 路：两侧条石路牙（长短不一、留缝、下埋）、路牙内青砖立砌、路心卵石花街（斜方格深色石子拼线，格心一朵暖黄）。
+路面贴着网页里看得见的地形网格走；桥面、石磴两段跳过（另有桥、台阶）；与别的路相接的一侧不立路牙、不镶砖。颜色全是顶点色。
+每 12 米切一块：`lu_<名>_<k>_base`（灰浆底、砖、路牙）和 `lu_<名>_<k>_peb`（卵石，网页只在 60 米内、中高画质显示）。网页里 `PATHS` 某条带 `lu:'<名>'` 就不画贴图带子，改载 `models/b/lu_<名>.wasm`；别的路伸进它路面的那截带子自动剪掉。
+全园园路（`PATHS` 里除正门外白石台矶外每条都带 `lu`：中轴 `zhou`，其余 `p<序号>`）。中轴卵石细密（0.095 米、六边），支路略疏（0.12 米、五边），全园约 300 万面、28 MB。
+路头接门：`PATHS` 里的 `tail` 是另接到门前的一小段，只用于路面本身；地形整平、布树布石仍按原路（全园布局不变），tail 上的“不长草”在铺草前才登记。
+```
+npx http-server -p 8765 &   # 仓库根目录
+node blender/scripts/web/lu_data.mjs http://localhost:8765/index.html              # 取横断面 → blender/data/lu_<名>.json（全部；后面跟名字则只取那几条）
+for f in blender/data/lu_*.json; do n=$(basename $f .json)
+  python3 blender/scripts/sites/paths_build.py $f /tmp/$n.glb      # 需要 bpy（pip install bpy，Python 3.11）
+  node blender/scripts/web/pack_lu.mjs /tmp/$n.glb models/b/$n.wasm; done
+```
+改了地形、`PATHS` 里这条路的走向或宽度，要重跑这三步。
+node tools/glb_cut.mjs models/b/luxue.wasm models/b/luxue.wasm '[[-1.7,5.0,-1,1.7,15,3,"^M_草$|^M_散草$"]]'   # 芦雪广：西路接到台基前的那截路上，芦苇芦花剪掉（“一条去径逶迤穿芦度苇过去”）

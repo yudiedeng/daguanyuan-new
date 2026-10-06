@@ -1,0 +1,148 @@
+{
+ "yhB_匾心": {
+  "rough": 0.45,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_太湖石": {
+  "rough": 0.85,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_屋脊灰": {
+  "rough": 0.8,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_彩画青": {
+  "rough": 0.75,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_描金": {
+  "rough": 0.35,
+  "metal": 0.7,
+  "c": "#ffffff"
+ },
+ "yhB_方砖地": {
+  "rough": 0.75,
+  "metal": 0.0,
+  "s": 2.6,
+  "a": "bk_large_grey_tiles_g.jpg",
+  "n": "bk_large_grey_tiles_n.jpg",
+  "nk": 1.0,
+  "c": "#ffffff"
+ },
+ "yhB_旧木": {
+  "rough": 0.7,
+  "metal": 0.0,
+  "s": 1.0,
+  "a": "bk_distressed_painted_planks_g.jpg",
+  "n": "bk_distressed_painted_planks_n.jpg",
+  "nk": 0.5,
+  "c": "#c4a689"
+ },
+ "yhB_本色木": {
+  "rough": 0.7,
+  "metal": 0.0,
+  "s": 1.0,
+  "a": "bk_distressed_painted_planks_g.jpg",
+  "n": "bk_distressed_painted_planks_n.jpg",
+  "nk": 0.5,
+  "c": "#f7ddbc"
+ },
+ "yhB_朱漆": {
+  "rough": 0.45,
+  "metal": 0.0,
+  "s": 1.2,
+  "a": "bk_distressed_painted_planks_g.jpg",
+  "n": "bk_distressed_painted_planks_n.jpg",
+  "nk": 0.3,
+  "c": "#a3554a"
+ },
+ "yhB_水": {
+  "rough": 0.03,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_汉白玉": {
+  "rough": 0.75,
+  "metal": 0.0,
+  "s": 2.4,
+  "a": "bk_marble_01_g.jpg",
+  "n": "bk_marble_01_n.jpg",
+  "nk": 1.0,
+  "c": "#f9f8f3"
+ },
+ "yhB_灰瓦": {
+  "rough": 0.75,
+  "metal": 0.0,
+  "s": 1.2,
+  "a": "bk_grey_roof_tiles_g.jpg",
+  "n": "bk_grey_roof_tiles_n.jpg",
+  "nk": 1.0,
+  "c": "#c4c7cb"
+ },
+ "yhB_白灰墙": {
+  "rough": 0.9,
+  "metal": 0.0,
+  "s": 2.5,
+  "a": "bk_white_plaster_rough_01_g.jpg",
+  "n": "bk_white_plaster_rough_01_n.jpg",
+  "nk": 0.4,
+  "c": "#ffffff",
+  "k": 1.35
+ },
+ "yhB_窗纸": {
+  "rough": 0.8,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_竹篱": {
+  "rough": 0.5,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_绿漆": {
+  "rough": 0.45,
+  "metal": 0.0,
+  "s": 1.2,
+  "a": "bk_distressed_painted_planks_g.jpg",
+  "n": "bk_distressed_painted_planks_n.jpg",
+  "nk": 0.3,
+  "c": "#5c7770"
+ },
+ "yhB_花池土": {
+  "rough": 0.95,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_苔缝": {
+  "rough": 0.95,
+  "metal": 0.0,
+  "c": "#ffffff"
+ },
+ "yhB_青石": {
+  "rough": 0.75,
+  "metal": 0.0,
+  "s": 2.2,
+  "a": "bk_white_sandstone_bricks_g.jpg",
+  "n": "bk_white_sandstone_bricks_n.jpg",
+  "nk": 1.0,
+  "c": "#dddddd"
+ },
+ "yhB_青砖": {
+  "rough": 0.75,
+  "metal": 0.0,
+  "s": 1.6,
+  "a": "bk_castle_brick_07_g.jpg",
+  "n": "bk_castle_brick_07_n.jpg",
+  "nk": 1.0,
+  "c": "#e7eaed"
+ },
+ "yhB_麻绳": {
+  "rough": 0.9,
+  "metal": 0.0,
+  "c": "#ffffff"
+ }
+}
