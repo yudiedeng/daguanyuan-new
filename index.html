@@ -951,11 +951,16 @@ function fitInterior(id,root){const D=INTER_DEF[id];root.updateMatrixWorld(true)
   for(const sgn of[1,-1]){const n=nrm.clone().multiplyScalar(sgn);const geo=oval?new THREE.CircleGeometry(0.5,48).scale(wd,ht,1):new THREE.PlaneGeometry(wd,ht);
    const rf=new Reflector(geo,{textureWidth:512,textureHeight:1024,color:0xb8bcb8,clipBias:0.003});
    rf.position.copy(c).addScaledVector(n,th/2+0.004);const xa=new V3().crossVectors(yv,n).normalize();rf.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(xa,yv,n));
-   root.add(rf);rf.updateMatrixWorld(true);rf.camera.layers.enable(2);MIRRORS.push(rf);/* 屋里的镜子要照见第 2 层的陈设 */}
+   reflGuard(rf,'镜子:'+id);root.add(rf);rf.updateMatrixWorld(true);rf.camera.layers.enable(2);MIRRORS.push(rf);/* 屋里的镜子要照见第 2 层的陈设 */}
   m.visible=false;}
  if(D)INTER.push({id,root,...D});}
+/* 倒影不套倒影：湖面、穿衣镜各自渲倒影时，画面里别的湖面/镜子不再递归去渲它们自己的倒影（套娃的倒影肉眼看不出，却让整个园子每帧多画好几遍） */
+let REFL=0,REFLTAG='';function reflGuard(o,tag){const f=o.onBeforeRender;o.onBeforeRender=function(...a){if(REFL>0)return;REFL++;REFLTAG=tag;try{f.apply(this,a);}finally{REFL--;REFLTAG='';}};}
 let LAMP=0;const MIRRORS=[];const _mv=new V3(),_mn=new V3();
-function updateMirrors(){for(const rf of MIRRORS){rf.getWorldPosition(_mv);_mn.set(0,0,1).applyQuaternion(rf.getWorldQuaternion(new THREE.Quaternion()));const to=camera.position.clone().sub(_mv);rf.visible=to.lengthSq()<14*14&&to.dot(_mn)>0;}}
+const _mfr=new THREE.Frustum(),_mpm=new THREE.Matrix4(),_msp=new THREE.Sphere();
+function updateMirrors(){if(!MIRRORS.length)return;camera.updateMatrixWorld();_mfr.setFromProjectionMatrix(_mpm.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse));
+ for(const rf of MIRRORS){rf.getWorldPosition(_mv);_mn.set(0,0,1).applyQuaternion(rf.getWorldQuaternion(new THREE.Quaternion()));const to=camera.position.clone().sub(_mv);
+  if(!rf.geometry.boundingSphere)rf.geometry.computeBoundingSphere();_msp.copy(rf.geometry.boundingSphere).applyMatrix4(rf.matrixWorld);rf.visible=to.lengthSq()<14*14&&to.dot(_mn)>0&&_mfr.intersectsSphere(_msp);}}  // 镜子在身后、视野外就不渲它的倒影
 // 室内补光：相机进到哪间屋，就把两盏暖光挪到那间屋里最近的灯位
 const IPL=[];let inRoom=null;const _li=new V3();
 function updateInteriorLight(lamp){if(!IPL.length)for(let i=0;i<2;i++){const l=new THREE.PointLight(0xffc890,0,14,1.6);scene.add(l);IPL.push(l);}
@@ -2068,7 +2073,7 @@ function updateGrass(){if(!GRASS.mesh)return;const R0=GRASS.R;const cp=camera.po
 let water=null,waterLow=null;
 function buildWater(){const geo=new THREE.PlaneGeometry(360,300);
  water=new Water(geo,{textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,waterNormals:WATERN,sunDirection:new V3(0,1,0),sunColor:0xffffff,waterColor:0x10261f,distortionScale:1.2,fog:false});
- water.rotation.x=-Math.PI/2;water.material.uniforms.size.value=6.0;scene.add(water);
+ water.rotation.x=-Math.PI/2;water.material.uniforms.size.value=6.0;reflGuard(water,'湖面');scene.add(water);
  const m=new THREE.ShaderMaterial({uniforms:{t:G.time,sky:{value:new THREE.Color('#9fb8cc')},deep:{value:new THREE.Color('#0d2019')},sunDir:G.sunDir,sunCol:G.sunCol},
   vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
   fragmentShader:`uniform float t;uniform vec3 sky,deep,sunDir,sunCol;varying vec3 vW;float wv(vec2 p){return sin(p.x*0.35+t*0.9)*0.5+sin(p.y*0.47-t*1.1)*0.4+sin((p.x+p.y)*0.9+t*1.7)*0.18;}
@@ -2659,7 +2664,7 @@ const DIAG={on:false,n:0,acc:{},stack:[]};
 function diagWrap(obj,fn,keyOf){const f0=obj[fn].bind(obj);obj[fn]=function(...a){if(!DIAG.on)return f0(...a);const ri=renderer.info.render,c0=ri.calls,t0=ri.triangles;DIAG.stack.push([0,0]);
  try{return f0(...a);}finally{const ch=DIAG.stack.pop(),dc=ri.calls-c0,dt=ri.triangles-t0,up=DIAG.stack[DIAG.stack.length-1];if(up){up[0]+=dc;up[1]+=dt;}
   const k=keyOf(...a),e=DIAG.acc[k]??=[0,0,0];e[0]+=dc-ch[0];e[1]+=dt-ch[1];e[2]++;}};}
-diagWrap(renderer,'render',(sc,cam)=>cam===camera?'主画面':cam.isOrthographicCamera?'后期':'倒影/镜面 '+(cam.name||'')+(renderer.getRenderTarget()?'':'(屏幕)'));
+diagWrap(renderer,'render',(sc,cam)=>cam===camera?'主画面':cam.isOrthographicCamera?'后期':'倒影 '+(REFLTAG||cam.name||'其他'));
 diagWrap(renderer.shadowMap,'render',()=>'阴影');
 function diagReport(){const N=DIAG.n,L=[],f=x=>(x/N/1e6).toFixed(2)+'M',g=x=>Math.round(x/N);
  L.push('【每帧各遍】');for(const [k,[c,t,n]] of Object.entries(DIAG.acc).sort((a,b)=>b[1][1]-a[1][1]))L.push(k+'：'+g(c)+' 次 · '+f(t)+' 面 · 每帧 '+(n/N).toFixed(1)+' 遍');
