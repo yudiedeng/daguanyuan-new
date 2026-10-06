@@ -666,8 +666,11 @@ function splitBig(root,CELL=16,MINT=40000){root.updateMatrixWorld(true);const li
   if(B.size<2)continue;
   for(const tris of B.values()){const remap=new Map(),idx=[];for(const t of tris)for(let j=0;j<3;j++){const o=I[t*3+j];let n=remap.get(o);if(n===undefined){n=remap.size;remap.set(o,n);}idx.push(n);}
    const ng=new THREE.BufferGeometry(),olds=[...remap.keys()];
-   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,il=a.isInterleavedBufferAttribute,src=il?a.data.array:a.array,st=il?a.data.stride:sz,of=il?a.offset:0,arr=new src.constructor(olds.length*sz);  // 量化顶点（int16/int8）常是交错存放：按 stride/offset 取原始值，照原类型、原 normalized 存成普通属性
-    for(let i=0;i<olds.length;i++){const b0=olds[i]*st+of;for(let c=0;c<sz;c++)arr[i*sz+c]=src[b0+c];}ng.setAttribute(k,new THREE.BufferAttribute(arr,sz,a.normalized));}
+   for(const k in g.attributes){const a=g.attributes[k],sz=a.itemSize,il=a.isInterleavedBufferAttribute,src=il?a.data.array:a.array,st=il?a.data.stride:sz,of=il?a.offset:0;
+    // 量化顶点（int16/int8）原是交错存放、每个顶点补齐到 4 字节；照样补齐（stride 取 4 字节倍数），否则 Mac（Metal）每次绘制都要先把整块顶点转一遍
+    const B=src.BYTES_PER_ELEMENT,ps=Math.ceil(sz*B/4)*4/B,arr=new src.constructor(olds.length*ps);
+    for(let i=0;i<olds.length;i++){const b0=olds[i]*st+of;for(let c=0;c<sz;c++)arr[i*ps+c]=src[b0+c];}
+    ng.setAttribute(k,ps===sz?new THREE.BufferAttribute(arr,sz,a.normalized):new THREE.InterleavedBufferAttribute(new THREE.InterleavedBuffer(arr,ps),sz,0,a.normalized));}
    ng.setIndex(new THREE.BufferAttribute(olds.length>65535?new Uint32Array(idx):new Uint16Array(idx),1));ng.computeBoundingSphere();ng.computeBoundingBox();
    const c=new THREE.Mesh(ng,m.material);c.name=m.name;c.position.copy(m.position);c.quaternion.copy(m.quaternion);c.scale.copy(m.scale);
    c.castShadow=m.castShadow;c.receiveShadow=m.receiveShadow;c.visible=m.visible;c.layers.mask=m.layers.mask;c.renderOrder=m.renderOrder;c.frustumCulled=m.frustumCulled;
