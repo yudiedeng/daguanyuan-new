@@ -1354,10 +1354,10 @@ function stairs(pts,hs,P){const hw=P.w/2+0.15,m=pts.length,tops=new Float32Array
    if(i===0||!posts[i-1])continue;const [x0,y0,z0]=posts[i-1],dx=x-x0,dz=z-z0,dh=Math.hypot(dx,dz),dy=y-y0,sl=Math.hypot(dh,dy),rx=-Math.atan2(dy,dh),M=T((x+x0)/2,0,(z+z0)/2,Math.atan2(dx,dz)),yc=(y+y0)/2;
    box('marble',M,0.16,0.14,sl,0,yc+0.88,0,{rx,noCol:1});box('marble',M,0.1,0.46,sl,0,yc+0.45,0,{rx,noCol:1});}}}
 /* 3D 石子甬路（lu）：这些路不画贴图带子，路面由 Blender 模型来；别的路接进来时，带子伸进 lu 路面的那截剪掉 */
-const LU=[];const nearLu=(x,z,pad)=>LU.some(({sp,hw})=>sp.some(p=>(p[0]-x)**2+(p[1]-z)**2<(hw+pad)**2));
+const LU=[],LU_PATHS=[];const nearLu=(x,z,pad)=>LU.some(({sp,hw})=>sp.some(p=>(p[0]-x)**2+(p[1]-z)**2<(hw+pad)**2));
 function buildLu(){const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);
  const mat=patch(std('#ffffff',0.88,{vertexColors:true,side:THREE.DoubleSide}),{key:'lu',snowLo:'0.5',snowHi:'0.9'});
- for(const P of PATHS)if(P.lu)L.loadAsync('models/b/lu_'+P.lu+'.wasm').then(g=>{const peb=[];g.scene.traverse(o=>{if(!o.isMesh)return;o.material=mat;o.receiveShadow=true;
+ for(const P of LU_PATHS)L.loadAsync('models/b/lu_'+P.lu+'.wasm').then(g=>{const peb=[];g.scene.traverse(o=>{if(!o.isMesh)return;o.material=mat;o.receiveShadow=true;
    if(/_peb$/.test(o.name)){peb.push(o);o.visible=false;}});scene.add(g.scene);g.scene.updateMatrixWorld(true);
   for(const o of peb){o.geometry.computeBoundingSphere();o.userData.bs=o.geometry.boundingSphere.clone().applyMatrix4(o.matrixWorld);}/* 量化后几何是局部坐标，按世界坐标算远近 */
   // 卵石只在近处显示（60 米内），低画质不显示；远处只看灰浆底、砖、路牙
@@ -1369,8 +1369,8 @@ const TAILS=[];const fullPts=P=>P.tail?P.pts.concat(P.tail):P.pts;
 function buildPath(P){
  const c=new THREE.CatmullRomCurve3(P.pts.map(p=>new V3(p[0],0,p[1])),false,'centripetal');const L=c.getLength();const sp=c.getSpacedPoints(Math.max(6,Math.ceil(L/0.8))).map(v=>[v.x,v.z]);
  const cf=P.tail?new THREE.CatmullRomCurve3(fullPts(P).map(p=>new V3(p[0],0,p[1])),false,'centripetal'):c,Lf=cf.getLength(),spf=P.tail?cf.getSpacedPoints(Math.max(6,Math.ceil(Lf/0.8))).map(v=>[v.x,v.z]):sp;
- if(P.tail)for(const v of cf.getSpacedPoints(Math.ceil(Lf/0.8)))if(v.distanceTo(c.getPoint(1))<Lf-L+1.5)TAILS.push([v.x,v.z]);
- if(P.lu)LU.push({sp:cf.getSpacedPoints(Math.ceil(Lf/0.5)).map(v=>[v.x,v.z]),hw:P.w/2});
+ if(P.tail){const t0=L/Lf;for(let i=0;i<=60;i++){const v=cf.getPointAt(t0+(1-t0)*i/60);TAILS.push([v.x,v.z,P.w/2+0.35]);}}/* 只取 tail 本身那段，宽度按路宽 */
+ if(P.lu){LU.push({sp:cf.getSpacedPoints(Math.ceil(Lf/0.5)).map(v=>[v.x,v.z]),hw:P.w/2});LU_PATHS.push(P);}/* PATHS 以外、各院自己画的小路（如潇湘馆院门前）带 lu 也一样 */
  const pos=[],uv=[],nor=[],col=[],idx=[];const hw=P.w/2;let acc=0;const n=sp.length-1;
  for(let i=0;i<=n;i++){const p=sp[i],a=sp[Math.max(0,i-1)],b=sp[Math.min(n,i+1)];let tx=b[0]-a[0],tz=b[1]-a[1];const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx;if(i>0)acc+=Math.hypot(p[0]-sp[i-1][0],p[1]-sp[i-1][1]);
   for(const s of[-1,1]){const x=p[0]+nx*hw*s,z=p[1]+nz*hw*s;pos.push(x,height(x,z)+0.07,z);nor.push(0,1,0);uv.push(s<0?0:1,acc/(P.w*2));col.push(1,1,1);}pathAdd(p[0],p[1]);}
@@ -1562,7 +1562,7 @@ function clearYihongGarden(){if(!GLB)return;const X=Z.yihong.x,Zc=Z.yihong.z,inG
  for(const k in TREES){const L=TREES[k];for(let i=L.length-1;i>=0;i--){const t=L[i];if(!inG(t.x,t.z))continue;L.splice(i,1);for(const c of COL)if(c.x===t.x&&c.z===t.z){c.hx=c.hz=0;c.top=-1e9;}}}}
 function buildXiaoxiang(){const y=Z.xiaoxiang.y;if(!GLB)court({x:-80,z:30,hw:15,hd:12,h:3.2,gates:[{side:'e',pos:30,plaque:'潇湘馆'}]});
  if(!GLB)hall(T(-83,y,23.5,0),{w:10.5,d:6,h:3.6,bays:3,base:0.5,pad:0.9,roof:'gable',roofH:2.1,over:1.0,plaque:'有凤来仪',pscale:0.72,lanterns:true});
- buildPath(GLB?{pts:[[-64,30],[-63.5,37],[-66,44],[-70.5,47.5],[-74.5,46.5],[-74.5,44.5]].map(([x,z])=>[x+MV.xiaoxiang[0],z+MV.xiaoxiang[1]]),w:1.4}:{pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
+ buildPath(GLB?{pts:[[-64,30],[-63.5,37],[-66,44],[-70.5,47.5],[-74.5,46.5],[-74.5,44.5]].map(([x,z])=>[x+MV.xiaoxiang[0],z+MV.xiaoxiang[1]]),w:1.4,lu:'xxmen'}:{pts:[[-64,30],[-70,33],[-76,31.5],[-83,29.6]],w:1.4});
  const [XD,XZ]=MV.xiaoxiang;if(!GLB){addTree('blossom',-91+XD,37+XZ,0.8,PEAR[0],y);BANANAS.push([-70+XD,38+XZ,1.8,y],[-69+XD,39+XZ,1.5,y]);}  // 有院落模型时梨花、芭蕉在模型的后院里
  const bamb=(x,z,inside)=>{const gy=height(x,z);const h=inside?R(8,13):R(9,14),lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(R(-.1,.1),R(0,6.28),R(-.1,.1))),sx=R(0.7,1.75);
   // 院内的竹子颜色深些，竹下幽暗
@@ -2013,7 +2013,7 @@ function inCave(x,z,r){if(Math.abs(x)>8||z<86||z>106)return false;for(let i=1;i<
 function buildHeightTex(){const nx=HG.nx,nzz=HG.nz;const data=new Uint16Array(nx*nzz*4);
  const SH=new Map();for(const t of STALKS){const k=Math.floor(t.x/3)+','+Math.floor(t.z/3);if(!SH.has(k))SH.set(k,[]);SH.get(k).push(t.x,t.z);}
  for(let j=0;j<nzz;j++)for(let i=0;i<nx;i++){const x=HG.x0+i,z=HG.z0+j,h=HG.data[j*nx+i];let d=1;
-  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(inCave(x,z,1.6))d=0;else if(Math.abs(x-8)<6&&z>60&&z<90&&nearStream(x,z,1.5))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
+  if(h<0.28)d=0;else if(inZone(x,z,0.5))d=0;else if(nearPath(x,z,1.9))d=0;else if(TAILS.some(t=>(t[0]-x)**2+(t[1]-z)**2<t[2]*t[2]))d=0;/* 路头 tail 上不长草（只按路宽） */else if(inCave(x,z,1.6))d=0;else if(Math.abs(x-8)<6&&z>60&&z<90&&nearStream(x,z,1.5))d=0;else if(Math.abs(x)<24&&z>88&&z<104)d=0.2;else if(Math.abs(x+68)<32&&Math.abs(z-94)<28)d=0.35;else if(!inGarden(x,z,1))d=0;
   if(d>0)d*=(0.55+0.45*nz(NOISE.d,x*2,z*2))*sstep(0.28,0.45,h);if(d>0&&h>3)d*=0.7;
   let can=0;{const ix=Math.floor(x/5),iz=Math.floor(z/5);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=treeHash.get((ix+a)+','+(iz+b));if(l)for(const p of l){const dd=Math.hypot(p[0]-x,p[1]-z);can+=Math.max(0,1-dd/5.5);}}can=Math.min(1,can*0.8);}
   if(inZone(x,z,0.5))can=Math.abs(x-Z.xiaoxiang.x)<Z.xiaoxiang.hw&&Math.abs(z-Z.xiaoxiang.z)<Z.xiaoxiang.hd?1:(Math.abs(x-Z.hengwu.x)<Z.hengwu.hw&&Math.abs(z-Z.hengwu.z)<Z.hengwu.hd?0.85:0);d*=1-0.85*can;  // 潇湘馆院内按竹荫下；蘅芜苑“一株花木也无，只见许多异草”——苔藓泥地，草只零星  // 潇湘馆院内按竹荫下处理：“土地下苍苔布满”
@@ -2717,9 +2717,9 @@ function frame(){
 /* 园路：tools/layout/paths.json（python3 tools/layout/check_paths.py 检查跨水与穿院）。跨水处自动架桥，bridges 依次指定桥型 */
 const PATHS=[
  {pts:[[0,113],[-0.9,108],[-0.9,105.6],[-0.9,103.2],[-1.35,101],[-2.45,99],[-2.7,97.2],[-2.05,95.5],[-1.05,94],[-0.55,92.4],[-0.5,90.5],[-0.5,86.4],[-2,81],[-5,75],[-3,67],[0,60],[0,44],[0,32],[0,14],[0,-4],[0,-20],[0,-37]],w:3,bridges:['qinfang','arch'],lamps:true,rail:true,lu:'zhou'}, // 中轴（路面为 Blender 建的石子甬路 models/b/lu_zhou.wasm，见 blender/scripts/sites/paths_build.py）
- {pts:[[-3,66.5],[-14,69],[-28,70],[-40,71],[-48,73],[-50.5,80],[-51,88],[-51.5,93.5],[-53,94]],w:2.4,tail:[[-53.6,100.5],[-55.8,107.8],[-62.5,109.4]],lu:'p1'}, // 潇湘馆（院门在北墙 x≈-62.5，原路头顶着东墙，tail 绕到门前）
+ {pts:[[-3,66.5],[-14,69],[-28,70],[-40,71],[-48,73],[-50.5,80],[-51,88],[-51.5,93.5],[-53,94]],w:2.4,lu:'p1'}, // 潇湘馆（院门在北墙，由 buildXiaoxiang 里那条绕到门前的小路 xxmen 接上）
  {pts:[[0,113],[14,110],[30,112],[44,120],[56,138],[66,156],[76,158.5],[83,158.5]],w:2.6,lamps:true,lu:'p2'}, // 怡红院
- {pts:[[56,138],[60,124],[62,110],[60,98],[57,88],[52,78],[46,68],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4,tail:[[93.8,44.4]],lu:'p3'}, // 东路·栊翠庵（tail 接到山门前台地脚）
+ {pts:[[56,138],[60,124],[62,110],[60,98],[57,88],[52,78],[46,68],[42,58],[40,44],[50,40],[66,42],[80,47],[88,47]],w:2.4,tail:[[93.8,44.4],[94.9,44.1]],lu:'p3'}, // 东路·栊翠庵（tail 接到山门前台地脚）
  {pts:[[50,40],[62,26],[82,18],[100,8],[114,-12],[118,-40],[118,-70],[110,-92],[96,-100],[86,-94]],w:2.2,tail:[[84.6,-90.6],[83,-87.3]],lu:'p4'}, // 东路·凹晶馆（tail 接到馆后墙正中的后门）
  {pts:[[-30,34],[-56,37],[-72,36],[-86,36],[-100,35],[-108,28],[-109,14],[-108,2],[-118,0]],w:2.2,tail:[[-125.8,0]],lu:'p5'}, // 西路·芦雪广（tail 接到台基边）
  {pts:[[-48,-40],[-46,-90],[-40,-112],[-20,-120],[20,-120],[44,-110],[50,-80],[48,-40]],w:2.2,lu:'p6'}, // 大观楼后
@@ -2739,18 +2739,18 @@ const PATHS=[
 const tick=(msg)=>new Promise(r=>{loadStep.textContent=tr(msg);requestAnimationFrame(()=>setTimeout(r,0));});
 async function build(){
  await tick('堆山凿池');prepPaths();prepViews();buildTerrain();buildWater();
- await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);pondRail();buildLu();
+ await tick('铺石子路，架桥');for(const P of PATHS)buildPath(P);pondRail();
  await tick('起楼阁，砌粉墙');buildGate();buildRockery();try{buildTown();}catch(e){console.warn('town',e);}buildDaguan();buildYihong();
- await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();try{buildHuaxu();}catch(e){console.warn('huaxu',e);}buildDaoxiang();buildLongcui();buildOuxiang();
+ await tick('修馆舍，筑茅屋');buildXiaoxiang();buildQiushuang();buildHengwu();try{buildHuaxu();}catch(e){console.warn('huaxu',e);}buildDaoxiang();buildLongcui();buildOuxiang();buildLu();/* 各院自己的小路也已登记 */
  if(QINFANG){const q=PLACES.find(p=>p.id==='qinfang');q.pos=[QINFANG.x,9,QINFANG.z];q.view={t:[QINFANG.x,2,QINFANG.z],c:[QINFANG.x-26,11,QINFANG.z+22]};q.spawn=[QINFANG.x-3,QINFANG.z+14,0];CHIMES.push(new V3(QINFANG.x,4,QINFANG.z));}
  CHIMES.push(new V3(-78,4,-16),new V3(0,10,Z.daguan.z+10),new V3(107,4,139));
  await tick('种树栽竹，植荷，叠驳岸');try{await loadTrees();}catch(e){console.warn('trees',e);}if(Q>0){try{buildEZ();}catch(e){console.warn('ez-tree',e);}}buildShore();buildPathStones();buildQinfangScene();buildBarriers();try{buildFeilou();}catch(e){console.warn('feilou',e);}buildVegetation();if(TM.banana_1&&TM.banana_1.lg)buildBananas();else for(const b of BANANAS)banana(b[0],b[1],b[2],b[3]);clearYihongGarden();buildInstances();
  await tick('搬入楼阁精模');try{await loadBuildings();}catch(e){console.warn('buildings',e);}buildCrops().catch(e=>console.warn('crops',e));buildPoultry().catch(e=>console.warn('poultry',e));try{buildBeds();}catch(e){console.warn('beds',e);}try{buildHengwuYard();}catch(e){console.warn('hengwu',e);}buildHuaxuCave().catch(e=>console.warn('huaxu cave',e));
  await tick('上瓦挂匾');try{buildOuterForest();}catch(e){console.warn('outer',e);}flush();buildLanterns();buildParticles();try{buildQinfangFX();}catch(e){console.warn('qinfang fx',e);}
- await tick('铺草');for(const [x,z] of TAILS){const k=Math.floor(x/4)+','+Math.floor(z/4);(pathHash.get(k)||pathHash.set(k,[]).get(k)).push([x,z]);}/* 路头 tail 上不长草 */buildHeightTex();buildGrass();buildWaterDist();
+ await tick('铺草');buildHeightTex();buildGrass();buildWaterDist();
  await tick('点野花，种蕨草');try{await Promise.race([loadFlora(),new Promise(r=>setTimeout(r,20000))]);}catch(e){console.warn('flora',e);}
  await tick('调天光');setupPost();initUI();markQ();applyDream();setSeason(0);applyTime();updateEnv();envDirty=false;select('all',false);
- window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={PATHS,terrainMesh,BROOT,BLD,nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
+ window.__DGY_OK=1;if(LAZY_BLD)setTimeout(()=>LAZY_BLD().then(()=>console.log('interiors',INTER.length)),1200);window.__dgy={PATHS,LU_PATHS,terrainMesh,BROOT,BLD,nearPath,THREE,scene,COL,INTER,MIRRORS,hero,setSeason,exitWalk,applyTime,isTouch,card,hourEl,PLACES,PATH_S,height,groundAt,blockedAt,FLORA,BRIDGES,QINFANG,BLD,BM,hq,Z,updateFlora,camera,controls,enterWalk,select,EZ,CROWNS,TREES,TG,renderer,layoutLOD,getQ:()=>Q,setHour:(h)=>{hour=h;hourEl.value=h;applyTime();envDirty=true;},walk};loadingEl.style.opacity=0;setTimeout(()=>loadingEl.remove(),800);requestAnimationFrame(frame);}
 const fontReady=document.fonts&&document.fonts.load?document.fonts.load('124px "Ma Shan Zheng"','沁芳顾恩思义大观楼缀锦阁含芳怡红快绿潇湘馆有凤来仪蘅芷清芬杏帘在望栊翠庵藕香榭省亲别墅').catch(()=>{}):Promise.resolve();
 Promise.race([fontReady,new Promise(r=>setTimeout(r,2500))]).then(()=>build()).catch(e=>{console.error(e);fail(String(e&&e.message||e));});
 </script>

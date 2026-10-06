@@ -15,7 +15,7 @@ const b=await pw.chromium.launch({args:['--use-angle=swiftshader','--enable-unsa
 const p=await b.newPage({viewport:{width:320,height:180}});
 if(process.env.PW_ROUTE){const R=JSON.parse(process.env.PW_ROUTE);await p.route(/cdn\.jsdelivr\.net\/npm\//,async r=>{const u=r.request().url();const m=u.match(/three@[^/]+\/(.*)$/);try{await r.fulfill({path:m?R.three+m[1]:R.eztree,contentType:'text/javascript'});}catch(e){r.abort();}});await p.route(/fonts\.(googleapis|gstatic)/,r=>r.abort());}
 await p.goto(url);await p.waitForFunction(()=>window.__dgy,null,{timeout:900000});
-const outs=await p.evaluate((only)=>{const d=window.__dgy,T=d.THREE,PS=d.PATHS;
+const outs=await p.evaluate((only)=>{const d=window.__dgy,T=d.THREE,PS=d.LU_PATHS;   // 所有带 lu 的路（PATHS 里的和各院自己画的）
  // 地形网格是 PlaneGeometry(340,410,340,410)：1 米一格，x 从 -170、z 从 -200 起；每格两个三角 (a,b,d)(b,c,d)。直接按三角插值，不用射线（射线没有加速结构，几千次就要几十分钟）
  const PA=d.terrainMesh.geometry.attributes.position,NX=341,gy=(x,z)=>{const fx=x+170,fz=z+200,c=Math.floor(fx),r=Math.floor(fz);if(c<0||r<0||c>=340||r>=410)return d.height(x,z);
   const u=fx-c,v=fz-r,Y=(cc,rr)=>PA.getY(cc+NX*rr);const a=Y(c,r),b=Y(c,r+1),cc=Y(c+1,r+1),dd=Y(c+1,r);
@@ -28,12 +28,14 @@ const outs=await p.evaluate((only)=>{const d=window.__dgy,T=d.THREE,PS=d.PATHS;
  PS.forEach((P,IDX)=>{if(!P.lu||(only.length&&!only.includes(P.lu)))return;const hw=P.w/2;
   const c=curve(P),L=c.getLength(),n=Math.ceil(L/0.25),sp=c.getSpacedPoints(n);
   // 石磴范围：照抄 buildPath 的算法
-  const S2=c.getSpacedPoints(Math.max(8,Math.ceil(L/0.2))).map(v=>[v.x,v.z]),m=S2.length,ds=L/(m-1),hs=S2.map(q=>d.height(q[0],q[1]));
+  // 石磴按原路（不含 tail）算，和 buildPath 一样；记下台阶段上的点，行落在这些点 0.3 米内才跳过
+  const c0=new T.CatmullRomCurve3(P.pts.map(q=>new T.Vector3(q[0],0,q[1])),false,'centripetal'),L0=c0.getLength();
+  const S2=c0.getSpacedPoints(Math.max(8,Math.ceil(L0/0.2))).map(v=>[v.x,v.z]),m=S2.length,ds=L0/(m-1),hs=S2.map(q=>d.height(q[0],q[1]));
   const steep=hs.map((h,i)=>{const a=Math.max(0,i-5),b2=Math.min(m-1,i+5);return h>0.3&&Math.abs(hs[b2]-hs[a])/((b2-a)*ds)>0.2;});
-  const stairs=[];for(let i=0;i<m;){if(!steep[i]){i++;continue;}let j=i;while(j<m&&steep[j])j++;if((j-i)*ds>=2)stairs.push([i*ds-0.05,(j-1)*ds+0.05]);i=j;}
+  const stairP=[];for(let i=0;i<m;){if(!steep[i]){i++;continue;}let j=i;while(j<m&&steep[j])j++;if((j-i)*ds>=2)for(let k=i;k<j;k++)stairP.push(S2[k]);i=j;}
   const OFF=[];for(let k=-6;k<=6;k++)OFF.push(+(k*(hw+0.7)/6).toFixed(3));
   const rows=sp.map((v,i)=>{const a=sp[Math.max(0,i-1)],b2=sp[Math.min(n,i+1)];let tx=b2.x-a.x,tz=b2.z-a.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx,s=i*L/n;
-   let skip=stairs.some(([s0,s1])=>s>=s0&&s<=s1)?1:0;
+   let skip=stairP.some(q=>(q[0]-v.x)**2+(q[1]-v.z)**2<0.09)?1:0;
    for(const B of d.BRIDGES){const dx=v.x-B.x,dz=v.z-B.z,al=dx*Math.sin(B.ry)+dz*Math.cos(B.ry),sd=dx*Math.cos(B.ry)-dz*Math.sin(B.ry);if(Math.abs(al)<B.L/2-0.5&&Math.abs(sd)<hw+1)skip=1;}
    let inn=0,jl=0,jr=0;
    PS.forEach((Q,j)=>{if(j===IDX||!lines[j])return;const Lq=lines[j],hq=Q.w/2,[dist,bi]=near(Lq,v.x,v.z),through=bi>0&&bi<Lq.length-1;
