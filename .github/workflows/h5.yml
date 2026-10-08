@@ -1,0 +1,31 @@
+# 打 H5 可玩 Demo 的 ZIP（比赛提交用，tools/build_h5.sh），发到 Releases 的「H5 Demo（最新）」：下载 daguanyuan-h5.zip 直接上传。
+# main 上网页、模型、贴图有改动会自动重打；也可以在 Actions → 打包 H5 Demo → Run workflow 手动跑。
+name: 打包 H5 Demo
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'game.js', 'i18n.js', 'models/**', 'tex/**', 'tools/build_h5.sh', 'tools/h5_README.txt', '.github/workflows/h5.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 取 three.js 与 ez-tree（与 index.html importmap 同版本）
+        run: mkdir -p /tmp/nm && cd /tmp/nm && npm i --no-save --no-package-lock three@0.170.0 @dgreenheck/ez-tree@1.1.0
+      - run: bash tools/build_h5.sh /tmp/nm/node_modules daguanyuan-h5.zip
+      - name: 检查大小（比赛上限 300 MB）
+        run: |
+          s=$(stat -c %s daguanyuan-h5.zip); echo "zip $s bytes"; test "$s" -lt 314572800
+          unzip -l daguanyuan-h5.zip | tail -1
+      - name: 发到 Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete h5-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create h5-latest daguanyuan-h5.zip --target "$GITHUB_SHA" --title "H5 Demo（最新）" --notes "比赛提交用 H5 可玩 Demo：下载 daguanyuan-h5.zip 直接上传。解压后用 http 服务打开 daguanyuan/index.html（见包内《游戏操作说明.txt》）。打包自 $GITHUB_SHA" --prerelease
