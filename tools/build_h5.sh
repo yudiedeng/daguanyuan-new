@@ -16,5 +16,6 @@ sed -i -e 's#https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js#./
        -e 's#https://cdn.jsdelivr.net/npm/@dgreenheck/ez-tree@1.1.0/build/ez-tree.es.js#./vendor/ez-tree/ez-tree.es.js#' "$D"/index.html
 ! grep -q 'cdn.jsdelivr' "$D"/index.html
 cp "$ROOT"/tools/h5_README.txt "$D"/游戏操作说明.txt
+cp "$ROOT"/tools/h5_ABOUT.txt "$D"/作品说明（创作初衷与AI使用说明）.txt
 (cd "$TMP" && zip -qr -9 "$OUT" daguanyuan)
 rm -rf "$TMP"; ls -l "$OUT"

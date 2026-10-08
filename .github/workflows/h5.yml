@@ -4,7 +4,7 @@ name: 打包 H5 Demo
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'game.js', 'i18n.js', 'models/**', 'tex/**', 'tools/build_h5.sh', 'tools/h5_README.txt', '.github/workflows/h5.yml']
+    paths: ['index.html', 'game.js', 'i18n.js', 'models/**', 'tex/**', 'tools/build_h5.sh', 'tools/h5_README.txt', 'tools/h5_ABOUT.txt', '.github/workflows/h5.yml']
   workflow_dispatch:
 permissions:
   contents: write
