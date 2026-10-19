@@ -1676,8 +1676,9 @@ function stairs(pts,hs,P){const hw=P.w/2+0.15,m=pts.length,tops=new Float32Array
 const LU=[],LU_PATHS=[];const nearLu=(x,z,pad)=>LU.some(({sp,hw})=>sp.some(p=>(p[0]-x)**2+(p[1]-z)**2<(hw+pad)**2));
 function buildLu(){const L=new GLTFLoader();L.setMeshoptDecoder(MeshoptDecoder);
  const mat=patch(std('#ffffff',0.88,{vertexColors:true,side:THREE.DoubleSide}),{key:'lu',snowLo:'0.5',snowHi:'0.9'});
- // p1 已按放大后的潇湘馆地形重贴合；版本号避免继续读到旧的悬空路面。
- for(const P of LU_PATHS)L.loadAsync('models/b/lu_'+P.lu+'.wasm'+(P.lu==='p1'?'?v=ground-20261018':'')).then(g=>{const peb=[];g.scene.traverse(o=>{if(!o.isMesh)return;o.material=o.name==='lu_p1_bedding_base'?MAT.path:mat;o.receiveShadow=true;
+ // p1、xxmen 已按放大后的潇湘馆（XK=1.2）重取样重建；版本号避免浏览器继续读到旧的悬空/错位路面。
+ const LU_V={p1:'ground-20261018',xxmen:'xk12-20261019'};
+ for(const P of LU_PATHS)L.loadAsync('models/b/lu_'+P.lu+'.wasm'+(LU_V[P.lu]?'?v='+LU_V[P.lu]:'')).then(g=>{const peb=[];g.scene.traverse(o=>{if(!o.isMesh)return;o.material=o.name==='lu_p1_bedding_base'?MAT.path:mat;o.receiveShadow=true;
    if(/_peb$/.test(o.name)){peb.push(o);o.visible=false;}});scene.add(g.scene);g.scene.updateMatrixWorld(true);
   for(const o of peb){o.geometry.computeBoundingSphere();o.userData.bs=o.geometry.boundingSphere.clone().applyMatrix4(o.matrixWorld);}/* 量化后几何是局部坐标，按世界坐标算远近 */
   // 卵石只在近处显示（60 米内），低画质不显示；远处只看灰浆底、砖、路牙

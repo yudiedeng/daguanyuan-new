@@ -17,7 +17,7 @@ if(process.env.PW_ROUTE){const R=JSON.parse(process.env.PW_ROUTE);await p.route(
 await p.goto(url);await p.waitForFunction(()=>window.__dgy,null,{timeout:900000});
 const outs=await p.evaluate((only)=>{const d=window.__dgy,T=d.THREE,PS=d.LU_PATHS;   // 所有带 lu 的路（PATHS 里的和各院自己画的）
  // 地形网格是 PlaneGeometry(340,410,340,410)：1 米一格，x 从 -170、z 从 -200 起；每格两个三角 (a,b,d)(b,c,d)。直接按三角插值，不用射线（射线没有加速结构，几千次就要几十分钟）
- const PA=d.terrainMesh.geometry.attributes.position,NX=341,gy=(x,z)=>{const fx=x+170,fz=z+200,c=Math.floor(fx),r=Math.floor(fz);if(c<0||r<0||c>=340||r>=410)return d.height(x,z);
+ const PA=(d.terrainMesh.geometry||d.terrainMesh.children[0].geometry).attributes.position  /* 性能版地形拆成分块 Group，各块共用同一组顶点 */,NX=341,gy=(x,z)=>{const fx=x+170,fz=z+200,c=Math.floor(fx),r=Math.floor(fz);if(c<0||r<0||c>=340||r>=410)return d.height(x,z);
   const u=fx-c,v=fz-r,Y=(cc,rr)=>PA.getY(cc+NX*rr);const a=Y(c,r),b=Y(c,r+1),cc=Y(c+1,r+1),dd=Y(c+1,r);
   return u+v<=1?a+(dd-a)*u+(b-a)*v:cc+(b-cc)*(1-u)+(dd-cc)*(1-v);};
  const curve=P=>new T.CatmullRomCurve3((P.tail?P.pts.concat(P.tail):P.pts).map(q=>new T.Vector3(q[0],0,q[1])),false,'centripetal');
