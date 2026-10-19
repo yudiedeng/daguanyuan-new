@@ -1,3 +1,10 @@
+import { createNavigation } from './navigation.js';
+import { finishTask, startTask } from './cooperative-task.mjs';
+import { createNavigationWorker } from './navigation-worker-client.mjs';
+const routeSeedsReady = Promise.race([
+  fetch('generated/navigation-routes.json').then(r => r.ok ? r.json() : null).catch(() => null),
+  new Promise(resolve => setTimeout(() => resolve(null), 1500))
+]);
 /* =====================================================================
    我们的大观园 · 赠礼玩法
    选一个人入园 → 心事 → 寻物 → 送礼 → 原著片段揭示 → 赠一份礼给现实中的人
@@ -5,6 +12,7 @@
    ===================================================================== */
 const wait = () => new Promise(r => { const t = () => window.__dgy && window.__DGY_OK ? r(window.__dgy) : setTimeout(t, 200); t(); });
 const D = await wait();
+const routeSeeds = await routeSeedsReady;
 /* 潇湘馆院落整体放大了 D.XK 倍（绕世界 −70, 91）：剧情里写死在院里、屋里的坐标按同一比例换算 */
 const xxP = (x, z) => [-70 + (D.XK || 1) * (x + 70), 91 + (D.XK || 1) * (z - 91)];
 const { THREE, scene, hero, walk, blockedAt, groundAt, setSeason, applyTime, enterWalk, exitWalk, camera, PLACES, isTouch, hourEl } = D;
@@ -157,6 +165,13 @@ const CHARS = {
 const css = `
 #g-start{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 50% 40%,rgba(18,21,27,.35),rgba(18,21,27,.78));overflow:auto}
 #g-start[hidden],#g-modal[hidden],#g-quest[hidden],#g-compass[hidden],#g-prompt[hidden]{display:none}
+body.g-welcoming .ui{display:none!important}
+#g-start[data-mode="welcome"]{align-items:flex-end;padding:24px 20px max(7vh,32px);background:linear-gradient(180deg,transparent 42%,rgba(15,20,18,.72));pointer-events:none;overflow:hidden}
+.g-welcome{pointer-events:auto;text-align:center;max-width:760px;color:var(--paper);text-shadow:0 2px 16px rgba(8,12,10,.85)}
+.g-welcome h1{margin:0 0 14px;font-family:var(--f-disp);font-size:clamp(52px,8vw,88px);font-weight:400;letter-spacing:.18em;line-height:1.2}
+.g-welcome p{margin:0 0 24px;font-family:var(--f-disp);font-size:clamp(16px,2.2vw,22px);letter-spacing:.12em;line-height:1.8}
+.g-welcome .g-btn{display:inline-block;min-width:150px;padding:11px 30px;font-family:var(--f-disp);font-size:22px;letter-spacing:.3em;background:var(--paper);color:var(--ink);border:1px solid rgba(238,230,211,.65);text-shadow:none}
+.g-welcome .g-btn:hover{background:#fff6e2}
 .g-sheet{background:var(--glass);border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.35);border-radius:3px;padding:28px 30px 24px;max-width:860px;width:100%;color:var(--ink)}
 .g-sheet h2{margin:0;font-family:var(--f-disp);font-weight:400;font-size:44px;letter-spacing:.1em;line-height:1.1}
 .g-sheet .g-lead{margin:10px 0 22px;font-size:15px;line-height:1.9;color:var(--ink-2);max-width:620px}
@@ -266,7 +281,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 const dockBtn = document.createElement('button');
 const dockLang = () => { dockBtn.textContent = L('入园', 'Play'); dockBtn.title = L('选一个人入园', 'Choose someone and enter the garden'); };
 { const b = dockBtn; b.className = 'tbtn'; b.id = 'btn-game'; dockLang();
-  b.addEventListener('click', () => showStart()); const w = $('btn-walk'); w.parentNode.insertBefore(b, w); }
+  b.addEventListener('click', () => { if (!startEl.hidden && startEl.dataset.mode === 'welcome') enterGarden(); else showStart(); }); const w = $('btn-walk'); w.parentNode.insertBefore(b, w); }
 
 /* ---------------------------------------------------------------------
    场景锚点：从每个地点的步行出生点朝建筑走，找一块能站人的空地
@@ -282,7 +297,7 @@ function reachable(sx, sz, R = 34) {
   const H = new Float32Array(N * N).fill(NaN), seen = new Uint8Array(N * N);
   const hAt = (i, j) => { const k = i * N + j; if (!Number.isNaN(H[k])) return H[k]; const x = ox + i * cell, z = oz + j * cell; const g = okAt(x, z); H[k] = g == null ? -1e9 : g; return H[k]; };
   const si = Math.round((sx - ox) / cell), sj = Math.round((sz - oz) / cell); const q = [si * N + sj]; seen[q[0]] = 1; const out = [];
-  while (q.length) { const k = q.shift(), i = (k / N) | 0, j = k % N, h = hAt(i, j); out.push(k);
+  for (let head = 0; head < q.length; head++) { const k = q[head], i = (k / N) | 0, j = k % N, h = hAt(i, j); out.push(k);
     for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue; const nk = ni * N + nj; if (seen[nk]) continue; const nh = hAt(ni, nj); if (nh < -1e8 || Math.abs(nh - h) > 0.45) continue; seen[nk] = 1; q.push(nk); } }
   return { N, cell, ox, oz, seen, H, list: out };
 }
@@ -374,7 +389,7 @@ const S = { char: null, q: 0, stage: 'pick', petals: 0, carrying: null, objects:
 try { Object.assign(S.done, JSON.parse(localStorage.getItem('dgy-game-done') || '{}')); } catch (e) {}
 const saveDone = () => { try { localStorage.setItem('dgy-game-done', JSON.stringify(S.done)); } catch (e) {} };
 
-function clearWorld() { for (const o of S.objects) scene.remove(o); S.objects = []; S.targets = []; for (const t of S.tags) t.el.remove(); S.tags = []; beacon.visible = groundRing.visible = false; }
+function clearWorld() { cancelPendingPP(); for (const o of S.objects) scene.remove(o); S.objects = []; S.targets = []; for (const t of S.tags) t.el.remove(); S.tags = []; beacon.visible = groundRing.visible = false; }
 function addTag(text, obj, dy, goal) { const el = document.createElement('div'); el.className = 'g-tag ui' + (goal ? ' goal' : ''); el.textContent = txt(text); document.body.appendChild(el); const t = { el, obj, dy, goal, text }; S.tags.push(t); return t; }
 function place(obj, v, faceTo) { obj.position.copy(v); if (faceTo) obj.rotation.y = Math.atan2(faceTo.x - v.x, faceTo.z - v.z); scene.add(obj); S.objects.push(obj); return obj; }
 
@@ -394,7 +409,16 @@ function stageWorld() {
   }
   renderQuest();
 }
-function currentGoal() { const t = S.targets.filter(t => t.stage === S.stage); if (!t.length) return null; const p = walk.pos; t.sort((a, b) => a.pos.distanceToSquared(p) - b.pos.distanceToSquared(p)); return t[0]; }
+let trackedGoal = null;
+function currentGoal() {
+  const targets = S.targets.filter(t => t.stage === S.stage), p = walk.pos;
+  targets.sort((a, b) => a.pos.distanceToSquared(p) - b.pos.distanceToSquared(p));
+  const nearest = targets[0] || null;
+  // 两个落花目标距离接近时保持当前目标，避免小步移动反复换路；收取或换阶段立即切换。
+  if (nearest && targets.includes(trackedGoal) &&
+      Math.sqrt(trackedGoal.pos.distanceToSquared(p)) <= Math.sqrt(nearest.pos.distanceToSquared(p)) + .8) return trackedGoal;
+  return trackedGoal = nearest;
+}
 
 /* ---------------------------------------------------------------------
    界面渲染
@@ -412,7 +436,25 @@ function renderQuest() {
 }
 function charCard(k) { const C = CHARS[k]; const done = S.done[k] ? L(' · 已完成', ' · completed') : '';
   return `<button class="g-char" data-k="${k}"><span class="sw" style="background:${C.look.robe}"></span><b>${esc(T(C, 'name'))}</b><small>${esc(T(C, 'home'))}${done}</small><p>${esc(T(C, 'line'))}</p><ol>${C.quests.map(q => `<li>${esc(T(q, 'title'))}</li>`).join('')}</ol></button>`; }
+// Keep the complete garden on screen until the visitor chooses to enter.
+function enterGarden() {
+  if (startEl.hidden || startEl.dataset.mode !== 'welcome') return;
+  startEl.hidden = true; startEl.dataset.mode = ''; document.body.classList.remove('g-welcoming');
+  const g = decodeGift(location.hash || '');
+  if (g) { S.gift = g; showStart(true); }
+  else showStart();
+}
+function paintWelcome() {
+  startEl.innerHTML = `<div class="g-welcome"><h1>${L('大观园', 'Grand View Garden')}</h1><p>${L('天上人间诸景备，芳园应锡大观名。', 'All the beauties of heaven and earth gather in this garden.')}</p><button class="g-btn" id="g-enter">${L('入园', 'Enter the garden')}</button></div>`;
+  $('g-enter').onclick = enterGarden;
+}
+function showWelcome() {
+  pauseGame(true); startEl.dataset.mode = 'welcome'; document.body.classList.add('g-welcoming');
+  paintWelcome(); startEl.hidden = false;
+  dispatchEvent(new Event('dgy-welcome-ready'));
+}
 function showStart(giftMode) {
+  document.body.classList.remove('g-welcoming');
   pauseGame(true);
   if (walk.on) exitWalk();
   if (giftMode && S.gift) {
@@ -850,7 +892,10 @@ const CH17 = {
                 pEn: ['When Baoyu saw this place, something stirred in his heart; it seemed he had seen it somewhere before, but he could not recall when.', 'The archway was later inscribed “Lodge for the Homecoming Visit”. In the Land of Illusion Baoyu once visited in a dream, there stood just such a stone archway.'] } }] },
     { tip: '绕着碧桃花，穿过竹篱花障编就的月洞门，便是一处院落。', tipEn: 'Round the peach blossom, through a moon gate in a bamboo-and-flower hedge, into a courtyard.',
       label: '打卡 · 蕉棠院', labelEn: 'Check in · Plantain and Crab-apple Court', place: 'yihong',
-      npcs: [{ ghost: 1, anchor: 'yihong' }],
+      // 长途按东岸、沁芳桥南和正门外小径分段，保持每段在花瓣寻路预算内。
+      via: [[79.8, -11.4], [37.8, 42], [0, 113]],
+      // 院外 BFS 锚点会落到北墙后；这里应经过院门，在蕉棠相对的庭院打卡。
+      npcs: [{ ghost: 1, at: () => L2W('yihong', 0, 9) }],
       pages: [{ say: [['', '', '粉垣环护，绿柳周垂。院中点衬几块山石，一边种几本芭蕉；那一边乃是一棵西府海棠，其势若伞，丝垂翠缕，葩吐丹砂。', 'Whitewashed walls all round, green willows trailing. A few rocks set about the court; on one side some plantains, on the other a Western crab-apple, spreading like an umbrella, its threads hanging green, its blossoms spitting cinnabar.']], btn: ['题个名', 'Name it'] },
               name(['这一处题什么？', 'What will you call it?'], ['红香绿玉', 'Red Fragrance, Green Jade'], [['崇光泛彩', 'Brimming Light and Floating Colour'], ['蕉鹤', 'Plantain and Crane']],
                 ['蕉棠两植，暗蓄“红”“绿”二字：只说蕉，棠无着落；只说棠，蕉亦无着落——“红香绿玉”，两全其妙。', 'Plantain and crab-apple hold “red” and “green” between them: speak only of one and the other is lost — “Red Fragrance, Green Jade” serves both.'],
@@ -875,6 +920,12 @@ let banEr = null, flowerHat = null;
 function standY(x, z) { return groundAt(x, z, Math.max(D.hq(x, z), 0) + 4.5)[0]; }
 function npcAt(n) {
   if (n.at) { const [x, z] = n.at(); const fy = n.floor && n.floor(); return new V3(x, fy ?? standY(x, z), z); }
+  // 预生成的剧情打卡位只用于无实体的标记；先按当前碰撞数据复核落脚面。
+  const site = routeSeeds?.sites?.[n.anchor], p = n.anchor && placeById(n.anchor), spawn = p && spawnOf(n.anchor);
+  const sameSite = site && p && site.pos[0] === p.pos[0] && site.pos[2] === p.pos[2] && site.spawn[0] === spawn[0] && site.spawn[1] === spawn[1];
+  const saved = n.ghost && sameSite && routeSeeds?.anchors?.[n.anchor];
+  if (saved) { const y = D.walkSurface.point(saved[0], saved[1], saved[2]);
+    if (y != null && Math.abs(y - saved[2]) < .05) return new V3(saved[0], y, saved[1]); }
   const a = anchor(n.anchor); return n.off ? a.off(n.off) : new V3(a.x, a.y, a.z);
 }
 function storyWorld() {
@@ -882,7 +933,7 @@ function storyWorld() {
   const fa = st.face ? st.face() : null;
   st.npcs.forEach((n, i) => {
     let v = npcAt(n); let face;
-    const lk = typeof n.look === 'function' ? n.look() : n.look; if (lk) face = new V3(lk[0], 0, lk[1]); else if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
+    const lk = typeof n.look === 'function' ? n.look() : n.look; if (n.ghost) face = null; else if (lk) face = new V3(lk[0], 0, lk[1]); else if (fa) face = new V3(fa[0], 0, fa[1]); else if (n.anchor) { const a = anchor(n.anchor); face = new V3(a.spawn[0], 0, a.spawn[1]); } else face = null;
     if (n.prop) { place(makeProp(n.prop), v, face); return; }
     const seatH = n.sit ? (typeof n.sit === 'number' ? n.sit : 0.5) : 0;
     if (n.sit && n.seat !== 'none') place(makeProp(n.seat || 'chair'), v.clone(), face);   // 座下垫一把椅子（室内已有家具的用 seat:'none'）
@@ -989,38 +1040,37 @@ function slipAnim(done) {
 
 /* 带路的人：从上一步站的地方出发，沿走得通的路在前面走；玩家落得太远就站住等 */
 let guide = null;
-/* 寻路格子（每格能不能走、地面高、是不是草坪）在各次寻路之间共用：园子是静的，只有懒加载的室内会加碰撞体，碰撞体数一变就清空重算。
-   原来每次寻路都从零查一遍地面和碰撞，花瓣引路每 1.5 秒重找一次路时主线程会卡一下。 */
-const PF = { n: -1, h: new Map(), lawn: new Map() };
-function findPath(ax, az, bx, bz, maxNodes = 400000) {
-  if (PF.n !== D.COL.length) { PF.n = D.COL.length; PF.h.clear(); PF.lawn.clear(); }
-  const cell = 0.6, X0 = -156, Z0 = -186, NX = Math.ceil(312 / cell), NZ = Math.ceil(322 / cell), memo = PF.h;
-  const toI = (x, z) => [Math.round((x - X0) / cell), Math.round((z - Z0) / cell)];
-  const hOf = (i, j) => { const k = i * NZ + j; let v = memo.get(k); if (v !== undefined) return v; const x = X0 + i * cell, z = Z0 + j * cell; let g = okAt(x, z);
-    if (g != null) for (const [dx, dz] of [[0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]]) if (okAt(x + dx, z + dz) == null) { g = null; break; }
-    memo.set(k, g); return g; };
-  /* 草坪（不在石子路、桥、台阶、室内）走起来贵 6 倍，路线就会沿着路走 */
-  const lawnM = PF.lawn, lawn = (i, j) => { const k = i * NZ + j; let v = lawnM.get(k); if (v === undefined) { const x = X0 + i * cell, z = Z0 + j * cell, gr = groundAt(x, z, 99); v = gr[1] && !(window.__dgy.nearPath && window.__dgy.nearPath(x, z, 1.7)); lawnM.set(k, v); } return v; };
-  const snap = (x, z) => { const [i0, j0] = toI(x, z); for (let r = 0; r < 8; r++) for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) { if (Math.max(Math.abs(a), Math.abs(b)) !== r) continue; if (hOf(i0 + a, j0 + b) != null) return [i0 + a, j0 + b]; } return null; };
-  const s = snap(ax, az), t = snap(bx, bz); if (!s || !t) return null;
-  const heap = [], push = (f, k) => { heap.push([f, k]); let c = heap.length - 1; while (c > 0) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
-  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let c = 0; for (;;) { let l = 2 * c + 1, r = l + 1, m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top; };
-  const G = new Map(), from = new Map(), key = (i, j) => i * NZ + j, h = (i, j) => Math.hypot(i - t[0], j - t[1]);
-  const sk = key(s[0], s[1]); G.set(sk, 0); push(h(s[0], s[1]), sk); let found = false, n = 0;
-  while (heap.length && n++ < maxNodes) { const [, k] = pop(); const i = (k / NZ) | 0, j = k % NZ; if (i === t[0] && j === t[1]) { found = true; break; } const cur = hOf(i, j), g0 = G.get(k);
-    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { if (!a && !b) continue; const ni = i + a, nj = j + b; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue; const nh = hOf(ni, nj); if (nh == null || Math.abs(nh - cur) > 0.55) continue;
-      if (a && b && (hOf(i + a, j) == null || hOf(i, j + b) == null)) continue; const nk = key(ni, nj), ng = g0 + Math.hypot(a, b) * (lawn(ni, nj) ? 6 : 1); if (ng < (G.get(nk) ?? 1e9)) { G.set(nk, ng); from.set(nk, k); push(ng + h(ni, nj), nk); } } }
-  if (!found) return null;
-  const pts = []; for (let k = key(t[0], t[1]); k !== undefined; k = from.get(k)) { pts.push([X0 + ((k / NZ) | 0) * cell, Z0 + (k % NZ) * cell]); if (k === sk) break; } pts.reverse(); pts.push([bx, bz]);
-  const los = (p, q) => { const L = Math.hypot(q[0] - p[0], q[1] - p[1]), m = Math.max(2, Math.ceil(L / 0.4)); let y = null; for (let u = 0; u <= m; u++) { const x = p[0] + (q[0] - p[0]) * u / m, z = p[1] + (q[1] - p[1]) * u / m, g = okAt(x, z); if (g == null || (y != null && Math.abs(g - y) > 0.4)) return false; y = g;
-    if (u && u < m && Math.min(Math.hypot(x - p[0], z - p[1]), Math.hypot(x - q[0], z - q[1])) > 2.5 && lawn(...toI(x, z))) return false; } return true; };
-  const out = [pts[0]]; let i = 0; while (i < pts.length - 1) { let j = pts.length - 1; while (j > i + 1 && !los(pts[i], pts[j])) j--; out.push(pts[j]); i = j; } return out;
+/* 同一张可走路径图供带路人物和花瓣使用；模型碰撞体或人物尺寸变化即失效。 */
+const navigationWorker = createNavigationWorker(() => ({ version: D.COL.length + ':' + walk.s, HG: D.HG, COL: D.COL, paths: D.PATH_S, scale: walk.s }));
+const NAV = createNavigation({
+  surface: D.walkSurface,
+  version: () => D.COL.length + ':' + walk.s,
+  requestSearch: (args, options) => navigationWorker.search(args, options),
+  isLawn: (x, z, y) => groundAt(x, z, y)[1] && !(D.nearPath && D.nearPath(x, z, 1.7)),
+  onRoute: () => { clearTimeout(routeSaveTimer); routeSaveTimer = setTimeout(() => {
+    try { localStorage.setItem('dgy-navigation-v1', JSON.stringify(NAV.exportRoutes())); } catch (_) {}
+  }, 800); }
+});
+let routeSaveTimer;
+NAV.importRoutes(routeSeeds?.routes);
+try { NAV.importRoutes(JSON.parse(localStorage.getItem('dgy-navigation-v1') || '[]')); } catch (_) {}
+function findPath(ax, az, bx, bz, maxNodes = 400000, options = {}) {
+  return NAV.findPath(ax, az, bx, bz, { ...options, maxNodes });
 }
 function startGuide(fig, ax, az, bx, bz, faceTo, via) {   // via：途经点（如穿山洞），逐段寻路再接起来
-  const pts = [[ax, az], ...(via || []), [bx, bz]]; let path = [];
-  for (let k = 1; k < pts.length; k++) { const seg = findPath(pts[k - 1][0], pts[k - 1][1], pts[k][0], pts[k][1]); if (!seg || seg.length < 2) { path = null; break; } path.push(...(k > 1 ? seg.slice(1) : seg)); }
-  if (!path && via) path = findPath(ax, az, bx, bz);
-  guide = path && path.length > 1 ? { fig, path, i: 1, faceTo } : null; return !!guide;
+  function* plan() {
+    const pts = [[ax, az], ...(via || []), [bx, bz]]; let path = [];
+    for (let k = 1; k < pts.length; k++) { const seg = yield* NAV.findPathSteps(...pts[k - 1], ...pts[k]);
+      if (!seg || seg.length < 2) { path = null; break; } path.push(...(k > 1 ? seg.slice(1) : seg)); }
+    if (!path && via) path = yield* NAV.findPathSteps(ax, az, bx, bz);
+    return path;
+  }
+  const version = NAV.version, task = startTask(plan(), { isCurrent: () => !!fig.parent && NAV.version === version });
+  const apply = path => { if (task.cancelled || !fig.parent) return false;
+    guide = path?.length > 1 ? { fig, path, i: 1, faceTo } : null;
+    if (!guide) fig.position.set(bx, standY(bx, bz), bz); return !!guide; };
+  if (task.done) { if (task.error) task.promise.catch(error => console.warn('guide route', error)); return apply(task.value); }
+  task.promise.then(apply).catch(error => console.warn('guide route', error)); return true;
 }
 function followGuide(dt) {
   const G = guide; if (!G || !G.fig.parent) return; const f = G.fig, p = walk.pos, x = f.position.x, z = f.position.z;
@@ -1225,14 +1275,14 @@ function goThroughDoor() {
   let dest = null; for (const dist of [2.3, 1.8, 1.3]) { const x = d.x + dx * dist, z = d.z + dz * dist; if (okAt(x, z) != null) { dest = [x, z]; break; } }
   if (!dest) dest = [d.x + dx * 1.3, d.z + dz * 1.3];
   const blink = $('g-blink'); blink.classList.add('on'); pauseGame(true);
-  setTimeout(() => { const gy = groundAt(dest[0], dest[1], p.y + 0.6)[0]; walk.pos.set(dest[0], gy, dest[1]); walk.feet = gy; walk.vel.set(0, 0, 0); walk.vy = 0; walk.grounded = true; walk.yaw = walk.charYaw = Math.atan2(-dx, -dz); flash(d.label); blink.classList.remove('on'); }, 260);
+  setTimeout(() => { const gy = groundAt(dest[0], dest[1], p.y + 0.6)[0]; walk.pos.set(dest[0], gy, dest[1]); walk.feet = gy; walk.vel.set(0, 0, 0); walk.vy = 0; walk.grounded = true; walk.yaw = walk.charYaw = Math.atan2(-dx, -dz); PP = null; flash(d.label); blink.classList.remove('on'); }, 260);
   setTimeout(() => { pauseGame(false); doorBusy = false; }, 640);
 }
 
 /* ---------------------------------------------------------------------
    花瓣引路：从脚下往目标沿着走得通的路飘一串花瓣；目标近了就散去
    --------------------------------------------------------------------- */
-const PET_N = 64;
+const PET_N = 64, TURN_N = 48;
 /* 桃花瓣：窄柄、圆肩、顶端一个小缺口，微微内卷；贴一张由柄部淡黄白渐到瓣缘粉红、带细脉的贴图 */
 function petalGeo() {
   const W = 0.055, H = 0.085, sh = new THREE.Shape();
@@ -1252,49 +1302,265 @@ function petalTex() {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 const petals = new THREE.InstancedMesh(petalGeo(), new THREE.MeshBasicMaterial({ map: petalTex(), color: '#ffffff', side: THREE.DoubleSide, transparent: true, opacity: 0.96, depthWrite: false }), PET_N);
-petals.frustumCulled = false; petals.visible = false; petals.renderOrder = 6; scene.add(petals);
-{ const tint = ['#ffffff', '#ffe8ee', '#ffd6e0', '#fff4f6', '#ffdfe6']; for (let i = 0; i < PET_N; i++) petals.setColorAt(i, new THREE.Color(tint[i % tint.length])); }
-const petalSeed = Array.from({ length: PET_N }, (_, i) => ({ lat: (Math.random() - 0.5) * 1.3, ph: Math.random() * 6.283, h: 0.2 + Math.random() * 0.9, sp: 0.8 + Math.random() * 0.5, o: i / PET_N }));
+// 转向花瓣是叠在场景上的方向提示，允许穿墙显示；路面花瓣仍沿可走路线正常遮挡。
+const turnPetals = new THREE.InstancedMesh(petals.geometry, petals.material.clone(), TURN_N);
+turnPetals.material.depthTest = false;
+// 引导随玩家移动，不能按初始化时的实例包围盒排进远景加载队列。
+for (const mesh of [petals, turnPetals]) {
+  mesh.userData.dgyImmediate = true; mesh.frustumCulled = false; mesh.visible = false; mesh.renderOrder = 6; scene.add(mesh);
+  const tint = ['#ffffff', '#ffe8ee', '#ffd6e0', '#fff4f6', '#ffdfe6'];
+  for (let i = 0; i < mesh.count; i++) mesh.setColorAt(i, new THREE.Color(tint[i % tint.length]));
+}
+const petalSeed = Array.from({ length: PET_N + TURN_N }, (_, i) => ({ lat: (Math.random() - 0.5) * 1.3, ph: Math.random() * 6.283, h: 0.2 + Math.random() * 0.9, sp: 0.8 + Math.random() * 0.5, o: i / PET_N }));
 const _pd = new THREE.Object3D(); let PP = null, ppT = -1e9;
-function buildPP(gx, gz, p, now) {
-  const st = S.story && SY.steps[S.q]; let via = st && st.via ? (typeof st.via === 'function' ? st.via() : st.via) : null; let path = null;
-  if (via) {   // 途经点（如穿翠嶂石洞）：从离玩家最近的一个途经点起，逐段寻路接起来
-    let k0 = 0, bd = 1e9; via.forEach((v, k) => { const d = Math.hypot(v[0] - p.x, v[1] - p.z); if (d < bd) { bd = d; k0 = k; } });
+function buildPP(gx, gz, p, now, goal) {
+  PP = finishTask(planPP(gx, gz, p, goal, true)); ppT = now;
+}
+let pendingPP = null;
+function cancelPendingPP() { if (pendingPP) { pendingPP.task?.cancel(); pendingPP = null; } }
+function* pathWork(ax, az, bx, bz, options = {}) { return yield* NAV.findPathSteps(ax, az, bx, bz, { maxNodes: 80000, ...options }); }
+function* planPP(gx, gz, p, goal, localOnly = false) {
+  const previous = PP;
+  const st = S.story && SY.steps[S.q]; const via = st && st.via ? (typeof st.via === 'function' ? st.via() : st.via) : null;
+  let path = null, door = null, viaState = null;
+  if (via) {
+    let k0 = 0, bd = Infinity; via.forEach((v, k) => { const d = Math.hypot(v[0] - p.x, v[1] - p.z); if (d < bd) { bd = d; k0 = k; } });
+    // 剧情途经点只前进不倒退；偏离旧线重算时不能再带玩家返回已经穿过的石洞。
+    if (previous?.viaState?.step === st) k0 = previous.viaState.next;
+    viaState = { step: st, next: k0, marks: [] };
     const pts = [[p.x, p.z], ...via.slice(k0), [gx, gz]]; path = [];
-    for (let k = 1; k < pts.length && path; k++) { const seg = findPath(pts[k - 1][0], pts[k - 1][1], pts[k][0], pts[k][1], 80000); if (!seg || seg.length < 2) path = null; else path.push(...(k > 1 ? seg.slice(1) : seg)); }
+    for (let k = 1; k < pts.length && path; k++) {
+      const seg = yield* pathWork(...pts[k - 1], ...pts[k], { remote: !localOnly, ...(k === 1 ? { startY: p.y } : {}) });
+      if (!seg) path = null; else path.push(...(k > 1 ? seg.slice(1) : seg));
+      if (path && k < pts.length - 1) viaState.marks.push({ index: path.length - 1, next: k0 + k });
+    }
+    if (!path) viaState.marks = [];
   }
-  if (!path) path = findPath(p.x, p.z, gx, gz, 80000);
-  if (!path || path.length < 2) {   // 目标在屋里而寻路进不去：先引到最近的门口，进门靠「按 E 进门」
-    buildDoors(); let dn = null, bd = 1e9; for (const d of DOORS) { const dd = Math.hypot(d.x - gx, d.z - gz); if (dd < bd) { bd = dd; dn = d; } }
-    const pd = dn && bd < 25 ? findPath(p.x, p.z, dn.x, dn.z, 80000) : null;
-    path = pd && pd.length > 1 ? [...pd, [gx, gz]] : [[p.x, p.z], [gx, gz]];
+  if (!path) path = yield* pathWork(p.x, p.z, gx, gz, { startY: p.y, remote: !localOnly });
+  if (!path) {
+    // 只引到可操作的门前；不能把门口再用直线连接到屋内。
+    buildDoors(); const target = goal ? goal.pos : new V3(gx, p.y, gz);
+    const candidates = DOORS.filter(d => {
+      const distance = Math.hypot(d.x - gx, d.z - gz);
+      return d.room ? insideRoom(d.room, p) !== insideRoom(d.room, target) : distance < 25;
+    }).sort((a, b) => Math.hypot(a.x - gx, a.z - gz) - Math.hypot(b.x - gx, b.z - gz));
+    for (const d of candidates) {
+      const pd = yield* pathWork(p.x, p.z, d.x, d.z, { startY: p.y, goalRadius: 2.4, remote: !localOnly,
+        acceptGoal: v => !d.room || insideRoom(d.room, new V3(v[0], v[2], v[1])) === insideRoom(d.room, p) });
+      if (pd) { path = pd; door = d; break; }
+    }
   }
-  const cum = [0]; for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
-  PP = { gx, gz, path, cum, len: cum[cum.length - 1] }; ppT = now;
+  const cum = [0]; path = path || [];
+  for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+  if (viaState) for (const mark of viaState.marks) mark.s = cum[mark.index];
+  // 重寻路仍沿用显示状态，让旧提示与新提示连续交接。
+  const turn = previous && previous.turn;
+  return { gx, gz, goal, path, door, cum, len: cum[cum.length - 1], version: NAV.version, origin: [p.x, p.z], turn, viaState };
+}
+function requestPP(gx, gz, p, now, goal) {
+  const version = NAV.version;
+  if (pendingPP && pendingPP.goal === goal && pendingPP.version === version && Math.hypot(pendingPP.gx - gx, pendingPP.gz - gz) <= .6) return;
+  cancelPendingPP(); const request = { goal, gx, gz, version }; pendingPP = request;
+  const task = request.task = startTask(planPP(gx, gz, p, goal), {
+    isCurrent: () => pendingPP === request && walk.on && NAV.version === version && Math.hypot(goal.pos.x - gx, goal.pos.z - gz) <= .6
+  });
+  const apply = (result, time) => {
+    if (pendingPP !== request || task.cancelled) return;
+    if (result) { result.turn = PP?.turn || result.turn; PP = result; ppT = time; }
+    pendingPP = null;
+  };
+  if (task.done) { if (task.error) task.promise.catch(error => console.warn('petal route', error)); apply(task.value, now); }
+  else task.promise.then(result => apply(result, performance.now())).catch(error => { if (pendingPP === request) pendingPP = null; console.warn('petal route', error); });
 }
 function ppNearest(p) {   // 玩家在路线上的最近位置（弧长）与偏离距离
-  let best = 1e9, bs = 0; const P = PP.path;
-  for (let i = 1; i < P.length; i++) { const ax = P[i - 1][0], az = P[i - 1][1], bx = P[i][0], bz = P[i][1], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1;
-    const t = Math.max(0, Math.min(1, ((p.x - ax) * dx + (p.z - az) * dz) / L2)), x = ax + dx * t, z = az + dz * t, d = Math.hypot(p.x - x, p.z - z); if (d < best) { best = d; bs = PP.cum[i - 1] + Math.sqrt(L2) * t; } }
+  const feet = groundAt(p.x, p.z, p.y)[0];
+  let best = Infinity, bs = 0; const P = PP.path;
+  for (let i = 1; i < P.length; i++) {
+    const ax = P[i - 1][0], az = P[i - 1][1], dx = P[i][0] - ax, dz = P[i][1] - az, L2 = dx * dx + dz * dz || 1, length = Math.sqrt(L2);
+    const projected = Math.max(0, Math.min(1, ((p.x - ax) * dx + (p.z - az) * dz) / L2));
+    // 贴墙横移时最近投影可能仍紧贴墙面；再试同一路段稍远的安全接入点。
+    for (const offset of [0, .3, -.3, .6, -.6, 1.2, -1.2]) {
+      const t = Math.max(0, Math.min(1, projected + offset / length)), x = ax + dx * t, z = az + dz * t, d = Math.hypot(p.x - x, p.z - z);
+      if (d > 1.2 || d >= best) continue;
+      const y = groundAt(x, z, P[i - 1][2] + (P[i][2] - P[i - 1][2]) * t)[0];
+      if (D.walkSurface.segment([p.x, p.z, feet], [x, z, y], { startPadding: 0, endPadding: 0 })) { best = d; bs = PP.cum[i - 1] + length * t; break; }
+    }
+  }
   return [bs, best];
 }
 function ppAt(s) {
   const P = PP.path, C = PP.cum; s = Math.max(0, Math.min(PP.len, s)); let i = 1; while (i < P.length - 1 && C[i] < s) i++;
-  const L = (C[i] - C[i - 1]) || 1, t = (s - C[i - 1]) / L; return [P[i - 1][0] + (P[i][0] - P[i - 1][0]) * t, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * t, (P[i][0] - P[i - 1][0]) / L, (P[i][1] - P[i - 1][1]) / L];
+  const L = (C[i] - C[i - 1]) || 1, t = (s - C[i - 1]) / L, x = P[i - 1][0] + (P[i][0] - P[i - 1][0]) * t, z = P[i - 1][1] + (P[i][1] - P[i - 1][1]) * t; return [x, z, (P[i][0] - P[i - 1][0]) / L, (P[i][1] - P[i - 1][1]) / L, groundAt(x, z, P[i - 1][2] + (P[i][2] - P[i - 1][2]) * t)[0]];
+}
+function petalLead(p, s0) {
+  const feet = groundAt(p.x, p.z, p.y)[0];
+  // 弯桥、门洞只提示当前能直达的这一段，不能把拐角后的点当作转头方向。
+  for (let distance = Math.min(2.4, PP.len - s0); distance > 0.1; distance -= 0.15) {
+    const end = ppAt(s0 + distance);
+    if (D.walkSurface.segment([p.x, p.z, feet], [end[0], end[1], end[4]], { startPadding: 0 })) return end;
+  }
+  return ppAt(s0 + Math.min(0.1, PP.len - s0));
+}
+function buildPetalTurn(p, s0, yaw, preferredSide) {
+  // 固定在相机近裁面之外，从眼前绕向可走路线。转身提示不按墙或栏杆缩小、裁掉。
+  const f = [-Math.sin(yaw), -Math.cos(yaw)], right = [-f[1], f[0]], end = petalLead(p, s0);
+  let angle = Math.atan2((end[0] - p.x) * right[0] + (end[1] - p.z) * right[1], (end[0] - p.x) * f[0] + (end[1] - p.z) * f[1]);
+  // 每次按当前朝向取最短弧；只有恰好正后方、左右等长时才沿用上一侧。
+  if (Math.abs(Math.abs(angle) - Math.PI) < 1e-6) angle = (preferredSide || 1) * Math.PI;
+  const side = angle < 0 ? -1 : 1;
+  const radius = 1.5 * walk.s, n = Math.max(8, Math.ceil(Math.abs(angle) * radius / 0.15)), path = [];
+  for (let i = 0; i <= n; i++) {
+    const a = angle * i / n;
+    path.push([p.x + radius * (f[0] * Math.cos(a) + right[0] * Math.sin(a)), p.z + radius * (f[1] * Math.cos(a) + right[1] * Math.sin(a)), p.y]);
+  }
+  path.push([end[0], end[1], end[4]]);
+  const cum = [0]; for (let i = 1; i < path.length; i++) cum.push(cum.at(-1) + Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]));
+  return { path, cum, len: cum.at(-1), side };
+}
+function roadPetalsInView(p) {
+  const yaw = walk.yaw || 0, pitch = walk.pitch || 0, sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
+  const halfWidth = typeof camera === 'undefined' ? .65 : Math.min(.65, Math.tan(camera.fov * Math.PI / 360) * camera.aspect * .85);
+  const eye = [p.x, p.z, p.y + 1.62 * walk.s + (walk.eyeOff || 0)];
+  let score = 0, sampled = false;
+  for (let i = 0; i < PET_N; i++) {
+    const v = petalSeed[i].visual;
+    if (!v) continue; sampled = true;
+    const x = v.x - eye[0], z = v.z - eye[1], y = v.y - eye[2], ahead = -sy * x - cy * z;
+    const forward = cp * ahead + sp * y, right = cy * x - sy * z, up = cp * y - sp * ahead;
+    if (forward < .3 || v.size / forward < .06) continue;
+    // 在路面花瓣滑出画面边缘之前接上近处提示；栏杆和转角遮挡也计入。
+    const edge = Math.max(0, Math.min(1, (halfWidth - Math.abs(right / forward)) / (halfWidth * .4), (.42 - Math.abs(up / forward)) / .16));
+    if (edge && D.walkSurface.space(eye, [v.x, v.z, v.y], .015)) score += edge * Math.min(1, v.size / forward / .12);
+    if (score >= 2) return 2;
+  }
+  return sampled ? score : 2;
+}
+function petalTurn(p, s0, now) {
+  const ahead = petalLead(p, s0), dx = ahead[0] - p.x, dz = ahead[1] - p.z;
+  const length = Math.hypot(dx, dz), yaw = walk.yaw || 0;
+  const dot = length > 0.05 ? (-Math.sin(yaw) * dx - Math.cos(yaw) * dz) / length : 1;
+  let turn = PP.turn;
+  // 路线离开视野前就接上转身提示；对准后渐隐，不在某个角度整批撤走。
+  // 眼前就是急弯或终点时，也保留近处提示，避免路面粒子恰好全在视野下沿或拐角后。
+  const angle = Math.acos(Math.max(-1, Math.min(1, dot))), u = Math.max(0, Math.min(1, (angle - Math.PI / 18) / (Math.PI / 6))), near = Math.max(0, Math.min(1, Math.max((4 - (PP.len - s0)) / 2, (2.3 - length) / .8)));
+  const airborne = Math.max(0, Math.min(1, (p.y - groundAt(p.x, p.z, p.y)[0]) / .12));
+  const target = Math.max(u * u * (3 - 2 * u), near, airborne, 1 - roadPetalsInView(p) / 2);
+  if (!turn && target === 0) return null;
+  const weight = turn ? turn.weight + (target - turn.weight) * (1 - Math.exp(-Math.max(0, now - turn.time) / 160)) : target;
+  if (target === 0 && weight < 0.001) { PP.turn = null; return null; }
+  const unchanged = turn && turn.x === p.x && turn.y === p.y && turn.z === p.z && turn.yaw === yaw && turn.pitch === walk.pitch && turn.eyeOff === walk.eyeOff && turn.s0 === s0 && turn.route === PP.path;
+  const cue = unchanged ? turn : buildPetalTurn(p, s0, yaw, turn && turn.side);
+  const pose = { x: p.x, y: p.y, z: p.z, yaw, eyeY: p.y + 1.62 * walk.s + (walk.eyeOff || 0) };
+  // 左右各自保留粒子身份。越过正后方时短暂交叉淡化，不能把整条可见弧线直接镜像。
+  const selected = cue.side < 0 ? 0 : 1, banks = turn?.banks || [{ weight: selected === 0 ? 1 : 0 }, { weight: selected === 1 ? 1 : 0 }];
+  const blend = turn ? 1 - Math.exp(-Math.max(0, now - turn.time) / 140) : 1;
+  for (let i = 0; i < banks.length; i++) {
+    banks[i].weight += ((i === selected ? 1 : 0) - banks[i].weight) * blend;
+    if (i === selected) banks[i].cue = { path: cue.path, cum: cue.cum, len: cue.len, ...pose };
+  }
+  turn = PP.turn = { ...cue, ...pose, banks, weight, showTurn: angle > Math.PI / 9, time: now, pitch: walk.pitch, eyeOff: walk.eyeOff, s0, route: PP.path };
+  return turn;
+}
+function petalTurnAt(turn, t) {
+  const s = t * turn.len, P = turn.path, C = turn.cum; let i = 1;
+  while (i < P.length - 1 && C[i] < s) i++;
+  const length = C[i] - C[i - 1] || 1, u = (s - C[i - 1]) / length,
+    x = P[i - 1][0] + (P[i][0] - P[i - 1][0]) * u, z = P[i - 1][1] + (P[i][1] - P[i - 1][1]) * u;
+  return [x, z, (P[i][0] - P[i - 1][0]) / length, (P[i][1] - P[i - 1][1]) / length,
+    P[i - 1][2] + (P[i][2] - P[i - 1][2]) * u];
+}
+function paintPetal(q, position, size, floor, now, cycle, isTurn) {
+  let v = q.visual;
+  if (!v || now < v.time || now - v.time > 1000) v = q.visual = { ...position, size, floor, time: now, cycle };
+  const dt = Math.max(0, now - v.time), blend = 1 - Math.exp(-dt / 75);
+  const distance = Math.hypot(position.x - v.x, position.y - v.y, position.z - v.z);
+  // 粒子循环或路线换段时先在原处淡出，再从新位置淡入；绝不带着可见尺寸瞬移。
+  const relocate = cycle !== v.cycle || distance > 1 || (!isTurn && distance > .001 &&
+    !D.walkSurface.segment([v.x, v.z, v.floor], [position.x, position.z, floor], { startPadding: 0, endPadding: 0 }));
+  if (relocate && v.size > .015) {
+    v.size *= Math.exp(-dt / 65);
+  } else {
+    if (relocate || v.size <= .015) { Object.assign(v, position); v.floor = floor; v.cycle = cycle; }
+    else {
+      const x = v.x + (position.x - v.x) * blend, z = v.z + (position.z - v.z) * blend;
+      if (isTurn) { v.x = x; v.z = z; v.y += (position.y - v.y) * blend; }
+      else {
+        // 先平滑抬过台阶的边缘再前移，不在跨上桥板的一帧强行跳高或穿进踏步。
+        const nextFloor = groundAt(x, z, floor)[0], r = .08;
+        const clearance = Math.max(nextFloor, groundAt(x+r,z,floor)[0], groundAt(x-r,z,floor)[0], groundAt(x,z+r,floor)[0], groundAt(x,z-r,floor)[0]) + .1 * walk.s;
+        v.y += (Math.max(position.y, clearance) - v.y) * blend;
+        if (v.y >= clearance - .005) { v.x = x; v.z = z; v.floor = nextFloor; }
+      }
+    }
+    v.size += (size - v.size) * (1 - Math.exp(-dt / 65));
+  }
+  v.time = now;
+  _pd.position.set(v.x, v.y, v.z); _pd.scale.setScalar(v.size);
 }
 function updatePetals(goal, p, now) {
-  if (!goal || !walk.on) { petals.visible = false; return; }
-  const gx = goal.pos.x, gz = goal.pos.z; if (Math.hypot(gx - p.x, gz - p.z) < 4) { petals.visible = false; return; }
-  if (now - ppT > 1500 && (!PP || Math.hypot(PP.gx - gx, PP.gz - gz) > 2 || ppNearest(p)[1] > 3.5)) buildPP(gx, gz, p, now);
-  if (!PP) { petals.visible = false; return; }
-  const [s0] = ppNearest(p), WIN = Math.min(18, PP.len - s0 - 1.5); if (WIN < 2) { petals.visible = false; return; }
+  if (!goal || !walk.on) { cancelPendingPP(); petals.visible = turnPetals.visible = false; return; }
+  if (!PP) for (const q of petalSeed) q.visual = null;
+  const gx = goal.pos.x, gz = goal.pos.z;
+  const changed = !PP || PP.goal !== goal || Math.hypot(PP.gx - gx, PP.gz - gz) > 0.6 || PP.version !== NAV.version;
+  let nearest = PP && PP.path.length > 1 ? ppNearest(p) : [0, Infinity];
+  // 失去旧路线接入点时当帧重算，不能先隐藏一秒半；只有失败后的原地重试限频。
+  const moved = PP && Math.hypot(p.x - PP.origin[0], p.z - PP.origin[1]) > 0.6;
+  if (changed || (nearest[1] > 1.2 && (PP.path.length > 1 || moved || now - ppT > 1500))) {
+    const grounded = new V3(p.x, groundAt(p.x, p.z, p.y)[0], p.z);
+    requestPP(gx, gz, grounded, now, goal); nearest = PP && PP.path.length > 1 ? ppNearest(p) : [0, Infinity];
+  }
+  if (!PP || PP.goal !== goal || Math.hypot(PP.gx - gx, PP.gz - gz) > .6 || PP.version !== NAV.version) { petals.visible = turnPetals.visible = false; return; }
+  if (nearest[1] > 1.2) { petals.visible = turnPetals.visible = false; return; }
+  const [s0] = nearest, remaining = PP.len - s0, offset = Math.min(1.4, remaining * 0.2), WIN = Math.min(18, remaining - offset);
+  if (PP.viaState) for (const mark of PP.viaState.marks) if (s0 >= mark.s - .1) PP.viaState.next = Math.max(PP.viaState.next, mark.next);
+  // 到达终点逐渐收起，不跨过一个距离阈值就整批消失。
+  const arrival = Math.max(0, Math.min(1, remaining / .6));
+  const turn = petalTurn(p, s0, now);
+  // 按固定米数间距流动，弧长改变只影响端点的淡入淡出，不再按花瓣数量重排整条弧线。
+  const capacity = TURN_N / 2, spacing = Math.max(18 / PET_N, (Math.PI * 1.5 * walk.s + 2.4) / (capacity - 1));
+  turnPetals.count = TURN_N;
+  if (turn && turn.weight > 0.1 && turn.showTurn) {
+    compassEl.hidden = false;
+    compassEl.querySelector('span').textContent = turn.side > 0 ? L('向右转身', 'Turn right') : L('向左转身', 'Turn left');
+  }
   petals.visible = true;
-  for (let i = 0; i < PET_N; i++) { const q = petalSeed[i], t = (q.o + now * 0.00016 * q.sp) % 1, s = s0 + 1.4 + t * WIN, [x0, z0, dx, dz] = ppAt(s);
-    const spread = q.lat * (0.3 + 0.7 * t), x = x0 - dz * spread + Math.sin(now * 0.002 + q.ph) * 0.18, z = z0 + dx * spread + Math.cos(now * 0.0017 + q.ph) * 0.18;
-    const y = groundAt(x, z, p.y + 1.2)[0] + (0.15 + q.h * 0.55) * walk.s + Math.sin(now * 0.0032 + q.ph) * 0.1;
-    const k = Math.min(1, t * 8) * (1 - Math.max(0, (t - 0.82) / 0.18));   // 近处淡入、远处散去
-    _pd.position.set(x, y, z); _pd.rotation.set(0.8 + Math.sin(now * 0.004 + q.ph) * 0.9, now * 0.0025 * q.sp + q.ph, now * 0.0018 + q.ph); _pd.scale.setScalar(Math.max(0.001, k) * (0.9 + q.h * 0.35)); _pd.updateMatrix(); petals.setMatrixAt(i, _pd.matrix); }
-  petals.instanceMatrix.needsUpdate = true; if (petals.instanceColor) petals.instanceColor.needsUpdate = true;
+  turnPetals.visible = !!(turn && turn.path);
+  // 固定两组粒子，转身时不挪用路上的花瓣，避免整条路线突然重排。
+  for (let i = 0; i < PET_N + TURN_N; i++) {
+    const q = petalSeed[i], isTurn = i >= PET_N, mesh = isTurn ? turnPetals : petals, instance = isTurn ? i - PET_N : i;
+    const bank = isTurn && turn?.banks[Math.floor(instance / capacity)], cue = bank && bank.cue;
+    if (isTurn && !cue) {
+      // 记录不可见状态；稍后首次启用这一侧时也要淡入，不能直接以完整尺寸冒出。
+      q.visual = { x: p.x, y: p.y, z: p.z, floor: p.y, size: 0, cycle: null, time: now };
+      _pd.scale.setScalar(0); _pd.updateMatrix(); mesh.setMatrixAt(instance, _pd.matrix); continue;
+    }
+    const period = isTurn ? capacity * spacing : 18,
+      phase = isTurn ? (instance % capacity) * spacing + now * .0012 : i * (18 / PET_N) + now * .00288 * q.sp,
+      distance = phase % period, length = isTurn ? cue.len : WIN, t = Math.min(1, distance / Math.max(.001, length)), cycle = Math.floor(phase / period);
+    let [x0, z0, dx, dz, y0] = isTurn ? petalTurnAt(cue, t) : ppAt(s0 + offset + Math.min(distance, WIN));
+    if (isTurn) {
+      // 正在淡出的旧侧仍跟随玩家和镜头，前方不会留下一个突然离开视野的空档。
+      const a = (walk.yaw || 0) - cue.yaw, c = Math.cos(a), s = Math.sin(a), x = x0 - cue.x, z = z0 - cue.z, oldDx = dx;
+      x0 = p.x + x * c + z * s; z0 = p.z - x * s + z * c; dx = dx * c + dz * s; dz = -oldDx * s + dz * c; y0 += p.y - cue.y;
+    }
+    const spread = q.lat * (isTurn ? 0.12 : 0.3 + 0.7 * t), sway = isTurn ? 0.035 : 0.18;
+    let x = x0 - dz * spread + Math.sin(now * 0.002 + q.ph) * sway, z = z0 + dx * spread + Math.cos(now * 0.0017 + q.ph) * sway;
+    // 路面花瓣仍收在可走区域内；转向花瓣允许穿过墙面，始终保留完整弧线。
+    if (!isTurn && !D.walkSurface.segment([x0, z0, y0], [x, z])) { x = x0; z = z0; }
+    const routeFloor = isTurn ? y0 : groundAt(x, z, y0)[0], routeY = routeFloor + (0.15 + q.h * 0.55) * walk.s;
+    const frontY = isTurn ? turn.eyeY - 0.08 + Math.sin(walk.pitch || 0) * walk.s : 0;
+    const y = (isTurn ? frontY + (routeY - frontY) * t * t : routeY) + Math.sin(now * 0.0032 + q.ph) * (isTurn ? 0.025 : 0.1);
+    const fade = isTurn ? spacing * .8 : .65, k = Math.max(0, Math.min(1, distance / fade, (length - distance) / fade));
+    if (isTurn && q.visual?.pose) {
+      // 在镜头坐标系里平滑形状；快速转头时提示立即跟上视野，不留在上一帧身后慢慢淡出。
+      const v = q.visual, pose = v.pose, a = (walk.yaw || 0) - pose.yaw, c = Math.cos(a), s = Math.sin(a), vx = v.x - pose.x, vz = v.z - pose.z;
+      v.x = p.x + vx * c + vz * s; v.z = p.z - vx * s + vz * c; v.y += turn.eyeY - pose.eyeY;
+    }
+    paintPetal(q, { x, y, z }, k * (0.9 + q.h * .35) * arrival * (isTurn ? turn.weight * bank.weight : 1), routeFloor, now, cycle, isTurn);
+    if (isTurn) q.visual.pose = { x: p.x, z: p.z, yaw: walk.yaw || 0, eyeY: turn.eyeY };
+    _pd.rotation.set(0.8 + Math.sin(now * 0.004 + q.ph) * 0.9, now * 0.0025 * q.sp + q.ph, now * 0.0018 + q.ph); _pd.updateMatrix(); mesh.setMatrixAt(instance, _pd.matrix);
+  }
+  petals.instanceMatrix.needsUpdate = turnPetals.instanceMatrix.needsUpdate = true;
 }
 
 const _v = new V3(); let last = performance.now();
@@ -1302,7 +1568,7 @@ function tick(now) {
   requestAnimationFrame(tick); const dt = Math.min(0.05, (now - last) / 1000); last = now; beaconMat.uniforms.t.value = now / 1000;
   const playing = (S.char || S.giftMode || S.story) && walk.on; if (S.story) { followBanEr(dt); followGuide(dt); }
   questEl.hidden = !(playing || (S.giftMode && walk.on));
-  if (!playing) { compassEl.hidden = true; petals.visible = false; doorUpdate(); beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
+  if (!playing) { compassEl.hidden = true; petals.visible = turnPetals.visible = false; doorUpdate(); beacon.visible = groundRing.visible = false; for (const t of S.tags) t.el.style.display = 'none'; return; }
   for (const t of S.targets) if (t.bob) t.obj.position.y = t.obj.userData.baseY + Math.sin(now / 500) * 0.06, t.obj.rotation.y += dt * 0.6;
   const goal = currentGoal(); const p = walk.pos;
   if (goal) {
@@ -1333,12 +1599,12 @@ addEventListener('dgy-lang', () => {
   dockLang();
   for (const t of S.tags) t.el.textContent = txt(t.text);
   if (S.char || S.story) renderQuest(); else if (S.giftMode && S.gift && S.stage === 'gift') renderGiftQuest();
-  if (!startEl.hidden) showStart(startEl.dataset.mode === 'gift');
+  if (!startEl.hidden) { if (startEl.dataset.mode === 'welcome') paintWelcome(); else showStart(startEl.dataset.mode === 'gift'); }
   if (!modalEl.hidden && modalPaint) modalPaint();
 });
 
 /* 调试接口（测试用） */
 window.__game = { get SY() { return SY; }, CH17, storyIntro, get guide() { return guide; }, followGuide, findPath, okAt, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
-/* 开场：链接里带礼 → 收礼；否则显示选择界面（第十七回为主线，其余标「开发中 · 可试玩」） */
-{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else showStart(); }
+/* 全园先供观赏；点击「入园」后显示选择界面（第十七回为主线，其余标「开发中 · 可试玩」），链接里带礼则收礼。 */
+showWelcome();

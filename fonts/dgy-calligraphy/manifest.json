@@ -1,0 +1,62 @@
+{
+  "family": "DGY Calligraphy",
+  "baseFamily": "Ma Shan Zheng",
+  "upstream": "https://github.com/google/fonts/tree/main/ofl/mashanzheng",
+  "license": "OFL-MaShanZheng.txt",
+  "sourceCharacterCount": 1521,
+  "restoredCount": 881,
+  "generatedCount": 7,
+  "generated": [
+    {
+      "character": "嶒",
+      "unicode": "U+5D92",
+      "source": "perf/calligraphy-source/generated/5d92.png",
+      "sha256": "4e3023d89f82a6ec8601670b804ee971589150e71a215c7f6e052a34eb71a305",
+      "contours": 11
+    },
+    {
+      "character": "槅",
+      "unicode": "U+69C5",
+      "source": "perf/calligraphy-source/generated/69c5.png",
+      "sha256": "db91020eafbdb253d0aef53d027c7db38da62ddc9e419da96dcae4e829d4658c",
+      "contours": 7
+    },
+    {
+      "character": "湲",
+      "unicode": "U+6E72",
+      "source": "perf/calligraphy-source/generated/6e72.png",
+      "sha256": "b4f65aac32fee24e9902aeff35300a84a3b130a2c3f3636e5549a8070730e953",
+      "contours": 7
+    },
+    {
+      "character": "罽",
+      "unicode": "U+7F7D",
+      "source": "perf/calligraphy-source/generated/7f7d.png",
+      "sha256": "ff5f8c1443424bcd60b2e0433115d612457e5aaa8e5151a9576f58ba2b0979d9",
+      "contours": 13
+    },
+    {
+      "character": "醾",
+      "unicode": "U+91BE",
+      "source": "perf/calligraphy-source/generated/91be.png",
+      "sha256": "27578a27d15b9814339f58f9e9afa299f801db42dd063806ebb956d9b381a385",
+      "contours": 9
+    },
+    {
+      "character": "鹴",
+      "unicode": "U+9E74",
+      "source": "perf/calligraphy-source/generated/9e74.png",
+      "sha256": "4c5d15e2b9fe2703955dc42d7156b18a976fc3b8e6cf259acd9fd26ee011157e",
+      "contours": 9
+    },
+    {
+      "character": "齁",
+      "unicode": "U+9F41",
+      "source": "perf/calligraphy-source/generated/9f41.png",
+      "sha256": "34cdc2e4939142060df2c09c8a86e0fdb2e4c6f20486dfed164dcf38d8f30a4a",
+      "contours": 10
+    }
+  ],
+  "supplementBytes": 408900,
+  "supplementSha256": "210ddabd0e5bc86917e7223fc0d43ff021b47895e21184b9fab9cadf5cac3aa2"
+}
