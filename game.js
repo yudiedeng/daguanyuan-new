@@ -176,6 +176,14 @@ const css = `
 .g-btn{all:unset;cursor:pointer;box-sizing:border-box;padding:8px 16px;border-radius:2px;background:var(--ink);color:var(--paper);font-size:14px;letter-spacing:.08em;text-align:center}
 .g-btn:hover{background:#000}
 .g-btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.g-main{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;margin:0 0 20px;border:1px solid var(--cinnabar);border-left-width:4px;border-radius:2px;background:rgba(255,255,255,.45)}
+.g-main .ey{font-size:12px;letter-spacing:.16em;color:var(--cinnabar)}
+.g-main b{display:block;font-family:var(--f-disp);font-weight:400;font-size:30px;letter-spacing:.1em;margin:2px 0 4px}
+.g-main p{margin:0;font-size:13px;line-height:1.75;color:var(--ink-2)}
+.g-btn.big{padding:12px 26px;font-size:16px;background:var(--cinnabar);white-space:nowrap}
+.g-btn.big:hover{background:#8f2a20}
+.g-dev{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:13px;letter-spacing:.12em;color:var(--ink-2)}
+.g-dev i{font-style:normal;font-size:11px;padding:2px 8px;border:1px solid var(--line);border-radius:10px;color:var(--cinnabar)}
 #g-quest{position:fixed;left:16px;top:calc(16px + env(safe-area-inset-top,0px));width:min(300px,calc(100% - 32px));padding:14px 16px 12px;border-radius:3px;z-index:6}
 #g-quest .who{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;letter-spacing:.14em;color:var(--cinnabar)}
 #g-quest .who b{font-family:var(--f-disp);font-weight:400;font-size:22px;color:var(--ink);letter-spacing:.1em}
@@ -236,7 +244,7 @@ body.g-playing .card{display:none!important}
 @keyframes glidT{0%{transform:translateY(0)}22%{transform:translateY(-22%)}34%{transform:translateY(-4%)}62%{transform:translateY(-58%)}74%{transform:translateY(-46%)}100%{transform:translateY(-110%)}}
 @keyframes glidB{0%{transform:translateY(0)}22%{transform:translateY(22%)}34%{transform:translateY(4%)}62%{transform:translateY(58%)}74%{transform:translateY(46%)}100%{transform:translateY(110%)}}
 @media (prefers-reduced-motion:reduce){#g-intro .ln{transition:opacity .6s}#g-lids i{animation-duration:1.2s}#g-intro .hint{animation:none}}
-@media (max-width:760px){.g-chars{grid-template-columns:1fr}.g-sheet{padding:20px 18px}.g-sheet h2{font-size:34px}.g-char ol{display:none}#g-quest{top:auto;bottom:calc(170px + env(safe-area-inset-bottom,0px));width:auto;right:16px}#g-prompt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.g-scroll{padding:24px 20px}.g-scroll .poem{font-size:20px}}
+@media (max-width:760px){.g-main{flex-direction:column;align-items:stretch}.g-chars{grid-template-columns:1fr}.g-sheet{padding:20px 18px}.g-sheet h2{font-size:34px}.g-char ol{display:none}#g-quest{top:auto;bottom:calc(170px + env(safe-area-inset-bottom,0px));width:auto;right:16px}#g-prompt{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.g-scroll{padding:24px 20px}.g-scroll .poem{font-size:20px}}
 @media (prefers-reduced-motion:reduce){#g-compass svg{transition:none}}
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`);
@@ -421,8 +429,10 @@ function showStart(giftMode) {
   startEl.dataset.mode = '';
   startEl.innerHTML = `<div class="g-sheet"><h2>${L('我们的大观园', 'Our Grand View Garden')}</h2>
    <p class="g-lead">${L('大观园本是贾府为元妃省亲造的一份礼。园中人也总以物寄情：一方旧帕，一枝红梅，几篓螃蟹。选一个人入园，替园中人把心意送到。', 'The Grand View Garden was itself a gift, built by the Jia family for the Imperial Consort’s visit home. Those who live in it speak their hearts through things, too: an old handkerchief, a sprig of red plum, a few baskets of crabs. Choose someone, enter the garden, and carry their feelings to where they belong.')}</p>
+   <div class="g-main"><div><span class="ey">${L('主线 · 第十七回', 'Main story · Chapter 17')}</span><b>${L('大观园试才题对额', 'Testing Talents in the Garden')}</b><p>${L('跟着花瓣引路，按原著游园的顺序，一处处走去、为院落题匾。', 'Follow the petals through the garden in the novel’s order, and name each scene as you go.')}</p></div><button class="g-btn big" id="g-ch17">${L('开始游园', 'Begin')}</button></div>
+   <div class="g-dev">${L('更多人物与剧情', 'More characters and stories')}<i>${L('开发中 · 可试玩', 'In development · playable')}</i></div>
    <div class="g-chars">${Object.keys(CHARS).map(charCard).join('')}</div>
-   <div class="g-foot"><span><button class="g-btn" id="g-ch17">${L('大观园试才题对额', 'Testing Talents in the Garden')}</button> <button class="g-btn" id="g-liu">${L('刘姥姥进大观园', 'Granny Liu Visits the Garden')}</button> <button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button></span><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
+   <div class="g-foot"><span><button class="g-btn ghost" id="g-liu">${L('刘姥姥进大观园', 'Granny Liu Visits the Garden')}</button> <button class="g-link" id="g-skip">${L('只是逛逛', 'Just wander')}</button></span><form class="g-recv" id="g-recv"><input id="g-code-in" placeholder="${L('有赠礼码？贴在这里', 'Have a gift code? Paste it here')}" aria-label="${L('赠礼码', 'Gift code')}"><button class="g-btn ghost" type="submit">${L('收礼', 'Receive')}</button></form></div></div>`;
   startEl.hidden = false;
   startEl.querySelectorAll('.g-char').forEach(b => b.onclick = () => { startEl.hidden = true; beginChar(b.dataset.k); });
   $('g-liu').onclick = () => { startEl.hidden = true; liuIntro(); };
@@ -1330,5 +1340,5 @@ addEventListener('dgy-lang', () => {
 /* 调试接口（测试用） */
 window.__game = { get SY() { return SY; }, CH17, storyIntro, get guide() { return guide; }, followGuide, findPath, okAt, S, CHARS, LIU, liuIntro, storyWorld, beginChar, interact, anchor, stageWorld, encodeGift, decodeGift, showStart, closeModal, beginGift };
 
-/* 开场：链接里带礼 → 收礼；否则显示选人 */
-{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else if ((S.done.ch17 || 0) >= CH17.steps.length) showStart(); else storyIntro('ch17'); }
+/* 开场：链接里带礼 → 收礼；否则显示选择界面（第十七回为主线，其余标「开发中 · 可试玩」） */
+{ const g = decodeGift(location.hash || ''); if (g) { S.gift = g; showStart(true); } else showStart(); }
