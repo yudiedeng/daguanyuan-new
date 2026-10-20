@@ -1665,6 +1665,9 @@ function pave(cx,cz,hw,hd,y){box('pave',T(cx,y+0.02,cz),2*hw-1,0.12,2*hd-1,0,0,0
 const PATH_S=[];const pathHash=new Map();
 function pathAdd(x,z){const k=Math.floor(x/4)+','+Math.floor(z/4);(pathHash.get(k)||pathHash.set(k,[]).get(k)).push([x,z]);PATH_S.push([x,z]);}
 function nearPath(x,z,r){const ix=Math.floor(x/4),iz=Math.floor(z/4),rr=Math.ceil(r/4);for(let a=-rr;a<=rr;a++)for(let b=-rr;b<=rr;b++){const l=pathHash.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<r*r)return true;}return false;}
+/* 路面占地（中线点＋半宽，含 tail）：种树时压在路面上的让开（见 addTree） */
+const PAVED=new Map();function paveAdd(x,z,hw){const k=Math.floor(x/4)+','+Math.floor(z/4);(PAVED.get(k)||PAVED.set(k,[]).get(k)).push([x,z,hw]);}
+function onPaving(x,z,pad){const ix=Math.floor(x/4),iz=Math.floor(z/4);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=PAVED.get((ix+a)+','+(iz+b));if(l)for(const p of l)if((p[0]-x)**2+(p[1]-z)**2<(p[2]+pad)**2)return true;}return TAILS.some(t=>(t[0]-x)**2+(t[1]-z)**2<(t[2]-0.35+pad)**2);}
 let QINFANG=null;const BRIDGES=[];
 /* 后登记的桥（路上 lateBridge）：先只建桥身，等种树、栽花、叠石这些抽随机数的布置都完了才放进 BRIDGES，
    免得新桥让附近的树、石“跳过不抽随机数”，把全园的布局整体带偏；这期间压在桥面上的单独让开（见 onLateBridge） */
@@ -1707,7 +1710,7 @@ function buildPath(P){
  if(P.lu){LU.push({sp:cf.getSpacedPoints(Math.ceil(Lf/0.5)).map(v=>[v.x,v.z]),hw:P.w/2});LU_PATHS.push(P);}/* PATHS 以外、各院自己画的小路（如潇湘馆院门前）带 lu 也一样 */
  const pos=[],uv=[],nor=[],col=[],idx=[];const hw=P.w/2;let acc=0;const n=sp.length-1;
  for(let i=0;i<=n;i++){const p=sp[i],a=sp[Math.max(0,i-1)],b=sp[Math.min(n,i+1)];let tx=b[0]-a[0],tz=b[1]-a[1];const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx;if(i>0)acc+=Math.hypot(p[0]-sp[i-1][0],p[1]-sp[i-1][1]);
-  for(const s of[-1,1]){const x=p[0]+nx*hw*s,z=p[1]+nz*hw*s;pos.push(x,height(x,z)+0.07,z);nor.push(0,1,0);uv.push(s<0?0:1,acc/(P.w*2));col.push(1,1,1);}pathAdd(p[0],p[1]);}
+  for(const s of[-1,1]){const x=p[0]+nx*hw*s,z=p[1]+nz*hw*s;pos.push(x,height(x,z)+0.07,z);nor.push(0,1,0);uv.push(s<0?0:1,acc/(P.w*2));col.push(1,1,1);}pathAdd(p[0],p[1]);paveAdd(p[0],p[1],hw);}
  for(let i=0;i<n;i++){const a=i*2;if(!P.lu&&LU.length&&nearLu((sp[i][0]+sp[i+1][0])/2,(sp[i][1]+sp[i+1][1])/2,0.1))continue;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
  if(!P.lu){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);add('path',g,new THREE.Matrix4());}
  let run=null,k=0;for(let i=0;i<=n;i++){const wet=height(sp[i][0],sp[i][1])<0.3;if(wet&&run===null)run=i;if((!wet||i===n)&&run!==null){if(i-run>=(P.wetMin||3)){const a=sp[Math.max(0,run-3)],b=sp[Math.min(n,i+2)];bridge(a,b,(P.bridges&&P.bridges[k])||'flat');if(P.lateBridge)LATE_BRIDGES.push(BRIDGES.pop());k++;}run=null;}}
@@ -1770,6 +1773,9 @@ function bridge(a,b,type){const cx=(a[0]+b[0])/2,cz=(a[1]+b[1])/2,L=Math.hypot(b
  const W=3.6,top=1.0;
  box('stone',M,W,0.55,L,0,top-0.275,0);for(let z=-L/2+2;z<=L/2-2;z+=4)box('stone',M,W-0.5,2.6,0.8,0,top-1.8,z,{noCol:1});
  for(const s of[-1,1])balustrade(M,s*(W/2-0.14),-L/2+0.2,s*(W/2-0.14),L/2-0.2,top);
+ /* 平桥两头：桥面比路面高出 0.22 米以上的一头加一两级踏步（原来路走到桥头是一道半米来高的石台帮，沁芳闸桥东头 0.47 米，得“爬”上桥） */
+ if(type==='flat')for(const e of[-1,1]){const g=height(cx+Math.sin(ry)*e*(L/2+0.6),cz+Math.cos(ry)*e*(L/2+0.6)),rise=top-g;if(rise<0.22||rise>0.9)continue;
+  const n=Math.ceil(rise/0.17)-1;for(let i=1;i<=n;i++){const t=top-rise*i/(n+1),b=g-0.3;box('stone',M,W-0.3,t-b,0.36,0,(t+b)/2,e*(L/2+0.36*(i-0.5)));}}
  if(type==='qinfang'){hall(at(M,0,top,0),{w:4.6,d:4.6,h:3.2,noBase:true,facade:'open',rail:false,roof:'hip',roofKey:'roofGreen',roofH:2.6,over:1.3,lift:1.2,bays:1,plaque:'沁芳',plaqueBack:'沁芳',pscale:0.7,lanterns:true});QINFANG={x:cx,z:cz};}}
 /* 藕香榭的曲折竹桥：从东岸接到水榭 */
 const ZIG=[[-49.5,-17],[-55,-20.5],[-60,-15.5],[-64,-19.5],[-69.9,-16]];
@@ -1801,7 +1807,7 @@ function inView(x,z,extra,segs){for(const v of segs||VIEWSEG){if(!v[4])continue;
 // 新景点（芦雪广、凹晶馆、凸碧山庄）占地：x, z, 半宽, 半深
 const SITE_FP=GLB?[[-131.5,0,8.5,13],[83,-83,8,8],[80,-129,9.5,9]]:[];
 function inSite(x,z,extra){for(const f of SITE_FP)if(Math.abs(x-f[0])<f[2]&&Math.abs(z-f[1])<f[3])return true;return VIEWSEG_NEW.length>0&&inView(x,z,extra||0,VIEWSEG_NEW);}
-function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(nearStream(x,z,3))return;/* 清溪两岸不种树，叠水露出来 */if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)||onLateBridge(x,z,1.2)){TREES[sp].pop();treeAdd(x,z);return;}/* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
+function addTree(sp,x,z,s,tint,y){if(inView(x,z,sp==='willow'||sp==='broad'?3:0))return;if(nearStream(x,z,3))return;/* 清溪两岸不种树，叠水露出来 */if(BRIDGES.some(b=>Math.hypot(x-b.x,z-b.z)<b.L/2+4.5))return;if(QINFANG&&Math.hypot(x-QINFANG.x,z-QINFANG.z)<9)return;y=y??height(x,z);TREES[sp].push({x,y,z,s,ry:rnd()*6.283,tint,plum:PLUM.includes(tint),v:Math.floor(rnd()*2)});if(inSite(x,z,sp==='willow'||sp==='broad'?3:0)||onLateBridge(x,z,1.2)||(Math.abs(y-height(x,z))<1.5&&onPaving(x,z,0.25))){TREES[sp].pop();treeAdd(x,z);return;}/* 压在路面上的树（大观楼后那条路上原有两棵松）照常抽随机数、登记树距，只是不种 *//* 新景点内不显示，但照旧登记树距，保证其余布局不变 */treeAdd(x,z);colAdd({x,z,c:1,s:0,hx:0.35*s,hz:0.35*s,top:y+4,bot:y-1});}
 const RC=['#c9c6bc','#d6d3ca','#bdbbb2','#c4c6b6','#aeb59e','#cfcbc0'];
 const RAILSEG=[];/* 沁芳池岸栏杆各段：压在栏杆上的山石照常抽随机数（布局不变），只是不放 */
 const nearRail=(x,z,r)=>RAILSEG.some(([ax,az,bx,bz])=>{const dx=bx-ax,dz=bz-az,t=Math.max(0,Math.min(1,((x-ax)*dx+(z-az)*dz)/(dx*dx+dz*dz||1)));return Math.hypot(ax+dx*t-x,az+dz*t-z)<r;});
