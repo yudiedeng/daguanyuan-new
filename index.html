@@ -168,7 +168,7 @@ button:focus-visible,.card a:focus-visible,input:focus-visible{outline:2px solid
 <div id="toast" class="panel" style="opacity:0"><b>琉璃世界</b><span>白雪红梅 · 第四十九回</span></div>
 
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","ez-tree":"https://cdn.jsdelivr.net/npm/@dgreenheck/ez-tree@1.1.0/build/ez-tree.es.js"}}
+{"imports":{"three":"./vendor/three/build/three.module.js","three/addons/":"./vendor/three/examples/jsm/","ez-tree":"./vendor/ez-tree/ez-tree.es.js"}}
 </script>
 <script>
 setTimeout(function(){if(!window.__DGY_OK&&!window.__DGY_MODULE_READY&&!window.__DGY_ERR){var s=document.getElementById('load-step');if(s)s.textContent=window.T?T('备料，稍候片刻'):'备料，稍候片刻';}},25000);
@@ -198,7 +198,8 @@ import { cameraNear, groundDepthMaterial } from './view-depth.mjs';
 import { installGrassDistanceLOD, partitionStaticVegetationInstances } from './vegetation-budget.mjs';
 import { prepareMainViewOcclusion } from './main-view-occlusion.mjs';
 import { prepareCellVisibility, interiorVisibilitySeeds } from './cell-visibility.mjs';
-import { createGpuOcclusionQueries } from './gpu-occlusion-query.mjs';
+import { prepareMovingGpuOcclusionQueries } from './moving-gpu-occlusion-query.mjs';
+import { createFrameOcclusion } from './frame-occlusion.mjs';
 import { createSceneSpatialIndex, markStaticSpatial } from './scene-spatial-index.mjs';
 import { installBuildingTransformCache, installStaticBranchTransformCache } from './building-transform-cache.mjs';
 import { HLOD_BUILDINGS, attachBuildingHLOD, createBuildingHLODController } from './building-hlod.mjs';
@@ -557,7 +558,7 @@ function patch(mat,o){o=o||{};const prev=mat.onBeforeCompile;if(o.tri)triGLSL(o)
    .replace('#include <opaque_fragment>',(o.fOut||'')+'\n#include <opaque_fragment>');
   if(prev)prev(sh,r);};
  const ck='p'+JSON.stringify(o,(k,v)=>k==='uniforms'?undefined:v).length+(o.key||'');mat.customProgramCacheKey=()=>ck;
- if(o.vWorld)mat.userData.shadowDynamic=true;  // 顶点随风摆：做阴影深度材质时，阴影图每帧都得重画它（其余不动的投影物缓存起来，见 three.module.js DGY-GPU-CACHE）
+ if(o.vWorld){mat.userData.shadowDynamic=true;mat.userData.dgyVWorld=o.vWorld;}  // 顶点随风摆：做阴影深度材质时，阴影图每帧都得重画它（其余不动的投影物缓存起来，见 three.module.js DGY-GPU-CACHE）
  return mat;}
 const TRIU={};function triSet(a,n){const k=a+'|'+(n||'');if(TRIU[k])return TRIU[k];const U={triA:{value:null},triN:{value:null},triOn:{value:0}};TRIU[k]=U;const L=new THREE.TextureLoader();let need=n?2:1;
  const fin=(t,srgb)=>{t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=ANISO;if(srgb)t.colorSpace=THREE.SRGBColorSpace;t.needsUpdate=true;};
@@ -1115,9 +1116,9 @@ const RCL={on:true,fr:new THREE.Frustum(),pm:new THREE.Matrix4(),idm:new THREE.M
 const rcShown=o=>{if(!o.layers.test(camera.layers))return false;for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;};
 // 只查询主相机的读者是否完全被挡。遮挡器缺失、失效或未确认时都保留原样；
 // 这里不改 visible，也不给倒影/阴影相机安装主视角的遮挡结果。
-const rcMainBoxHidden=b=>runtimeOptimization.gpu?.isOccluded?.(b,camera)===true||runtimeOptimization.occlusion?.isOccluded?.(b,camera)===true;
-const rcMainObjectHidden=o=>{if(runtimeOptimization.gpu?.isObjectOccluded?.(o,camera)===true)return true;const c=runtimeOptimization.occlusion;if(c?.isObjectOccluded?.(o,camera)===true)return true;
- if((runtimeOptimization.gpu||c?.isOccluded)&&o.userData.rcKind==='mirror'){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const b=o.userData.rcOccBox||(o.userData.rcOccBox=new THREE.Box3());b.copy(o.geometry.boundingBox);b.min.z-=1e-3;b.max.z+=1e-3;b.applyMatrix4(o.matrixWorld);return rcMainBoxHidden(b);}return false;};
+const rcMainBoxHidden=b=>runtimeOptimization.hzb?.isOccluded?.(b,camera)===true||runtimeOptimization.gpu?.isOccluded?.(b,camera)===true||runtimeOptimization.occlusion?.isOccluded?.(b,camera)===true;
+const rcMainObjectHidden=o=>{if(runtimeOptimization.hzb?.isObjectOccluded?.(o,camera)===true||runtimeOptimization.gpu?.isObjectOccluded?.(o,camera)===true)return true;const c=runtimeOptimization.occlusion;if(c?.isObjectOccluded?.(o,camera)===true)return true;
+ if((runtimeOptimization.hzb||runtimeOptimization.gpu||c?.isOccluded)&&o.userData.rcKind==='mirror'){if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const b=o.userData.rcOccBox||(o.userData.rcOccBox=new THREE.Box3());b.copy(o.geometry.boundingBox);b.min.z-=1e-3;b.max.z+=1e-3;b.applyMatrix4(o.matrixWorld);return rcMainBoxHidden(b);}return false;};
 const rcMainMirrorShown=m=>m.visible&&rcShown(m)&&!rcMainObjectHidden(m);
 // 一块：世界包围盒 b（判可见、算距离），投影用的 8 个角点 p（矩阵输入空间：湖面及借用者用世界坐标，Water2、镜子用物体局部坐标）
 function rcBox(wb,lb){const p=new Float32Array(24);for(let i=0;i<8;i++){p[i*3]=i&1?lb.max.x:lb.min.x;p[i*3+1]=i&2?lb.max.y:lb.min.y;p[i*3+2]=i&4?lb.max.z:lb.min.z;}return {b:wb,p};}
@@ -1205,20 +1206,23 @@ function rcOK(S){if(!S||S.full)return !S||S.tex.every(t=>rcIn([0,0,1,1],t().user
 function rcRender(S,r0,done){return function(sc,cam){const rt=renderer.getRenderTarget(),tx=rt&&rt.texture,st=RCL.stat;
  if(!tx||!S.tex.some(t=>t()===tx))return r0.call(renderer,sc,cam);
  done.add(tx);st.rend++;const W=rt.width,H=rt.height;st.pxAll+=W*H;
+ // 湖面倒影的逐帧可见性（hzbR）：渲之前更新、渲完（只渲了剪裁框的话只认框里）测下一次的
+ const HR=runtimeOptimization.hzbR,hr=HR&&water&&cam===water.mirrorCamera&&rt===water.renderTarget?HR:null;
  const e=S.full?{need:'full'}:rcEval(S).find(q=>q.tex===tx);
  if(!e.need){st.skip++;tx.userData.rcValid=null;tx.userData.rcCorner=false;return;}  // 这一帧没有一处读它：不渲（矩阵已换，旧图作废）
  const px=rcPix(e.need,W,H,tx.userData.rcM||0.02);
- if(!px){rt.scissorTest=false;renderer.setRenderTarget(rt);st.full++;st.px+=W*H;r0.call(renderer,sc,cam);tx.userData.rcValid=[0,0,1,1];tx.userData.rcCorner=true;return;}
+ if(!px){rt.scissorTest=false;renderer.setRenderTarget(rt);st.full++;st.px+=W*H;if(hr)hr.update(cam,rt);r0.call(renderer,sc,cam);if(hr)hr.afterRender();tx.userData.rcValid=[0,0,1,1];tx.userData.rcCorner=true;return;}
  // 有会取出 NaN 坐标的水面露着（见 rcNan）：左下角那格也要和原来一样是新的。框离角不远就扩到角上，远了就另外补渲角上 2×2
  let rs=[px],cn=px[0]===0&&px[1]===0;
  if(px[2]<=px[0]||px[3]<=px[1]){if(!S.nan){st.skip++;tx.userData.rcValid=null;tx.userData.rcCorner=false;return;}rs=[[0,0,2,2]];cn=true;}
  else if(S.nan&&!cn){rs=px[2]*px[3]<=1.3*(px[2]-px[0])*(px[3]-px[1])?[[0,0,px[2],px[3]]]:[px,[0,0,2,2]];cn=true;}
- RCL.sct.add(rt);
- for(const p of rs){rt.scissor.set(p[0],p[1],p[2]-p[0],p[3]-p[1]);rt.scissorTest=true;renderer.setRenderTarget(rt);st.px+=(p[2]-p[0])*(p[3]-p[1]);
+ // 倒影的可见性只认第一个框（另补的左下角 2×2 不参与，也不按它剔除）
+ RCL.sct.add(rt);const v0=[rs[0][0],rs[0][1],rs[0][2]-1,rs[0][3]-1];if(hr)hr.update(cam,rt,v0);
+ for(const p of rs){rt.scissor.set(p[0],p[1],p[2]-p[0],p[3]-p[1]);rt.scissorTest=true;renderer.setRenderTarget(rt);st.px+=(p[2]-p[0])*(p[3]-p[1]);RCL.hzbROff=p!==rs[0];
   const x0=p[0]/W*2-1,x1=p[2]/W*2-1,y0=p[1]/H*2-1,y1=p[3]/H*2-1,sx=(x1-x0)/2,sy=(y1-y0)/2,ax=(x0+x1)/2,ay=(y0+y1)/2;
   RCL.crop.set(1/sx,0,0,-ax/sx, 0,1/sy,0,-ay/sy, 0,0,1,0, 0,0,0,1);cam.dgyCull=RCL.crop.clone().multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
-  try{r0.call(renderer,sc,cam);}finally{delete cam.dgyCull;}}
- const p=rs[0];tx.userData.rcValid=[p[0]/W,p[1]/H,p[2]/W,p[3]/H];tx.userData.rcCorner=cn;};}
+  try{r0.call(renderer,sc,cam);}finally{delete cam.dgyCull;RCL.hzbROff=false;}}
+ const p=rs[0];if(hr)hr.afterRender(v0);tx.userData.rcValid=[p[0]/W,p[1]/H,p[2]/W,p[3]/H];tx.userData.rcCorner=cn;};}
 // 不按范围渲的时候（比如临时关了 RCL.on），上次留下的剪裁框要先去掉
 function rcPlain(r0){return function(sc,cam){const rt=renderer.getRenderTarget();if(rt&&rt.scissorTest&&RCL.sct.has(rt)){rt.scissorTest=false;renderer.setRenderTarget(rt);}return r0.call(renderer,sc,cam);};}
 /* 倒影提前渲：原先湖面、清溪、镜子的倒影在主画面画到一半时（它们的 onBeforeRender）插进来渲，在手机这类分块渲染的 GPU 上，
@@ -2028,12 +2032,13 @@ function buildRill(){const OX=-82+MV.xiaoxiang[0],OZ=27+MV.xiaoxiang[1],W=0.28;
     float foam=clamp(rf*smoothstep(0.55,0.85,n3*0.7+n4*0.5)*0.8+fall*smoothstep(0.35,0.7,n3+0.2)+smoothstep(0.86,1.0,abs(c))*smoothstep(0.6,0.8,n4)*0.5,0.0,1.0);
     vec3 col=mix(under,refl,fr)+gSunCol*spec*0.35;col=mix(col,vec3(0.82,0.88,0.86)*L,foam*0.85);
     gl_FragColor=vec4(col,1.0);}`});
- const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.layers.set(2);RG.add(mesh);MIRUSERS.push(mesh);mesh.userData.rcUse={on:RILLU,k:0,ex:0.35,ey:0.03,per:40};  // 读湖面倒影的位置：水面点水平最多偏 0.35 m（见下面 texMat 那行），水面上下晃不到 3 cm  // 水面读湖面倒影贴图：不画进任何倒影（第 2 层），湖面那遍另由 MIRUSERS 藏起
+ m.userData.dgySway=0.17;  // 水面起伏：最快约 0.16 米/秒，最多 2.7 厘米（逐帧遮挡据此留余量）
+ const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.userData.dgyBoundsPad=0.03;mesh.layers.set(2);RG.add(mesh);MIRUSERS.push(mesh);mesh.userData.rcUse={on:RILLU,k:0,ex:0.35,ey:0.03,per:40};  // 读湖面倒影的位置：水面点水平最多偏 0.35 m（见下面 texMat 那行），水面上下晃不到 3 cm  // 水面读湖面倒影贴图：不画进任何倒影（第 2 层），湖面那遍另由 MIRUSERS 藏起
  // 小瀑布：每级承水石上一汪翻花的浅水（与泉沟同一材质，标成跌水段），唇口间挂下的水帘，落水处溅水珠
  {const ppos=[],pF=[],pT=[],pidx=[];const pool=(d0,d1,h,hw,sd)=>{const b=ppos.length/3;for(const d of[d0,d1])for(const c of[-1,1]){const [x,z]=fat(d,sd+c*hw);ppos.push(OX+x,GY+h,OZ+z);pF.push(-0.4-d,c,hw);pT.push(FD[0],FD[1]);}pidx.push(b,b+1,b+2,b+1,b+3,b+2);};
   pool(0.1,FLIPS[0][0],FLIPS[0][1],0.1,FLIPS[0][2]);pool(FLIPS[0][0]+0.1,FLIPS[1][0],FLIPS[1][1],0.15,FLIPS[1][2]);pool(FLIPS[1][0]+0.1,FLIPS[2][0],FLIPS[2][1],0.19,FLIPS[2][2]);
   const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(ppos,3));pg.setAttribute('aF',new THREE.Float32BufferAttribute(pF,3));pg.setAttribute('aT',new THREE.Float32BufferAttribute(pT,2));pg.setIndex(pidx);
-  const pm=new THREE.Mesh(pg,m);pm.frustumCulled=false;pm.layers.set(2);RG.add(pm);MIRUSERS.push(pm);pm.userData.rcUse=mesh.userData.rcUse;
+  const pm=new THREE.Mesh(pg,m);pm.frustumCulled=false;pm.userData.dgyBoundsPad=0.03;pm.layers.set(2);RG.add(pm);MIRUSERS.push(pm);pm.userData.rcUse=mesh.userData.rcUse;
   // 水帘：从唇口抛出、抛物线落下，横 5 段、竖 10 段
   const spos=[],suv=[],sidx=[];const sheet=(d0,h0,d1,h1,hw,sd0,sd1)=>{const b=spos.length/3,NV=10,NU=4;for(let j=0;j<=NV;j++){const t=j/NV,d=d0+(d1-d0)*Math.sqrt(t),h=h0+(h1-h0)*t*t,w=hw*(1+0.25*t);
     for(let k=0;k<=NU;k++){const c=k/NU*2-1;const [x,z]=fat(d,sd0+(sd1-sd0)*t+c*w);spos.push(OX+x,GY+h+0.01*(1-t),OZ+z);suv.push(c,t*(h0-h1));}}
@@ -2452,18 +2457,23 @@ function buildGrass(){
      #endif
      diffuseColor.rgb=mix(tc*vGCol*vGS,vec3(0.86,0.88,0.92),gSnow*0.85);}`)
    .replace('#include <opaque_fragment>',`{vec3 Vw=normalize(cameraPosition-vGW);outgoingLight+=diffuseColor.rgb*vec3(1.1,1.3,0.6)*gSunCol*pow(clamp(dot(-Vw,gSunDir),0.0,1.0),4.0)*0.35*max(gSunDir.y,0.0);}\n#include <opaque_fragment>`);};
- mat.customProgramCacheKey=()=>'grass2';
+ mat.customProgramCacheKey=()=>'grass2';mat.userData.dgySway=2.2;mat.userData.dgyWind=true;  // 草尖最快约 2 米/秒（最强阵风前沿扫过时），逐帧遮挡按这个速度留余量
  GRASS.mesh=new THREE.Mesh(g,mat);GRASS.mesh.frustumCulled=false;GRASS.mesh.receiveShadow=true;GRASS.mesh.layers.set(1);scene.add(GRASS.mesh);
  GRASS.parts=[{mesh:GRASS.mesh,attr:GRASS.attr}];
  for(const cnt of[GRASS.nT[1],GRASS.nT[0]]){const q=new THREE.InstancedBufferGeometry();for(const k in g.attributes)if(k!=='iCell')q.setAttribute(k,g.attributes[k]);q.setIndex(g.index);
   const at=new THREE.InstancedBufferAttribute(new Float32Array(GRASS.max*2),2);at.setUsage(THREE.DynamicDrawUsage);q.setAttribute('iCell',at);q.setDrawRange(0,cnt);q.instanceCount=0;q.boundingSphere=g.boundingSphere;
   const m=new THREE.Mesh(q,mat);m.frustumCulled=false;m.receiveShadow=true;m.layers.set(1);scene.add(m);GRASS.parts.push({mesh:m,attr:at});}}
 const _frus=new THREE.Frustum(),_pm=new THREE.Matrix4(),_box=new THREE.Box3();
+/* 草格的保守包围盒：格内（外扩 1 米）地面最低到最高，草叶最高 0.9 米、连风摆带草丛宽度水平最多伸出 3 米 */
+const GRASSBOX=new Map();
+function grassBox(cx,cz){const k=cx+','+cz;let b=GRASSBOX.get(k);if(b)return b;let lo=Infinity,hi=-Infinity;
+ for(let x=cx-1;x<=cx+9;x++)for(let z=cz-1;z<=cz+9;z++){const h=hq(x,z);lo=Math.min(lo,h);hi=Math.max(hi,h);}
+ b=new THREE.Box3(new V3(cx-3,lo-0.15,cz-3),new V3(cx+11,hi+1.0,cz+11));GRASSBOX.set(k,b);return b;}
 function updateGrass(){if(!GRASS.mesh)return;const R0=GRASS.R;const cp=camera.position;const gy=hq(cp.x,cp.z);if(R0<=0||cp.y-gy>R0*0.9){for(const P of GRASS.parts)P.mesh.geometry.instanceCount=0;return;}
  _pm.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);_frus.setFromProjectionMatrix(_pm);let n=0;const nk=[0,0,0];
  const x0=Math.floor((cp.x-R0+170)/8)*8-170,z0=Math.floor((cp.z-R0+200)/8)*8-200;
  for(let cx=x0;cx<=cp.x+R0;cx+=8)for(let cz=z0;cz<=cp.z+R0;cz+=8){if(!GRASS.cells.has(cx+','+cz))continue;const dx=Math.max(cx-cp.x,0,cp.x-cx-8),dz=Math.max(cz-cp.z,0,cp.z-cz-8);if(dx*dx+dz*dz>R0*R0)continue;
-  const hy=hq(cx+4,cz+4);_box.min.set(cx,hy-3,cz);_box.max.set(cx+8,hy+3,cz+8);if(!_frus.intersectsBox(_box))continue;if(n>=GRASS.max)break;n++;
+  const hy=hq(cx+4,cz+4);_box.min.set(cx,hy-3,cz);_box.max.set(cx+8,hy+3,cz+8);if(!_frus.intersectsBox(_box))continue;if(runtimeOptimization.hzb?.isOccluded(grassBox(cx,cz),camera))continue;if(n>=GRASS.max)break;n++;
   const dm=Math.hypot(Math.max(dx-0.5,0),Math.max(dz-0.5,0)),t=dm>=34?2:dm>=16?1:0,a=GRASS.parts[t].attr.array;a[nk[t]*2]=cx;a[nk[t]*2+1]=cz;nk[t]++;}  // 草根最多伸出格子 0.27 米，按 0.5 米余量算最近距离
  GRASS.parts.forEach((P,i)=>{P.attr.needsUpdate=true;P.mesh.geometry.instanceCount=nk[i];});}
 
@@ -2472,21 +2482,21 @@ function updateGrass(){if(!GRASS.mesh)return;const R0=GRASS.R;const cp=camera.po
    ===================================================================== */
 let water=null,waterLow=null;
 function buildWater(){const geo=new THREE.PlaneGeometry(360,300);
- water=new Water(geo,{textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,waterNormals:WATERN,sunDirection:new V3(0,1,0),sunColor:0xffffff,waterColor:0x10261f,distortionScale:1.2,fog:false});
- water.rotation.x=-Math.PI/2;water.material.uniforms.size.value=6.0;water.userData.rcKind='lake';reflGuard(water,'湖面',0,0);scene.add(water);
+ water=new Water(geo,{textureWidth:Q===2?1024:512,textureHeight:Q===2?1024:512,renderTarget:{depthTexture:new THREE.DepthTexture(Q===2?1024:512,Q===2?1024:512)},waterNormals:WATERN,sunDirection:new V3(0,1,0),sunColor:0xffffff,waterColor:0x10261f,distortionScale:1.2,fog:false});
+ water.rotation.x=-Math.PI/2;water.material.uniforms.size.value=6.0;water.userData.rcKind='lake';water.material.userData.dgySway=0;reflGuard(water,'湖面',0,0);scene.add(water);  // 湖面顶点不动（只是平面），可以当遮挡物
  const m=new THREE.ShaderMaterial({uniforms:{t:G.time,sky:{value:new THREE.Color('#9fb8cc')},deep:{value:new THREE.Color('#0d2019')},sunDir:G.sunDir,sunCol:G.sunCol},
   vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
   fragmentShader:`uniform float t;uniform vec3 sky,deep,sunDir,sunCol;varying vec3 vW;float wv(vec2 p){return sin(p.x*0.35+t*0.9)*0.5+sin(p.y*0.47-t*1.1)*0.4+sin((p.x+p.y)*0.9+t*1.7)*0.18;}
   void main(){vec2 p=vW.xz;float e=0.15;float h0=wv(p);vec3 n=normalize(vec3(-(wv(p+vec2(e,0.))-h0)/e*0.06,1.0,-(wv(p+vec2(0.,e))-h0)/e*0.06));vec3 v=normalize(cameraPosition-vW);vec3 r=reflect(-v,n);float fr=0.04+0.96*pow(1.0-max(dot(n,v),0.0),5.0);
   vec3 col=mix(deep,sky,clamp(fr*0.9+0.1,0.,1.));col+=sunCol*pow(max(dot(r,sunDir),0.),160.)*3.0;gl_FragColor=vec4(col,1.);}`});
- waterLow=new THREE.Mesh(geo.clone().rotateX(-Math.PI/2),m);scene.add(waterLow);
+ m.userData.dgySway=0;waterLow=new THREE.Mesh(geo.clone().rotateX(-Math.PI/2),m);scene.add(waterLow);
  water.visible=Q>0;waterLow.visible=Q===0;
  /* 湖面先只写一遍深度（不出颜色，排在所有不透明物前面）：湖底那片地形和别的水下部分在深度测试阶段就被丢掉，
     不再跑那段很重的地形着色器。这一遍往后推一点点（polygonOffset），湖面自己和贴着水面的东西照常画得上去；
     被它挡掉的只有湖面以下、本来就会被湖面盖住的像素，画面不变。顶点位置按各自水面着色器里一模一样的式子算 */
  const zv=['vec4 mvPosition=modelViewMatrix*vec4(position,1.0);gl_Position=projectionMatrix*mvPosition;','vec4 w=modelMatrix*vec4(position,1.);gl_Position=projectionMatrix*viewMatrix*w;'];
  [water,waterLow].forEach((w,i)=>{const zm=new THREE.ShaderMaterial({vertexShader:'void main(){'+zv[i]+'}',fragmentShader:'void main(){gl_FragColor=vec4(0.);}',
-  colorWrite:false,side:w.material.side,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:4});
+  colorWrite:false,side:w.material.side,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:4});zm.userData.dgySway=0;
   const z=new THREE.Mesh(w.geometry,zm);z.renderOrder=-1;z.name='Water·先写深度';w.add(z);});}
 
 /* =====================================================================
@@ -2829,7 +2839,7 @@ const hero=(()=>{const g=new THREE.Group();const robe=std('#9fc0cf',.8),robe2=st
   const cuff=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,0.05,12),trim);cuff.position.y=-0.52;sh.add(cuff);
   const hand=new THREE.Mesh(new THREE.SphereGeometry(0.045,10,8),skin);hand.position.y=-0.58;sh.add(hand);sh.rotation.z=s*0.12;arms.push(sh);}
  const feet=[];for(const s of[-1,1]){const f=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.06,0.22),shoe);f.position.set(s*0.09,0.03,0.04);g.add(f);feet.push(f);}
- g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return {g,lower,arms,feet,head,torso,tail};})();
+ g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.dynamic=true;}});g.visible=false;scene.add(g);return {g,lower,arms,feet,head,torso,tail};})();
 function groundAt(x,z,feet){let g=hq(x,z);let fromTerrain=true;const k=Math.floor(x/CELL)+','+Math.floor(z/CELL);const l=colHash.get(k);if(l)for(const c of l){const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx+0.02&&Math.abs(lz)<=c.hz+0.02&&c.top<=feet+0.52&&c.top>g){g=c.top;fromTerrain=false;}}return [g,fromTerrain];}
 function blockedAt(x,y,z){const l=colHash.get(Math.floor(x/CELL)+','+Math.floor(z/CELL));if(l)for(const c of l){if(c.walk)continue;const dx=x-c.x,dz=z-c.z;const lx=dx*c.c-dz*c.s,lz=dx*c.s+dz*c.c;if(Math.abs(lx)<=c.hx+0.15&&Math.abs(lz)<=c.hz+0.15&&y>c.bot&&y<c.top+0.1)return true;}return false;}
 function pushOut(p,feet){const r=0.3*walk.s;const k0=Math.floor(p.x/CELL),k1=Math.floor(p.z/CELL);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++){const l=colHash.get((k0+a)+','+(k1+b));if(!l)continue;for(const c of l){if(!blocksWalking(c,feet))continue;
@@ -3018,7 +3028,7 @@ async function loadFlora(){if(FLORA.R<=0)return;const L=new GLTFLoader(),TL=new 
   const mat=a2c(patch(new THREE.MeshStandardMaterial({map:src.map,normalMap:src.normalMap||null,alphaMap:alpha,alphaTest:0.5,side:THREE.DoubleSide,roughness:0.8,metalness:0}),
    {alphaFix:1,photo:D.ref?'vec3('+D.ref.join(',')+')':0,key:'flora'+name,vWorld:FLORA_SWAY,fOut:LEAF_OUT,snowLo:'0.5',snowHi:'0.95'}));
   FLORA.sp[name]={mat,vars:[...new Set(D.vars)].map(vi=>{const geo=geos[vi];const cap=Math.max(1,items.filter(t=>t.sp===name&&t.v===vi).length);
-   const m=new THREE.InstancedMesh(geo,mat,cap);m.layers.set(2);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=true;m.setColorAt(0,new THREE.Color(1,1,1));scene.add(m);FLORA.meshes.push(m);return {vi,m};})};}));
+   const m=new THREE.InstancedMesh(geo,mat,cap);m.layers.set(2);m.count=0;m.frustumCulled=false;m.userData.dgyStableInstances=true;m.userData.dgyBoundsPad=0.15;m.castShadow=false;m.receiveShadow=true;m.setColorAt(0,new THREE.Color(1,1,1));scene.add(m);FLORA.meshes.push(m);return {vi,m};})};}));
  FLORA.ready=true;updateFlora(true);}
 function floraLook(sp,t,ss){const fern=!!FLORA_DEF[sp].fern;
  if(fern)return ss===0?[0.85,['#9cc864','#86b456','#a6c96a'][Math.floor(t.h*3)]]:ss===1?[1,['#6f9a45','#628e3e','#7aa14c'][Math.floor(t.h*3)]]:ss===2?[1,['#b0793a','#c29a4c','#8e6a36','#9c8a44'][Math.floor(t.h*4)]]:[0.7,'#6e6048'];
@@ -3186,6 +3196,10 @@ const sceneMatrices=tw('矩阵更新',()=>scene.updateMatrixWorld());
 function updateCameraDepth(){const near=cameraNear(camera.position.distanceTo(controls.target),camera.position.y-hq(camera.position.x,camera.position.z),walk.on);
  if(Math.abs(camera.near-near)>0.001){camera.near=near;camera.updateProjectionMatrix();}}
 function frame(){FRAMEN++;
+ // 遮挡结果的回读是一次同步往返，要等 GPU 进程把排在前面的活做完。两个候选点：帧最开头（只剩上一帧命令的尾巴），
+ // 和帧逻辑跑完、hzb.update 之前（尾巴已经做完，但有的浏览器这时正在呈现上一帧，headless Chrome 还要把它整张读回来）。
+ // pollAt 两处都调，实际在量出来更便宜的那处读（隔一阵再试另一处）
+ runtimeOptimization.hzb?.pollAt?.(0);runtimeOptimization.hzbR?.poll?.();
  flushRenderSize();
  renderer.info.reset();
  const raw=clock.getDelta(),dt=Math.min(raw,0.05),et=clock.elapsedTime;G.time.value=et;
@@ -3229,12 +3243,15 @@ function frame(){FRAMEN++;
   // 院里：色彩收一收（饱和度、对比度降），接触阴影加重，天光补光加大让竹荫的光斑不那么硬
   fogPass.uniforms.sat.value=(DREAM?1.04:0.98)*(1-0.17*XXK);fogPass.uniforms.contrast.value=1.12-0.1*XXK;fogPass.uniforms.aoK.value=1+0.9*XXK;hemi.intensity=HEMI0*(1+0.45*XXK);}
  applyOff(); lodUpdate(); sceneMatrices();
+ runtimeOptimization.hzbAdd?.();runtimeOptimization.hzb?.pollAt?.(1);runtimeOptimization.hzb?.update(camera,rtScene);runtimeOptimization.hzbFallback?.();
  runtimeOptimization.gpu?.update(camera);
  runtimeOptimization.pvs?.update(camera);
  runtimeOptimization.occlusion?.update(camera);
  const renderStarted=performance.now();
  renderer.shadowMap.needsUpdate=true;
- renderer.setRenderTarget(rtScene);renderer.render(scene,camera);renderer.setRenderTarget(null);composer.render(dt);
+ renderer.setRenderTarget(rtScene);renderer.render(scene,camera);runtimeOptimization.hzb?.afterRender();renderer.setRenderTarget(null);composer.render(dt);
+ // 这一帧最后的命令（遮挡测试、后期）立刻交给 GPU 进程，不等浏览器收尾时才送：下一帧回读时排在前面的就少了
+ renderer.getContext().flush();runtimeOptimization.hzbGate?.step();
  if(firstViewPending){firstViewPending=false;
   const ready={...startupMetrics,fromNavigationMs:performance.now(),fromModuleMs:performance.now()-startupBegin,renderMs:performance.now()-renderStarted,drawCalls:renderer.info.render.calls,programs:renderer.info.programs.length,quality:Q,resolution:RS,interiors:INTER.length,boot:boot.snapshot()};
   document.documentElement.dataset.boot=JSON.stringify(ready.boot);
@@ -3248,7 +3265,7 @@ function frame(){FRAMEN++;
  }
  if(snapReq){snapReq=false;saveSnap();}if(DIAG.on){const now=performance.now();if(PROF.last)PROF.iv+=now-PROF.last;PROF.last=now;}if(DIAG.on&&++DIAG.n>=20){DIAG.on=false;diagReport();}
  // dynamic resolution
- ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+(OFF.size?' · 关:'+[...OFF].join(','):'')+' · 远景 '+BLD.filter(b=>b.lo).length+'座/在用 '+BLD.filter(b=>b.lo&&b.lo.visible).length+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
+ ftAcc+=raw;ftN++;drTimer+=raw;if(drTimer>0.5){const fps=ftN/ftAcc;fpsEl.textContent=Math.round(fps)+' fps';{/* 诊断：每帧总绘制次数、三角形、显存里的模型和贴图数，供排查卡顿（设置面板“帧率”下面那行） */const ri=renderer.info,st=document.getElementById('fps-st');if(st)st.textContent=ri.render.calls+' 次绘制 · '+(ri.render.triangles/1e6).toFixed(1)+'M 面 · 模型 '+ri.memory.geometries+' · 贴图 '+ri.memory.textures+' · '+Math.round(RS*100)+'% · '+(walk.on?'步行':'俯瞰')+' · Q'+Q+(OFF.size?' · 关:'+[...OFF].join(','):'')+' · 远景 '+BLD.filter(b=>b.lo).length+'座/在用 '+BLD.filter(b=>b.lo&&b.lo.visible).length+' · 遮挡剔除 '+((H=>!H?'无':!H.enabled?'关（'+(H.stats.reason||'不支持')+'）':H.gated?'待命（轻场景）':'开·剔 '+(H.stats.culled+H.stats.boxCulled))(runtimeOptimization.hzb))+' · '+(window.__gpu??=(()=>{try{const g=renderer.getContext(),e=g.getExtension('WEBGL_debug_renderer_info');return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):'?';}catch(e){return '?';}})());}ftAcc=0;ftN=0;drTimer=0;autoTune(fps);}
  requestAnimationFrame(frame);}
 
 /* =====================================================================
@@ -3313,8 +3330,48 @@ async function build(){
  // 整个小区域都成立的静态可见性证明按需缓存；独立开关用于同画面 A/B。
  runtimeOptimization.pvs=await prepareCellVisibility({THREE,camera,registry:runtimeOptimization.occlusion.registry,maxFacesPerCell:32,maxPairTests:12000,maxCells:24},{budgetMs:8,yieldFrame:bootPaint});
  await runtimeOptimization.pvs.precomputeAsync(interiorVisibilitySeeds({THREE,interiors:INTER,maxCells:12,eyeHeight:1.62*walk.s}),{yieldFrame:bootPaint,onProgress:({done,total})=>loadPresentation.stage('梳理全园',total?done/total:1)});
- runtimeOptimization.gpu=createGpuOcclusionQueries({THREE,renderer,camera,registry:runtimeOptimization.occlusion.registry,getMainTarget:()=>rtScene,enabled:true,queriesPerFrame:32,maxPendingQueries:64});
- renderer.dgyMainOccluded=(object,viewCamera)=>runtimeOptimization.gpu.isObjectOccluded(object,viewCamera)||runtimeOptimization.pvs.isObjectOccluded(object,viewCamera)||runtimeOptimization.occlusion.isObjectOccluded(object,viewCamera);
+ runtimeOptimization.gpu=await prepareMovingGpuOcclusionQueries({THREE,renderer,camera,registry:runtimeOptimization.occlusion.registry,getMainTarget:()=>rtScene,enabled:true,queriesPerFrame:32,maxPendingQueries:64},{budgetMs:8,yieldFrame:bootPaint});
+ /* 每帧可见性：主画面画完后用它自己的深度（岩壁、假山、地形、墙、屋顶……所有不透明面）做层级深度图，一次测完全部候选，
+    结果异步读回、从下一帧起用。每个结论对“眼睛在 ε 范围内任意位置”都成立（遮挡边缘按 ε 能造成的视差收缩），走出 ε 就作废照画，
+    所以边走边转也持续剔除、不会提前把该露出来的东西剔掉。主相机一套，湖面倒影相机一套（hzbR，见下），阴影和镜子照旧。见 frame-occlusion.mjs */
+ // 顶点随风动的材质声明顶点最快速度（米/秒，按最强阵风前沿算）：慢的照样当遮挡物、多留余量；快的（竹、垂柳）和不认识的不当遮挡物
+ const hzbSway=m=>{const v=m.userData.dgyVWorld;return v===FLORA_SWAY?0.5:v===HANG_SWAY?0.4:v===CROWN_SWAY?1.6:undefined;};
+ // 顶点风摆离静止位置最远多少米（按最强阵风算）：花草约 0.1、藤约 0.09、树冠约 0.34，垂柳和竹约 1.6；被遮挡测试用精确包围盒放宽这么多，不用整批的包围球
+ const hzbReach=m=>{const v=m.userData.dgyVWorld;return v===FLORA_SWAY?0.15:v===HANG_SWAY?0.12:v===CROWN_SWAY?0.4:v?2:undefined;};
+ // 上面的速度是最强阵风下的上限，平时风小得多：随风摆的（花草、藤、树冠、草）按当前风况乘一个比例。阵风强度在 life 秒内
+ // 最多涨 1-e^(-life/1.4)，按涨满后的风力 w 和阵风场移动速度算各类风摆随风部分（阵风场变化率 gr）+ 不随风部分的速度上限，与最强阵风时之比取最大
+ const hzbWindOf=m=>{const v=m.userData.dgyVWorld;return v===FLORA_SWAY||v===HANG_SWAY||v===CROWN_SWAY||m.userData.dgyWind===true;};
+ const hzbWind=(()=>{const K=[[0.0835,0.07,0],[0.0455,0.06,0],[0.292,0.2246,0.207],[0.314,0.55,0.628]],gr=g=>(0.25+0.75*g)*1.13*Math.hypot(1.5+3.5*g,0.5+1.2*g)+0.536,g1=gr(1);
+  return life=>{const g=Math.min(1,Math.max(0,(G.wind.value-0.25)/0.75)+1-Math.exp(-Math.max(0,life)/1.4)),w=0.25+0.75*g,r=gr(g);let s=0;for(const [a,b,c] of K)s=Math.max(s,(a+b*r+c*w)/(a+b*g1+c));return Math.min(1,s);};})();
+ // 树的远近档重排、草格增减：看得见的那些原地不动，不算遮挡物在动
+ for(const g of TG)for(const e of [...g.near,...g.far])for(const m of [e.m,e.rm])if(m)m.userData.dgyStableInstances=true;
+ for(const P of GRASS.parts||[])P.mesh.userData.dgyStableInstances=true;
+ // 结果回读（getBufferSubData）在 Chrome 里是一次同步往返：要等 GPU 进程把排在前面的活（含合成上一帧）都做完。放在帧逻辑之后要等 ~12 ms，放在帧一开始只要 ~2 ms，所以两套都关掉自动回读，在 frame() 开头统一读（见 frame()）
+ runtimeOptimization.hzb=createFrameOcclusion({THREE,renderer,camera,registry:runtimeOptimization.occlusion.registry,swaySpeed:hzbSway,swayReach:hzbReach,swayWind:hzbWindOf,windScale:hzbWind,autoPoll:false});
+ runtimeOptimization.hzb.addRegistry();
+ // 湖面倒影也一样：倒影相机每次渲完，用倒影自己的深度做层级深度图测一遍，下次渲倒影时跳过倒影里被挡住的东西。
+ // 倒影贴图是 8 位的，种类记在它的 alpha 里（水面只读倒影的 rgb）；倒影相机的近裁面是斜的（水面），深度按它的投影矩阵还原。
+ // 倒影的测试结果搭主视角的车（carrier）：和主视角的结果一起回读，一帧只有一次同步往返（同一帧里第二次回读要多等 ~9 ms）
+ const hzbR=water&&water.mirrorCamera?createFrameOcclusion({THREE,renderer,camera:water.mirrorCamera,registry:runtimeOptimization.occlusion.registry,swaySpeed:hzbSway,swayReach:hzbReach,swayWind:hzbWindOf,windScale:hzbWind,idKey:'dgyHzbIdR',kindBits:8,autoPoll:false,carrier:runtimeOptimization.hzb}):null;
+ runtimeOptimization.hzbR=hzbR;if(hzbR)hzbR.addRegistry();
+ // 登记表以外的网格（路、地形、藤、山石、荷叶、地被花草、楼里没登记的构件……）凡有保守包围盒的也逐个参与；之后才加进场景的（路、藤、花草异步载入）下一帧补上
+ runtimeOptimization.hzb.addScene(scene);if(hzbR)hzbR.addScene(scene);
+ {const q=[];scene.addEventListener('childadded',e=>q.push(e.child));runtimeOptimization.hzbAdd=()=>{while(q.length){const o=q.pop();runtimeOptimization.hzb.addScene(o);if(hzbR)hzbR.addScene(o);}};}
+ // 主画面每次绘制把“这块面能不能当遮挡物”记进 rtScene 的 alpha（只改 alpha 的混合系数；后期只读 rgb，画面不变）
+ // 这两个钩子每个物体、每次绘制都要调一次：先按相机分开（主相机只问主画面那几套，倒影相机只问 hzbR，阴影等别的相机直接放过），省掉一串注定答“否”的调用
+ {const RO=runtimeOptimization,H=RO.hzb,G=RO.gpu,P=RO.pvs,O=RO.occlusion,mc=hzbR?water.mirrorCamera:null;
+  // 轻场景自动暂停：主画面就算一个不剔也不到 800 次绘制时，层级深度剔除剔掉的多是小件（每个只省约 5 µs），抵不过它每帧的固定开销
+  // （同步回读、更新、测试，约 2–3 ms）；连续 60 帧（约 2 秒）这样才暂停（不测、不读、不剔，和关掉一样），主画面一到 950 次（走近建筑群、转身朝园内）立刻恢复
+  const g=RO.hzbGate={auto:true,draws:0,low:0,lo:800,hi:950,n:60,step(){
+   const u=g.draws+(H.stats.live?H.stats.culled+H.stats.boxCulled:0),set=v=>{H.gated=v;if(hzbR)hzbR.gated=v;g.low=0;};g.draws=0;
+   if(!g.auto||!H.enabled){if(H.gated)set(false);return;}
+   if(!H.gated){g.low=u<g.lo?g.low+1:0;if(g.low>=g.n)set(true);}else if(u>=g.hi)set(false);}};
+  renderer.dgyDrawClass=hzbR?(o,m,c)=>{if(c===camera){g.draws++;H.classify(o,m,c);}else if(c===mc)hzbR.classify(o,m,c);}:(o,m,c)=>{if(c===camera)g.draws++;H.classify(o,m,c);};
+  renderer.dgyMainOccluded=(object,viewCamera)=>viewCamera===camera?H.isObjectOccluded(object,viewCamera)||G.isObjectOccluded(object,viewCamera)||P.isObjectOccluded(object,viewCamera)||O.isObjectOccluded(object,viewCamera)
+   :viewCamera===mc&&!RCL.hzbROff&&hzbR.isObjectOccluded(object,viewCamera);}
+ // 每帧可见性在用时，旧的逐物体 GPU 遮挡查询（gpu）和 CPU 保守遮挡（occlusion）几乎剔不出更多东西，却每帧多花好几毫秒
+ // （逐物体校验登记表、发查询、垃圾回收），查询还让 GPU 空等；只在每帧可见性不可用或出错时打开它们兜底
+ {const RO=runtimeOptimization,fb=()=>{const on=!RO.hzb.enabled;RO.gpu.enabled=on;RO.occlusion.enabled=on;};fb();RO.hzbFallback=()=>{if(RO.hzb.stats.errors&&!RO.gpu.enabled)fb();};}
  const gpuStart=performance.now();
  startupMetrics=await prepareFullScene({THREE,renderer,scene,camera,target:()=>rtScene,sun,onProgress:({label,done,total})=>{
   loadPresentation.stage(label,total?done/total:1);

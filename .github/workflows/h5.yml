@@ -4,7 +4,7 @@ name: 打包 H5 Demo
 on:
   push:
     branches: [main]
-    paths: ['index.html', '*.js', '*.mjs', 'models/**', 'tex/**', 'fonts/**', 'generated/**', 'tools/h5_*', 'tools/build_h5.sh', 'tools/h5_README.txt', 'tools/h5_ABOUT.txt', '.github/workflows/h5.yml']
+    paths: ['index.html', '*.js', '*.mjs', 'models/**', 'tex/**', 'fonts/**', 'generated/**', 'vendor/**', 'tools/h5_*', 'tools/build_h5.sh', 'tools/h5_README.txt', 'tools/h5_ABOUT.txt', '.github/workflows/h5.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -13,12 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: 取 three.js 与 ez-tree（与 index.html importmap 同版本）
-        run: mkdir -p /tmp/nm && cd /tmp/nm && npm i --no-save --no-package-lock three@0.170.0 @dgreenheck/ez-tree@1.1.0
-      - run: bash tools/build_h5.sh /tmp/nm/node_modules daguanyuan-h5.zip
+      - run: bash tools/build_h5.sh daguanyuan-h5.zip
       - name: 检查大小（比赛上限 300 MB）
         run: |
           s=$(stat -c %s daguanyuan-h5.zip); echo "zip $s bytes"; test "$s" -lt 314572800

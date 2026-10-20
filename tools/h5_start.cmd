@@ -7,7 +7,14 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-echo Open http://127.0.0.1:8000/ in your browser after the server starts.
+if not exist "%~dp0daguanyuan\index.html" (
+  echo Please extract the complete ZIP before starting the game.
+  pause
+  exit /b 1
+)
+set "PORT=8000"
+echo Daguanyuan v4 Release - 2026-10-20
+echo Open http://127.0.0.1:8000/ after the server starts.
 echo Keep this window open while playing. Press Ctrl+C to stop.
 echo.
 node "%~dp0serve.cjs"

@@ -369,7 +369,10 @@ function makeFigure(color, female = true, sit = false) {
       const foot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.18), darkM); foot.position.set(s * 0.1, -0.36, 0.56); g.add(foot);
     }
   }
-  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  // Story figures may stand still, then lead the player or turn to face them. They must never become static
+  // occluders during a pause: resuming movement would otherwise invalidate the garden's entire HZB result set.
+  g.name = 'story-figure';
+  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.userData.dynamic = true; } });
   g.scale.setScalar(walk.s);   // 与主角同比例
   return g;
 }

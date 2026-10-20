@@ -1,4 +1,4 @@
-import { partitionOcclusionSurface } from './occlusion-surface-patches.mjs';
+import { partitionOcclusionSurface, createOcclusionBoundsHierarchy } from './occlusion-surface-patches.mjs';
 
 // Full-mesh conservative coverage. At run time each real triangle contributes
 // only its facing/clip decision and three signed topology edges. Shared edges
@@ -94,18 +94,21 @@ function* prepareConservativeOcclusion({THREE:T,occluders=[],width=64,height=36,
   maxPatches,maxProjectedEdges=40000,maxRasterCells=120000,getObjectBounds=null,isOccluderCurrent=null,
   getPreparationGroup=null,primaryBudgetFraction=.8,mergeSources=true,
   maxUpdateMs=3,maxRasterSourceTriangles=8000,maxRowEvents=2048,
-  surfacePatchSize=2,surfacePatchTriangles=2048,partitionLargeSources=true,now=()=>performance.now()}={}){
+  surfacePatchSize=2,surfacePatchTriangles=2048,partitionLargeSources=true,
+  maxCandidateMs=.8,maxCandidateRecords=128,maxCandidateNodes=1024,now=()=>performance.now()}={}){
   if(!T)throw new Error('THREE is required');width=clamp(width|0,4,512);height=clamp(height|0,4,288);
   if(maxPatches!==undefined)maxMeshes=Math.min(maxMeshes,maxPatches);
   const size=width*height,depth=new Float64Array(size),boundary=new Uint8Array(size),rows=Array.from({length:height},()=>[]),rowWinding=new Int32Array(height);
   const rowPools=Array.from({length:height},()=>[]);
-  const records=[],byObject=new WeakMap(),candidates=[],previous=[];
+  const records=[],sourceGroups=[],byObject=new WeakMap(),candidates=[],previous=[],heap=[];
+  let sourceHierarchy=null;
   const vp=new T.Matrix4(),frustum=new T.Frustum(),eye=new T.Vector3(),tmp=new T.Vector3(),pv=new Float64Array(3);
   const cw=new Float64Array(16),cp=new Float64Array(16),query={};let camera=null,enabled=true,ready=false,layerMask=0,deadline=Infinity;
   const stats={meshes:0,sourceTriangles:0,rejectedMeshes:0,buildMs:0,updateMs:0,reused:false,candidateMeshes:0,
     projectedTriangles:0,rasterTriangles:0,rasterCells:0,coveredCells:0,boundaryEdges:0,budgetSkipped:0,
     rasterPatches:0,rasterMeshes:0,queries:0,culled:0,staleQueries:0,coverageRevision:0,
-    budgetMs:maxUpdateMs,budgetExhausted:false,complexitySkipped:0,surfacePatches:0,partitionedSources:0};
+    budgetMs:maxUpdateMs,budgetExhausted:false,complexitySkipped:0,surfacePatches:0,partitionedSources:0,
+    candidateCollectionMs:0,candidateNodes:0,candidateTruncated:false,sourceChecks:0};
   const start=performance.now(),metadata=[],a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),n=new T.Vector3(),ab=new T.Vector3();
   const sources=[...new Set(occluders)];let inspected=0,prepared=0,totalWork=0;
   const inferGroup=preparationRegions(sources);
@@ -173,17 +176,19 @@ function* prepareConservativeOcclusion({THREE:T,occluders=[],width=64,height=36,
     if(partitionLargeSources&&r.count>maxRasterSourceTriangles&&surfacePatchSize>0&&surfacePatchTriangles>0){
       const work=partitionOcclusionSurface({THREE:T,record:r,cellSize:surfacePatchSize,maxTriangles:Math.min(surfacePatchTriangles,maxRasterSourceTriangles)});let step;
       do{step=work.next();if(!step.done)yield {done:prepared+count,total:Math.max(1,totalWork),phase:'build'};}while(!step.done);
-      records.push(...step.value);stats.surfacePatches+=step.value.length;stats.partitionedSources++;
+      records.push(...step.value);sourceGroups.push({bounds:r.bounds,parts:r.parts,patchRoot:createOcclusionBoundsHierarchy(T,step.value)});
+      stats.surfacePatches+=step.value.length;stats.partitionedSources++;
       // Querying a source itself still uses its complete original bounds, not
       // one arbitrary spatial patch. Keep only its live certificate, not all
       // duplicated topology arrays after the bounded records are prepared.
       const certificate={mesh:r.mesh,parts:r.parts,bounds:r.bounds};for(const part of r.parts)byObject.set(part.mesh,certificate);
-    }else{records.push(r);for(const part of r.parts)byObject.set(part.mesh,r);}
+    }else{records.push(r);sourceGroups.push({bounds:r.bounds,parts:r.parts,patchRoot:r});for(const part of r.parts)byObject.set(part.mesh,r);}
     stats.sourceTriangles+=count;
     prepared+=count;
   }
   yield {done:totalWork,total:totalWork,phase:'build'};
-  stats.meshes=records.length;stats.buildMs=performance.now()-start;depth.fill(Infinity);
+  sourceHierarchy=createOcclusionBoundsHierarchy(T,sourceGroups);
+  stats.meshes=records.length;stats.sourceGroups=sourceGroups.length;stats.buildMs=performance.now()-start;depth.fill(Infinity);
   function invalidateCoverage(){ready=false;stats.coverageRevision++;}
   function outOfTime(){if(now()<deadline)return false;stats.budgetExhausted=true;return true;}
   function clearRasterStats(){for(const key of ['projectedTriangles','rasterTriangles','rasterCells','coveredCells','boundaryEdges','budgetSkipped','rasterPatches','rasterMeshes'])stats[key]=0;}
@@ -277,33 +282,64 @@ function* prepareConservativeOcclusion({THREE:T,occluders=[],width=64,height=36,
       for(let x=0;x<width;x++){while(j<row.length&&row[j][0]<=x+.5){winding+=row[j][1];j++;}const at=y*width+x;if(winding!==0&&!boundary[at])depth[at]=Math.min(depth[at],far+DEPTH);}}
     stats.boundaryEdges+=edgeCount;stats.rasterTriangles+=accepted;stats.rasterPatches++;stats.rasterCells+=size;
   }
+  function queueNode(node){
+    if(!node)return;const box=node.bounds;
+    const dx=Math.max(box.min.x-eye.x,0,eye.x-box.max.x),dy=Math.max(box.min.y-eye.y,0,eye.y-box.max.y),dz=Math.max(box.min.z-eye.z,0,eye.z-box.max.z),d2=dx*dx+dy*dy+dz*dz;
+    if(d2>maxDistance*maxDistance||!frustum.intersectsBox(box))return;
+    node.queueDistance=d2;let i=heap.length;heap.push(node);
+    while(i){const parent=(i-1)>>1;if(heap[parent].queueDistance<=d2)break;heap[i]=heap[parent];i=parent;}heap[i]=node;
+  }
+  function takeNode(){
+    const first=heap[0],last=heap.pop();if(heap.length){let i=0;
+      while(i*2+1<heap.length){let child=i*2+1;if(child+1<heap.length&&heap[child+1].queueDistance<heap[child].queueDistance)child++;
+        if(heap[child].queueDistance>=last.queueDistance)break;heap[i]=heap[child];i=child;}
+      heap[i]=last;}return first;
+  }
   function update(view){
     const start=now();deadline=start+Math.max(0,maxUpdateMs);stats.queries=stats.culled=stats.staleQueries=0;stats.reused=false;stats.budgetExhausted=false;stats.complexitySkipped=0;
+    stats.candidateCollectionMs=stats.candidateNodes=stats.sourceChecks=0;stats.candidateTruncated=false;
     if(!enabled||!view?.isPerspectiveCamera||view.isArrayCamera||view.coordinateSystem!==T.WebGLCoordinateSystem){if(ready)invalidateCoverage();stats.updateMs=now()-start;return stats;}
-    view.updateMatrixWorld();let same=ready&&view===camera&&eq16(view.matrixWorld.elements,cw)&&eq16(view.projectionMatrix.elements,cp)&&view.layers.mask===layerMask;
-    camera=view;eye.setFromMatrixPosition(view.matrixWorld);vp.multiplyMatrices(view.projectionMatrix,view.matrixWorldInverse);frustum.setFromProjectionMatrix(vp);candidates.length=0;
+    view.updateMatrixWorld();let same=ready&&previous.length>0&&stats.coveredCells>0&&view===camera&&eq16(view.matrixWorld.elements,cw)&&eq16(view.projectionMatrix.elements,cp)&&view.layers.mask===layerMask;
+    camera=view;eye.setFromMatrixPosition(view.matrixWorld);vp.multiplyMatrices(view.projectionMatrix,view.matrixWorldInverse);frustum.setFromProjectionMatrix(vp);candidates.length=0;heap.length=0;
     const validationCache=new Map();
-    for(let i=0;i<records.length;i++){if((i&31)===0&&outOfTime()){invalidateCoverage();depth.fill(Infinity);clearRasterStats();stats.candidateMeshes=0;stats.updateMs=now()-start;return stats;}
-      const r=records[i],d=r.bounds.distanceToPoint(eye);if(d>maxDistance||!frustum.intersectsBox(r.bounds))continue;
-      // Large audited surfaces are normally partitioned into exact original
-      // triangle patches during preparation. Explicit limits may still leave
-      // an oversized record, which must fail open rather than overrun a frame.
-      if(r.count>maxRasterSourceTriangles){stats.complexitySkipped++;continue;}
-      if(!validRecord(r,view,validationCache))continue;
-      const old=previous[candidates.length];if(!old||old.record!==r||old.state!==r.state)same=false;candidates.push(r);r.bounds.getSize(tmp);
-      // Dense rocks need the closest complete surface, not the cheapest moss
-      // fragment. Small authored walls retain their established cost ranking.
-      r.rank=r.surfacePatch?Math.min(32,tmp.lengthSq())/Math.max(.25,d*d):tmp.lengthSq()/Math.max(1,d*d)/Math.max(1,r.count);}
-    if(previous.length!==candidates.length)same=false;stats.candidateMeshes=candidates.length;
-    if(same){stats.reused=true;stats.updateMs=now()-start;return stats;}
-    invalidateCoverage();depth.fill(Infinity);cw.set(view.matrixWorld.elements);cp.set(view.projectionMatrix.elements);layerMask=view.layers.mask;
-    previous.length=0;for(const r of candidates)previous.push({record:r,state:r.state});
-    clearRasterStats();
+    // Only sources that actually supplied the previous depth can affect its
+    // validity. New/unselected sources cannot invalidate an existing proof.
+    if(same){for(const old of previous){
+      if(outOfTime()||!validRecord(old.record,view,validationCache)||old.record.state!==old.state){same=false;break;}}
+      if(same){stats.reused=true;stats.updateMs=now()-start;return stats;}}
+    // Any camera motion discards old coverage BEFORE bounded candidate work.
+    // Truncation below retains only complete proofs computed for this view.
+    invalidateCoverage();depth.fill(Infinity);cw.set(view.matrixWorld.elements);cp.set(view.projectionMatrix.elements);layerMask=view.layers.mask;previous.length=0;clearRasterStats();
+    const collectStart=now(),collectDeadline=Math.min(deadline,collectStart+(Number.isFinite(maxUpdateMs)?Math.max(0,maxCandidateMs):Infinity)),visibleGroups=new Map();
+    queueNode(sourceHierarchy);
+    while(heap.length&&candidates.length<maxCandidateRecords&&stats.candidateNodes<maxCandidateNodes){
+      if(now()>=collectDeadline){stats.candidateTruncated=true;break;}
+      const node=takeNode();stats.candidateNodes++;
+      if(node.left){queueNode(node.left);queueNode(node.right);continue;}
+      if(node.entries){for(const entry of node.entries)queueNode(entry);continue;}
+      if(node.patchRoot){
+        let visible=visibleGroups.get(node.parts);if(visible===undefined){visible=true;
+          for(const part of node.parts)for(let parent=part.mesh;parent;parent=parent.parent)if(!parent.visible){visible=false;break;}
+          visibleGroups.set(node.parts,visible);}
+        if(visible)queueNode(node.patchRoot);continue;
+      }
+      const r=node;if(r.count>maxRasterSourceTriangles){stats.complexitySkipped++;continue;}
+      r.bounds.getSize(tmp);r.rank=r.surfacePatch?Math.min(32,tmp.lengthSq())/Math.max(.25,r.queueDistance):tmp.lengthSq()/Math.max(1,r.queueDistance)/Math.max(1,r.count);
+      candidates.push(r);
+    }
+    if(heap.length)stats.candidateTruncated=true;heap.length=0;
+    stats.candidateCollectionMs=now()-collectStart;stats.candidateMeshes=candidates.length;
+    if(now()>=deadline)stats.budgetExhausted=true;
     candidates.sort((a,b)=>b.rank-a.rank);
-    for(const r of candidates){const passes=r.sides.includes(T.DoubleSide)?2:1;
-      if(outOfTime())break;
-      if(stats.projectedTriangles+r.count>maxFrameTriangles||stats.rasterMeshes>=maxMeshes||stats.rasterCells+size*passes>maxRasterCells){stats.budgetSkipped++;continue;}
-      raster(r);stats.rasterMeshes++;if(stats.budgetExhausted)break;
+    for(const r of candidates){
+      if(outOfTime()||stats.rasterMeshes>=maxMeshes)break;
+      // Expensive source/geometry/material validation is deferred until a
+      // nearby complete patch is actually about to contribute depth.
+      if(!validationCache.has(r.parts))stats.sourceChecks++;
+      if(!validRecord(r,view,validationCache))continue;
+      const passes=r.sides.includes(T.DoubleSide)?2:1;
+      if(stats.projectedTriangles+r.count>maxFrameTriangles||stats.rasterCells+size*passes>maxRasterCells){stats.budgetSkipped++;continue;}
+      previous.push({record:r,state:r.state});raster(r);stats.rasterMeshes++;if(stats.budgetExhausted)break;
     }
     for(let i=0;i<size;i++)if(Number.isFinite(depth[i]))stats.coveredCells++;ready=true;stats.updateMs=now()-start;return stats;
   }
@@ -333,7 +369,7 @@ function* prepareConservativeOcclusion({THREE:T,occluders=[],width=64,height=36,
     isObjectOccluded(object,view=camera){const r=byObject.get(object),box=getObjectBounds?.(object)||object?.userData?.dgySpatialWorldBounds||(r&&camera&&validRecord(r,camera)?r.bounds:null);return !!box&&isOccluded(box,view);},
     get coverageRevision(){return stats.coverageRevision;},
     get enabled(){return enabled;},set enabled(v){enabled=!!v;invalidateCoverage();},invalidate(){invalidateCoverage();},
-    dispose(){enabled=false;invalidateCoverage();camera=null;records.length=0;candidates.length=0;previous.length=0;depth.fill(Infinity);},
+    dispose(){enabled=false;invalidateCoverage();camera=null;sourceHierarchy=null;sourceGroups.length=0;heap.length=0;records.length=0;candidates.length=0;previous.length=0;depth.fill(Infinity);},
   };
 }
 

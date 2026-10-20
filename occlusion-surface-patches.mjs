@@ -42,3 +42,23 @@ export function* partitionOcclusionSurface({ THREE: T, record, cellSize = 2, max
   }
   return result;
 }
+
+// Immutable preparation-time bounds hierarchy. Bounds are a broadphase only;
+// every adopted leaf still needs its original source's live certificate.
+export function createOcclusionBoundsHierarchy(T, entries, leafSize = 6) {
+  if (!entries.length) return null;
+  const build = list => {
+    const bounds = new T.Box3(); for (const entry of list) bounds.union(entry.bounds);
+    if (list.length <= leafSize) return { bounds, entries: list };
+    const spans = ['x', 'y', 'z'].map(axis => {
+      let low = Infinity, high = -Infinity;
+      for (const entry of list) { const centre = entry.bounds.min[axis] + entry.bounds.max[axis]; low = Math.min(low, centre); high = Math.max(high, centre); }
+      return high - low;
+    });
+    const axis = ['x', 'y', 'z'][spans.indexOf(Math.max(...spans))];
+    list.sort((a, b) => a.bounds.min[axis] + a.bounds.max[axis] - b.bounds.min[axis] - b.bounds.max[axis]);
+    const at = list.length >> 1;
+    return { bounds, left: build(list.slice(0, at)), right: build(list.slice(at)) };
+  };
+  return build(entries.slice());
+}
